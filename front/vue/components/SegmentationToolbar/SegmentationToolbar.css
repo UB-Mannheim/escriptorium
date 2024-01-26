@@ -76,3 +76,9 @@
     min-height: 38px;
     cursor: pointer;
 }
+
+/* scroll the type select menu if it gets too long */
+#type-select-menu {
+    overflow: auto;
+    max-height: 350px;
+}
