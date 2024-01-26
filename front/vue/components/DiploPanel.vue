@@ -93,6 +93,7 @@
 
                     <!-- Regions mode -->
                     <VDropdown
+                        v-if="isSortModeEnabled"
                         theme="escr-tooltip-small"
                         placement="bottom"
                         :distance="8"
@@ -109,7 +110,7 @@
                             </template>
                         </ToggleButton>
                         <template #popper>
-                            Show regions
+                            Show/hide regions
                         </template>
                     </VDropdown>
 
@@ -130,7 +131,7 @@
                         >
                             <ToggleButton
                                 :checked="isVKEnabled"
-                                :disabled="disabled"
+                                :disabled="disabled || isSortModeEnabled"
                                 :on-change="toggleVK"
                             >
                                 <template #button-icon>
@@ -227,7 +228,7 @@
                 'content-container': true,
                 'escr-diplo-container': true,
                 [readDirection]: true,
-                sortmode: isSortModeEnabled
+                sortmode: true,
             } "
         >
             <details
@@ -238,7 +239,7 @@
                 open
             >
                 <summary
-                    :draggable="isSortModeEnabled"
+                    :draggable="true"
                     @dragstart="(e) => handleRegionDragStart(e, region)"
                     @dragend="handleRegionDragEnd"
                 >
@@ -246,17 +247,10 @@
                     <ChevronDownIcon aria-hidden="true" />
                 </summary>
                 <ol
-                    class="escr-lines-region"
+                    class="escr-lines-region sortmode"
                     autocomplete="off"
                     :dir="mainTextDirection.includes('rl') ? 'rtl' : 'ltr'"
-                    :class="{ sortmode: isSortModeEnabled }"
                     :start="region.lines[0].order + 1"
-                    :contenteditable="!isSortModeEnabled"
-                    @focus="startEdit"
-                    @blur="stopEdit"
-                    @keydown="onKeyPress"
-                    @paste="onPaste"
-                    @input="changed"
                 >
                     <GroupedLine
                         v-for="line in region.lines"
@@ -268,7 +262,7 @@
                         :ratio="ratio"
                         :select-line="(evt) => handleSelectLine(evt, line.pk)"
                         :selected-lines="selectedLines"
-                        :sort-mode="isSortModeEnabled"
+                        :sort-mode="true"
                     />
                 </ol>
             </details>
@@ -412,16 +406,17 @@ export default {
                     // reset recogito app container element
                     this.anno._appContainerEl = this.$refs.contentContainer;
                     await this.loadAnnotations();
-                    this.anno.readOnly = false;
                 });
-            } else {
-                this.anno.readOnly = true;
             }
             this.$nextTick(() => this.recalculatePanelHeight())
         },
-        isSortModeEnabled() {
+        isSortModeEnabled(isEnabled) {
             // reset selected lines on sort mode toggle
             this.selectedLines = [];
+            if (!isEnabled) {
+                // regions mode may only be active when sort mode is also active
+                this.isRegionsModeEnabled = false;
+            }
         }
     },
 
