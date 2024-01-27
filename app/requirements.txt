@@ -22,7 +22,7 @@ kraken~=4.3.12
 oitei~=1.1.1
 opensearch-py
 # passim, "seriatim" branch
-git+https://github.com/dasmiq/passim.git@9ec8622981f2f4a4578af8f9354801893b01c17b#egg=passim
+git+https://github.com/dasmiq/passim.git@v2.0.1#egg=passim
 Pillow>=5.4.1
 psycopg2-binary
 pyvips~=2.1.12
