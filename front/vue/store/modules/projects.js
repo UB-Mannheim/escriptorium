@@ -193,7 +193,7 @@ const actions = {
                     ...result,
                     tags: { tags: result.tags },
                     // link to project dashboard
-                    href: SCRIPT_NAME + `/project/${result.slug}`,
+                    href: SCRIPT_NAME + `/project/${result.slug}/`,
                 })),
             );
             commit("setNextPage", data.next);
@@ -217,7 +217,7 @@ const actions = {
                         ...result,
                         tags: { tags: result.tags },
                         // link to project dashboard
-                        href: SCRIPT_NAME + `/project/${result.slug}`,
+                        href: SCRIPT_NAME + `/project/${result.slug}/`,
                     });
                 });
                 commit("setNextPage", data.next);
