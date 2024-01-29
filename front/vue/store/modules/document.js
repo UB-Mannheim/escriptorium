@@ -190,7 +190,8 @@ const actions = {
                 { root: true },
             );
             await dispatch("fetchTranscriptionCharacters");
-            dispatch("fetchTranscriptionCharCount");
+            // TODO: Uncomment below when character count backend implemented
+            // dispatch("fetchTranscriptionCharCount");
             commit("characters/setLoading", false, { root: true });
             commit(
                 "transcription/setLoading",
@@ -451,7 +452,8 @@ const actions = {
                         { key: "characterCount", loading: true },
                         { root: true },
                     );
-                    dispatch("fetchTranscriptionCharCount");
+                    // TODO: Uncomment below when character count backend implemented
+                    // dispatch("fetchTranscriptionCharCount");
                     commit(
                         "transcription/setLoading",
                         { key: "characterCount", loading: false },
