@@ -52,6 +52,19 @@ export const retrieveDocumentOntology = async ({
 export const retrieveDefaultOntology = async (category) =>
     await axios.get(`/${ontologyMap[category]}/`);
 
+// create, update, destroy ontology types
+export const createType = async (category, data) =>
+    await axios.post(`/${ontologyMap[category]}/`, data);
+
+export const updateType = async (category, { typePk, ...data }) =>
+    await axios.patch(`/${ontologyMap[category]}/${typePk}/`, data);
+
+export const deleteType = async (category, { typePk, ...data }) =>
+    await axios.delete(`/${ontologyMap[category]}/${typePk}/`, data);
+
+export const updateDocumentOntology = async (documentId, data) =>
+    await axios.patch(`/documents/${documentId}/modify_ontology/`, data);
+
 // retrieve characters, sorted by character or frequency, for a specific transcription on a document
 export const retrieveTranscriptionCharacters = async ({
     documentId,

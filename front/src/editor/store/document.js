@@ -1,5 +1,11 @@
 import * as api from "../api";
-import { retrieveDefaultOntology } from "../../api";
+import {
+    createType,
+    deleteType,
+    retrieveDefaultOntology,
+    updateDocumentOntology,
+    updateType,
+} from "../../api";
 
 export const initialState = () => ({
     id: null,
@@ -287,10 +293,92 @@ export const actions = {
         }
     },
 
-    saveOntologyChanges({ commit, state }) {
+    async saveOntologyChanges({ commit, state, rootState }) {
         commit("setLoading", true);
-        // TODO: persist changes to ontology.
+        let typesToUpdate = {};
+        let typesToDelete = {};
+        let validTypes = {};
         // NOTE: colors were saved separately (local settings only), in the modal.
+        await Promise.all(
+            Object.entries(rootState.forms.ontology).map(
+                async ([category, newTypes]) => {
+                    const oldTypes = state.types[category];
+                    // default types: we can't make changes to them, but we can choose if they
+                    // should be enabled or disabled for this document.
+                    const defaultTypes = state.defaultTypes[category];
+
+                    // prepare types from form state
+                    typesToUpdate[category] = [];
+                    typesToDelete[category] = [];
+                    validTypes[category] = [];
+                    await Promise.all(
+                        newTypes.map(async (type) => {
+                            let typePk = type.pk;
+                            // non-default types: create/queue for update
+                            if (
+                                !defaultTypes.find(
+                                    (b) =>
+                                        (!typePk && b.name === type.name) ||
+                                        (typePk && typePk === b.pk),
+                                )
+                            ) {
+                                if (!typePk) {
+                                    // create new types
+                                    const { data } = await createType(
+                                        category,
+                                        { name: type.name },
+                                    );
+                                    typePk = data.pk;
+                                } else if (
+                                    oldTypes.find(
+                                        (o) =>
+                                            o.pk === type.pk &&
+                                            o.name !== type.name,
+                                    )
+                                ) {
+                                    // update changed existing types (non-default)
+                                    await updateType(category, {
+                                        typePk: type.pk,
+                                        name: type.name,
+                                    });
+                                }
+                            }
+                            if (typePk) {
+                                // add type to valid types for this document
+                                validTypes[category].push(typePk);
+                            }
+                            return Promise.resolve();
+                        }),
+                    );
+
+                    // not in form types + not in default types = should be deleted
+                    await Promise.all(
+                        oldTypes
+                            .filter((a) => !newTypes.find((b) => a.pk === b.pk))
+                            .filter(
+                                (a) => !defaultTypes.find((b) => a.pk === b.pk),
+                            )
+                            .map(
+                                async (type) =>
+                                    await deleteType(category, {
+                                        typePk: type.pk,
+                                    }),
+                            ),
+                    );
+                },
+            ),
+        );
+        // finally, set the valid types on the document
+        const { data } = await updateDocumentOntology(state.id, {
+            valid_line_types: validTypes["lines"],
+            valid_part_types: validTypes["parts"],
+            valid_block_types: validTypes["regions"],
+        });
+        commit("setTypes", {
+            regions: data.valid_block_types,
+            lines: data.valid_line_types,
+            parts: data.valid_part_types,
+        });
         commit("setLoading", false);
     },
 
@@ -306,7 +394,7 @@ export const actions = {
      */
     toggleConfidence({ commit }) {
         commit("toggleConfidenceVizOn");
-    }
+    },
 };
 
 export default {
