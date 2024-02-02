@@ -43,3 +43,9 @@ export const deletePartMetadata = async (documentId, partId, metadataId) =>
 
 export const rotateDocumentPart = async (documentId, partId, data) =>
     await axios.post(`/documents/${documentId}/parts/${partId}/rotate/`, data);
+
+// move a single document part
+export const moveDocumentPart = async ({ documentId, partId, index }) =>
+    await axios.post(`/documents/${documentId}/parts/${partId}/move/`, {
+        index,
+    });

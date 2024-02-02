@@ -424,7 +424,7 @@ export default {
     methods: {
         ...mapActions("alerts", ["addError"]),
         ...mapActions("tasks", ["openModal"]),
-        ...mapActions("images", ["openDeleteModal"]),
+        ...mapActions("images", ["movePart", "openDeleteModal"]),
         ...mapMutations("images", ["setSelectedParts", "setIsDragging"]),
         /**
          * Handler for opening a task modal on one image from context menu
@@ -466,6 +466,7 @@ export default {
         handleDragStart(e) {
             if(this.isBeingDragged) {
                 e.dataTransfer.setData("draggingPk", this.part.pk);
+                e.dataTransfer.setData("draggingOrder", this.part.order);
                 // a bit of DOM manipulation to show # of selected elements being moved
                 if (this.selectedParts.length > 1 && this.selectedParts.includes(this.part.pk)) {
                     // create a copy of this node
@@ -503,17 +504,26 @@ export default {
          * On drop, perform the reordering operation, then turn off all drag-related
          * component and store states.
          */
-        handleDrop(e, idx) {
+        async handleDrop(e, idx) {
             // TODO: perform the actual reordering here. incorporate multi-select reordering
             // when backend available
             const draggingPk = parseInt(e.dataTransfer.getData("draggingPk"));
-            let draggedItemStr = `element with pk ${draggingPk}`;
+            const oldIndex = parseInt(e.dataTransfer.getData("draggingOrder"));
             if (this.selectedParts.length > 1 && this.selectedParts.includes(draggingPk)) {
-                draggedItemStr = `${this.selectedParts.length} elements`;
+                this.addError({ message: `${this.selectedParts.length} elements will move ${
+                    idx === -1 ? "before": "after"
+                } image #${this.part.order + 1}. Not yet implemented.`});
+            } else if (draggingPk !== this.part.pk) {
+                // determine the index to move to
+                let newIndex = idx === -1 ? this.part.order : this.part.order + 1;
+                if (oldIndex < newIndex) {
+                    newIndex--;
+                }
+                // if not moving, don't bother making the API request
+                if (oldIndex !== newIndex) {
+                    await this.movePart({ partPk: draggingPk, index: newIndex });
+                }
             }
-            this.addError({ message: `${draggedItemStr} will move ${
-                idx === -1 ? "before": "after"
-            } image #${this.part.order + 1}`});
 
             this.isBeingDragged = false;
             this.dragOver = 0;

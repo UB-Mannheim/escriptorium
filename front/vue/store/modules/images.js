@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
     deleteDocumentPart,
+    moveDocumentPart,
     retrieveDocument,
     retrieveDocumentParts,
 } from "../../../src/api";
@@ -357,7 +358,30 @@ const actions = {
      */
     async moveSelectedParts({ dispatch }) {
         // TODO: Implement when we have bulk move backend.
-        dispatch("alerts/addError", { message: "Not implemented" }, { root: true });
+        dispatch(
+            "alerts/addError",
+            { message: "Not implemented" },
+            { root: true },
+        );
+    },
+    /**
+     * Move a single image to the specified index.
+     */
+    async movePart({ commit, dispatch, rootState }, { partPk, index }) {
+        commit("setLoading", { key: "images", loading: true });
+        try {
+            await moveDocumentPart({
+                documentId: rootState.document.id,
+                partId: partPk,
+                index,
+            });
+            await dispatch("fetchParts");
+            commit("setSelectedParts", []);
+            commit("setLoading", { key: "images", loading: false });
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
     },
     /**
      * Open the delete confirmation modal for a part.
