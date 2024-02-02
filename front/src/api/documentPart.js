@@ -16,7 +16,7 @@ export const retrievePartMetadata = async (documentId, partId) =>
 
 export const retrievePartMetadatum = async (documentId, partId, metadataId) =>
     await axios.get(
-        `/documents/${documentId}/parts/${partId}/metadata/${metadataId}`,
+        `/documents/${documentId}/parts/${partId}/metadata/${metadataId}/`,
     );
 
 export const createPartMetadata = async (documentId, partId, data) =>
