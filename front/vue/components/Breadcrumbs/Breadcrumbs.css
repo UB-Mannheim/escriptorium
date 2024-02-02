@@ -19,6 +19,8 @@
     content: "/";
     display: inline;
     margin-right: 8px;
+    font-weight: 600;
+    color: var(--text2);
 }
 .escr-breadcrumbs li.escr-first-crumb {
     min-width: 81px;

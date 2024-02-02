@@ -1,0 +1,13 @@
+.escr-transcription-management .escr-modal {
+    width: 800px;
+    top: 60px;
+    left: calc(50% - 400px);
+    color: var(--text1);
+}
+.escr-transcription-management .escr-modal-content {
+    max-height: calc(100vh - 250px);
+}
+.escr-transcription-edit-icon svg {
+    width: 16px;
+    height: 16px;
+}

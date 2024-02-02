@@ -59,6 +59,22 @@ const actions = {
         }
     },
     /**
+     * Handle array add/change/remove operations.
+     */
+    handleGenericArrayInput({ commit }, { form, field, action, value }) {
+        switch (action) {
+            case "add":
+                commit("addToArray", { form, field, value });
+                break;
+            case "remove":
+                commit("removeObjectFromArray", { form, field, value });
+                break;
+            case "update":
+                commit("updateArrayValue", { form, field, value });
+                break;
+        }
+    },
+    /**
      * Show a named tooltip on a form
      */
     showTooltip({ commit }, { form, tooltip }) {
@@ -87,6 +103,20 @@ const mutations = {
         const formClone = structuredClone(state[form]);
         formClone[field].splice(formClone[field].indexOf(value), 1);
         state[form] = formClone;
+    },
+    removeObjectFromArray(state, { form, field, value }) {
+        const formClone = structuredClone(state[form]);
+        const foundIndex = formClone[field].findIndex(
+            (v) =>
+            // use pk if it exists on the backend, otherwise use index
+                (value.pk && v.pk.toString() === value.pk.toString()) ||
+                (value.index && v.index === value.index),
+        );
+        // remove if found
+        if (foundIndex !== -1) {
+            formClone[field].splice(foundIndex, 1);
+            state[form] = formClone;
+        }
     },
     removeMetadatum(state, { form, metadatum }) {
         const formClone = structuredClone(state[form]);
@@ -121,6 +151,20 @@ const mutations = {
         // update if found
         if (foundIndex !== -1) {
             formClone.metadata[foundIndex] = metadatum;
+            state[form] = formClone;
+        }
+    },
+    updateArrayValue(state, { form, field, value }) {
+        const formClone = structuredClone(state[form]);
+        const foundIndex = formClone[field].findIndex(
+            (v) =>
+            // use pk if it exists on the backend, otherwise use index
+                (value.pk && v.pk.toString() === value.pk.toString()) ||
+                (value.index && v.index === value.index),
+        );
+        // update if found
+        if (foundIndex !== -1) {
+            formClone[field][foundIndex] = value;
             state[form] = formClone;
         }
     },

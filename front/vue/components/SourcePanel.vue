@@ -54,7 +54,7 @@
         </div>
         <div
             ref="content"
-            class="content-container"
+            :class="{ 'content-container': true, 'pan-active': activeTool === 'pan' }"
         >
             <div
                 id="source-zoom-container"
@@ -96,7 +96,7 @@
 </template>
 
 <script>
-import { assign } from "lodash"
+import { mapState } from "vuex";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
 import { Annotorious } from "@recogito/annotorious";
 
@@ -111,6 +111,9 @@ export default Vue.extend({
         isWorking: false
     };},
     computed: {
+        ...mapState({
+            activeTool: (state) => state.globalTools.activeTool,
+        }),
         imageSrc() {
             let src =
                 (!this.fullsizeimage &&

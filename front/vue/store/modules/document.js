@@ -16,7 +16,7 @@ import {
     updateDocumentMetadata,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
-import { getDocumentMetadataCRUD } from "../util/metadata";
+import { getMetadataCRUD } from "../util/metadata";
 import forms from "../util/initialFormState";
 import { throttle } from "../util/throttle";
 
@@ -874,7 +874,7 @@ const actions = {
         } = rootState.forms.editDocument;
         // split modified metadata by operation
         const { metadataToCreate, metadataToUpdate, metadataToDelete } =
-            getDocumentMetadataCRUD({
+            getMetadataCRUD({
                 stateMetadata: state.metadata,
                 formMetadata: metadata,
             });
@@ -916,15 +916,16 @@ const actions = {
                     if (response.status === 200) {
                         // updated
                         const { data } = response;
-                        commit("addMetadatum", data);
+                        commit("updateMetadatum", data);
                     } else if (response.status === 201) {
                         // created
                         const { data } = response;
-                        commit("updateMetadatum", data);
+                        commit("addMetadatum", data);
                     } else if (response.status === 204) {
                         // deleted
                         const { request } = response;
-                        const pk = request?.responseURL.split("/").slice(-1);
+                        const splitURL = request?.responseURL.split("/");
+                        const pk = splitURL[splitURL.length - 2];
                         commit("removeMetadatum", pk);
                     } else {
                         throw new Error("Error updating metadata");

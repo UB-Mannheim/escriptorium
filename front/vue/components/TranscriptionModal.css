@@ -1,0 +1,91 @@
+/* line-by-line transcription modal */
+.escr-line-modal .modal-content {
+    background-color: var(--background1);
+    color: var(--text1);
+}
+.escr-line-modal .escr-line-modal-header h2 {
+    margin: 0 2rem 0 0;
+}
+.escr-line-modal .escr-line-modal-header {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: flex-start;
+}
+.escr-line-modal-header .escr-line-modal-right {
+    flex: 1 0 auto;
+    display: flex;
+    justify-content: flex-end;
+}
+.escr-line-modal-header .escr-vk-toggle:not(:active):not([class*="active"]):not(:hover) {
+    background-color: transparent;
+}
+.escr-line-modal-header .new-section.with-separator {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    margin-left: 0.5rem;
+}
+.escr-line-modal details summary {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    min-height: 32px;
+}
+.escr-line-modal details summary::before {
+    content: "\25B6";
+    font-size: 12px;
+    unicode-bidi: isolate;
+    text-transform: none;
+    text-indent: 0px !important;
+    text-align: start !important;
+    text-align-last: start !important;
+}
+.escr-line-modal details[open] summary::before {
+    content: "\25BC";
+    padding-top: 2px;
+    margin-right: -1px;
+}
+.escr-line-modal details.escr-compare summary > div {
+    display: none;
+}
+.escr-line-modal details[open].escr-compare summary > div {
+    display: flex;
+    flex: 1 0 auto;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: flex-end;
+}
+.escr-line-modal details summary > span {
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 16px;
+}
+.escr-line-modal details.escr-compare summary + #comparison {
+    margin-top: 1rem;
+}
+.escr-line-modal .escr-no-content {
+    display: block;
+    font-size: 14px;
+    font-weight: 400;
+    margin: 1rem;
+    color: var(--text2);
+}
+.escr-line-modal .text-muted {
+    color: var(--text1) !important;
+}
+#trans-modal.escr-line-modal #history .d-table {
+    border-spacing: 0;
+}
+.escr-line-modal .escr-line-version :not(.escr-line-content):not(button) {
+    font-size: 80%;
+}
+.escr-line-modal .escr-line-version {
+    min-height: 32px;
+}
+.escr-line-modal .escr-line-version .d-table-cell {
+    vertical-align: middle;
+}
+.escr-line-modal .escr-line-version button {
+    color: var(--primary);
+}

@@ -1,6 +1,12 @@
 <template>
-    <div class="col panel">
-        <div class="tools">
+    <div
+        id="diplo-panel"
+        class="col panel"
+    >
+        <div
+            v-if="legacyModeEnabled"
+            class="tools"
+        >
             <i
                 title="Text Panel"
                 class="panel-icon fas fa-list-ol"
@@ -31,12 +37,14 @@
             </button>
 
             <div
-                v-for="typo in groupedTaxonomies"
+                v-for="(typo, idx) in groupedTaxonomies"
+                :key="idx"
                 class="btn-group taxo-group ml-2 mr-1"
             >
                 <button
                     v-for="taxo in typo"
                     :id="'anno-taxo-' + taxo.pk"
+                    :key="taxo.pk"
                     :data-taxo="taxo"
                     :title="taxo.name"
                     class="btn btn-sm btn-outline-info"
@@ -47,12 +55,101 @@
                 </button>
             </div>
         </div>
+        <EditorToolbar
+            v-else
+            panel-type="diplomatic"
+            :disabled="disabled"
+            :panel-index="panelIndex"
+        >
+            <template #editor-tools-center>
+                <div class="escr-editortools-paneltools">
+                    <!-- transcription switcher -->
+                    <TranscriptionDropdown
+                        :disabled="disabled"
+                    />
+                    <i
+                        id="save-notif"
+                        ref="saveNotif"
+                        title="There is content waiting to be saved (don't leave the page)"
+                        class="notice fas fa-save hide new-section"
+                    />
+
+                    <!-- Line reordering -->
+                    <VDropdown
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
+                    >
+                        <ToggleButton
+                            color="secondary"
+                            class="sort-mode-toggle"
+                            :checked="isSortModeEnabled"
+                            :disabled="disabled || isVKEnabled"
+                            :on-change="toggleSort"
+                        >
+                            <template #button-icon>
+                                <LineOrderingIcon />
+                            </template>
+                        </ToggleButton>
+                        <template #popper>
+                            Line ordering mode
+                        </template>
+                    </VDropdown>
+
+                    <!-- Virtual keyboard -->
+                    <div class="vk-container">
+                        <VDropdown
+                            theme="escr-tooltip-small"
+                            placement="bottom"
+                            :distance="8"
+                            :triggers="['hover']"
+                        >
+                            <ToggleButton
+                                :checked="isVKEnabled"
+                                :disabled="disabled"
+                                :on-change="toggleVK"
+                            >
+                                <template #button-icon>
+                                    <KeyboardIcon />
+                                </template>
+                            </ToggleButton>
+                            <template #popper>
+                                Virtual keyboard
+                            </template>
+                        </VDropdown>
+                    </div>
+
+                    <!-- TODO: Annotation -->
+                    <!--
+                    <div
+                        v-for="(typo, idx) in groupedTaxonomies"
+                        :key="idx"
+                        class="btn-group taxo-group ml-2 mr-1"
+                    >
+                        <button
+                            v-for="taxo in typo"
+                            :id="'anno-taxo-' + taxo.pk"
+                            :key="taxo.pk"
+                            :data-taxo="taxo"
+                            :title="taxo.name"
+                            class="btn btn-sm btn-outline-info"
+                            autocomplete="off"
+                            @click="toggleTaxonomy(taxo)"
+                        >
+                            {{ taxo.abbreviation ? taxo.abbreviation : taxo.name }}
+                        </button>
+                    </div> -->
+                </div>
+            </template>
+        </EditorToolbar>
         <div
             ref="contentContainer"
             :class="'content-container ' + $store.state.document.readDirection"
         >
-            <diploline
+            <DiploLine
                 v-for="line in $store.state.lines.all"
+                ref="diploLineComponents"
                 :key="'DL' + line.pk"
                 :line="line"
                 :ratio="ratio"
@@ -62,7 +159,7 @@
             <div
                 id="diplomatic-lines"
                 ref="diplomaticLines"
-                :class="$store.state.document.mainTextDirection"
+                :class="{ [mainTextDirection]: true, sortmode: isSortModeEnabled }"
                 contenteditable="true"
                 autocomplete="off"
                 @keydown="onKeyPress"
@@ -79,22 +176,39 @@
 </template>
 
 <script>
-import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
-import DiploLine from "./DiploLine.vue";
+import { mapState } from "vuex";
+import { Dropdown as VDropdown } from "floating-vue";
 import { Recogito } from "@recogito/recogito-js";
+import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
+import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
+import LineOrderingIcon from "./Icons/LineOrderingIcon/LineOrderingIcon.vue";
+import DiploLine from "./DiploLine.vue";
+import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
+import ToggleButton from "./ToggleButton/ToggleButton.vue";
+import TranscriptionDropdown from "./EditorTranscriptionDropdown/EditorTranscriptionDropdown.vue";
 
 export default Vue.extend({
     components: {
-        "diploline": DiploLine,
+        DiploLine,
+        EditorToolbar,
+        KeyboardIcon,
+        LineOrderingIcon,
+        ToggleButton,
+        TranscriptionDropdown,
+        VDropdown,
     },
     mixins: [BasePanel, AnnoPanel],
     data() { return {
         updatedLines : [],
         createdLines : [],
         movedLines:[],
-        isVKEnabled: false
+        isVKEnabled: false,
+        isSortModeEnabled: false,
     };},
     computed: {
+        ...mapState({
+            mainTextDirection: (state) => state.document.mainTextDirection,
+        }),
         groupedTaxonomies() {
             return _.groupBy(this.$store.state.document.annotationTaxonomies.text,
                 function(taxo) {
@@ -136,7 +250,7 @@ export default Vue.extend({
             vm.sortable = Sortable.create(this.$refs.diplomaticLines, {
                 disabled: true,
                 multiDrag: true,
-                multiDragKey : "CTRL",
+                multiDragKey : "Meta",
                 selectedClass: "selected",
                 ghostClass: "ghost",
                 dragClass: "info",
@@ -166,8 +280,8 @@ export default Vue.extend({
         getAPITextAnnotationBody(annotation, offsets) {
             var body = this.getAPIAnnotationBody(annotation);
             let total = 0;
-            for(let i=0; i<this.$children.length; i++) {
-                let currentLine = this.$children[i];
+            for(let i=0; i<this.$refs.diploLineComponents.length; i++) {
+                let currentLine = this.$refs.diploLineComponents[i];
                 let content = currentLine.getEl().textContent;
                 if (!body.start_line && total+content.length > offsets.start) {
                     body.start_line = currentLine.line.pk;
@@ -291,13 +405,19 @@ export default Vue.extend({
             if (this.$refs.diplomaticLines.contentEditable === "true") {
                 this.$refs.diplomaticLines.contentEditable = "false";
                 this.sortable.option("disabled", false);
-                this.$refs.sortMode.classList.remove("btn-info");
-                this.$refs.sortMode.classList.add("btn-success");
+                this.isSortModeEnabled = true;
+                if (this.$refs.sortMode) {
+                    this.$refs.sortMode.classList.remove("btn-info");
+                    this.$refs.sortMode.classList.add("btn-success");
+                }
             } else {
                 this.$refs.diplomaticLines.contentEditable = "true";
                 this.sortable.option("disabled", true);
-                this.$refs.sortMode.classList.remove("btn-success");
-                this.$refs.sortMode.classList.add("btn-info");
+                this.isSortModeEnabled = false;
+                if (this.$refs.sortMode) {
+                    this.$refs.sortMode.classList.remove("btn-success");
+                    this.$refs.sortMode.classList.add("btn-info");
+                }
             }
         },
 
@@ -401,7 +521,7 @@ export default Vue.extend({
                Finish dragging lines, save new positions
              */
             if(ev.newIndicies.length == 0 && ev.newIndex != ev.oldIndex) {
-                let diploLine = this.$children.find((dl)=>dl.line.order==ev.oldIndex);
+                let diploLine = this.$refs.diploLineComponents.find((dl)=>dl.line.order==ev.oldIndex);
                 this.movedLines.push({
                     "pk": diploLine.line.pk,
                     "order": ev.newIndex
@@ -409,7 +529,7 @@ export default Vue.extend({
             } else {
                 for(let i=0; i< ev.newIndicies.length; i++) {
 
-                    let diploLine = this.$children.find((dl)=>dl.line.order==ev.oldIndicies[i].index);
+                    let diploLine = this.$refs.diploLineComponents.find((dl)=>dl.line.order==ev.oldIndicies[i].index);
                     this.movedLines.push({
                         "pk": diploLine.line.pk,
                         "order": ev.newIndicies[i].index
@@ -636,8 +756,8 @@ export default Vue.extend({
         showOverlay(ev) {
             let target = ev.target.closest("div");
             let index = Array.prototype.indexOf.call(target.parentNode.children, target);
-            if (index > -1 && index < this.$children.length) {
-                let diploLine = this.$children.find((dl)=>dl.line.order==index);
+            if (index > -1 && index < this.$refs.diploLineComponents.length) {
+                let diploLine = this.$refs.diploLineComponents.find((dl)=>dl.line.order==index);
                 if (diploLine) diploLine.showOverlay();
             } else {
                 this.hideOverlay();
@@ -645,7 +765,9 @@ export default Vue.extend({
         },
 
         hideOverlay() {
-            if (this.$children.length) this.$children[0].hideOverlay();
+            if (this.$refs.diploLineComponents.length) {
+                this.$refs.diploLineComponents[0].hideOverlay();
+            }
         },
 
         async bulkUpdate() {
@@ -668,8 +790,8 @@ export default Vue.extend({
             /*
                parse all lines if the content changed, add it to updated lines
              */
-            for(let i=0; i<this.$children.length; i++) {
-                let currentLine = this.$children[i];
+            for(let i=0; i<this.$refs.diploLineComponents.length; i++) {
+                let currentLine = this.$refs.diploLineComponents[i];
                 let content = currentLine.getEl().textContent;
                 if(currentLine.line.currentTrans.content != content){
                     currentLine.line.currentTrans.content = content;
@@ -696,11 +818,14 @@ export default Vue.extend({
         },
 
         setHeight() {
-            this.$refs.contentContainer.style.minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio) + "px";
+            const minHeight = Math.round(this.$store.state.parts.image.size[1] * this.ratio);
+            this.$refs.contentContainer.style.minHeight =  `${minHeight}px`;
         },
 
         updateView() {
-            this.setHeight();
+            if (this.legacyModeEnabled) {
+                this.setHeight();
+            }
         },
 
         setThisAnnoTaxonomy(taxo) {
@@ -750,6 +875,11 @@ export default Vue.extend({
                 this.$refs.diplomaticLines.childNodes.forEach((c) => {
                     this.activateVK(c);
                 });
+                if (!this.legacyModeEnabled && this.isSortModeEnabled) {
+                    this.$refs.diplomaticLines.contentEditable = "true";
+                    this.sortable.option("disabled", true);
+                    this.isSortModeEnabled = false;
+                }
             } else {
                 // Make sure we save changes made before we remove the VK
                 vks.splice(vks.indexOf(this.$store.state.document.id), 1);

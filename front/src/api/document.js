@@ -48,6 +48,23 @@ export const retrieveDocumentOntology = async ({
     );
 };
 
+// retrieve default types list by category (regions, lines, parts)
+export const retrieveDefaultOntology = async (category) =>
+    await axios.get(`/${ontologyMap[category]}/`);
+
+// create, update, destroy ontology types
+export const createType = async (category, data) =>
+    await axios.post(`/${ontologyMap[category]}/`, data);
+
+export const updateType = async (category, { typePk, ...data }) =>
+    await axios.patch(`/${ontologyMap[category]}/${typePk}/`, data);
+
+export const deleteType = async (category, { typePk, ...data }) =>
+    await axios.delete(`/${ontologyMap[category]}/${typePk}/`, data);
+
+export const updateDocumentOntology = async (documentId, data) =>
+    await axios.patch(`/documents/${documentId}/modify_ontology/`, data);
+
 // retrieve characters, sorted by character or frequency, for a specific transcription on a document
 export const retrieveTranscriptionCharacters = async ({
     documentId,
@@ -79,6 +96,17 @@ export const retrieveTranscriptionCharCount = async ({
         `/documents/${documentId}/transcriptions/${transcriptionId}/character_count/`,
     );
 };
+
+export const updateTranscription = async ({
+    documentId,
+    transcriptionId,
+    name,
+    comments,
+}) =>
+    await axios.put(
+        `/documents/${documentId}/transcriptions/${transcriptionId}/`,
+        { name, comments },
+    );
 
 // retrieve document parts
 export const retrieveDocumentParts = async ({
@@ -163,7 +191,7 @@ const jobTypeIds = {
 
 // retrieve all models (by job type)
 export const retrieveModels = async (jobType) =>
-    await axios.get("/models", { params: { job: jobTypeIds[jobType] } });
+    await axios.get("/models/", { params: { job: jobTypeIds[jobType] } });
 
 // share this document with a group or user
 export const shareDocument = async ({ documentId, group, user }) =>
