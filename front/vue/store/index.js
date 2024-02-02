@@ -23,6 +23,9 @@ Vue.use(FloatingVue, {
         "escr-tooltip": {
             $extend: "dropdown",
         },
+        "escr-tooltip-small": {
+            $extend: "dropdown",
+        },
         "tags-dropdown": {
             $extend: "dropdown",
         },

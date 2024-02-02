@@ -1,0 +1,20 @@
+.escr-element-details .escr-modal {
+    top: 60px;
+    color: var(--text1);
+}
+.escr-element-details .escr-modal-content {
+    max-height: calc(100vh - 250px);
+}
+.escr-element-details dl.escr-form-field {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 0;
+    margin-block-end: 0;
+}
+.escr-element-details .escr-metadata-field legend {
+    font-size: 1rem;
+}
+.escr-element-details input {
+    color: var(--text1);
+}

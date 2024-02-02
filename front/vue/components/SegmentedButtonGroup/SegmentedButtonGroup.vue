@@ -1,9 +1,69 @@
+<template>
+    <div
+        :class="classes"
+        role="group"
+    >
+        <div
+            v-for="option in options"
+            :key="option.value"
+        >
+            <input
+                :id="`${name}-${option.value}`"
+                type="radio"
+                class="sr-only"
+                :value="option.value"
+                :name="name"
+                :checked="option.selected"
+                :disabled="disabled"
+                @change="() => onChangeSelection(option.value)"
+            >
+            <VDropdown
+                v-if="option.tooltip"
+                theme="escr-tooltip-small"
+                placement="bottom"
+                :distance="8"
+                :triggers="['hover']"
+            >
+                <label :for="`${name}-${option.value}`">
+                    <component
+                        :is="option.label"
+                        v-if="typeof option.label !== 'string'"
+                    />
+                    <span v-else>
+                        {{ option.label }}
+                    </span>
+                </label>
+                <template #popper>
+                    <span class="escr-tooltip-text">
+                        {{ option.tooltip }}
+                    </span>
+                </template>
+            </VDropdown>
+            <label
+                v-else
+                :for="`${name}-${option.value}`"
+            >
+                <component
+                    :is="option.label"
+                    v-if="typeof option.label !== 'string'"
+                />
+                <span v-else>
+                    {{ option.label }}
+                </span>
+            </label>
+        </div>
+    </div>
+</template>
+
 <script>
+import { Dropdown as VDropdown } from "floating-vue";
 import "./SegmentedButtonGroup.css";
 
 export default {
     name: "EscrSegmentedButtonGroup",
-    functional: true,
+    components: {
+        VDropdown,
+    },
     props: {
         /**
          * Color of the selected button
@@ -55,56 +115,13 @@ export default {
             required: true,
         },
     },
-    render: (h, context) => {
-        /**
-         * Reusable function to render a single option's radio input and label
-         */
-        function renderOption(option) {
-            return [
-                h(
-                    "input",
-                    {
-                        domProps: {
-                            type: "radio",
-                            id: `${context.props.name}-${option.value}`,
-                            value: option.value,
-                            name: context.props.name,
-                            checked: option.selected,
-                            disabled: context.props.disabled,
-                        },
-                        class: {"sr-only": true },
-                        on: {
-                            change: () => context.props.onChangeSelection(option.value),
-                        },
-                    },
-                ),
-                h(
-                    "label",
-                    {
-                        domProps: {
-                            htmlFor: `${context.props.name}-${option.value}`,
-                        },
-                    },
-                    option.label,
-                ),
-            ]
-        }
-        /**
-         * Render the container div and radio children
-         */
-        return h(
-            "div",
-            {
-                class: {
-                    "escr-segmented-button-group": true,
-                    [`escr-segmented-button-group--${context.props.color}`]: true,
-                },
-                domProps: {
-                    role: "group",
-                }
-            },
-            context.props.options.map((option) => renderOption(option)),
-        );
+    computed: {
+        classes() {
+            return {
+                "escr-segmented-button-group": true,
+                [`escr-segmented-button-group--${this.color}`]: true,
+            };
+        },
     },
 };
 </script>

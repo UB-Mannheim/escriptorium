@@ -1,6 +1,12 @@
 <template>
-    <div class="col panel">
+    <div
+        class="col panel"
+        @pointermove="dragToolbar"
+        @pointerup="stopDragToolbar"
+        @pointerleave="stopDragToolbar"
+    >
         <div
+            v-if="legacyModeEnabled"
             class="tools"
         >
             <i
@@ -169,8 +175,62 @@
                 <help />
             </div>
         </div>
-
-        <div id="context-menu">
+        <SegmentationToolbar
+            v-else
+            ref="segmentation-toolbar"
+            :display-mode="(segmenter && segmenter.mode) || 'lines'"
+            :can-redo="undoManager && undoManager.hasRedo()"
+            :can-undo="undoManager && undoManager.hasUndo()"
+            :disabled="isWorking || disabled"
+            :has-selection="hasSelection"
+            :has-points-selection="hasPointsSelection"
+            :line-numbering-enabled="(segmenter && segmenter.showLineNumbers) || false"
+            :on-change-mode="onChangeMode"
+            :on-change-selection-type="onChangeType"
+            :on-delete="onDelete"
+            :on-link-unlink="onLinkUnlink"
+            :on-join="onJoin"
+            :on-toggle-line-numbering="onToggleLineNumbering"
+            :on-redo="redo"
+            :on-reverse="onReverse"
+            :on-undo="undo"
+            :panel-index="panelIndex"
+            :selected-type="selectedType"
+            :selection-is-linked="selectionIsLinked"
+            :toggle-tool="onToggleTool"
+            :toggle-toolbar-detached="toggleToolbarDetached"
+            :tool="activeTool"
+            :toolbar-detached="toolbarDetached"
+        />
+        <DetachableToolbar
+            v-if="toolbarDetached"
+            ref="detachable-toolbar"
+            class="escr-toolbar escr-segmentation-toolbar"
+            :disabled="isWorking || disabled"
+            :display-mode="(segmenter && segmenter.mode) || 'lines'"
+            :has-points-selection="hasPointsSelection"
+            :has-selection="hasSelection"
+            :on-change-selection-type="onChangeType"
+            :on-delete="onDelete"
+            :on-join="onJoin"
+            :on-link-unlink="onLinkUnlink"
+            :on-reverse="onReverse"
+            :selected-type="selectedType"
+            :selection-is-linked="selectionIsLinked"
+            :start-drag="startDragToolbar"
+            :style="{
+                'left': `${toolbarPosition.x}px`,
+                'top': `${toolbarPosition.y}px`,
+            }"
+            :toggle-tool="onToggleTool"
+            :toggle-toolbar-detached="toggleToolbarDetached"
+            :tool="activeTool"
+            :toolbar-detached="true"
+        />
+        <div
+            v-if="legacyModeEnabled"
+            id="context-menu"
+        >
             <button
                 id="be-link-region"
                 title="Link selected lines to (the first detected) background region. (Y)"
@@ -210,7 +270,13 @@
 
         <div id="info-tooltip" />
 
-        <div class="content-container">
+        <div
+            :class="{
+                'content-container': true,
+                'pan-active': activeTool === 'pan',
+                disabled,
+            }"
+        >
             <div
                 id="seg-zoom-container"
                 ref="segZoomContainer"
@@ -278,9 +344,12 @@
 /*
    Baseline editor panel (or segmentation panel)
  */
+import { mapActions, mapState } from "vuex";
 import { BasePanel } from "../../src/editor/mixins.js";
+import DetachableToolbar from "./SegmentationToolbar/DetachableToolbar.vue";
 import SegRegion from "./SegRegion.vue";
 import SegLine from "./SegLine.vue";
+import SegmentationToolbar from "./SegmentationToolbar/SegmentationToolbar.vue";
 import Help from "./Help.vue";
 import { Segmenter } from "../../src/baseline.editor.js";
 
@@ -288,10 +357,17 @@ export default Vue.extend({
     components: {
         segline: SegLine,
         segregion: SegRegion,
-        help: Help
+        help: Help,
+        DetachableToolbar,
+        SegmentationToolbar,
     },
     mixins: [BasePanel],
-    props: ["fullsizeimage"],
+    props: {
+        fullsizeimage: {
+            type: Boolean,
+            required: true,
+        },
+    },
     data() {
         return {
             segmenter: { loaded: false },
@@ -299,10 +375,22 @@ export default Vue.extend({
             colorMode: "color", //  color - binary - grayscale
             undoManager: new UndoManager(),
             isWorking: false,
-            autoOrder: userProfile.get("autoOrder", true)
+            autoOrder: userProfile.get("autoOrder", true),
+            toolbarDetached: false,
+            toolbarDragging: false,
+            toolbarPosition: {
+                x: 16,
+                y: 96,
+            },
         };
     },
     computed: {
+        ...mapState({
+            activeTool: (state) => state.globalTools.activeTool,
+            blockShortcuts: (state) => state.document.blockShortcuts,
+            editorPanels: (state) => state.document.editorPanels,
+            visiblePanels: (state) => state.document.visible_panels,
+        }),
         hasBinaryColor() {
             return (
                 this.$store.state.parts.loaded &&
@@ -333,8 +421,74 @@ export default Vue.extend({
 
             return bwSrc;
         },
+        /**
+         * Return true if there are any segments, regions, or lines selected.
+         */
+        hasSelection() {
+            return (
+                this.segmenter?.selection?.segments?.length !== 0 ||
+                this.segmenter?.selection?.regions?.length !== 0 ||
+                this.segmenter?.selection?.lines?.length !== 0
+            ) || false;
+        },
+        /**
+         * Return true if there are any segments selected.
+         */
+        hasPointsSelection() {
+            return this.segmenter?.selection?.segments?.length !== 0 || false;
+        },
+        /**
+         * Return true if there is any line selected that is linked to a region.
+         */
+        selectionIsLinked() {
+            return (this.segmenter?.regions?.length > 0 &&
+                    this.segmenter.selection?.lines?.filter(
+                        (l) => l.region !== null
+                    ).length > 0
+            ) || false;
+        },
+        /**
+         * Returns the selected type name, if all selected lines or regions are the same type,
+         * or else returns "None".
+         */
+        selectedType() {
+            if (
+                this.segmenter?.selection?.lines?.length && this.segmenter.selection.lines.every(
+                    (line, _, lines) => line.type === lines[0].type,
+                )
+            ) {
+                return this.segmenter.selection.lines[0].type || "None";
+            } else if (
+                this.segmenter?.selection?.regions?.length &&
+                this.segmenter.selection.regions.every(
+                    (reg, _, regions) => reg.type === regions[0].type
+                )
+            ) {
+                return this.segmenter.selection.regions[0].type || "None";
+            } else {
+                return "None";
+            }
+        },
     },
     watch: {
+        activeTool: function (tool, _) {
+            // set active tool on segmenter
+            this.segmenter.activeTool = tool;
+
+            // handle other per-tool state requirements
+            if (tool === "cut") {
+                this.segmenter.splitting = !this.segmenter.splitting;
+            } else {
+                this.segmenter.splitting = false;
+            }
+
+            // change the cursor according to the active tool
+            this.segmenter.setCursor();
+        },
+        disabled: function (isDisabled, _) {
+            // pass disabled state along to segmenter to prevent keyboard shortcuts
+            this.segmenter.setDisabled(isDisabled);
+        },
         "$store.state.parts.loaded": function (isLoaded, wasLoaded) {
             if (isLoaded === true) {
                 if (this.colorMode !== "binary" && !this.hasBinaryColor) {
@@ -393,6 +547,16 @@ export default Vue.extend({
                     baselinesColor: beSettings["color-baselines"] || null,
                     regionColors: beSettings["color-regions"] || null,
                     directionHintColors: beSettings["color-directions"] || null,
+                    newUiEnabled: !this.legacyModeEnabled,
+                    toolbar: this.$refs["segmentation-toolbar"]?.$el,
+                    detachableToolbar: this.$refs["detachable-toolbar"]?.$el,
+                    toolbarSubmenuIds: [
+                        // for click handling on toolbar, list all submenu node IDs here
+                        "type-select-menu",
+                        "delete-menu",
+                    ],
+                    activeTool: this.activeTool,
+                    setActiveTool: this.setActiveTool,
                 });
                 // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
                 let canvas = this.segmenter.canvas;
@@ -530,18 +694,24 @@ export default Vue.extend({
         );
 
         // history
-        this.$refs.undo.addEventListener(
-            "click",
-            function (ev) {
-                this.undo();
-            }.bind(this)
-        );
-        this.$refs.redo.addEventListener(
-            "click",
-            function (ev) {
-                this.redo();
-            }.bind(this)
-        );
+        if (this.legacyModeEnabled) {
+            this.$refs.undo.addEventListener(
+                "click",
+                function (ev) {
+                    this.undo();
+                }.bind(this)
+            );
+            this.$refs.redo.addEventListener(
+                "click",
+                function (ev) {
+                    this.redo();
+                }.bind(this)
+            );
+        }
+
+        // when undo or redo completes, turn off isWorking
+        this.undoManager.setCallback(() => this.isWorking = false);
+
         this.$refs.img.addEventListener(
             "load",
             function (ev) {
@@ -552,7 +722,7 @@ export default Vue.extend({
         document.addEventListener(
             "keyup",
             function (ev) {
-                if (ev.ctrlKey) {
+                if (!this.blockShortcuts && ev.ctrlKey) {
                     if (ev.key == "z") this.undo();
                     if (ev.key == "y") this.redo();
                 }
@@ -560,6 +730,7 @@ export default Vue.extend({
         );
     },
     methods: {
+        ...mapActions("globalTools", ["setActiveTool", "toggleTool"]),
         toggleBinary(ev) {
             if (this.colorMode == "color") this.colorMode = "binary";
             else this.colorMode = "color";
@@ -603,7 +774,7 @@ export default Vue.extend({
                     if (this.segmenter.loaded) {
                         this.segmenter.refresh();
                     } else {
-                        this.segmenter.init();
+                        this.segmenter.init({ newUiEnabled: !this.legacyModeEnabled });
                     }
                 }.bind(this)
             );
@@ -889,18 +1060,144 @@ export default Vue.extend({
         },
         /* History */
         undo() {
+            this.isWorking = true;
             this.undoManager.undo();
             this.refreshHistoryBtns();
         },
         redo() {
+            this.isWorking = true;
             this.undoManager.redo();
             this.refreshHistoryBtns();
         },
         refreshHistoryBtns() {
-            if (this.undoManager.hasUndo()) this.$refs.undo.disabled = false;
-            else this.$refs.undo.disabled = true;
-            if (this.undoManager.hasRedo()) this.$refs.redo.disabled = false;
-            else this.$refs.redo.disabled = true;
+            if (this.$refs.undo) {
+                if (this.undoManager.hasUndo()) this.$refs.undo.disabled = false;
+                else this.$refs.undo.disabled = true;
+                if (this.undoManager.hasRedo()) this.$refs.redo.disabled = false;
+                else this.$refs.redo.disabled = true;
+            }
+        },
+        /**
+         * Change the mode between lines, regions, and masks.
+         *
+         * @param {String} value One of "lines", "regions", or "masks"
+         */
+        onChangeMode(value) {
+            this.segmenter.setMode(value);
+        },
+        /**
+         * Turn line numbering on and off.
+         */
+        onToggleLineNumbering(e) {
+            this.segmenter.setOrdering(e.target.checked);
+        },
+        /**
+         * change the currently active tool
+         */
+        onToggleTool(tool) {
+            // purge the selection before changing tool
+            this.segmenter.purgeSelection();
+
+            // use the vuex store callback for toggling the active tool
+            this.toggleTool(tool);
+        },
+        /**
+         * Link or unlink depending on state of selection.
+         */
+        onLinkUnlink() {
+            if (this.selectionIsLinked) {
+                this.segmenter.unlinkSelection();
+            } else if (this.hasSelection) {
+                this.segmenter.linkSelection();
+            }
+        },
+        /**
+         * Change the type of lines or regions
+         *
+         * @param {String} type Name of the selected type
+         */
+        onChangeType(type) {
+            this.segmenter.setSelectionType(type);
+        },
+        /**
+         * Delete the currently selected points, lines, or regions
+         *
+         * @param {Boolean} onlyPoints Whether or not to delete selected points
+         */
+        onDelete(onlyPoints) {
+            if (onlyPoints) {
+                this.segmenter.deleteSelectedSegments();
+            } else {
+                this.segmenter.deleteSelection();
+            }
+        },
+        /**
+         * Merge/join the currently selected lines or regions
+         */
+        onJoin() {
+            this.segmenter.mergeSelection();
+        },
+        /**
+         * Reverse the direction of the currently selected lines
+         */
+        onReverse() {
+            this.segmenter.reverseSelection();
+        },
+        /**
+         * Detach or reattach the toolbar, and update the segmenter's ref to it
+         */
+        toggleToolbarDetached() {
+            this.toolbarDetached = !this.toolbarDetached;
+            this.$nextTick(() => {
+                this.segmenter.setDetachableToolbar(this.$refs["detachable-toolbar"]?.$el);
+            });
+        },
+        startDragToolbar() {
+            if (!this.legacyModeEnabled)
+                this.toolbarDragging = true;
+        },
+        dragToolbar(e) {
+            if (!this.legacyModeEnabled && this.toolbarDragging) {
+                e.preventDefault();
+                let newX = this.toolbarPosition.x + e.movementX;
+                let newY = this.toolbarPosition.y + e.movementY;
+                // prevent toolbar from going left of (underneath) the global nav bar
+                newX = Math.max(newX, 1);
+                // prevent toolbar from going above the non-detachable segmentation toolbar
+                if (this.$refs["segmentation-toolbar"]?.$el) {
+                    const staticToolbar = this.$refs["segmentation-toolbar"].$el;
+                    const staticToolbarRect = staticToolbar.getBoundingClientRect();
+                    newY = Math.max(newY, staticToolbarRect.height + 1);
+                    const minY = staticToolbarRect.bottom;
+                    // stop dragging if the mouse goes above the bottom of the seg toolbar
+                    if (e.clientY < minY) {
+                        this.stopDragToolbar();
+                    }
+                }
+                if (this.$refs["detachable-toolbar"]?.$el) {
+                    // prevent toolbar from overflowing the segmentation container on the x-axis
+                    const detachableToolbar = this.$refs["detachable-toolbar"].$el;
+                    const width = detachableToolbar.clientWidth;
+                    const height = detachableToolbar.clientHeight;
+                    const containerWidth = this.$el.clientWidth - 1;
+                    if (newX + width >= containerWidth) {
+                        newX = containerWidth - width;
+                    }
+                    // and the y-axis
+                    const containerHeight = this.$el.clientHeight - 1;
+                    if (newY + height >= containerHeight){
+                        newY = containerHeight - height;
+                    }
+                }
+                this.toolbarPosition = {
+                    x: newX,
+                    y: newY,
+                }
+            }
+        },
+        stopDragToolbar() {
+            if (!this.legacyModeEnabled)
+                this.toolbarDragging = false;
         },
     },
 });

@@ -1,51 +1,123 @@
 <template>
-    <div>
-        <nav>
+    <div id="escr-editor">
+        <nav v-if="legacyModeEnabled">
             <div
                 id="nav-tab"
                 class="nav nav-tabs mb-3"
                 role="tablist"
             >
                 <slot />
-                <extrainfo />
-                <transmanagement />
-                <extranav />
+                <ExtraInfo />
+                <TranscriptionManagement />
+                <ExtraNav />
             </div>
         </nav>
+        <EditorNavigation
+            v-else
+            :disabled="!partsLoaded"
+        />
 
-        <tabcontent />
+        <TabContent :legacy-mode-enabled="legacyModeEnabled" />
+
+        <!-- modals -->
+        <ElementDetailsModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.elementDetails"
+            :disabled="!partsLoaded"
+            :on-cancel="closeElementDetailsModal"
+            :on-save="onSavePart"
+        />
+        <TranscriptionsModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.transcriptions"
+            :disabled="!partsLoaded || saveTranscriptionsLoading"
+            :on-cancel="closeTranscriptionsModal"
+            :on-save="onSaveTranscriptions"
+        />
+        <OntologyModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.ontology"
+            :disabled="!partsLoaded || saveOntologyLoading"
+            :on-cancel="closeOntologyModal"
+            :on-save="onSaveOntology"
+        />
+        <ConfirmModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.deleteTranscription"
+            :body-text="`Are you sure you want to delete ${transcriptionToDelete.name}?`"
+            confirm-verb="Delete"
+            title="Delete Transcription"
+            :cannot-undo="true"
+            :disabled="!partsLoaded"
+            :on-cancel="closeDeleteTranscriptionModal"
+            :on-confirm="deleteTranscription"
+        />
     </div>
 </template>
 
 <script>
+import { mapActions, mapState } from "vuex";
+import ConfirmModal from "./ConfirmModal/ConfirmModal.vue";
+import EditorNavigation from "./EditorNavigation/EditorNavigation.vue";
+import ElementDetailsModal from "./ElementDetailsModal/ElementDetailsModal.vue";
 import ExtraInfo from "./ExtraInfo.vue";
-import TranscriptionManagement from "./TranscriptionManagement.vue";
 import ExtraNav from "./ExtraNav.vue";
+import OntologyModal from "./OntologyModal/OntologyModal.vue";
 import TabContent from "./TabContent.vue";
+import TranscriptionManagement from "./TranscriptionManagement.vue";
+import TranscriptionsModal from "./TranscriptionsModal/TranscriptionsModal.vue";
+import "./Editor.css";
 
 export default {
-
+    name: "EscrEditor",
     components: {
-        "extrainfo": ExtraInfo,
-        "transmanagement": TranscriptionManagement,
-        "extranav": ExtraNav,
-        "tabcontent": TabContent,
+        ConfirmModal,
+        ElementDetailsModal,
+        EditorNavigation,
+        ExtraInfo,
+        ExtraNav,
+        OntologyModal,
+        TabContent,
+        TranscriptionManagement,
+        TranscriptionsModal,
     },
-    props: [
-        "documentId",
-        "documentName",
-        "partId",
-        "defaultTextDirection",
-        "mainTextDirection",
-        "readDirection",
-    ],
-    computed: {
-        navEditActive() {
-            return window.location.pathname === "/document/" + this.documentId + "/parts/edit/" || window.location.pathname === "/document/" + this.documentId + "/part/" + this.$store.state.parts.pk + "/edit/";
+    props: {
+        documentId: {
+            type: String,
+            required: true,
         },
-        partPk() {
-            return this.$store.state.parts.pk
-        }
+        documentName: {
+            type: String,
+            required: true,
+        },
+        partId: {
+            type: String,
+            required: true,
+        },
+        defaultTextDirection: {
+            type: String,
+            required: true,
+        },
+        mainTextDirection: {
+            type: String,
+            required: true,
+        },
+        readDirection: {
+            type: String,
+            required: true,
+        },
+        /**
+         * Whether or not legacy mode is enabled by the user.
+         */
+        legacyModeEnabled: {
+            type: Boolean,
+            required: true,
+        },
+    },
+    computed: {
+        ...mapState({
+            modalOpen: (state) => state.globalTools.modalOpen,
+            partsLoaded: (state) => state.parts.loaded,
+            transcriptionToDelete: (state) => state.transcriptions.transcriptionToDelete,
+            saveOntologyLoading: (state) => state.document.loading,
+            saveTranscriptionsLoading: (state) => state.transcriptions.saveLoading,
+        }),
     },
     watch: {
         "$store.state.parts.pk": function(n, o) {
@@ -120,6 +192,32 @@ export default {
             }.bind(this));
         }.bind(this));
     },
+    methods: {
+        ...mapActions("globalTools", [
+            "closeElementDetailsModal",
+            "closeOntologyModal",
+            "closeTranscriptionsModal",
+        ]),
+        ...mapActions("transcriptions", {
+            closeDeleteTranscriptionModal: "closeDeleteModal",
+            deleteTranscription: "deleteTranscription",
+            saveTranscriptionsChanges: "saveTranscriptionsChanges",
+        }),
+        ...mapActions("document", ["saveOntologyChanges"]),
+        ...mapActions("parts", ["savePartChanges"]),
+        async onSavePart() {
+            await this.savePartChanges();
+            this.closeElementDetailsModal();
+        },
+        async onSaveOntology() {
+            await this.saveOntologyChanges();
+            this.closeOntologyModal();
+        },
+        async onSaveTranscriptions() {
+            await this.saveTranscriptionsChanges();
+            this.closeTranscriptionsModal();
+        },
+    }
 }
 </script>
 

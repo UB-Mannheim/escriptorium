@@ -3,13 +3,14 @@
 {% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
 {% block body %}
-<div id="editor">
+<div id="editor"{% if not request.user.legacy_mode %} class="escr-vue-enabled"{% endif %}>
     <editor :document-id="'{{document.id}}'"
             :document-name="'{{ document.name|escapejs }}'"
             :part-id="'{{part.id}}'"
             :default-text-direction="'{{ document.default_text_direction }}'"
             :main-text-direction="'{{ document.main_script.text_direction }}'"
-            :read-direction="'{{ document.read_direction }}'">
+            :read-direction="'{{ document.read_direction }}'"
+            :legacy-mode-enabled="{% if request.user.legacy_mode %}true{% else %}false{% endif %}">
 
         {% block nav %}{{ block.super }}{% endblock %}
   </editor>
@@ -29,3 +30,10 @@
 
   <script src="{% static 'editor.js' %}"></script>
 {% endblock %}
+
+
+{% block extrastyle %}
+    {% if not request.user.legacy_mode %}
+        <link href="{% static 'editor.css' %}" rel="stylesheet" type="text/css">
+    {% endif %}
+{% endblock extrastyle %}

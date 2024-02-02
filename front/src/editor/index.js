@@ -10,6 +10,8 @@ import taxonomies from "./store/taxonomies";
 import imageAnnotations from "./store/image_annotations";
 import textAnnotations from "./store/text_annotations";
 import documentslist from "./store/documentslist";
+import forms from "../../vue/store/modules/forms";
+import globalTools from "./store/globalTools";
 
 Vue.use(Vuex);
 Vue.use(vueFilterPrettyBytes);
@@ -25,5 +27,7 @@ export default new Vuex.Store({
         imageAnnotations,
         textAnnotations,
         documentslist,
+        globalTools,
+        forms,
     },
 });

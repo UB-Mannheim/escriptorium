@@ -266,7 +266,11 @@ class SegmenterLine {
 
     select() {
         if (this.selected) return;
-        if (this.maskPath && this.maskPath.visible) {
+        if (
+            this.maskPath &&
+            this.maskPath.visible &&
+            (!this.segmenter.newUiEnabled || this.segmenter.mode === "masks")
+        ) {
             this.maskPath.selected = true;
             this.maskPath.fillColor = this.segmenter.shadeColor(
                 this.getMaskColor(),
@@ -274,7 +278,11 @@ class SegmenterLine {
             );
             this.maskPath.bringToFront();
         }
-        if (this.baselinePath) {
+        if (
+            this.baselinePath &&
+            (!this.segmenter.newUiEnabled || this.segmenter.mode === "lines")
+        ) {
+            // TODO: Should selecting masks also select lines??
             this.baselinePath.selected = true;
             this.baselinePath.bringToFront();
             this.baselinePath.strokeColor = this.segmenter.shadeColor(
@@ -588,6 +596,18 @@ export class Segmenter {
             // field to store and reuse in output from loaded data
             // can be set to null to disable behavior
             idField = "id",
+            // whether or not we are using the new UI
+            newUiEnabled = false,
+            // the new UI segmentation toolbar ref, for click handlers
+            toolbar = null,
+            // detachable segmentation toolbar ref, for click handlers
+            detachableToolbar = null,
+            // the new UI type select dropdown, for click handlers
+            toolbarSubmenuIds = [],
+            // the active tool from state, see editor/store/globalTools for info
+            activeTool = "",
+            // callback function (Vuex action) to set the active tool on state
+            setActiveTool = () => {},
         } = {},
     ) {
         this.loaded = false;
@@ -607,6 +627,15 @@ export class Segmenter {
         this.canvas.style.position = "absolute";
         this.canvas.style.top = 0;
         this.canvas.style.left = 0;
+
+        /** New UI */
+        this.newUiEnabled = newUiEnabled;
+        this.toolbar = toolbar;
+        this.detachableToolbar = detachableToolbar;
+        this.toolbarSubmenuIds = toolbarSubmenuIds;
+        this.activeTool = activeTool;
+        this.setActiveTool = setActiveTool;
+        /** end New UI */
 
         // paper.js helpers
         this.inactiveLayerOpacity = inactiveLayerOpacity;
@@ -644,65 +673,72 @@ export class Segmenter {
         this.splitting = false;
         this.copy = null;
 
-        // menu btns
-        this.toggleMasksBtn = document.getElementById("be-toggle-masks");
-        this.toggleLineModeBtn = document.getElementById("be-toggle-line-mode");
-        this.toggleOrderingBtn = document.getElementById("be-toggle-order");
-        this.toggleRegionModeBtn = document.getElementById("be-toggle-regions");
-        this.splitBtn = document.getElementById("be-split-lines");
-
-        // contextual btns
-        this.deletePointBtn = document.getElementById("be-delete-point");
-        this.deleteSelectionBtn = document.getElementById(
-            "be-delete-selection",
-        );
-        this.mergeBtn = document.getElementById("be-merge-selection");
-        this.reverseBtn = document.getElementById("be-reverse-selection");
-        this.linkRegionBtn = document.getElementById("be-link-region");
-        this.unlinkRegionBtn = document.getElementById("be-unlink-region");
-        this.setTypeBtn = document.getElementById("be-set-type");
-
-        // editor settings;
-        this.baselinesColorInput = document.getElementById("be-bl-color");
-        this.evenMasksColorInput =
-            document.getElementById("be-even-mask-color");
-        this.oddMasksColorInput = document.getElementById("be-odd-mask-color");
-        this.dirHintColorInputs = [];
-        for (let index in this.lineTypes) {
-            this.dirHintColorInputs.push(
-                document.getElementById("be-dir-color-" + index),
-            );
-        }
-        this.regionColorInputs = [];
-        for (let index in this.regionTypes) {
-            this.regionColorInputs.push(
-                document.getElementById("be-reg-color-" + index),
-            );
-        }
-
-        // create a menu for the context buttons
-        this.contextMenu = document.getElementById("context-menu");
-        if (!this.contextMenu) {
-            document.createElement("div");
-            this.contextMenu.id = "context-menu";
-        }
-        if (this.linkRegionBtn)
-            this.contextMenu.appendChild(this.linkRegionBtn);
-        if (this.unlinkRegionBtn)
-            this.contextMenu.appendChild(this.unlinkRegionBtn);
-        if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
-        if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
-        if (this.setTypeBtn) this.contextMenu.appendChild(this.setTypeBtn);
-        if (this.deletePointBtn)
-            this.contextMenu.appendChild(this.deletePointBtn);
-        if (this.deleteSelectionBtn)
-            this.contextMenu.appendChild(this.deleteSelectionBtn);
-
         this.tooltip = document.getElementById("info-tooltip");
 
-        this.createTypeSelects();
-        this.bindButtons();
+        if (!this.newUiEnabled) {
+            // menu btns
+            this.toggleMasksBtn = document.getElementById("be-toggle-masks");
+            this.toggleLineModeBtn = document.getElementById(
+                "be-toggle-line-mode",
+            );
+            this.toggleOrderingBtn = document.getElementById("be-toggle-order");
+            this.toggleRegionModeBtn =
+                document.getElementById("be-toggle-regions");
+            this.splitBtn = document.getElementById("be-split-lines");
 
+            // contextual btns
+            this.deletePointBtn = document.getElementById("be-delete-point");
+            this.deleteSelectionBtn = document.getElementById(
+                "be-delete-selection",
+            );
+            this.mergeBtn = document.getElementById("be-merge-selection");
+            this.reverseBtn = document.getElementById("be-reverse-selection");
+            this.linkRegionBtn = document.getElementById("be-link-region");
+            this.unlinkRegionBtn = document.getElementById("be-unlink-region");
+            this.setTypeBtn = document.getElementById("be-set-type");
+
+            // editor settings;
+            this.baselinesColorInput = document.getElementById("be-bl-color");
+            this.evenMasksColorInput =
+                document.getElementById("be-even-mask-color");
+            this.oddMasksColorInput =
+                document.getElementById("be-odd-mask-color");
+            this.dirHintColorInputs = [];
+            for (let index in this.lineTypes) {
+                this.dirHintColorInputs.push(
+                    document.getElementById("be-dir-color-" + index),
+                );
+            }
+            this.regionColorInputs = [];
+            for (let index in this.regionTypes) {
+                this.regionColorInputs.push(
+                    document.getElementById("be-reg-color-" + index),
+                );
+            }
+
+            // create a menu for the context buttons
+            this.contextMenu = document.getElementById("context-menu");
+            if (!this.contextMenu) {
+                document.createElement("div");
+                this.contextMenu.id = "context-menu";
+            }
+            if (this.linkRegionBtn)
+                this.contextMenu.appendChild(this.linkRegionBtn);
+            if (this.unlinkRegionBtn)
+                this.contextMenu.appendChild(this.unlinkRegionBtn);
+            if (this.mergeBtn) this.contextMenu.appendChild(this.mergeBtn);
+            if (this.reverseBtn) this.contextMenu.appendChild(this.reverseBtn);
+            if (this.setTypeBtn) this.contextMenu.appendChild(this.setTypeBtn);
+            if (this.deletePointBtn)
+                this.contextMenu.appendChild(this.deletePointBtn);
+            if (this.deleteSelectionBtn)
+                this.contextMenu.appendChild(this.deleteSelectionBtn);
+
+            this.createTypeSelects();
+            this.bindButtons();
+        } else {
+            this.bindGlobalEvents();
+        }
         // init paperjs
         if (!delayInit) {
             this.init();
@@ -726,7 +762,9 @@ export class Segmenter {
         for (let i = this.selection.regions.length - 1; i >= 0; i--) {
             this.selection.regions[i].delete();
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     deleteSelectedSegments() {
@@ -751,7 +789,9 @@ export class Segmenter {
             this.selection.regions[i].updateDataFromCanvas();
         }
 
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     bindButtons() {
@@ -864,109 +904,176 @@ export class Segmenter {
         if (this.dirHintColorInputs) {
             for (let index in this.dirHintColorInputs) {
                 let input = this.dirHintColorInputs[index];
-                input.addEventListener(
-                    "change",
-                    function (ev) {
-                        let type = this.lineTypes[index];
-                        this.directionHintColors[type] = ev.target.value;
-                        if (type == "None") type = null; // switch to null for comparison
-                        for (let index in this.lines) {
-                            let line = this.lines[index];
-                            if (line.type == type) {
-                                line.refresh();
+                if (input) {
+                    input.addEventListener(
+                        "change",
+                        function (ev) {
+                            let type = this.lineTypes[index];
+                            this.directionHintColors[type] = ev.target.value;
+                            if (type == "None") type = null; // switch to null for comparison
+                            for (let index in this.lines) {
+                                let line = this.lines[index];
+                                if (line.type == type) {
+                                    line.refresh();
+                                }
                             }
-                        }
-                        this.trigger("baseline-editor:settings", {
-                            name: "color-directions",
-                            value: this.directionHintColors,
-                        });
-                    }.bind(this),
-                );
+                            this.trigger("baseline-editor:settings", {
+                                name: "color-directions",
+                                value: this.directionHintColors,
+                            });
+                        }.bind(this),
+                    );
+                }
             }
         }
         if (this.regionColorInputs) {
             for (let index in this.regionColorInputs) {
                 let input = this.regionColorInputs[index];
-                input.addEventListener(
-                    "change",
-                    function (ev) {
-                        let type = this.regionTypes[index];
-                        this.regionColors[type] = ev.target.value;
-                        if (type == "None") type = null; // switch to null for comparison
-                        for (let index in this.regions) {
-                            let region = this.regions[index];
-                            if (region.type == type) {
-                                region.refresh();
+                if (input) {
+                    input.addEventListener(
+                        "change",
+                        function (ev) {
+                            let type = this.regionTypes[index];
+                            this.regionColors[type] = ev.target.value;
+                            if (type == "None") type = null; // switch to null for comparison
+                            for (let index in this.regions) {
+                                let region = this.regions[index];
+                                if (region.type == type) {
+                                    region.refresh();
+                                }
                             }
-                        }
-                        this.trigger("baseline-editor:settings", {
-                            name: "color-regions",
-                            value: this.regionColors,
-                        });
-                    }.bind(this),
-                );
+                            this.trigger("baseline-editor:settings", {
+                                name: "color-regions",
+                                value: this.regionColors,
+                            });
+                        }.bind(this),
+                    );
+                }
             }
         }
-
+        this.bindGlobalEvents();
+    }
+    bindGlobalEvents() {
         document.addEventListener(
             "keydown",
             function (event) {
                 if (this.disableShortcuts) return;
-                if (event.keyCode == 27) {
-                    // escape
-                    this.purgeSelection();
-                } else if (event.keyCode == 46) {
-                    // supr
-                    if (event.ctrlKey) {
-                        this.deleteSelectedSegments();
-                    } else {
-                        this.deleteSelection();
-                    }
-                } else if (event.keyCode == 67) {
-                    // C
-                    this.splitting = !this.splitting;
-                    if (this.splitBtn) {
-                        this.splitBtn.classList.toggle("btn-warning");
-                        this.splitBtn.classList.toggle("btn-success");
-                    }
-                    this.setCursor();
-                } else if (event.keyCode == 73) {
-                    // K
-                    this.reverseSelection();
-                } else if (event.keyCode == 74) {
-                    // J (for join)
-                    this.mergeSelection();
-                } else if (event.keyCode == 77) {
-                    // M
-                    this.toggleLineMode();
-                } else if (event.keyCode == 76) {
-                    // L
-                    this.toggleOrdering();
-                } else if (event.keyCode == 82) {
-                    // R
-                    this.toggleRegionMode();
-                } else if (event.keyCode == 89) {
-                    // Y
-                    this.linkSelection();
-                } else if (event.keyCode == 85) {
-                    // U
-                    this.unlinkSelection();
-                } else if (event.keyCode == 84) {
-                    // T
-                    this.showTypeSelect();
-                    event.preventDefault(); // avoid selecting an option starting with T
-                } else if (event.keyCode == 65 && event.ctrlKey) {
-                    // Ctrl+A
-                    event.preventDefault();
-                    event.stopPropagation();
-                    // select all
-                    if (this.mode == "lines") {
-                        for (let i in this.lines) this.lines[i].select();
-                    } else if (this.mode == "regions") {
-                        for (let i in this.regions) this.regions[i].select();
-                    }
+                const { ctrlKey, key } = event;
+                switch (key.toLowerCase()) {
+                    case "delete":
+                        // delete points or entire selection
+                        if (ctrlKey) {
+                            this.deleteSelectedSegments();
+                        } else {
+                            this.deleteSelection();
+                        }
+                        break;
+                    case "escape":
+                        // clear selection
+                        this.purgeSelection();
+                        break;
+                    case "a":
+                        if (ctrlKey) {
+                            // select all
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (["lines", "masks"].includes(this.mode)) {
+                                for (let i in this.lines)
+                                    this.lines[i].select();
+                            } else if (this.mode == "regions") {
+                                for (let i in this.regions)
+                                    this.regions[i].select();
+                            }
+                        } else if (this.newUiEnabled) {
+                            if (this.mode === "lines") {
+                                // add lines
+                                this.setActiveTool(
+                                    this.activeTool === "add-lines"
+                                        ? "select"
+                                        : "add-lines",
+                                );
+                            } else if (this.mode === "regions") {
+                                // add regions
+                                this.setActiveTool(
+                                    this.activeTool === "add-regions"
+                                        ? "select"
+                                        : "add-regions",
+                                );
+                            }
+                        }
+                        break;
+                    case "c":
+                        // activate cutting tool
+                        if (this.newUiEnabled) {
+                            this.setActiveTool(
+                                this.activeTool === "cut" ? "select" : "cut",
+                            );
+                        } else {
+                            this.splitting = !this.splitting;
+                            if (this.splitBtn) {
+                                this.splitBtn.classList.toggle("btn-warning");
+                                this.splitBtn.classList.toggle("btn-success");
+                            }
+                            this.setCursor();
+                        }
+                        break;
+                    case "i":
+                        // reverse direction of selected lines
+                        this.reverseSelection();
+                        break;
+                    case "j":
+                        // join selected lines
+                        this.mergeSelection();
+                        break;
+                    case "l":
+                        if (this.newUiEnabled) {
+                            // lines mode
+                            this.setMode("lines");
+                        } else {
+                            // toggle line numbers overlay
+                            this.toggleOrdering();
+                        }
+                        break;
+                    case "m":
+                        // masks mode
+                        if (this.newUiEnabled) {
+                            this.setMode("masks");
+                        } else {
+                            this.toggleLineMode();
+                        }
+                        break;
+                    case "n":
+                        // toggle line numbers overlay
+                        if (this.newUiEnabled) {
+                            this.setOrdering(!this.showLineNumbers);
+                        }
+                        break;
+                    case "r":
+                        // regions mode
+                        if (this.newUiEnabled) {
+                            this.setMode("regions");
+                        } else {
+                            this.toggleRegionMode();
+                        }
+                        break;
+                    case "t":
+                        // open type select options
+                        if (!this.newUiEnabled) {
+                            this.showTypeSelect();
+                            event.preventDefault(); // avoid selecting an option starting with T
+                        }
+                        break;
+                    case "u":
+                        // unlink selected lines from region
+                        this.unlinkSelection();
+                        break;
+                    case "y":
+                        // link selected lines to background region
+                        this.linkSelection();
+                        break;
+                    default:
+                        break;
                 }
-
                 // Attempt to duplicate content...
                 // } else if (event.keyCode == 67 && event.ctrlKey) {  // Ctrl+C
                 //     this.copy = this.selection.map(a => [
@@ -1004,14 +1111,59 @@ export class Segmenter {
         document.addEventListener(
             "mousedown",
             function (event) {
+                // special handling for menus inside toolbar, since they are poppers
+                // and we can't use their refs directly
+                let isInToolbarSubmenu = false;
+                if (this.newUiEnabled) {
+                    // menu item clicks could be span or button, depending on where clicked
+                    if (event.target.nodeName === "SPAN") {
+                        isInToolbarSubmenu = this.toolbarSubmenuIds.includes(
+                            // ul#id > li > button > span
+                            event.target.parentNode?.parentNode?.parentNode?.id,
+                        );
+                    } else if (event.target.nodeName === "BUTTON") {
+                        isInToolbarSubmenu = this.toolbarSubmenuIds.includes(
+                            // ul#id > li > button
+                            event.target.parentNode?.parentNode?.id,
+                        );
+                    }
+                }
                 if (
                     event.target != this.canvas &&
-                    !this.contextMenu.contains(event.target)
+                    !this.contextMenu?.contains(event.target) &&
+                    !this.toolbar?.contains(event.target) &&
+                    !(
+                        this.newUiEnabled &&
+                        this.detachableToolbar?.contains(event.target)
+                    ) &&
+                    !(this.newUiEnabled && isInToolbarSubmenu)
                 ) {
                     this.purgeSelection();
                 }
             }.bind(this),
         );
+
+        if (this.newUiEnabled) {
+            // custom event for live color changing after form save; must be on document so
+            // modal can send event
+            document.addEventListener(
+                "baseline-editor:ontology-colors",
+                ((ev) => {
+                    let { category, colors } = ev.detail;
+                    if (category === "color-regions") {
+                        this.regionColors = colors;
+                        for (let index in this.regions) {
+                            this.regions[index].refresh();
+                        }
+                    } else if (category === "color-directions") {
+                        this.directionHintColors = colors;
+                        for (let index in this.lines) {
+                            this.lines[index].refresh();
+                        }
+                    }
+                }).bind(this),
+            );
+        }
     }
 
     init() {
@@ -1163,6 +1315,7 @@ export class Segmenter {
     bindRegionEvents(region) {
         region.polygonPath.onMouseDown = function (event) {
             if (
+                this.activeTool === "pan" ||
                 event.event.ctrlKey ||
                 this.splitting ||
                 // this.selecting ||
@@ -1223,6 +1376,20 @@ export class Segmenter {
             }.bind(this);
         }.bind(this);
 
+        region.polygonPath.onMouseMove = function () {
+            if (this.mode != "regions") {
+                return;
+            } else if (this.newUiEnabled) {
+                this.setCursor("pointer");
+            }
+        }.bind(this);
+
+        region.polygonPath.onMouseLeave = function () {
+            if (this.newUiEnabled) {
+                this.setCursor();
+            }
+        }.bind(this);
+
         region.polygonPath.onDoubleClick = function (event) {
             // Creates a new control point in the region
             if (event.event.ctrlKey || this.mode != "regions") return;
@@ -1238,6 +1405,7 @@ export class Segmenter {
         if (line.baselinePath) {
             line.baselinePath.onMouseDown = function (event) {
                 if (
+                    this.activeTool === "pan" ||
                     event.event.ctrlKey ||
                     this.splitting ||
                     isRightClick(event.event) ||
@@ -1325,11 +1493,12 @@ export class Segmenter {
         if (line.maskPath) {
             line.maskPath.onMouseDown = function (event) {
                 if (
+                    this.activeTool === "pan" ||
                     event.event.ctrlKey ||
                     this.splitting ||
                     isRightClick(event.event) ||
                     this.selecting ||
-                    this.mode != "lines"
+                    !["lines", "masks"].includes(this.mode)
                 )
                     return;
                 this.selecting = line;
@@ -1347,7 +1516,11 @@ export class Segmenter {
                                 e.index == hit.segment.index,
                         ) == -1
                     ) {
-                        this.addToSelection(hit.segment);
+                        if (this.mode !== "masks") {
+                            // in masks mode, this causes mask to get deselected and replaced
+                            // with line selection, which is not desired behavior
+                            this.addToSelection(hit.segment);
+                        }
                     } else {
                         this.removeFromSelection(hit.segment);
                     }
@@ -1356,7 +1529,6 @@ export class Segmenter {
                     event.point,
                 ).segment;
                 this.tool.onMouseDrag = function (event) {
-                    this.selecting = false;
                     if (!event.event.shiftKey && !event.event.ctrlKey) {
                         this.movePointInView(dragging.point, event.delta);
                     }
@@ -1369,7 +1541,11 @@ export class Segmenter {
                 }.bind(this);
             }.bind(this);
             line.maskPath.onMouseMove = function (event) {
-                if (event.event.ctrlKey || this.mode != "lines") return;
+                if (
+                    event.event.ctrlKey ||
+                    !["lines", "masks"].includes(this.mode)
+                )
+                    return;
                 if (line.selected) this.setCursor("grab");
                 else this.setCursor("pointer");
             }.bind(this);
@@ -1377,8 +1553,14 @@ export class Segmenter {
                 this.setCursor();
             }.bind(this);
             line.maskPath.onMouseDrag = function (event) {
-                if (event.event.ctrlKey || this.mode != "lines") return;
-                this.setCursor("move");
+                if (
+                    event.event.ctrlKey ||
+                    !["lines", "masks"].includes(this.mode)
+                )
+                    return;
+                if (this.canvas.style.cursor !== "move") {
+                    this.setCursor("move");
+                }
             }.bind(this);
         }
     }
@@ -1406,8 +1588,9 @@ export class Segmenter {
 
     multiMove(event) {
         var delta = event.delta;
-        if (this.mode == "lines") {
+        if (["lines", "masks"].includes(this.mode)) {
             if (this.selection.segments.length) {
+                // if segments are selected, move those
                 for (let i in this.selection.segments) {
                     this.movePointInView(
                         this.selection.segments[i].point,
@@ -1422,7 +1605,7 @@ export class Segmenter {
                 // move the entire line
                 for (let i in this.selection.lines) {
                     let line = this.selection.lines[i];
-                    if (line.baselinePath) {
+                    if (line.baselinePath && this.mode === "lines") {
                         for (let j in line.baselinePath.segments) {
                             this.movePointInView(
                                 line.baselinePath.segments[j].point,
@@ -1430,7 +1613,10 @@ export class Segmenter {
                             );
                         }
                     }
-                    if (line.maskPath) {
+                    if (
+                        line.maskPath &&
+                        (!this.newUiEnabled || this.mode === "masks")
+                    ) {
                         for (let j in line.maskPath.segments) {
                             this.movePointInView(
                                 line.maskPath.segments[j].point,
@@ -1469,7 +1655,8 @@ export class Segmenter {
             this.multiMove(event);
             this.tool.onMouseUp = function (event) {
                 this.resetToolEvents();
-                if (this.mode == "lines") {
+                // TODO: Should moving masks also move lines??
+                if (["lines", "masks"].includes(this.mode)) {
                     for (let i in this.selection.lines) {
                         this.selection.lines[i].updateDataFromCanvas();
                     }
@@ -1485,18 +1672,29 @@ export class Segmenter {
     onMouseDown(event) {
         if (isRightClick(event.event)) return;
         if (!this.selecting) {
-            if (event.event.ctrlKey) return;
-            if (this.splitting) {
+            if (
+                event.event.ctrlKey ||
+                (this.newUiEnabled && this.activeTool === "pan")
+            ) {
+                // don't do any segmentation action if moving items or panning
+                return;
+            } else if (this.splitting) {
                 this.startCuter(event);
             } else if (event.event.shiftKey) {
                 // lasso selection tool
                 this.startLassoSelection(event);
-            } else if (this.mode == "regions") {
+            } else if (
+                (this.mode == "regions" && !this.newUiEnabled) ||
+                this.activeTool === "add-regions"
+            ) {
                 this.startNewRegion(event);
-            } else {
+            } else if (!this.newUiEnabled || this.activeTool === "add-lines") {
                 // mode = 'lines'
                 // create a new line
                 this.startNewLine(event);
+            } else if (this.newUiEnabled) {
+                // normal mouse tool, click outside selection = deselect all
+                this.purgeSelection();
             }
         }
     }
@@ -1650,7 +1848,7 @@ export class Segmenter {
             return null;
         }.bind(this);
         let finishCut = function (event) {
-            if (this.mode == "lines") {
+            if (["lines", "masks"].includes(this.mode)) {
                 this.splitLinesByPath(clip);
             } else if (this.mode == "regions") {
                 this.splitRegionsByPath(clip);
@@ -1703,7 +1901,7 @@ export class Segmenter {
         let tmpSelected = [];
         this.tool.onMouseDrag = function (event) {
             this.updateSelectionRectangle(clip, event);
-            if (this.mode == "lines") {
+            if (["lines", "masks"].includes(this.mode)) {
                 this.lassoSelectionLines(clip, allLines, tmpSelected);
             } else if (this.mode == "regions") {
                 this.lassoSelectionRegions(clip, allRegions, tmpSelected);
@@ -2224,7 +2422,9 @@ export class Segmenter {
                 obj.selected = true;
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     removeFromSelection(obj) {
@@ -2252,7 +2452,9 @@ export class Segmenter {
                 obj.point.selected = false;
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     purgeSelection(except) {
@@ -2274,10 +2476,17 @@ export class Segmenter {
                 !except ||
                 except.baselinePath != this.selection.segments[i].path
             ) {
+                if (this.mode === "masks") {
+                    // also unselect paths if in new UI "mask" mode; this usually happens in
+                    // SegmenterLine.unselect
+                    this.selection.segments[i].path.selected = false;
+                }
                 this.removeFromSelection(this.selection.segments[i]);
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     makeSelectionRectangle(event) {
@@ -2355,30 +2564,41 @@ export class Segmenter {
             let allSegments;
             let line = allLines[i];
             if (this.showMasks && line.maskPath) {
-                if (line.baselinePath)
+                if (
+                    line.baselinePath &&
+                    (!this.newUiEnabled || this.mode === "lines")
+                ) {
                     allSegments = line.baselinePath.segments.concat(
                         line.maskPath.segments,
                     );
-                else allSegments = line.maskPath.segments;
+                } else {
+                    allSegments = line.maskPath.segments;
+                }
             } else {
                 allSegments = line.baselinePath.segments;
             }
             this.clipSelectPoly(clip, allSegments, tmpSelected);
             if (
-                (line.baselinePath && line.baselinePath.intersects(clip)) ||
-                (line.baselinePath &&
-                    line.baselinePath.isInside(clip.bounds)) ||
-                (this.showMasks &&
-                    line.maskPath &&
-                    line.maskPath.intersects(clip))
-            )
+                this.mode === "lines" &&
+                ((line.baselinePath && line.baselinePath.intersects(clip)) ||
+                    (line.baselinePath &&
+                        line.baselinePath.isInside(clip.bounds)) ||
+                    (this.showMasks &&
+                        line.maskPath &&
+                        line.maskPath.intersects(clip)))
+            ) {
                 line.select();
-            else if (allLines.length == this.lines.length) line.unselect();
+            } else if (
+                this.mode === "lines" &&
+                allLines.length == this.lines.length
+            ) {
+                line.unselect();
+            }
         }
     }
 
     splitHelper(clip, event) {
-        if (this.mode == "lines") {
+        if (["lines", "masks"].includes(this.mode)) {
             this.lines.forEach(
                 function (line) {
                     if (!line.baselinePath) return;
@@ -2665,7 +2885,9 @@ export class Segmenter {
                 this.addToUpdateQueue({ lines: [line] });
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     unlinkSelection() {
@@ -2677,7 +2899,9 @@ export class Segmenter {
                 this.addToUpdateQueue({ lines: [line] });
             }
         }
-        this.showContextMenu();
+        if (!this.newUiEnabled) {
+            this.showContextMenu();
+        }
     }
 
     mergeSelection() {
@@ -2808,8 +3032,18 @@ export class Segmenter {
     }
 
     setCursor(style) {
-        if (style) {
+        if (style && !(this.newUiEnabled && this.activeTool === "pan")) {
             this.canvas.style.cursor = style;
+        } else if (this.newUiEnabled) {
+            if (this.activeTool === "pan") {
+                this.canvas.style.cursor = "grab";
+            } else if (this.activeTool === "cut") {
+                this.canvas.style.cursor = "crosshair";
+            } else if (["add-lines", "add-regions"].includes(this.activeTool)) {
+                this.canvas.style.cursor = "copy";
+            } else {
+                this.canvas.style.cursor = "default";
+            }
         } else {
             this.canvas.style.cursor = this.splitting ? "crosshair" : "copy";
         }
@@ -2975,12 +3209,83 @@ export class Segmenter {
             this.baselinesColorInput.value = this.baselinesColor;
         for (let index in this.dirHintColorInputs) {
             let input = this.dirHintColorInputs[index];
-            input.value = this.directionHintColors[this.lineTypes[index]];
+            if (input)
+                input.value = this.directionHintColors[this.lineTypes[index]];
         }
         for (let index in this.regionColorInputs) {
             let input = this.regionColorInputs[index];
-            input.value = this.regionColors[this.regionTypes[index]];
+            if (input) input.value = this.regionColors[this.regionTypes[index]];
         }
+    }
+
+    /**
+     * "New UI"-related methods
+     */
+
+    /**
+     * On mode change, purge selection and set the new mode
+     * @param {String} mode - The name of the mode ("lines", "regions", or "masks")
+     */
+    setMode(mode) {
+        if (this.activeTool !== "pan") {
+            // set tool back to select (default), unless in pan tool
+            this.setActiveTool("select");
+        }
+        this.purgeSelection();
+        this.mode = mode;
+        switch (mode) {
+            case "lines":
+                this.toggleMasks(false);
+                this.toggleLineStrokes(true);
+                this.evenMasksGroup.bringToFront();
+                this.oddMasksGroup.bringToFront();
+                this.linesGroup.bringToFront();
+                break;
+            case "regions":
+                this.toggleMasks(false);
+                this.toggleLineStrokes(false);
+                break;
+            case "masks":
+                this.toggleMasks(true);
+                this.toggleLineStrokes(true);
+                this.evenMasksGroup.bringToFront();
+                this.oddMasksGroup.bringToFront();
+                this.linesGroup.sendToBack();
+                break;
+        }
+        this.applyRegionMode();
+    }
+
+    /**
+     * Set line ordering (known on/off value, rather than toggle)
+     * @param {Boolean} enabled - Whether or not the line number layer should be visible
+     */
+    setOrdering(enabled) {
+        if (enabled === true) {
+            this.showLineNumbers = true;
+            this.orderingLayer.visible = true;
+            this.orderingLayer.bringToFront();
+        } else {
+            this.showLineNumbers = false;
+            this.orderingLayer.visible = false;
+            this.orderingLayer.sendToBack();
+        }
+    }
+
+    /**
+     * Set the segmenter's disableShortcuts state
+     * @param {Boolean} disabled - The current disabled state
+     */
+    setDisabled(disabled) {
+        this.disableShortcuts = disabled;
+    }
+
+    /**
+     * Set the segmenter's detachableToolbar to the detached toolbar element
+     * @param {HTMLElement} element
+     */
+    setDetachableToolbar(element) {
+        this.detachableToolbar = element;
     }
 }
 

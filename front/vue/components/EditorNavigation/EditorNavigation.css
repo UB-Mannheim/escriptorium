@@ -1,0 +1,62 @@
+nav.escr-editor-nav {
+    display: flex;
+    flex-flow: row;
+    background-color: var(--background2);
+    min-height: 72px;
+    max-height: 72px;
+    padding: 1rem;
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.15);
+    z-index: var(--editor-nav-z);
+}
+nav.escr-editor-nav .escr-editor-nav-meta {
+    flex: 1 0 auto;
+    display: flex;
+    flex-flow: column;
+    gap: 6px;
+}
+nav.escr-editor-nav .escr-breadcrumbs {
+    margin: 0;
+}
+nav.escr-editor-nav h1.escr-element-title {
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 20px;
+    margin: 0;
+    padding: 0;
+    color: var(--text1);
+}
+nav.escr-editor-nav .escr-editor-nav-actions {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+}
+nav.escr-editor-nav .escr-editor-nav-actions .element-switcher {
+    margin: 0 0.5rem;
+    color: var(--text1);
+}
+nav.escr-editor-nav .escr-editor-nav-actions .element-switcher > span,
+nav.escr-editor-nav .escr-editor-nav-actions .element-switcher > input {
+    display: inline-block;
+    min-width: 24px;
+    max-width: 48px;
+    text-align: center;
+}
+.escr-editor-nav-actions .element-switcher > input {
+    background-color: var(--background2);
+    color: var(--text1);
+    border: none;
+    border-bottom: 1px solid var(--text1);
+}
+
+/* Chrome, Safari, Edge, Opera */
+.element-switcher > input::-webkit-outer-spin-button,
+.element-switcher > input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+.element-switcher > input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}

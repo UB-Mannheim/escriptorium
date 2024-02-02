@@ -41,7 +41,7 @@
 }
 
 .escr-modal .escr-form-field {
-    margin-top: 24px;
+    margin: 24px 0 0;
 }
 /* button group at end of modal */
 .escr-modal .modal-actions {

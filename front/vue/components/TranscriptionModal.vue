@@ -2,7 +2,7 @@
     <div
         id="trans-modal"
         ref="transModal"
-        class="modal"
+        :class="{ modal: true, ['escr-line-modal']: !legacyModeEnabled }"
         role="dialog"
     >
         <div
@@ -10,9 +10,12 @@
             role="document"
         >
             <div class="modal-content">
-                <div class="modal-header">
+                <div
+                    v-if="legacyModeEnabled"
+                    class="modal-header"
+                >
                     <button
-                        v-if="$store.state.document.readDirection == 'rtl'"
+                        v-if="readDirection == 'rtl'"
                         id="next-btn"
                         type="button"
                         title="Next (up arrow)"
@@ -33,7 +36,7 @@
                     </button>
 
                     <button
-                        v-if="$store.state.document.readDirection == 'rtl'"
+                        v-if="readDirection == 'rtl'"
                         id="prev-btn"
                         type="button"
                         title="Previous (down arrow)"
@@ -77,7 +80,54 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div :class="'modal-body ' + $store.state.document.defaultTextDirection">
+                <div
+                    v-else
+                    class="modal-header escr-line-modal-header"
+                >
+                    <h2>Line #{{ line.order + 1 }}</h2>
+                    <EscrButton
+                        color="text"
+                        :on-click="() => editLine(readDirection === 'rtl' ? 'next' : 'previous')"
+                        size="small"
+                    >
+                        <template #button-icon>
+                            <ArrowCircleLeftIcon />
+                        </template>
+                    </EscrButton>
+                    <EscrButton
+                        color="text"
+                        :on-click="() => editLine(readDirection === 'rtl' ? 'previous' : 'next')"
+                        size="small"
+                    >
+                        <template #button-icon>
+                            <ArrowCircleRightIcon />
+                        </template>
+                    </EscrButton>
+                    <div class="new-section with-separator">
+                        <ToggleButton
+                            class="escr-vk-toggle"
+                            size="small"
+                            :checked="isVKEnabled"
+                            :on-change="toggleVK"
+                        >
+                            <template #button-icon>
+                                <KeyboardIcon />
+                            </template>
+                        </ToggleButton>
+                    </div>
+                    <div class="escr-line-modal-right">
+                        <EscrButton
+                            color="text"
+                            :on-click="() => close()"
+                            size="small"
+                        >
+                            <template #button-icon>
+                                <XIcon />
+                            </template>
+                        </EscrButton>
+                    </div>
+                </div>
+                <div :class="'modal-body ' + defaultTextDirection">
                     <p
                         v-if="line.mask == null"
                         class="text-warning"
@@ -121,12 +171,13 @@
                         </div>
                     </div>
 
+                    <!-- TODO: Refactor to not use refs (use vuex store or component data) -->
                     <div
                         id="trans-input-container"
                         ref="transInputContainer"
                     >
                         <input
-                            v-if="$store.state.document.mainTextDirection != 'ttb'"
+                            v-if="mainTextDirection != 'ttb'"
                             id="trans-input"
                             ref="transInput"
                             v-model.lazy="localTranscription"
@@ -150,7 +201,7 @@
                         >
                         <!-- in this case, input field is replaced by: -->
                         <div
-                            v-if="$store.state.document.mainTextDirection == 'ttb'"
+                            v-if="mainTextDirection == 'ttb'"
                             id="textInputWrapper"
                         >
                             <div
@@ -180,9 +231,59 @@
                         </small>
                     </div>
 
+                    <hr v-if="!legacyModeEnabled">
+
                     <!-- transcription comparison -->
+                    <details
+                        v-if="!legacyModeEnabled"
+                        class="escr-compare"
+                    >
+                        <summary dir="ltr">
+                            <span>Transcription comparison</span>
+                            <TranscriptionSelector />
+                        </summary>
+                        <div
+                            v-if="comparedTranscriptions.length"
+                            id="comparison"
+                            class="compare-show"
+                        >
+                            <div
+                                class="d-table"
+                            >
+                                <div
+                                    v-for="trans in otherTranscriptions"
+                                    :key="'TrC' + trans.pk"
+                                    class="d-table-row"
+                                >
+                                    <div
+                                        class="d-table-cell col"
+                                        v-html="comparedContent(trans.content)"
+                                    />
+                                    <div
+                                        class="d-table-cell text-muted text-nowrap col"
+                                        title="Transcription name"
+                                    >
+                                        <small>
+                                            {{ trans.name }}
+                                            <span
+                                                v-if="trans.pk == selectedTranscription"
+                                            >
+                                                (current)
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span
+                            v-else
+                            class="escr-no-content"
+                        >
+                            No transcriptions selected
+                        </span>
+                    </details>
                     <div
-                        v-if="$store.state.transcriptions.comparedTranscriptions.length"
+                        v-else-if="comparedTranscriptions.length"
                         class="card history-block mt-2"
                     >
                         <div class="card-header">
@@ -228,16 +329,49 @@
                                     >
                                         <small>
                                             {{ trans.name }}
-                                            <span v-if="trans.pk == $store.state.transcriptions.selectedTranscription">(current)</span></small>
+                                            <span v-if="trans.pk == selectedTranscription">(current)</span></small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    <hr v-if="!legacyModeEnabled">
+
                     <!-- versioning/history -->
+                    <details v-if="!legacyModeEnabled">
+                        <summary dir="ltr">
+                            <span>Transcription history</span>
+                        </summary>
+                        <div
+                            v-if="line.currentTrans &&
+                                line.currentTrans.versions &&
+                                line.currentTrans.versions.length"
+                            id="history"
+                            class="history-show"
+                        >
+                            <div class="d-table">
+                                <LineVersion
+                                    v-for="(version, index) in line.currentTrans.versions"
+                                    :key="version.revision"
+                                    :previous="line.currentTrans.versions[index+1]"
+                                    :version="version"
+                                    :line="line"
+                                    :legacy-mode-enabled="legacyModeEnabled"
+                                />
+                            </div>
+                        </div>
+                        <span
+                            v-else
+                            class="escr-no-content"
+                        >
+                            No history to display
+                        </span>
+                    </details>
                     <div
-                        v-if="line.currentTrans && line.currentTrans.versions && line.currentTrans.versions.length"
+                        v-else-if="line.currentTrans &&
+                            line.currentTrans.versions &&
+                            line.currentTrans.versions.length"
                         class="card history-block mt-2"
                     >
                         <div class="card-header">
@@ -274,6 +408,7 @@
                                     :previous="line.currentTrans.versions[index+1]"
                                     :version="version"
                                     :line="line"
+                                    :legacy-mode-enabled="legacyModeEnabled"
                                 />
                             </div>
                         </div>
@@ -285,15 +420,40 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
+import ArrowCircleLeftIcon from "./Icons/ArrowCircleLeftIcon/ArrowCircleLeftIcon.vue";
+import ArrowCircleRightIcon from "./Icons/ArrowCircleRightIcon/ArrowCircleRightIcon.vue";
+import EscrButton from "./Button/Button.vue";
+import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
 import LineVersion from "./LineVersion.vue";
 import HelpVersions from "./HelpVersions.vue";
 import HelpCompareTranscriptions from "./HelpCompareTranscriptions.vue";
+import ToggleButton from "./ToggleButton/ToggleButton.vue";
+import TranscriptionSelector from "./TranscriptionSelector/TranscriptionSelector.vue";
+import XIcon from "./Icons/XIcon/XIcon.vue";
+import "./TranscriptionModal.css";
 
 export default Vue.extend({
     components: {
+        ArrowCircleLeftIcon,
+        ArrowCircleRightIcon,
+        EscrButton,
+        KeyboardIcon,
         LineVersion,
         HelpVersions,
         HelpCompareTranscriptions,
+        ToggleButton,
+        TranscriptionSelector,
+        XIcon,
+    },
+    props: {
+        /**
+         * Whether or not legacy mode is enabled by the user.
+         */
+        legacyModeEnabled: {
+            type: Boolean,
+            required: true,
+        },
     },
     data() {
         return {
@@ -301,29 +461,38 @@ export default Vue.extend({
         }
     },
     computed: {
-        line () {
-            return this.$store.state.lines.editedLine
-        },
+        ...mapState({
+            allTranscriptions: (state) => state.transcriptions.all,
+            comparedTranscriptions: (state) => state.transcriptions.comparedTranscriptions,
+            defaultTextDirection: (state) => state.document.defaultTextDirection,
+            documentId: (state) => state.document.id,
+            enabledVKs: (state) => state.document.enabledVKs,
+            image: (state) => state.parts.image,
+            line: (state) => state.lines.editedLine,
+            mainTextDirection: (state) => state.document.mainTextDirection,
+            readDirection: (state) => state.document.readDirection,
+            selectedTranscription: (state) => state.transcriptions.selectedTranscription,
+        }),
         momentDate() {
             return moment.tz(this.line.currentTrans.version_updated_at, this.timeZone);
         },
         modalImgSrc() {
-            if (this.$store.state.parts.image.uri.endsWith(".tif") ||
-                 this.$store.state.parts.image.uri.endsWith(".tiff")) {
+            if (this.image.uri.endsWith(".tif") ||
+                 this.image.uri.endsWith(".tiff")) {
                 // can't display tifs so fallback to large thumbnail
-                return this.$store.state.parts.image.thumbnails.large;
+                return this.image.thumbnails.large;
             } else {
-                return this.$store.state.parts.image.uri;
+                return this.image.uri;
             }
         },
         otherTranscriptions() {
             let a = Object
                 .keys(this.line.transcriptions)
-                .filter((pk)=>this.$store.state.transcriptions.comparedTranscriptions
+                .filter((pk)=>this.comparedTranscriptions
                     .includes(parseInt(pk)))
                 .map((pk)=>{ return {
                     pk: pk,
-                    name: this.$store.state.transcriptions.all.find((e)=>e.pk==pk).name,
+                    name: this.allTranscriptions.find((e)=>e.pk==pk).name,
                     content: this.line.transcriptions[pk].content
                 }; });
             return a;
@@ -347,11 +516,11 @@ export default Vue.extend({
         },
     },
     watch: {
-        line(new_, old_) {
+        line() {
             this.computeStyles();
         },
-        "$store.state.document.enabledVKs"() {
-            this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
+        enabledVKs() {
+            this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
         }
     },
     created() {
@@ -396,7 +565,7 @@ export default Vue.extend({
         let input = this.$refs.transInput;
 
         // no need to make focus on hidden input with a ttb text
-        if(this.$store.state.document.mainTextDirection != "ttb"){
+        if(this.mainTextDirection != "ttb"){
             input.focus();
         }else{  // avoid some br or other html tag for a copied text on an editable input div (vertical_text_input):
             //
@@ -413,7 +582,7 @@ export default Vue.extend({
             }, false);
         }
 
-        this.isVKEnabled = this.$store.state.document.enabledVKs.indexOf(this.$store.state.document.id) != -1 || false;
+        this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
         if (this.isVKEnabled)
             for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
                 enableVirtualKeyboard(input);
@@ -487,12 +656,12 @@ export default Vue.extend({
 
             // calculate rotation needed to get the line horizontal
             let target_angle = 0;  // all lines should be topologically ltr
-            if(this.$store.state.document.mainTextDirection == "ttb") // add a 90 angle for vertical texts
+            if(this.mainTextDirection == "ttb") // add a 90 angle for vertical texts
                 target_angle = 90;
             let angle = target_angle - this.getLineAngle();
 
             // apply it to the polygon and get the resulting bbox
-            let transformOrigin =  this.$store.state.parts.image.size[0]/2+"px "+this.$store.state.parts.image.size[1]/2+"px";
+            let transformOrigin =  this.image.size[0]/2+"px "+this.image.size[1]/2+"px";
             tmppoly.style.transformOrigin = transformOrigin;
             tmppoly.style.transform = "rotate("+angle+"deg)";
             svg.appendChild(tmppoly);
@@ -513,7 +682,7 @@ export default Vue.extend({
             let context = hContext*lineHeight;
             let visuHeight = lineHeight + 2*context;
 
-            if(this.$store.state.document.mainTextDirection != "ttb"){
+            if(this.mainTextDirection != "ttb"){
                 modalImgContainer.style.height = visuHeight+"px";
             }else{
                 modalImgContainer.style.width = visuHeight+"px";
@@ -526,14 +695,14 @@ export default Vue.extend({
             // if text direction is rtl and the line doesn't take all the space,
             // align it to the right
             if (modalImgContainer.clientWidth - 2*context > bbox.width*ratio
-                && this.$store.state.document.defaultTextDirection == "rtl") {
+                && this.defaultTextDirection == "rtl") {
                 left += modalImgContainer.clientWidth - 2*context - bbox.width*ratio;
             }
 
             // modalImgContainer.style.transform = 'scale('+ratio+')';
 
-            let imgWidth = this.$store.state.parts.image.size[0]*ratio +"px";
-            let transformOrigin =  this.$store.state.parts.image.size[0]*ratio/2+"px "+this.$store.state.parts.image.size[1]*ratio/2+"px";
+            let imgWidth = this.image.size[0]*ratio +"px";
+            let transformOrigin =  this.image.size[0]*ratio/2+"px "+this.image.size[1]*ratio/2+"px";
             let transform = "translate("+left+"px, "+top+"px) rotate("+bbox.angle+"deg)";
             img.style.width = imgWidth;
             img.style.transformOrigin = transformOrigin;
@@ -548,7 +717,7 @@ export default Vue.extend({
                 let polygon = overlay.querySelector("polygon");
                 polygon.setAttribute("points", maskPoints);
                 overlay.style.width = imgWidth;
-                overlay.style.height = this.$store.state.parts.image.size[1]*ratio+"px";
+                overlay.style.height = this.image.size[1]*ratio+"px";
                 overlay.style.transformOrigin = transformOrigin;
                 overlay.style.transform = transform;
                 overlay.classList.add("show");
@@ -572,7 +741,7 @@ export default Vue.extend({
             ruler.textContent = content;
             ruler.style.whiteSpace="nowrap"
 
-            if(this.$store.state.document.mainTextDirection == "ttb"){
+            if(this.mainTextDirection == "ttb"){
                 // put the container inline for vertical transcription:
                 container.style.display = "inline-block";
                 verticalTextInput = container.querySelector("#vertical_text_input");
@@ -587,7 +756,7 @@ export default Vue.extend({
             let fontSize = Math.max(15, Math.round(lineHeight*0.7));  // Note could depend on the script
             ruler.style.fontSize = fontSize+"px";
 
-            if(this.$store.state.document.mainTextDirection != "ttb"){
+            if(this.mainTextDirection != "ttb"){
                 input.style.fontSize = fontSize+"px";
                 input.style.height = Math.round(fontSize*1.1)+"px";
             }else{
@@ -595,14 +764,14 @@ export default Vue.extend({
                 verticalTextInput.style.width = Math.round(fontSize*1.1)+"px";
             }
 
-            if (this.$store.state.document.readDirection == "rtl") {
+            if (this.readDirection == "rtl") {
                 container.style.marginRight = context+"px";
             } else {
                 // left to right
                 // TODO: deal with other directions
                 container.style.marginLeft = context+"px";
             }
-            if(this.$store.state.document.mainTextDirection != "ttb"){
+            if(this.mainTextDirection != "ttb"){
                 if (content) {
                     let lineWidth = bbox.width*ratio;
                     var scaleX = Math.min(5,  lineWidth / ruler.clientWidth);
@@ -654,7 +823,7 @@ export default Vue.extend({
             let ratio = 1;
             let lineHeight = 150;
 
-            if(this.$store.state.document.mainTextDirection != "ttb")
+            if(this.mainTextDirection != "ttb")
             {
                 ratio = modalImgContainer.clientWidth / (bbox.width + (2*bbox.height*hContext));
                 let MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-230) / 3));
@@ -684,9 +853,9 @@ export default Vue.extend({
 
         toggleVK() {
             this.isVKEnabled = !this.isVKEnabled;
-            let vks = this.$store.state.document.enabledVKs;
+            let vks = this.enabledVKs;
             if (this.isVKEnabled) {
-                vks.push(this.$store.state.document.id);
+                vks.push(this.documentId);
                 this.$store.commit("document/setEnabledVKs", vks);
                 userProfile.set("VK-enabled", vks);
                 for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
@@ -694,7 +863,7 @@ export default Vue.extend({
             } else {
                 // Make sure we save changes made before we remove the VK
                 this.localTranscription = this.$refs.transInput.value;
-                vks.splice(vks.indexOf(this.$store.state.document.id), 1);
+                vks.splice(vks.indexOf(this.documentId), 1);
                 this.$store.commit("document/setEnabledVKs", vks);
                 userProfile.set("VK-enabled", vks);
                 for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
@@ -704,6 +873,3 @@ export default Vue.extend({
     },
 });
 </script>
-
-<style scoped>
-</style>

@@ -5,7 +5,7 @@
  * Returns an object with three named arrays:
  * { metadataToCreate, metadataToUpdate, metadataToDelete }.
  */
-export const getDocumentMetadataCRUD = ({ stateMetadata, formMetadata }) => {
+export const getMetadataCRUD = ({ stateMetadata, formMetadata }) => {
     // metadata without a pk in the form state must be new, so create on the backend
     const metadataToCreate = formMetadata.filter(
         (formMetadatum) => !formMetadatum.pk,
@@ -27,7 +27,7 @@ export const getDocumentMetadataCRUD = ({ stateMetadata, formMetadata }) => {
             formMetadatum.value !== m.value
         ) {
             // if found but keyname or value differs, it should be updated
-            metadataToUpdate.push(m);
+            metadataToUpdate.push(formMetadatum);
         }
     });
 

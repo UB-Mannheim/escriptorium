@@ -40,6 +40,12 @@ export default {
         tags: [],
         tagName: "",
     },
+    elementDetails: {
+        comments: "",
+        metadata: [],
+        name: "",
+        typology: "",
+    },
     export: {
         fileFormat: "",
         includeImages: false,
@@ -61,6 +67,11 @@ export default {
         index: "",
         location: "before",
     },
+    ontology: {
+        lines: [],
+        parts: [],
+        regions: [],
+    },
     segment: {
         model: "",
         overwrite: false,
@@ -80,5 +91,8 @@ export default {
     transcribe: {
         model: "",
         layerName: "",
+    },
+    transcriptionManagement: {
+        transcriptions: [],
     },
 };

@@ -108,7 +108,7 @@ export default {
                 this.$store.dispatch("transcriptions/archive", transcription)
                     .then((test) => {
                         ev.target.parentNode.remove();
-                        this.$store.commit("transcriptions/removeComparedTranscription", transcription);
+                        this.$store.commit("transcriptions/removeComparedTranscription", parseInt(transcription));
                     })
                     .catch((err) => {
                         console.log("couldn't archive transcription #", transcription, err)

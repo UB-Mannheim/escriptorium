@@ -170,7 +170,7 @@ class PartMoveSerializer(serializers.ModelSerializer):
 class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transcription
-        fields = ('pk', 'name', 'archived', 'avg_confidence')
+        fields = ('pk', 'name', 'archived', 'avg_confidence', 'created_at', 'comments')
 
     def create(self, data):
         document = Document.objects.get(pk=self.context["view"].kwargs["document_pk"])
