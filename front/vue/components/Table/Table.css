@@ -45,6 +45,9 @@
 .escr-table tr td:last-of-type {
     padding: 0 16px 0 0;
 }
+.escr-table tr td:only-of-type {
+    padding: 0 0 0 16px;
+}
 .escr-table tbody tr:hover {
     background-color: var(--background2);
 }

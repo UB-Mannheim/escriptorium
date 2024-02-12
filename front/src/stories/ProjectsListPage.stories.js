@@ -74,7 +74,7 @@ const PageTemplate = (args, { argTypes }) => ({
         const projectsIdEndpoint = new RegExp(`${projectsEndpoint}/*`);
         const currentUserEndpoint = "/users/current";
         // mock projects list
-        mock.onGet(projectsEndpoint).reply(async function(config) {
+        mock.onGet(projectsEndpoint).reply(async function (config) {
             // wait for 100-300 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
@@ -96,7 +96,7 @@ const PageTemplate = (args, { argTypes }) => ({
         // mock tags list
         mock.onGet(projectsTagsEndpoint).reply(200, { results: tags });
         // mock create tag
-        mock.onPost(projectsTagsEndpoint).reply(async function(config) {
+        mock.onPost(projectsTagsEndpoint).reply(async function (config) {
             const timeout = Math.random() * 200 + 100;
             await new Promise((r) => setTimeout(r, timeout));
             if (config?.data) {
@@ -109,14 +109,14 @@ const PageTemplate = (args, { argTypes }) => ({
             }
         });
         // mock create project
-        mock.onPost(projectsEndpoint).reply(async function() {
+        mock.onPost(projectsEndpoint).reply(async function () {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, projects[0]];
         });
         // mock delete project (throw an error, for fun!)
-        mock.onDelete(projectsIdEndpoint).reply(async function() {
+        mock.onDelete(projectsIdEndpoint).reply(async function () {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
@@ -129,7 +129,7 @@ const PageTemplate = (args, { argTypes }) => ({
             ];
         });
         // send one more dummy project from next page
-        mock.onGet("fake-nextpage").reply(async function() {
+        mock.onGet("fake-nextpage").reply(async function () {
             // wait for 200-400 ms to mimic server-side loading
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
@@ -152,7 +152,7 @@ const PageTemplate = (args, { argTypes }) => ({
             ];
         });
         // mock get current user
-        mock.onGet(currentUserEndpoint).reply(async function() {
+        mock.onGet(currentUserEndpoint).reply(async function () {
             const timeout = Math.random() * 200 + 200;
             await new Promise((r) => setTimeout(r, timeout));
             return [200, currentUser];

@@ -1,0 +1,16 @@
+
+/* VisuPanel special styling */
+.escr-editor-transcription-dropdown.escr-dropdown,
+.escr-editor-transcription-dropdown.escr-dropdown select {
+    height: 38px;
+    max-width: 220px;
+}
+.escr-editor-transcription-dropdown.escr-dropdown .escr-chevron-down-icon {
+    top: 17px;
+}
+.escr-editor-transcription-dropdown.escr-dropdown select {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background-color: var(--background1);
+}

@@ -62,16 +62,25 @@
     --foreground-alert: #771010;
     --background-alert: #f8caca;
 
+    /* line ordering panel */
+    --line-ordering-border: rgba(0, 0, 0, 0.15);
+    --line-ordering-selected: rgba(23, 97, 181, 0.2);
+
     /* z-index layers */
-    --segmented-button-focus-z: 1;
-    --table-actions-z: 2;
-    --taggroup-overflow-z: 3;
-    --sidebar-backdrop-z: 4;
-    --sidebar-container-z: 5;
-    --sidebar-z: 6;
-    --modal-backdrop-z: 7;
-    --modal-z: 8;
-    --toast-z: 9;
+    --editor-toolbar-z: 1;
+    --editor-global-toolbar-z: 2;
+    --editor-nav-z: 3;
+    --detached-toolbar-z: 4;
+    --global-nav-z: 5;
+    --segmented-button-focus-z: 6;
+    --table-actions-z: 7;
+    --taggroup-overflow-z: 8;
+    --sidebar-backdrop-z: 9;
+    --sidebar-container-z: 10;
+    --sidebar-z: 11;
+    --modal-backdrop-z: 12;
+    --modal-z: 13;
+    --toast-z: 14;
 }
 .light-mode {
     /* button colors */
@@ -212,16 +221,15 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
     font-style: normal;
 }
 /* tooltip/menu arrows restyling */
-.escr-body .v-popper__popper .v-popper__arrow-inner {
-    border-color: var(--background1);
-}
+.escr-body .v-popper__popper .v-popper__arrow-inner,
 .escr-body .v-popper__popper .v-popper__arrow-outer {
-    border-color: var(--background2);
+    border-color: var(--background1);
 }
 /* global nav layout styles */
 #vue-global-nav {
     height: 100vh;
     min-width: 64px;
+    z-index: var(--global-nav-z);
 }
 #vue-global-nav .escr-global-nav {
     height: 100vh;
@@ -240,6 +248,9 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
     font-weight: bold;
 }
 .escr-vue-enabled h2,
+.escr-page h2,
+.escr-modal h2,
+.escr-line-modal h2,
 .escr-sidebar-container h2 {
     font-weight: 700;
     font-size: 18px;
@@ -252,6 +263,8 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
     font-weight: bold;
 }
 .escr-vue-enabled h3,
+.escr-page h3,
+.escr-modal h3,
 .escr-sidebar-container h3 {
     font-weight: 600;
     font-size: 16px;
@@ -278,6 +291,7 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
 
 /* Horizontal rule */
 .escr-page hr,
+.escr-line-modal hr,
 .escr-sidebar-container hr {
     border: none;
     border-top: 1px solid var(--text3);
@@ -302,7 +316,8 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
 }
 
 /* tooltip styling */
-.v-popper--theme-escr-tooltip .v-popper__inner {
+.v-popper--theme-escr-tooltip .v-popper__inner,
+.v-popper--theme-escr-tooltip-small .v-popper__inner {
     background: var(--background1);
     border-radius: 15px;
     padding: 16px;
@@ -311,10 +326,16 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
     max-width: 220px;
     font-size: 12px;
 }
-.v-popper--theme-escr-tooltip .v-popper__arrow-inner {
+.v-popper--theme-escr-tooltip-small .v-popper__inner {
+    padding: 8px;
+    border-radius: 8px;
+}
+.v-popper--theme-escr-tooltip .v-popper__arrow-inner,
+.v-popper--theme-escr-tooltip-small .v-popper__arrow-inner {
     border-color: var(--background1);
 }
-.v-popper--theme-escr-tooltip .v-popper__arrow-outer {
+.v-popper--theme-escr-tooltip .v-popper__arrow-outer,
+.v-popper--theme-escr-tooltip-small .v-popper__arrow-outer {
     border-color: var(--background2);
 }
 
@@ -355,4 +376,34 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
     border-right-color: var(--alert);
     -webkit-animation: none;
     animation: none;
+}
+
+/* toolbars */
+.escr-toolbar {
+    position: relative;
+    z-index: var(--editor-toolbar-z);
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.15);
+    min-height: 54px;
+    max-height: 54px;
+    margin: 0;
+}
+.escr-toolbar-tooltip {
+    text-align: center;
+}
+.escr-toolbar .new-section,
+nav.escr-editor-nav .new-section {
+    margin-left: 0.5rem;
+}
+.escr-toolbar .new-section.with-separator,
+nav.escr-editor-nav .new-section.with-separator {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+}
+.new-section.with-separator::before {
+    width: 1px;
+    content: "";
+    height: 1rem;
+    border-left: 1px solid var(--text3);
+    padding-left: 0.5rem;
 }

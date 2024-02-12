@@ -540,6 +540,77 @@ class DocumentViewSet(ModelViewSet):
 
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['patch'])
+    def modify_ontology(self, request, pk=None):
+        # special PATCH action to modify documents' ontology nested relationships
+        # (can't be done from normal PUT/PATCH on a document because nested)
+
+        # check for needed params
+        if not any(param in request.data for param in [
+            'valid_part_types', 'valid_line_types', 'valid_block_types'
+        ]):
+            return Response(
+                {'error': "Must supply at least one of valid_part_types, valid_line_types, or valid_block_types."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        document = self.get_object()
+
+        # for all ontologies (part, line, block): check if array of pks is valid, and
+        # matching type objects exist, then set relations on the document to them
+
+        # part (image)
+        if 'valid_part_types' in request.data:
+            part_types = request.data['valid_part_types']
+            if not all([isinstance(pk, int) for pk in part_types]):
+                return Response(
+                    {'error': "valid_part_types must be an array of PKs."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            valid_part_types = DocumentPartType.objects.filter(pk__in=part_types)
+            if valid_part_types.count() < len(part_types):
+                return Response(
+                    {'error': "At least one pk in valid_part_types is invalid."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            document.valid_part_types.set(valid_part_types)
+
+        # line
+        if 'valid_line_types' in request.data:
+            line_types = request.data['valid_line_types']
+            if not all([isinstance(pk, int) for pk in line_types]):
+                return Response(
+                    {'error': "valid_line_types must be an array of PKs."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            valid_line_types = LineType.objects.filter(pk__in=line_types)
+            if valid_line_types.count() < len(line_types):
+                return Response(
+                    {'error': "At least one pk in valid_line_types is invalid."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            document.valid_line_types.set(valid_line_types)
+
+        # block (region)
+        if 'valid_block_types' in request.data:
+            block_types = request.data['valid_block_types']
+            if not all([isinstance(pk, int) for pk in block_types]):
+                return Response(
+                    {'error': "valid_block_types must be an array of PKs."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            valid_block_types = BlockType.objects.filter(pk__in=block_types)
+            if valid_block_types.count() < len(block_types):
+                return Response(
+                    {'error': "At least one pk in valid_block_types is invalid."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            document.valid_block_types.set(valid_block_types)
+
+        # save the document and return it in the response data
+        document.save()
+        serializer = self.get_serializer(document)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class TaskReportViewSet(ModelViewSet):
     queryset = TaskReport.objects.all()
@@ -753,23 +824,42 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         return self.characters_query("char ASC")
 
 
-class BlockTypeViewSet(ModelViewSet):
-    queryset = BlockType.objects.filter(public=True)
+class TypologyViewSet(ModelViewSet):
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # POST queryset should be all()
+        if self.request.method == "GET":
+            # GET queryset should be only public types
+            return qs.filter(public=True)
+        elif self.request.method in ["PUT", "PATCH", "DELETE"]:
+            # PUT/PATCH/DELETE (updating and deleting) require permissions
+            return qs.filter(
+                Q(valid_in__owner=self.request.user)
+                | Q(valid_in__shared_with_users=self.request.user)
+                | Q(valid_in__shared_with_groups__user=self.request.user)
+                | Q(valid_in__project__owner=self.request.user)
+                | Q(valid_in__project__shared_with_users=self.request.user)
+            )
+        return qs
+
+
+class BlockTypeViewSet(TypologyViewSet):
+    queryset = BlockType.objects.all()
     serializer_class = BlockTypeSerializer
 
 
-class LineTypeViewSet(ModelViewSet):
-    queryset = LineType.objects.filter(public=True)
+class LineTypeViewSet(TypologyViewSet):
+    queryset = LineType.objects.all()
     serializer_class = LineTypeSerializer
 
 
-class AnnotationTypeViewSet(ModelViewSet):
-    queryset = AnnotationType.objects.filter(public=True)
+class AnnotationTypeViewSet(TypologyViewSet):
+    queryset = AnnotationType.objects.all()
     serializer_class = AnnotationTypeSerializer
 
 
-class DocumentPartTypeViewSet(ModelViewSet):
-    queryset = DocumentPartType.objects.filter(public=True)
+class DocumentPartTypeViewSet(TypologyViewSet):
+    queryset = DocumentPartType.objects.all()
     serializer_class = DocumentPartTypeSerializer
 
 

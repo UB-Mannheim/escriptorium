@@ -8,8 +8,7 @@ export const models = [
     {
         pk: 1,
         name: "arabPersPrBigMixed_best",
-        file:
-            "https://github.com/OpenITI/ocr_with_kraken_public/raw/main/models/arabPersPrBigMixed_best%20(1).mlmodel",
+        file: "https://github.com/OpenITI/ocr_with_kraken_public/raw/main/models/arabPersPrBigMixed_best%20(1).mlmodel",
         file_size: 20036695,
         job: "Recognize",
         training: false,
@@ -21,8 +20,7 @@ export const models = [
     {
         pk: 2,
         name: "ap1ksplit21-ft-best",
-        file:
-            "https://github.com/OpenITI/ocr_with_kraken_public/raw/main/models/arabPersPrBigMixed_best%20(1).mlmodel",
+        file: "https://github.com/OpenITI/ocr_with_kraken_public/raw/main/models/arabPersPrBigMixed_best%20(1).mlmodel",
         file_size: 20036695,
         job: "Recognize",
         training: false,
@@ -32,8 +30,7 @@ export const models = [
     {
         pk: 9,
         name: "arabPersPrBigMixed_best (1)",
-        file:
-            "https://github.com/OpenITI/ocr_with_kraken_public/raw/main/models/arabPersPrBigMixed_best%20(1).mlmodel",
+        file: "https://github.com/OpenITI/ocr_with_kraken_public/raw/main/models/arabPersPrBigMixed_best%20(1).mlmodel",
         file_size: 5052823,
         job: "Segment",
         training: false,

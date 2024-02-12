@@ -110,11 +110,7 @@ pages:
   stage: deploy
   image: node:latest
   rules:
-    # run this job on push to develop when frontend related stuff changes
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "develop"'
-      changes:
-        - front/**/*
-    # or on manual trigger in GitLab web ui
+    # run this job only on manual trigger in GitLab web ui
     - if: '$CI_PIPELINE_SOURCE == "web"'
   script:
     # install npm deps and build storybook

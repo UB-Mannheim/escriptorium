@@ -1,0 +1,87 @@
+/* generic editor toolbar layout */
+.escr-toolbar {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+/* panel switcher */
+.escr-toolbar .escr-editortools-switcher {
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+}
+.escr-toolbar .escr-editortools-switcher button {
+    padding: 0.5rem;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+}
+.escr-toolbar .escr-editortools-switcher button svg {
+    max-height: 20px;
+    max-width: 20px;
+}
+.escr-toolbar .escr-editortools-switcher {
+    flex-basis: 70px;
+}
+
+/* center panel-specific tools */
+.escr-toolbar .escr-editortools-paneltools {
+    display: flex;
+    align-items: center;
+    flex-flow: row nowrap;
+    flex: 1 0 calc(100% - 122px);
+    padding: 0.5rem 0;
+    margin: 0;
+}
+
+/* close button */
+.escr-toolbar .escr-editortools-close {
+    flex-basis: 36px;
+    background-color: var(--background3);
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+.escr-toolbar .escr-editortools-close button {
+    display: block;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    color: var(--text2);
+    width: 36px;
+    height: 100%;
+    min-height: 54px;
+    max-height: 108px;
+}
+
+
+/* confidence/virtual keyboard toggle special styling */
+.escr-toolbar .escr-editortools-paneltools .escr-confidence-control,
+.escr-toolbar .escr-editortools-paneltools .vk-container {
+    flex: 1 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    align-content: center;
+    margin-right: 8px;
+}
+.escr-confidence-control
+    .escr-button:not(:disabled):not([class*="disabled"]):not(
+        [class*="active"]
+    ):not(:hover) {
+    background-color: var(--background1);
+}
+.escr-confidence-control .escr-toggle-button {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-right: 1px;
+}
+.escr-confidence-control .escr-button.menu-toggle {
+    min-width: 24px;
+    min-height: 38px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}

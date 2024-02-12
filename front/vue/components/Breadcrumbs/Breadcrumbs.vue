@@ -8,9 +8,7 @@
             <a
                 v-if="index !== items.length - 1 && item.href"
                 :href="item.href"
-            >
-                {{ item.title }}
-            </a>
+            >{{ item.title }}</a>
             <span v-else>{{ item.title }}</span>
         </li>
     </ul>

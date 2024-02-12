@@ -2,6 +2,7 @@
 export const ontologyMap = {
     regions: "types/block",
     lines: "types/line",
+    parts: "types/part",
     text: "taxonomies/annotations",
     image: "taxonomies/annotations",
 };

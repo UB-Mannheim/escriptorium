@@ -499,6 +499,25 @@ i.panel-icon {
     max-height: calc(100vh - 200px);
 }
 
+/* grab cursor for pan tool (new ui) */
+.content-container.pan-active {
+    cursor: grab;
+}
+/* disabled state (e.g. for loading) */
+.content-container.disabled {
+    pointer-events: none;
+    cursor: default;
+}
+.content-container.disabled::before {
+    width: 100%;
+    height: 100%;
+    display: block;
+    position: absolute;
+    content: "";
+    background-color: rgba(0, 0, 0, .25);
+    z-index: 10;
+}
+
 .panel .panel-img {
     width: 100%;
 }

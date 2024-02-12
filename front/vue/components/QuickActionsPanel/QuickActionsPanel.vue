@@ -76,7 +76,7 @@
 
 <script>
 import { Dropdown as VDropdown } from "floating-vue";
-import { mapActions, mapState } from "vuex";
+import { mapActions } from "vuex";
 import AlignIcon from "../Icons/AlignIcon/AlignIcon.vue";
 import EscrButton from "../Button/Button.vue";
 import ExportIcon from "../Icons/ExportIcon/ExportIcon.vue";
@@ -108,11 +108,6 @@ export default {
             type: Object,
             required: true,
         },
-    },
-    computed: {
-        ...mapState({
-            modalOpen: (state) => state.tasks.modalOpen,
-        }),
     },
     methods: {
         ...mapActions("tasks", [

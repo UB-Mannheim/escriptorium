@@ -40,6 +40,7 @@ export default {
                     "tertiary",
                     "danger",
                     "text",
+                    "text-alt",
                     "link-primary",
                     "link-secondary",
                     "outline-primary",
@@ -98,7 +99,9 @@ export default {
                 [`escr-button--${this.color}`]: true,
                 [`escr-button--${this.size}`]: true,
                 "escr-button--round": this.round,
-                "escr-button--icon-only": !this.label && this.$slots["button-icon"],
+                "escr-button--icon-only": !this.label && (
+                    this.$slots["button-icon"] || this.$slots["button-icon-right"]
+                ),
             };
         },
     },

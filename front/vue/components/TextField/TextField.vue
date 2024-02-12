@@ -10,6 +10,7 @@
             >*</span>
         </span>
         <input
+            v-if="!textarea"
             type="text"
             :placeholder="placeholder"
             :aria-label="label"
@@ -20,6 +21,17 @@
             :invalid="invalid"
             @input="onInput"
         >
+        <textarea
+            v-else
+            :placeholder="placeholder"
+            :aria-label="label"
+            :value="value"
+            :disabled="disabled"
+            :name="name"
+            :maxlength="maxLength"
+            :invalid="invalid"
+            @input="onInput"
+        />
         <span
             v-if="helpText"
             class="escr-help-text"
@@ -101,6 +113,13 @@ export default {
         maxLength: {
             type: Number,
             default: undefined,
+        },
+        /**
+         * Whether or not the input should be a textarea (as opposed to input type="text").
+         */
+        textarea: {
+            type: Boolean,
+            default: false,
         },
         /**
          * Current value.
