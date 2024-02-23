@@ -186,6 +186,8 @@ const actions = {
                     commit("setLoading", { key: "images", loading: false });
                     dispatch("alerts/addError", error, { root: true });
                 }
+            } else {
+                commit("setLoading", { key: "images", loading: false });
             }
         } else {
             commit("setLoading", { key: "document", loading: false });

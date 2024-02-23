@@ -42,7 +42,7 @@
                 <div class="escr-images-toolbar">
                     <div class="escr-toolbar-left">
                         <span
-                            v-if="!loading.document"
+                            v-if="!loading.document && parts && parts.length"
                             class="escr-parts-count"
                         >
                             {{
@@ -58,7 +58,7 @@
                             no-data-message="0 images"
                         />
                         <TextField
-                            :disabled="loading && loading.images"
+                            :disabled="(loading && loading.images) || !parts.length"
                             :on-input="onSearch"
                             :label-visible="false"
                             :value="textFilter"
@@ -76,7 +76,7 @@
                                 theme: 'escr-tooltip-small',
                                 placement: 'top-end',
                             }"
-                            :disabled="loading && loading.images"
+                            :disabled="(loading && loading.images) || !parts.length"
                             :on-input="onRangeInput"
                             :invalid="!!rangeValidationError"
                             :label-visible="false"
@@ -98,7 +98,7 @@
                                 color="secondary"
                                 label="Reorder"
                                 :checked="isReorderMode"
-                                :disabled="loading && loading.images"
+                                :disabled="(loading && loading.images) || !parts.length"
                                 :on-change="() => isReorderMode = !isReorderMode"
                             >
                                 <template #button-icon>
