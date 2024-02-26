@@ -54,7 +54,7 @@
                         <EscrLoader
                             v-else
                             class="escr-parts-count"
-                            :loading="loading && loading.document"
+                            :loading="loading && (loading.document || loading.images)"
                             no-data-message="0 images"
                         />
                         <TextField
@@ -62,8 +62,8 @@
                             :on-input="onSearch"
                             :label-visible="false"
                             :value="textFilter"
-                            label="Search to filter images"
-                            placeholder="Search"
+                            label="Search to filter images by element name"
+                            placeholder="Search element name"
                         />
                     </div>
                     <div class="escr-toolbar-right">
