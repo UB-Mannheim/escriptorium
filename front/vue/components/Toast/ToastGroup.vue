@@ -11,6 +11,7 @@
             :action-link="toast.actionLink"
             :delay="toast.delay"
             :color="toast.color"
+            :count="toast.count"
             :message="toast.message"
             :on-close="() => remove(toast)"
         />

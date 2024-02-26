@@ -2,14 +2,18 @@
 const state = () => ({
     /**
      * alerts: [{
+     *     actionLabel?: String,
+     *     actionLink?: String,
      *     color: String,
+     *     count?: Number,
+     *     delay?: Number,
      *     message: String,
      *     id: Number,
      * }]
      */
     alerts: [],
     // a counter of all alerts that have been created, to give each a unique id
-    count: 0,
+    idCounter: 0,
 });
 const actions = {
     add({ _, commit }, alert) {
@@ -56,8 +60,19 @@ const mutations = {
      * Add an alert to the list, giving it an id from the current counter
      */
     addAlert: (state, alert) => {
-        state.alerts.push({ ...alert, id: state.count });
-        state.count += 1;
+        const foundIndex = state.alerts.findIndex((a) => a.message === alert.message);
+        if (foundIndex !== -1) {
+            // if we already have an alert with this message, just update its count
+            const foundAlert = state.alerts[foundIndex];
+            foundAlert.count += 1;
+            const alertsClone = structuredClone(state.alerts);
+            alertsClone[foundIndex] = foundAlert;
+        } else {
+            // otherwise, add it, set its count to 1, and add 1 to idCounter
+            state.alerts.push({ ...alert, id: state.idCounter, count: 1 });
+            state.idCounter += 1;
+        }
+
     },
     /**
      * Remove an alert from the list, by id.

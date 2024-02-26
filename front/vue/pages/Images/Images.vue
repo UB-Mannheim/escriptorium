@@ -789,6 +789,7 @@ export default {
             "deleteSelectedParts",
             "fetchDocument",
             "fetchNextPage",
+            "fetchParts",
             "handleSubmitAlign",
             "handleSubmitExport",
             "handleSubmitSegmentation",
@@ -969,7 +970,18 @@ export default {
             if (
                 data.type === "event" && taskEvents.some((task) => data.name.startsWith(task))
             ) {
-                this.updatePartTaskStatus(data?.data);
+                this.updatePartTaskStatus(data.data);
+            }
+            // update images on import progress
+            if (data.name === "import:progress" || data.name === "import:done") {
+                this.setLoading({ key: "images", loading: true });
+                try {
+                    await this.fetchParts();
+                    this.setLoading({ key: "images", loading: false });
+                } catch (error) {
+                    this.setLoading({ key: "images", loading: false });
+                    this.addError(error);
+                }
             }
         },
     },

@@ -290,7 +290,6 @@ const actions = {
      */
     async handleSubmitSegmentation({ commit, dispatch, rootState }) {
         try {
-            commit("setLoading", { key: "images", loading: true });
             await dispatch("document/handleSubmitSegmentation", null, {
                 root: true,
             });

@@ -737,6 +737,7 @@ const actions = {
     async handleSubmitImport({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
+            const importMode = rootState?.forms?.import?.mode;
             await dispatch("tasks/importImagesOrTranscription", state.id, {
                 root: true,
             });
@@ -744,7 +745,6 @@ const actions = {
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
-            const importMode = rootState?.forms?.import?.mode;
             dispatch(
                 "alerts/add",
                 {
@@ -752,7 +752,8 @@ const actions = {
                     message:
                         importMode === "images"
                             ? "Images imported successfully"
-                            : "Import queued successfully",
+                            : "Import queued successfully. It may take time for images to appear.",
+                    delay: 4000,
                 },
                 { root: true },
             );
