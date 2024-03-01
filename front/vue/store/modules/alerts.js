@@ -81,7 +81,9 @@ const mutations = {
         const { id } = alert;
         if (id || id === 0) {
             const index = state.alerts.findIndex((a) => a.id === id);
-            state.alerts.splice(index, 1);
+            if (index !== -1) {
+                state.alerts.splice(index, 1);
+            }
         }
     },
 };
