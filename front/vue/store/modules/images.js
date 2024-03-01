@@ -200,31 +200,24 @@ const actions = {
      * Fetch the next page of images, retrieved from fetchImages, and add
      * all of its projects on the state.
      */
-    async fetchNextPage({ state, commit, dispatch, rootState }) {
-        commit("setLoading", { key: "images", loading: true });
-        try {
-            const { data } = await axios.get(state.nextPage);
-            if (data?.results) {
-                data.results.forEach((part) => {
-                    commit(
-                        "document/addPart",
-                        {
-                            ...part,
-                            title: `${part.title} - ${part.filename}`,
-                            thumbnail: part.image?.thumbnails?.card,
-                            href: `/document/${rootState.document.id}/part/${part.pk}/edit/`,
-                        },
-                        { root: true },
-                    );
-                });
-                commit("setNextPage", data.next || "");
-            } else {
-                throw new Error("Unable to retrieve additional images");
-            }
-            commit("setLoading", { key: "images", loading: false });
-        } catch (error) {
-            commit("setLoading", { key: "images", loading: false });
-            dispatch("alerts/addError", error, { root: true });
+    async fetchNextPage({ state, commit, rootState }) {
+        const { data } = await axios.get(state.nextPage);
+        if (data?.results) {
+            data.results.forEach((part) => {
+                commit(
+                    "document/addPart",
+                    {
+                        ...part,
+                        title: `${part.title} - ${part.filename}`,
+                        thumbnail: part.image?.thumbnails?.card,
+                        href: `/document/${rootState.document.id}/part/${part.pk}/edit/`,
+                    },
+                    { root: true },
+                );
+            });
+            commit("setNextPage", data.next || "");
+        } else {
+            throw new Error("Unable to retrieve additional images");
         }
     },
     /**

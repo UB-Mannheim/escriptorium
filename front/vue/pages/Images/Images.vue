@@ -832,16 +832,33 @@ export default {
             this.rangeValidationError = error;
             if (!error) {
                 // fetch more pages if needed
-                while (this.nextPage && (
-                    // more items selected than are loaded
-                    selected.length > this.parts.length ||
-                    // specific items are selected that have not been loaded
-                    selected.some((order) => !this.parts.find((p) => p.order === order))
-                )) {
-                    await this.fetchNextPage();
+                let failureCount = 0;
+                this.setLoading({ key: "images", loading: true });
+                while (this.nextPage &&
+                    (
+                        // more items selected than are loaded
+                        selected.length > this.parts.length ||
+                        // specific items are selected that have not been loaded
+                        selected.some((order) => !this.parts.find((p) => p.order === order))
+                    ) &&
+                    failureCount < 5
+                ) {
+                    try {
+                        await this.fetchNextPage();
+                    } catch (error) {
+                        this.addError(error);
+                        failureCount += 1;
+                        // wait 1 second between attempts
+                        await new Promise((res) => setTimeout(res, 500));
+                    }
                 }
                 // set selected items on state
-                this.setSelectedPartsByOrder(selected);
+                if (failureCount < 5) {
+                    this.setSelectedPartsByOrder(selected);
+                } else {
+                    this.addError({ message: "Failed to fetch additional images" });
+                }
+                this.setLoading({ key: "images", loading: false });
             }
         },
         /**
@@ -900,12 +917,25 @@ export default {
          * Handler for clicking "select all"
          */
         async selectAll() {
+            let failureCount = 0;
             this.setLoading({ key: "images", loading: true });
-            while (this.nextPage) {
-                await this.fetchNextPage();
+            // max 5 attempts
+            while (this.nextPage && failureCount < 5) {
+                try {
+                    await this.fetchNextPage();
+                } catch (error) {
+                    this.addError(error);
+                    failureCount += 1;
+                    // wait 1 second between attempts
+                    await new Promise((res) => setTimeout(res, 500));
+                }
+            }
+            if (failureCount < 5) {
+                this.setSelectedParts(this.parts.map((part) => part.pk));
+            } else {
+                this.addError({ message: "Failed to fetch additional images" });
             }
             this.setLoading({ key: "images", loading: false });
-            this.setSelectedParts(this.parts.map((part) => part.pk));
         },
         /**
          * Handler for clicking "select none"
