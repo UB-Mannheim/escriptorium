@@ -125,7 +125,7 @@
                             color="secondary"
                             label="Move to top"
                             size="small"
-                            :on-click="() => moveSelectedParts(0)"
+                            :on-click="() => moveSelectedParts({ index: 0 })"
                         >
                             <template #button-icon>
                                 <MoveToTopIcon />
@@ -135,7 +135,7 @@
                             color="secondary"
                             label="Move to bottom"
                             size="small"
-                            :on-click="() => moveSelectedParts(-1)"
+                            :on-click="() => moveSelectedParts({ index: -1 })"
                         >
                             <template #button-icon>
                                 <MoveToBottomIcon />

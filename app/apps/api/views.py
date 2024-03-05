@@ -48,6 +48,7 @@ from api.serializers import (
     LineTranscriptionSerializer,
     LineTypeSerializer,
     OcrModelSerializer,
+    PartBulkMoveSerializer,
     PartDetailSerializer,
     PartMoveSerializer,
     PartSerializer,
@@ -610,6 +611,20 @@ class DocumentViewSet(ModelViewSet):
         document.save()
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def bulk_move_parts(self, request, pk=None):
+        # move multiple parts
+        data = request.data
+        # we pass parts in POST data since this is on a Document
+        part_pks = data.pop("parts")
+        parts = DocumentPart.objects.filter(document=pk, pk__in=part_pks).order_by("order")
+        serializer = PartBulkMoveSerializer(parts=parts, data=data)
+        if serializer.is_valid() and parts.count():
+            serializer.bulk_move()
+            return Response({'status': 'moved'})
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TaskReportViewSet(ModelViewSet):

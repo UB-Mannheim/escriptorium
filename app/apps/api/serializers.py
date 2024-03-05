@@ -167,6 +167,35 @@ class PartMoveSerializer(serializers.ModelSerializer):
         self.part.to(self.validated_data['index'])
 
 
+class PartBulkMoveSerializer(serializers.ModelSerializer):
+    index = serializers.IntegerField()
+
+    class Meta:
+        model = DocumentPart
+        fields = ('index',)
+
+    def __init__(self, *args, parts=None, **kwargs):
+        self.parts = parts
+        super().__init__(*args, **kwargs)
+
+    def bulk_move(self):
+        oq = self.parts.first().get_ordering_queryset()
+        # construct full parts list without the selected parts, but maintain indices
+        reordered = [None if part in self.parts else part for part in oq]
+        idx = self.validated_data['index']
+        if idx == -1:
+            # index of -1 means move to the end
+            idx = oq.count()
+        # insert correctly-ordered selected parts at the new index
+        reordered[idx:idx] = list(self.parts)
+        # filter all the Nones out
+        reordered = list(filter(lambda item: item is not None, reordered))
+        # store the new orders
+        for (idx, p) in enumerate(reordered):
+            p.order = idx
+        DocumentPart.objects.bulk_update(reordered, ["order"])
+
+
 class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transcription

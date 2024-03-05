@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+    bulkMoveParts,
     deleteDocumentPart,
     moveDocumentPart,
     retrieveDocument,
@@ -348,15 +349,23 @@ const actions = {
     },
     /**
      * Move the selected images to the specified index.
-     * if index is -1, move to the end of the list of parts.
+     * (if index is -1, move to the end of the list of parts.)
      */
-    async moveSelectedParts({ dispatch }) {
-        // TODO: Implement when we have bulk move backend.
-        dispatch(
-            "alerts/addError",
-            { message: "Not implemented" },
-            { root: true },
-        );
+    async moveSelectedParts({ commit, dispatch, rootState, state }, { index }) {
+        commit("setLoading", { key: "images", loading: true });
+        try {
+            await bulkMoveParts({
+                documentId: rootState.document.id,
+                parts: state.selectedParts,
+                index,
+            });
+            await dispatch("fetchParts");
+            commit("setSelectedParts", []);
+            commit("setLoading", { key: "images", loading: false });
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
     },
     /**
      * Move a single image to the specified index.
@@ -397,9 +406,12 @@ const actions = {
     /**
      * Submit the move modal
      */
-    async onSubmitMove({ commit, dispatch }) {
-        // TODO: Implement when we have bulk move backend.
-        await dispatch("moveSelectedParts");
+    async onSubmitMove({ commit, dispatch, rootState }) {
+        // get form state: index and whether it's before/after that index
+        const { index, location } = rootState.forms.moveImages;
+        const idx = location === "before" ? index - 1 : index;
+        // move
+        await dispatch("moveSelectedParts", { index: idx });
         commit("setMoveModalOpen", false);
         dispatch("forms/clearForm", "moveImages", { root: true });
     },

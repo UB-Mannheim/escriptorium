@@ -424,7 +424,7 @@ export default {
     methods: {
         ...mapActions("alerts", ["addError"]),
         ...mapActions("tasks", ["openModal"]),
-        ...mapActions("images", ["movePart", "openDeleteModal"]),
+        ...mapActions("images", ["movePart", "moveSelectedParts", "openDeleteModal"]),
         ...mapMutations("images", ["setSelectedParts", "setIsDragging"]),
         /**
          * Handler for opening a task modal on one image from context menu
@@ -505,24 +505,18 @@ export default {
          * component and store states.
          */
         async handleDrop(e, idx) {
-            // TODO: perform the actual reordering here. incorporate multi-select reordering
-            // when backend available
             const draggingPk = parseInt(e.dataTransfer.getData("draggingPk"));
             const oldIndex = parseInt(e.dataTransfer.getData("draggingOrder"));
+            // determine the index to move to
+            let newIndex = idx === -1 ? this.part.order : this.part.order + 1;
+            if (this.selectedParts.length <= 1 && oldIndex < newIndex) {
+                newIndex--;
+            }
             if (this.selectedParts.length > 1 && this.selectedParts.includes(draggingPk)) {
-                this.addError({ message: `${this.selectedParts.length} elements will move ${
-                    idx === -1 ? "before": "after"
-                } image #${this.part.order + 1}. Not yet implemented.`});
-            } else if (draggingPk !== this.part.pk) {
-                // determine the index to move to
-                let newIndex = idx === -1 ? this.part.order : this.part.order + 1;
-                if (oldIndex < newIndex) {
-                    newIndex--;
-                }
+                await this.moveSelectedParts({ index: newIndex });
+            } else if (draggingPk !== this.part.pk && oldIndex !== newIndex) {
                 // if not moving, don't bother making the API request
-                if (oldIndex !== newIndex) {
-                    await this.movePart({ partPk: draggingPk, index: newIndex });
-                }
+                await this.movePart({ partPk: draggingPk, index: newIndex });
             }
 
             this.isBeingDragged = false;

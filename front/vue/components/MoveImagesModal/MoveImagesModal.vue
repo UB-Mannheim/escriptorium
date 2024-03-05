@@ -60,7 +60,7 @@
                 />
                 <template #popper>
                     Position is required and must be between 1 and
-                    {{ selectedParts.length.toString() }}
+                    {{ partsCount.toString() }}
                 </template>
             </VDropdown>
             <EscrButton
@@ -141,7 +141,8 @@ export default {
          * Invalid if no index or index out of bounds
          */
         invalid() {
-            return !parseInt(this.index) || parseInt(this.index) > this.partsCount.length;
+            const idx = parseInt(this.index);
+            return !idx || idx > this.partsCount.length || idx < 1;
         },
     },
     methods: {

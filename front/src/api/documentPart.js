@@ -49,3 +49,10 @@ export const moveDocumentPart = async ({ documentId, partId, index }) =>
     await axios.post(`/documents/${documentId}/parts/${partId}/move/`, {
         index,
     });
+
+// move multiple document parts
+export const bulkMoveParts = async ({ documentId, parts, index }) =>
+    await axios.post(`/documents/${documentId}/bulk_move_parts/`, {
+        parts,
+        index,
+    });
