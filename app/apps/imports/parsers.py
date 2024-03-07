@@ -1277,10 +1277,12 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
                 )
         elif METSProcessor.NAMESPACES["mets"] in schemas:
             return METSRemoteParser(document, file_handler, report, root, mets_base_uri, transcription_name=name)
+        elif "OAI" in schema:
+            return METSRemoteParser(document, file_handler, report, root, mets_base_uri, transcription_name=name)
 
         else:
             raise ParseError(
-                "Couldn't determine xml schema, check the content of the root tag."
+                "Couldn't determine xml schema, check the content of the root tag." + schema
             )
     elif ext == "json":
         return IIIFManifestParser(document, file_handler, report)
