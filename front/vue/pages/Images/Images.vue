@@ -81,7 +81,8 @@
                                 content: rangeValidationError,
                                 html: true,
                                 shown: !!rangeValidationError,
-                                triggers: ['focus'],
+                                triggers: [],
+                                noAutoFocus: true,
                                 theme: 'escr-tooltip-small',
                                 placement: 'top-end',
                             }"
