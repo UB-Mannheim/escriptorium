@@ -1109,6 +1109,12 @@ const mutations = {
             (metadatum) => metadatum.pk.toString() !== removePk.toString(),
         );
     },
+    removePart(state, removePk) {
+        const clone = structuredClone(state.parts);
+        state.parts = clone.filter(
+            (part) => part.pk.toString() !== removePk.toString(),
+        );
+    },
     setDeleteModalOpen(state, open) {
         state.deleteModalOpen = open;
     },

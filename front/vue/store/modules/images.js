@@ -248,6 +248,75 @@ const actions = {
         }
     },
     /**
+     * Fetch all images currently loaded, and update if any have changed.
+     * Use the optional "fields" param to specify fields; otherwise only checks order.
+     */
+    async fetchUpdatedParts({ commit, rootState }, fields = ["order"]) {
+        // figure out how many parts are loaded now
+        const partsToLoadCount = rootState.document.parts.length;
+        const loops = Math.ceil(partsToLoadCount / 50);
+        const allResultParts = [];
+        let nextPage = null;
+        // loop only as many times as necessary to reach that number
+        for (let i = 0; i < loops; i++) {
+            let data = null;
+            if (i === 0) {
+                // first loop: fetch first page
+                const res = await retrieveDocumentParts({
+                    documentId: rootState.document.id,
+                    field: "order",
+                    direction: 1,
+                    pageSize: 50,
+                });
+                data = res.data;
+            } else if (nextPage) {
+                // fetch next page on subsequent loops
+                const res = await axios.get(nextPage);
+                data = res.data;
+            }
+            if (data?.results) {
+                const resultParts = data.results.map((part) => ({
+                    ...part,
+                    title: `${part.title} - ${part.filename}`,
+                    thumbnail: part.image?.thumbnails?.card,
+                    href: `/document/${rootState.document.id}/part/${part.pk}/edit/`,
+                }));
+                // find new or changed parts for add/update operation
+                resultParts.forEach((part) => {
+                    const foundPart = rootState.document.parts.find(
+                        (p) => p.pk.toString() === part.pk.toString(),
+                    );
+                    // check for changes on specified field(s)
+                    if (
+                        foundPart &&
+                        fields.some((field) => foundPart[field] !== part[field])
+                    ) {
+                        commit("document/updatePart", part, { root: true });
+                    } else if (!foundPart) {
+                        // if the part isn't present at all, add it. this could happen
+                        // if a part is moved to the bottom of the list and not all
+                        // parts have been loaded
+                        commit("document/addPart", part, { root: true });
+                    }
+                });
+                // store all parts for final comparison
+                allResultParts.push(...resultParts);
+                // set next page
+                nextPage = data.next || "";
+            }
+        }
+        // remove from state any parts that should no longer be visible
+        const toRemove = rootState.document.parts.filter(
+            (p) =>
+                !allResultParts.some(
+                    (part) => p.pk.toString() === part.pk.toString(),
+                ),
+        );
+        toRemove.forEach((part) =>
+            commit("document/removePart", part.pk, { root: true }),
+        );
+    },
+    /**
      * Handle submitting the align modal.
      */
     async handleSubmitAlign({ commit, dispatch }) {
@@ -359,7 +428,7 @@ const actions = {
                 parts: state.selectedParts,
                 index,
             });
-            await dispatch("fetchParts");
+            await dispatch("fetchUpdatedParts");
             commit("setSelectedParts", []);
             commit("setLoading", { key: "images", loading: false });
         } catch (error) {
@@ -378,7 +447,7 @@ const actions = {
                 partId: partPk,
                 index,
             });
-            await dispatch("fetchParts");
+            await dispatch("fetchUpdatedParts");
             commit("setSelectedParts", []);
             commit("setLoading", { key: "images", loading: false });
         } catch (error) {
