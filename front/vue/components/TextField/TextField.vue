@@ -32,6 +32,7 @@
             :maxlength="maxLength"
             :invalid="invalid"
             @input="onInput"
+            @keydown="onKeydown"
         >
         <textarea
             v-else
@@ -43,6 +44,7 @@
             :maxlength="maxLength"
             :invalid="invalid"
             @input="onInput"
+            @keydown="onKeydown"
         />
         <span
             v-if="helpText"
@@ -68,6 +70,13 @@ export default {
         onInput: {
             type: Function,
             required: true,
+        },
+        /**
+         * Event handler for pressing a key
+         */
+        onKeydown: {
+            type: Function,
+            default: () => {},
         },
         /**
          * Placeholder text (optional)

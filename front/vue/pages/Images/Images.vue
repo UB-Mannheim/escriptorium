@@ -60,10 +60,19 @@
                         <TextField
                             :disabled="(loading && loading.images) || !parts.length"
                             :on-input="onSearch"
+                            :on-keydown="onSearchKeydown"
                             :label-visible="false"
-                            :value="textFilter"
+                            :value="textFilterValue"
+                            class="search-text-field"
                             label="Search to filter images by element name"
                             placeholder="Search element name"
+                        />
+                        <EscrButton
+                            color="secondary"
+                            label="Search"
+                            size="small"
+                            :disabled="(loading && loading.images) || !parts.length"
+                            :on-click="onSubmitSearch"
                         />
                     </div>
                     <div class="escr-toolbar-right">
@@ -304,7 +313,7 @@
                             :is-draggable="isReorderMode"
                         />
                         <li
-                            v-if="filteredParts.length < parts.length"
+                            v-if="filteredParts.length < parts.length || parts.length < partsCount"
                             class="not-shown"
                             dir="ltr"
                         >
@@ -328,6 +337,10 @@
                                     <XCircleFilledIcon />
                                 </template>
                             </EscrButton>
+                            <span v-if="parts.length < partsCount">
+                                Only searching the first {{ parts.length }} images;
+                                click "Load More" below to include the rest.
+                            </span>
                         </li>
                     </ul>
                     <EscrButton
@@ -611,6 +624,7 @@ export default {
             rangeInputValue: "",
             rangeRegex: /^\d+((,|-)\d+)*$/g,
             textFilter: "",
+            textFilterValue: "",
         }
     },
     computed: {
@@ -865,7 +879,20 @@ export default {
          * Handle search to filter
          */
         onSearch(e) {
-            this.textFilter = e.target.value;
+            this.textFilterValue = e.target.value;
+        },
+        /**
+         * Handle pressing enter in the search filter
+         */
+        async onSearchKeydown(e) {
+            if (e.key === "Enter") await this.onSubmitSearch();
+        },
+        /**
+         * Handle submitting search filter
+         */
+        async onSubmitSearch() {
+            await this.loadAll();
+            this.textFilter = this.textFilterValue;
         },
         /**
          * Handle the checkbox input to select/deselect parts
@@ -914,13 +941,13 @@ export default {
             this.contextMenuOpen = pk;
         },
         /**
-         * Handler for clicking "select all"
+         * Load all remaining images
          */
-        async selectAll() {
+        async loadAll(callback = () => {}, maxRetries = 5) {
             let failureCount = 0;
             this.setLoading({ key: "images", loading: true });
             // max 5 attempts
-            while (this.nextPage && failureCount < 5) {
+            while (this.nextPage && failureCount < maxRetries) {
                 try {
                     await this.fetchNextPage();
                 } catch (error) {
@@ -930,12 +957,18 @@ export default {
                     await new Promise((res) => setTimeout(res, 500));
                 }
             }
-            if (failureCount < 5) {
-                this.setSelectedParts(this.parts.map((part) => part.pk));
+            if (failureCount < maxRetries) {
+                callback();
             } else {
                 this.addError({ message: "Failed to fetch additional images" });
             }
             this.setLoading({ key: "images", loading: false });
+        },
+        /**
+         * Handler for clicking "select all"
+         */
+        async selectAll() {
+            await this.loadAll(() => this.setSelectedParts(this.parts.map((part) => part.pk)));
         },
         /**
          * Handler for clicking "select none"
