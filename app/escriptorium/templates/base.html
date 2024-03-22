@@ -169,7 +169,7 @@
     {% endif %}
 
     <main><section>
-    <div id="main" class="container-fluid">
+    <div id="main" class="container-fluid{% if not request.user.legacy_mode %} escr-vue{% endif %}">
     {% block body %}
     {% endblock body %}
     </div>

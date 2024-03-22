@@ -674,9 +674,6 @@ export default {
         ...mapActions("tasks", {
             cancelTask: "cancel",
             closeTaskModal: "closeModal",
-            align: "alignDocument",
-            transcribe: "transcribeDocument",
-            export: "exportDocument",
         }),
         navigateToImages() {
             if (this.id) {
