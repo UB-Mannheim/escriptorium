@@ -5,6 +5,8 @@ import {
     exportDocument,
     queueImport,
     segmentDocument,
+    trainRecognizerModel,
+    trainSegmenterModel,
     transcribeDocument,
 } from "../../../src/api";
 import initialFormState from "../util/initialFormState";
@@ -20,6 +22,8 @@ const state = () => ({
         overwriteWarning: false,
         segment: false,
         transcribe: false,
+        trainSegmenter: false,
+        trainRecognizer: false,
     },
     selectedTask: undefined,
 });
@@ -31,7 +35,7 @@ const actions = {
      * Queue the alignment task for a document, passing in the correct type of witness
      * (selected existing or upload), and the correct choice of beam size or max offset.
      */
-    async alignDocument({ rootState }, documentId) {
+    async alignDocument({ rootState }, { documentId, parts }) {
         if (rootState?.forms?.align) {
             const witness =
                 rootState.forms.align.textualWitnessType === "select"
@@ -50,6 +54,7 @@ const actions = {
                 regionTypes: rootState.forms.align.regionTypes,
                 threshold: rootState.forms.align.threshold,
                 transcription: rootState.forms.align.transcription,
+                parts,
                 ...beamOrOffset,
                 ...witness,
             });
@@ -97,17 +102,20 @@ const actions = {
      */
     closeModal({ commit, dispatch, rootState }, key) {
         commit("setModalOpen", { key, open: false });
-        if (Object.hasOwnProperty.call(initialFormState, key)) {
-            dispatch("forms/clearForm", key, { root: true });
+        let form = key;
+        // ensure training forms are cleared (different modals that share a key)
+        if (key.startsWith("train")) form = "train";
+        if (Object.hasOwnProperty.call(initialFormState, form)) {
+            dispatch("forms/clearForm", form, { root: true });
             // when clearing forms with regionTypes, ensure default (all types selected)
             // is set if possible
             if (
-                Object.hasOwnProperty.call(initialFormState[key], "regionTypes")
+                Object.hasOwnProperty.call(initialFormState[form], "regionTypes")
             ) {
                 commit(
                     "forms/setFieldValue",
                     {
-                        form: key,
+                        form,
                         field: "regionTypes",
                         value:
                             rootState?.document?.regionTypes?.map((rt) =>
@@ -122,13 +130,14 @@ const actions = {
     /**
      * Queue the export task for a document.
      */
-    async exportDocument({ rootState }, documentId) {
+    async exportDocument({ rootState }, { documentId, parts }) {
         await exportDocument({
             documentId,
             regionTypes: rootState?.forms?.export?.regionTypes,
             fileFormat: rootState?.forms?.export?.fileFormat,
             transcription: rootState?.forms?.export?.transcription,
             includeImages: rootState?.forms?.export?.includeImages,
+            parts,
         });
     },
     /**
@@ -191,7 +200,7 @@ const actions = {
     /**
      * Queue the segmentation task for a document.
      */
-    async segmentDocument({ rootState }, documentId) {
+    async segmentDocument({ rootState }, { documentId, parts }) {
         // segmentation steps should be "both", "regions", or "lines"
         const steps =
             rootState?.forms?.segment?.include?.length === 2
@@ -202,6 +211,7 @@ const actions = {
             override: rootState?.forms?.segment?.overwrite,
             model: rootState?.forms?.segment?.model,
             steps,
+            parts,
         });
     },
     /**
@@ -211,9 +221,29 @@ const actions = {
         commit("setSelectedTask", task.pk);
     },
     /**
+     * Queue the model training task.
+     */
+    async trainModel({ rootState }, { documentId, parts, modelType }) {
+        const params = {
+            documentId,
+            model: rootState?.forms?.train?.model,
+            modelName: rootState?.forms?.train?.modelName,
+            override: rootState?.forms?.train?.override,
+            parts,
+        };
+        if (modelType === "recognizer") {
+            await trainRecognizerModel({
+                ...params,
+                transcription: rootState?.forms?.train?.transcription,
+            });
+        } else if (modelType === "segmenter") {
+            await trainSegmenterModel(params);
+        }
+    },
+    /**
      * Queue the transcription task for a document.
      */
-    async transcribeDocument({ rootState }, documentId) {
+    async transcribeDocument({ rootState }, { documentId, parts }) {
         // first, create a transcription layer by POSTing the name to the endpoint
         const { data } = await createTranscriptionLayer({
             documentId,
@@ -226,6 +256,7 @@ const actions = {
                 documentId,
                 model: rootState?.forms?.transcribe?.model,
                 transcription,
+                parts,
             });
         } else {
             throw new Error("Unable to create transcription layer.");

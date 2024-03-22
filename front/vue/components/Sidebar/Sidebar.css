@@ -22,6 +22,11 @@
 /* individual sidebar button */
 .escr-sidebar-button {
     cursor: pointer;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
     border: none;
     font: inherit;
     font-size: 10px;
@@ -41,13 +46,13 @@
 .escr-sidebar-button:active,
 .escr-sidebar-button--selected {
     background-color: var(--secondary);
-    color: var(--background1);
-    fill: var(--background1);
+    color: var(--button-text);
+    fill: var(--button-text);
 }
 .escr-sidebar-button--selected:hover {
     background-color: var(--secondary-dark);
-    color: var(--background1);
-    fill: var(--background1);
+    color: var(--button-text);
+    fill: var(--button-text);
 }
 .escr-sidebar-button--selected:active {
     background-color: var(--secondary-darker);

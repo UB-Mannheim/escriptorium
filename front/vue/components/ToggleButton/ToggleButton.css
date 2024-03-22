@@ -56,7 +56,6 @@
 .escr-toggle-button--active-danger:hover {
     background-color: var(--alert-dark);
 }
-
 /* disabled state */
 .escr-toggle-button:disabled,
 .escr-toggle-button--disabled {

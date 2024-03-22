@@ -9,6 +9,11 @@
     --primary-dark: #229082;
     --primary-darker: #1e8174;
     --primary-focus: rgb(40 166 150 / 50%);
+    --secondary: #1761b5;
+    --secondary-dark: #14549d;
+    --secondary-darker: #114b8d;
+    --secondary-focus: rgb(23 97 181 / 50%);
+    --secondary-hover: rgb(23 97 181 / 20%);
     --tertiary-dark: #2c41fb;
     --tertiary-darker: #0f26fa;
     --tertiary-focus: rgb(88 105 252 / 50%);
@@ -18,6 +23,11 @@
     --at-risk-light: #FFAB004C;;
     /* text on all filled buttons */
     --button-text: #ffffff;
+
+    /* task colors */
+    --initiated: #f2c94c;
+    --in-progress: #1761b5;
+    --completed: #219653;
 
     /* tag colors */
     --tag-0: #c6c4c4;
@@ -78,17 +88,12 @@
     --sidebar-backdrop-z: 9;
     --sidebar-container-z: 10;
     --sidebar-z: 11;
-    --modal-backdrop-z: 12;
-    --modal-z: 13;
-    --toast-z: 14;
+    --menu-z: 12;
+    --modal-backdrop-z: 13;
+    --modal-z: 14;
+    --toast-z: 15;
 }
 .light-mode {
-    /* button colors */
-    --secondary: #1761b5;
-    --secondary-dark: #14549d;
-    --secondary-darker: #114b8d;
-    --secondary-focus: rgb(23 97 181 / 50%);
-    --secondary-hover: rgb(23 97 181 / 20%);
     /* light mode backgrounds */
     --background: #f0f0f0;
     --background1: #ffffff;
@@ -106,12 +111,6 @@
     --toast-text: #ffffff;
 }
 .dark-mode {
-    /* button colors */
-    --secondary: #4f96e8;
-    --secondary-dark: #2b80e3;
-    --secondary-darker: #1c72d6;
-    --secondary-focus: rgb(79 150 232 / 50%);
-    --secondary-hover: rgb(79 150 232 / 20%);
     /* dark mode backgrounds */
     --background: #212323;
     --background1: #2f3132;
@@ -136,6 +135,8 @@
     flex-flow: row nowrap;
     align-items: stretch;
     height: 100vh;
+    overflow-y: hidden;
+    max-height: 100vh;
 }
 .escr-body main {
     max-height: 100vh;
@@ -147,7 +148,7 @@
     color: var(--text1);
     min-height: 100vh;
 }
-.escr-page,
+.escr-page:not(#editor),
 main:has(.escr-vue-enabled):not(:has(.escr-page)) {
     padding: 16px 32px;
 }
@@ -225,6 +226,7 @@ main:has(.escr-vue-enabled):not(:has(.escr-page)) {
 .escr-body .v-popper__popper .v-popper__arrow-outer {
     border-color: var(--background1);
 }
+
 /* global nav layout styles */
 #vue-global-nav {
     height: 100vh;

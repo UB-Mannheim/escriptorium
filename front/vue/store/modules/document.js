@@ -252,10 +252,17 @@ const actions = {
     /**
      * Handle the user overwriting existing segmentation
      */
-    async confirmOverwriteWarning({ commit, dispatch, state }) {
+    async confirmOverwriteWarning({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
-            await dispatch("tasks/segmentDocument", state.id, { root: true });
+            await dispatch(
+                "tasks/segmentDocument",
+                {
+                    documentId: state.id,
+                    parts: rootState.images.selectedParts || [],
+                },
+                { root: true },
+            );
             dispatch("tasks/closeModal", "overwriteWarning", { root: true });
             dispatch("tasks/closeModal", "segment", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
@@ -665,10 +672,17 @@ const actions = {
     /**
      * Handle submitting the alignment modal. Queue the task and close the modal.
      */
-    async handleSubmitAlign({ commit, dispatch, state }) {
+    async handleSubmitAlign({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
-            await dispatch("tasks/alignDocument", state.id, { root: true });
+            await dispatch(
+                "tasks/alignDocument",
+                {
+                    documentId: state.id,
+                    parts: rootState.images.selectedParts || [],
+                },
+                { root: true },
+            );
             dispatch("tasks/closeModal", "align", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             commit("setLoading", { key: "document", loading: false });
@@ -689,10 +703,17 @@ const actions = {
     /**
      * Handle submitting the export modal. Queue the task and close the modal.
      */
-    async handleSubmitExport({ commit, dispatch, state }) {
+    async handleSubmitExport({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
-            await dispatch("tasks/exportDocument", state.id, { root: true });
+            await dispatch(
+                "tasks/exportDocument",
+                {
+                    documentId: state.id,
+                    parts: rootState.images.selectedParts || [],
+                },
+                { root: true },
+            );
             dispatch("tasks/closeModal", "export", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             commit("setLoading", { key: "document", loading: false });
@@ -716,6 +737,7 @@ const actions = {
     async handleSubmitImport({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
+            const importMode = rootState?.forms?.import?.mode;
             await dispatch("tasks/importImagesOrTranscription", state.id, {
                 root: true,
             });
@@ -723,7 +745,6 @@ const actions = {
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             commit("setLoading", { key: "document", loading: false });
             // show toast alert on success
-            const importMode = rootState?.forms?.import?.mode;
             dispatch(
                 "alerts/add",
                 {
@@ -731,7 +752,8 @@ const actions = {
                     message:
                         importMode === "images"
                             ? "Images imported successfully"
-                            : "Import queued successfully",
+                            : "Import queued successfully. It may take time for images to appear.",
+                    delay: 4000,
                 },
                 { root: true },
             );
@@ -755,9 +777,14 @@ const actions = {
         } else {
             commit("setLoading", { key: "document", loading: true });
             try {
-                await dispatch("tasks/segmentDocument", state.id, {
-                    root: true,
-                });
+                await dispatch(
+                    "tasks/segmentDocument",
+                    {
+                        documentId: state.id,
+                        parts: rootState.images.selectedParts || [],
+                    },
+                    { root: true },
+                );
                 dispatch("tasks/closeModal", "segment", { root: true });
                 // set default text direction for the segment form
                 commit(
@@ -792,12 +819,17 @@ const actions = {
     /**
      * Handle submitting the transcribe modal: just queue the task and close the modal.
      */
-    async handleSubmitTranscribe({ commit, dispatch, state }) {
+    async handleSubmitTranscribe({ commit, dispatch, rootState, state }) {
         try {
             commit("setLoading", { key: "document", loading: true });
-            await dispatch("tasks/transcribeDocument", state.id, {
-                root: true,
-            });
+            await dispatch(
+                "tasks/transcribeDocument",
+                {
+                    documentId: state.id,
+                    parts: rootState.images.selectedParts || [],
+                },
+                { root: true },
+            );
             dispatch("tasks/closeModal", "transcribe", { root: true });
             dispatch({ type: "sidebar/closeSidebar" }, { root: true });
             await dispatch("refreshTranscriptions");
@@ -1045,9 +1077,27 @@ const actions = {
             dispatch("alerts/addError", error, { root: true });
         }
     },
+    /**
+     * Update a part's workflow status.
+     */
+    updatePartTaskStatus({ commit, state }, { id, process, status }) {
+        if (id) {
+            const part = structuredClone(
+                state.parts.find((p) => p.pk.toString() === id.toString()),
+            );
+            if (part) {
+                part.workflow[process] =
+                    status === "canceled" ? "error" : status;
+                commit("updatePart", part);
+            }
+        }
+    },
 };
 
 const mutations = {
+    addPart(state, part) {
+        state.parts.push(part);
+    },
     addMetadatum(state, metadatum) {
         const metadata = structuredClone(state.metadata);
         metadata.push(metadatum);
@@ -1057,6 +1107,12 @@ const mutations = {
         const clone = structuredClone(state.metadata);
         state.metadata = clone.filter(
             (metadatum) => metadatum.pk.toString() !== removePk.toString(),
+        );
+    },
+    removePart(state, removePk) {
+        const clone = structuredClone(state.parts);
+        state.parts = clone.filter(
+            (part) => part.pk.toString() !== removePk.toString(),
         );
     },
     setDeleteModalOpen(state, open) {
@@ -1144,6 +1200,15 @@ const mutations = {
             return m;
         });
         state.metadata = metadata;
+    },
+    updatePart(state, partToUpdate) {
+        const parts = structuredClone(state.parts).map((p) => {
+            if (p.pk.toString() === partToUpdate.pk.toString()) {
+                return partToUpdate;
+            }
+            return p;
+        });
+        state.parts = parts;
     },
 };
 

@@ -113,10 +113,14 @@ export const retrieveDocumentParts = async ({
     documentId,
     field,
     direction,
+    pageSize,
 }) => {
     let params = {};
     if (field && direction) {
         params.ordering = getSortParam({ field, direction });
+    }
+    if (pageSize) {
+        params.paginate_by = pageSize;
     }
     return await axios.get(`/documents/${documentId}/parts/`, { params });
 };
@@ -201,11 +205,18 @@ export const shareDocument = async ({ documentId, group, user }) =>
     });
 
 // queue the segmentation task for this document
-export const segmentDocument = async ({ documentId, override, model, steps }) =>
+export const segmentDocument = async ({
+    documentId,
+    override,
+    model,
+    steps,
+    parts,
+}) =>
     await axios.post(`/documents/${documentId}/segment/`, {
         override,
         model,
         steps,
+        parts,
     });
 
 // queue the transcription task for this document
@@ -213,10 +224,12 @@ export const transcribeDocument = async ({
     documentId,
     model,
     transcription,
+    parts,
 }) =>
     await axios.post(`/documents/${documentId}/transcribe/`, {
         model,
         transcription,
+        parts,
     });
 
 // retrieve textual witnesses for use in alignment
@@ -238,6 +251,7 @@ export const alignDocument = async ({
     threshold,
     transcription,
     witnessFile,
+    parts,
 }) => {
     // need to use FormData to handle witness file upload
     const formData = new FormData();
@@ -255,6 +269,9 @@ export const alignDocument = async ({
     formData.append("threshold", threshold);
     formData.append("transcription", transcription);
     if (witnessFile) formData.append("witness_file", witnessFile);
+    if (parts?.length) {
+        parts.forEach((part) => formData.append("parts", part));
+    }
     const headers = { "Content-Type": "multipart/form-data" };
     return await axios.post(`/documents/${documentId}/align/`, formData, {
         headers,
@@ -268,12 +285,14 @@ export const exportDocument = async ({
     includeImages,
     regionTypes,
     transcription,
+    parts,
 }) =>
     await axios.post(`/documents/${documentId}/export/`, {
         region_types: regionTypes,
         file_format: fileFormat,
         include_images: includeImages,
         transcription,
+        parts,
     });
 
 // queue the import task for this document
@@ -306,7 +325,52 @@ export const cancelTask = async ({ documentId, taskReportId }) =>
         task_report: taskReportId,
     });
 
+// create a new transcription layer
 export const createTranscriptionLayer = async ({ documentId, layerName }) =>
     await axios.post(`/documents/${documentId}/transcriptions/`, {
         name: layerName,
     });
+
+// delete a part (image) on a document
+export const deleteDocumentPart = async ({ documentId, partPk }) =>
+    await axios.delete(`/documents/${documentId}/parts/${partPk}/`);
+
+export const trainRecognizerModel = async ({
+    documentId,
+    model,
+    modelName,
+    override,
+    parts,
+    transcription,
+}) => {
+    const params = {
+        override,
+        parts,
+        transcription,
+    };
+    if (model) {
+        params.model = model;
+    } else {
+        params.model_name = modelName;
+    }
+    return await axios.post(`/documents/${documentId}/train/`, params);
+};
+
+export const trainSegmenterModel = async ({
+    documentId,
+    model,
+    modelName,
+    override,
+    parts,
+}) => {
+    const params = {
+        override,
+        parts,
+    };
+    if (model) {
+        params.model = model;
+    } else {
+        params.model_name = modelName;
+    }
+    return await axios.post(`/documents/${documentId}/segtrain/`, params);
+};

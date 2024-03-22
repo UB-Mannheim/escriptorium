@@ -2,10 +2,10 @@ body {
     margin: auto;
 }
 
-#escriptorium #main.container-fluid {
+#escriptorium #main.container-fluid:not(.escr-vue-enabled) {
     margin-top: 15px;
-}
 
+}
 #escriptorium #main.escr-vue-enabled {
     margin: 0;
     padding: 0;

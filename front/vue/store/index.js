@@ -6,6 +6,7 @@ import characters from "./modules/characters";
 import document from "./modules/document";
 import filter from "./modules/filter";
 import forms from "./modules/forms";
+import images from "./modules/images";
 import ontology from "./modules/ontology";
 import project from "./modules/project";
 import projects from "./modules/projects";
@@ -49,6 +50,7 @@ const store = new Store({
         document,
         filter,
         forms,
+        images,
         ontology,
         project,
         projects,
