@@ -87,6 +87,9 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
 }
 
 /* DiploPanel line and cursor styling */
+.escr-editor-tabcontent #diplo-panel {
+    color: black;
+}
 .escr-editor-tabcontent #diplomatic-lines > div {
     border: 1px solid transparent;
     border-left: 3px solid transparent;

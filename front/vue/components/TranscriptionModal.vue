@@ -130,9 +130,14 @@
                 <div :class="'modal-body ' + defaultTextDirection">
                     <p
                         v-if="line.mask == null"
+                        dir="ltr"
                         class="text-warning"
                     >
-                        No mask found for the line, preview unavailable! Calculate masks by hitting the green thumbs up button in the segmentation panel.
+                        No mask found for the line, preview unavailable!
+                        <span v-if="legacyModeEnabled">
+                            Calculate masks by hitting the green thumbs up button in the
+                            segmentation panel.
+                        </span>
                     </p>
                     <div
                         id="modal-img-container"
