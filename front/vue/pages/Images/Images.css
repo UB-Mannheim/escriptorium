@@ -1,8 +1,8 @@
 /* special styling for images page */
-.escr-images-page.escr-body.escr-vue-enabled .escr-page {
+.escr-body #main.escr-vue-enabled .escr-images-page .escr-page {
     padding: 0;
 }
-.escr-images-page.escr-body.escr-vue-enabled .escr-breadcrumbs {
+.escr-body #main.escr-vue-enabled .escr-images-page .escr-breadcrumbs {
     padding: 1rem 2rem;
     margin: 0;
     background-color: var(--background2);

@@ -4,6 +4,7 @@
     --primary: #28a696;
     --tertiary: #5869fc;
     --alert: #e84f4f;
+    --at-risk: #FFAB00;
     /* button state colors */
     --primary-dark: #229082;
     --primary-darker: #1e8174;
@@ -19,6 +20,7 @@
     --alert-dark: #e32b2b;
     --alert-darker: #d61c1c;
     --alert-focus: rgb(227 43 43 / 50%);
+    --at-risk-light: #FFAB004C;;
     /* text on all filled buttons */
     --button-text: #ffffff;
 
@@ -127,7 +129,8 @@
 }
 
 /* Site-wide styles */
-.escr-body {
+.escr-body,
+.escr-page-container {
     display: flex;
     flex-flow: row nowrap;
     align-items: stretch;
@@ -140,7 +143,16 @@
     overflow: auto;
     width: 100%;
 }
-.escr-body.escr-vue-enabled {
+.escr-body main:has(.escr-vue-enabled) {
+    background-color: var(--background);
+    color: var(--text1);
+    min-height: 100vh;
+}
+.escr-page:not(#editor),
+main:has(.escr-vue-enabled):not(:has(.escr-page)) {
+    padding: 16px 32px;
+}
+.escr-vue-enabled .escr-page-container {
     background-color: var(--background);
 }
 
@@ -198,7 +210,7 @@
         /* Arabic Mathematical Alphabetic Symbols */ U+1EE00-1EEFF;
 }
 /* reset default fonts to 14px normal noto sans, weight 400 */
-.escr-body.escr-vue-enabled,
+.escr-vue-enabled .escr-page-container,
 .escr-page input[type="text"],
 .escr-sidebar-container input[type="text"],
 .escr-global-nav,
@@ -225,7 +237,7 @@
     height: 100vh;
 }
 /* font styles */
-.escr-page h1,
+.escr-vue-enabled h1,
 .escr-sidebar-container h1 {
     font-weight: 700;
     font-size: 24px;
@@ -237,6 +249,7 @@
     margin-inline-end: 0;
     font-weight: bold;
 }
+.escr-vue-enabled h2,
 .escr-page h2,
 .escr-modal h2,
 .escr-line-modal h2,
@@ -251,6 +264,7 @@
     margin-inline-end: 0;
     font-weight: bold;
 }
+.escr-vue-enabled h3,
 .escr-page h3,
 .escr-modal h3,
 .escr-sidebar-container h3 {
@@ -264,7 +278,7 @@
     margin-inline-end: 0;
     font-weight: bold;
 }
-.escr-page h4,
+.escr-vue-enabled h4,
 .escr-sidebar-container h4 {
     font-weight: 600;
     font-size: 14px;

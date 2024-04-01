@@ -3,6 +3,7 @@
 {% block head_title %}{% trans "Tasks monitoring" %}{% endblock %}
 
 {% block body %}
+<h1>{% trans 'Task Monitoring' %}</h1>
 <div id="documents_tasks">
   <documentstasks :is-admin="{{ user.is_staff|lower }}" :task-states="{{ task_states }}" :users="{{ users }}" />
 </div>
