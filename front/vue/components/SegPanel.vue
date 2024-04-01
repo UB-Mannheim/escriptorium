@@ -1,5 +1,10 @@
 <template>
-    <div class="col panel">
+    <div
+        class="col panel"
+        @pointermove="dragToolbar"
+        @pointerup="stopDragToolbar"
+        @pointerleave="stopDragToolbar"
+    >
         <div
             v-if="legacyModeEnabled"
             class="tools"
@@ -193,7 +198,34 @@
             :selected-type="selectedType"
             :selection-is-linked="selectionIsLinked"
             :toggle-tool="onToggleTool"
+            :toggle-toolbar-detached="toggleToolbarDetached"
             :tool="activeTool"
+            :toolbar-detached="toolbarDetached"
+        />
+        <DetachableToolbar
+            v-if="toolbarDetached"
+            ref="detachable-toolbar"
+            class="escr-toolbar escr-segmentation-toolbar"
+            :disabled="isWorking || disabled"
+            :display-mode="(segmenter && segmenter.mode) || 'lines'"
+            :has-points-selection="hasPointsSelection"
+            :has-selection="hasSelection"
+            :on-change-selection-type="onChangeType"
+            :on-delete="onDelete"
+            :on-join="onJoin"
+            :on-link-unlink="onLinkUnlink"
+            :on-reverse="onReverse"
+            :selected-type="selectedType"
+            :selection-is-linked="selectionIsLinked"
+            :start-drag="startDragToolbar"
+            :style="{
+                'left': `${toolbarPosition.x}px`,
+                'top': `${toolbarPosition.y}px`,
+            }"
+            :toggle-tool="onToggleTool"
+            :toggle-toolbar-detached="toggleToolbarDetached"
+            :tool="activeTool"
+            :toolbar-detached="true"
         />
         <div
             v-if="legacyModeEnabled"
@@ -314,6 +346,7 @@
  */
 import { mapActions, mapState } from "vuex";
 import { BasePanel } from "../../src/editor/mixins.js";
+import DetachableToolbar from "./SegmentationToolbar/DetachableToolbar.vue";
 import SegRegion from "./SegRegion.vue";
 import SegLine from "./SegLine.vue";
 import SegmentationToolbar from "./SegmentationToolbar/SegmentationToolbar.vue";
@@ -325,6 +358,7 @@ export default Vue.extend({
         segline: SegLine,
         segregion: SegRegion,
         help: Help,
+        DetachableToolbar,
         SegmentationToolbar,
     },
     mixins: [BasePanel],
@@ -342,6 +376,12 @@ export default Vue.extend({
             undoManager: new UndoManager(),
             isWorking: false,
             autoOrder: userProfile.get("autoOrder", true),
+            toolbarDetached: false,
+            toolbarDragging: false,
+            toolbarPosition: {
+                x: 16,
+                y: 96,
+            },
         };
     },
     computed: {
@@ -509,9 +549,11 @@ export default Vue.extend({
                     directionHintColors: beSettings["color-directions"] || null,
                     newUiEnabled: !this.legacyModeEnabled,
                     toolbar: this.$refs["segmentation-toolbar"]?.$el,
+                    detachableToolbar: this.$refs["detachable-toolbar"]?.$el,
                     toolbarSubmenuIds: [
                         // for click handling on toolbar, list all submenu node IDs here
                         "type-select-menu",
+                        "delete-menu",
                     ],
                     activeTool: this.activeTool,
                     setActiveTool: this.setActiveTool,
@@ -948,6 +990,10 @@ export default Vue.extend({
             let region = this.segmenter.regions.find(
                 (r) => r.context.pk == createdLine.region
             );
+            if (createdLine.typology) {
+                var typo = this.$store.state.document.types.lines.find((t) => t.pk == createdLine.typology);
+                createdLine.type = typo.name;
+            }
             const segmenterLine = this.segmenter.loadLine(createdLine, region);
 
             // update the segmenter pk
@@ -1096,6 +1142,62 @@ export default Vue.extend({
          */
         onReverse() {
             this.segmenter.reverseSelection();
+        },
+        /**
+         * Detach or reattach the toolbar, and update the segmenter's ref to it
+         */
+        toggleToolbarDetached() {
+            this.toolbarDetached = !this.toolbarDetached;
+            this.$nextTick(() => {
+                this.segmenter.setDetachableToolbar(this.$refs["detachable-toolbar"]?.$el);
+            });
+        },
+        startDragToolbar() {
+            if (!this.legacyModeEnabled)
+                this.toolbarDragging = true;
+        },
+        dragToolbar(e) {
+            if (!this.legacyModeEnabled && this.toolbarDragging) {
+                e.preventDefault();
+                let newX = this.toolbarPosition.x + e.movementX;
+                let newY = this.toolbarPosition.y + e.movementY;
+                // prevent toolbar from going left of (underneath) the global nav bar
+                newX = Math.max(newX, 1);
+                // prevent toolbar from going above the non-detachable segmentation toolbar
+                if (this.$refs["segmentation-toolbar"]?.$el) {
+                    const staticToolbar = this.$refs["segmentation-toolbar"].$el;
+                    const staticToolbarRect = staticToolbar.getBoundingClientRect();
+                    newY = Math.max(newY, staticToolbarRect.height + 1);
+                    const minY = staticToolbarRect.bottom;
+                    // stop dragging if the mouse goes above the bottom of the seg toolbar
+                    if (e.clientY < minY) {
+                        this.stopDragToolbar();
+                    }
+                }
+                if (this.$refs["detachable-toolbar"]?.$el) {
+                    // prevent toolbar from overflowing the segmentation container on the x-axis
+                    const detachableToolbar = this.$refs["detachable-toolbar"].$el;
+                    const width = detachableToolbar.clientWidth;
+                    const height = detachableToolbar.clientHeight;
+                    const containerWidth = this.$el.clientWidth - 1;
+                    if (newX + width >= containerWidth) {
+                        newX = containerWidth - width;
+                    }
+                    // and the y-axis
+                    const containerHeight = this.$el.clientHeight - 1;
+                    if (newY + height >= containerHeight){
+                        newY = containerHeight - height;
+                    }
+                }
+                this.toolbarPosition = {
+                    x: newX,
+                    y: newY,
+                }
+            }
+        },
+        stopDragToolbar() {
+            if (!this.legacyModeEnabled)
+                this.toolbarDragging = false;
         },
     },
 });

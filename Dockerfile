@@ -20,7 +20,14 @@ ENV LC_ALL=C.UTF-8
 WORKDIR /usr/src/app
 
 COPY ./app/entrypoint.sh /usr/src/app/entrypoint.sh
-COPY ./app /usr/src/app/
+COPY ./app/manage.py /usr/src/app/manage.py
+COPY ./app/requirements.txt /usr/src/app/requirements.txt
+COPY ./app/uwsgi.ini /usr/src/app/uwsgi.ini
+
+COPY ./app/apps /usr/src/app/apps
+COPY ./app/escriptorium /usr/src/app/escriptorium
+COPY ./app/locale /usr/src/app/locale
+COPY ./app/homepage /usr/src/app/homepage
 COPY --from=frontend /build/dist /usr/src/app/front
 
 # run entrypoint.sh

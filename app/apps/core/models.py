@@ -43,6 +43,7 @@ from ordered_model.models import OrderedModel, OrderedModelManager
 from PIL import Image
 from shapely import affinity
 from shapely.geometry import LineString, Polygon
+from skimage.measure import approximate_polygon
 from sklearn import preprocessing
 from sklearn.cluster import DBSCAN
 
@@ -1536,7 +1537,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                 im, [line.baseline], suppl_obj=context, scale=(1200, 0), topline=topline
             )
             if mask[0]:
-                line.mask = mask[0]
+                if len(mask[0]) > 50:
+                    line.mask = approximate_polygon(np.array(mask[0]), 2).tolist()
+                else:
+                    line.mask = mask[0]
                 line.save()
 
         return to_calc

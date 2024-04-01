@@ -5,6 +5,7 @@
 .escr-segmented-button-group > div {
     height: 32px;
     max-height: 32px;
+    flex: 1 0 auto;
 }
 .escr-segmented-button-group > div > label,
 .escr-segmented-button-group > div > div > label {

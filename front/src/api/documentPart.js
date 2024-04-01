@@ -16,7 +16,7 @@ export const retrievePartMetadata = async (documentId, partId) =>
 
 export const retrievePartMetadatum = async (documentId, partId, metadataId) =>
     await axios.get(
-        `/documents/${documentId}/parts/${partId}/metadata/${metadataId}`,
+        `/documents/${documentId}/parts/${partId}/metadata/${metadataId}/`,
     );
 
 export const createPartMetadata = async (documentId, partId, data) =>
@@ -43,3 +43,16 @@ export const deletePartMetadata = async (documentId, partId, metadataId) =>
 
 export const rotateDocumentPart = async (documentId, partId, data) =>
     await axios.post(`/documents/${documentId}/parts/${partId}/rotate/`, data);
+
+// move a single document part
+export const moveDocumentPart = async ({ documentId, partId, index }) =>
+    await axios.post(`/documents/${documentId}/parts/${partId}/move/`, {
+        index,
+    });
+
+// move multiple document parts
+export const bulkMoveParts = async ({ documentId, parts, index }) =>
+    await axios.post(`/documents/${documentId}/bulk_move_parts/`, {
+        parts,
+        index,
+    });

@@ -3,7 +3,7 @@
 
 {% block body %}
 <a href="{% url 'model-upload' %}" class="btn btn-success float-sm-right">{% trans "Upload a model" %}</a>
-<h2>{% trans "My Models" %}</h2>
+<h1>{% trans "Models" %}</h1>
 {% include 'core/models_list/table.html' %}
 {% endblock %}
 {% block scripts %}

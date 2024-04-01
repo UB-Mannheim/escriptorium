@@ -9,6 +9,18 @@
                 class="escr-required"
             >*</span>
         </span>
+        <ul
+            v-if="errors && errors.length > 0"
+            class="escr-field-errors"
+        >
+            <li
+                v-for="(error, i) in errors"
+                :key="`error-${i}`"
+                class="escr-help-text escr-error-text"
+            >
+                {{ error }}
+            </li>
+        </ul>
         <EscrDropdown
             :label="label"
             :disabled="disabled"
@@ -85,6 +97,13 @@ export default {
         required: {
             type: Boolean,
             default: false,
+        },
+        /**
+         * Array of error strings.
+         */
+        errors: {
+            type: Array,
+            default: () => [],
         },
     },
 }

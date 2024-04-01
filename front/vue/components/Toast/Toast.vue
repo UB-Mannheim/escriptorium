@@ -5,7 +5,7 @@
         role="alert"
     >
         <span>
-            {{ message }}
+            {{ message }}{{ count > 1 ? ` (${count})` : "" }}
         </span>
         <a
             v-if="actionLink && actionLabel"
@@ -78,6 +78,14 @@ export default {
             },
         },
         /**
+         * If there is more than one alert with the same message, this count can be appended
+         * to the message string in order to group them into a single toast.
+         */
+        count: {
+            type: Number,
+            default: 1,
+        },
+        /**
          * By default, toasts will disappear after 2000 ms (2 seconds). Provide a number
          * here to change the delay, or pass 0 to disable auto-disappearance.
          */
@@ -108,10 +116,17 @@ export default {
             };
         }
     },
+    watch: {
+        count() {
+            if (this.delay) {
+                setTimeout(this.onClose, this.delay);
+            }
+        },
+    },
     mounted() {
         if (this.delay) {
             setTimeout(this.onClose, this.delay);
         }
-    }
+    },
 }
 </script>

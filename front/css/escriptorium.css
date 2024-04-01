@@ -2,11 +2,11 @@ body {
     margin: auto;
 }
 
-#escriptorium #main.container-fluid {
+#escriptorium #main.container-fluid:not(.escr-vue-enabled) {
     margin-top: 15px;
-}
 
-#escriptorium #main:has(.escr-vue-enabled) {
+}
+#escriptorium #main.escr-vue-enabled {
     margin: 0;
     padding: 0;
 }
@@ -14,7 +14,6 @@ body {
 .hide {
     display: none;
 }
-
 
 .errorlist {
     color: var(--danger);
@@ -66,7 +65,6 @@ body {
     display: none;
 }
 
-
 /* document form */
 
 .multi-proc span {
@@ -98,9 +96,8 @@ form.inline-form {
     display: none;
 }
 
-
 .dropzone {
-    border: 2px dashed #0087F7;
+    border: 2px dashed #0087f7;
     border-radius: 5px;
     background: white;
 }
@@ -130,7 +127,7 @@ form.inline-form {
 }
 
 .drop-accept {
-    border: 2px dashed #0087F7;
+    border: 2px dashed #0087f7;
 }
 
 #cards-container {
@@ -219,7 +216,7 @@ form.inline-form {
     text-shadow: 0 1px 0 #fff;
     background-color: transparent;
     float: right;
-    opacity: .5;
+    opacity: 0.5;
 }
 
 #segmentation-help-ben.help {
@@ -229,8 +226,8 @@ form.inline-form {
 .tools .notice {
     color: var(--warning);
     border: 1px solid;
-    padding: .25rem .5rem;
-    border-radius: .2rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.2rem;
     float: right;
 }
 
@@ -248,8 +245,8 @@ form.inline-form {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #EEEEEE;
-    border: 1px solid rgba(0, 0, 0, .125);
+    background-color: #eeeeee;
+    border: 1px solid rgba(0, 0, 0, 0.125);
     display: none;
     /*  */
 }
@@ -294,7 +291,7 @@ form.inline-form {
 }
 
 .line-box:hover {
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 6px var(--secondary);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 6px var(--secondary);
 }
 
 #escriptorium .box.selected {
@@ -309,7 +306,7 @@ form.inline-form {
 
 .card .js-trans-progress {
     width: 100%;
-    background-color: #EEEEEE;
+    background-color: #eeeeee;
     border-radius: 5px;
 }
 
@@ -381,7 +378,6 @@ form.inline-form {
     /* mess with outline */
 }
 
-
 /* transcription interface  */
 .nav-div {
     display: inline-block;
@@ -406,7 +402,6 @@ form.inline-form {
     margin: 0 15px;
 }
 
-
 .tools {
     min-height: 45px;
     margin-bottom: 5px;
@@ -430,7 +425,7 @@ i.panel-icon {
 }
 
 .js-zoom-target {
-    box-shadow: 1px 0 4px 1px rgba(0,0,0,0.1);
+    box-shadow: 1px 0 4px 1px rgba(0, 0, 0, 0.1);
     display: inline-block;
     width: 100%;
 }
@@ -438,7 +433,6 @@ i.panel-icon {
 #transcription-panel .js-zoom-target {
     width: 100%;
 }
-
 
 #zoom-range {
     height: 200px;
@@ -572,8 +566,9 @@ i.panel-icon {
     display: block;
 }
 
-
-#trans-modal #trans-input, #trans-rule, .compared-line {
+#trans-modal #trans-input,
+#trans-rule,
+.compared-line {
     overflow: visible;
     margin-top: 1rem;
     white-space: nowrap;
@@ -584,7 +579,8 @@ i.panel-icon {
     box-shadow: none;
 }
 
-#trans-modal #versions-help, #compare-help {
+#trans-modal #versions-help,
+#compare-help {
     position: absolute;
     right: 0;
     z-index: 1;
@@ -603,27 +599,25 @@ i.panel-icon {
     padding: 0 10px;
 }
 #trans-modal #history .d-table-cell:first-child {
-     padding-left: 0;
+    padding-left: 0;
 }
 #trans-modal #history .d-table-cell:last-child {
-     padding-right: 0;
+    padding-right: 0;
 }
 
-#trans-modal .card-toggle.collapsed span:before
-{
-    content:'+';
-    width:15px;
+#trans-modal .card-toggle.collapsed span:before {
+    content: "+";
+    width: 15px;
 }
-#trans-modal .card-toggle span:before
-{
-    content:'-';
-    width:15px;
+#trans-modal .card-toggle span:before {
+    content: "-";
+    width: 15px;
 }
 
-#trans-modal .modal-body{
+#trans-modal .modal-body {
     overflow: visible;
 }
-#trans-modal .modal-header{
+#trans-modal .modal-header {
     cursor: move;
 }
 
@@ -640,7 +634,7 @@ i.panel-icon {
 }
 
 .trans-box:hover {
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 6px var(--secondary);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 6px var(--secondary);
 }
 
 .trans-box span {
@@ -658,17 +652,16 @@ i.panel-icon {
 }
 
 .notransition {
-  -webkit-transition: none !important;
-  -moz-transition: none !important;
-  -o-transition: none !important;
-  transition: none !important;
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -o-transition: none !important;
+    transition: none !important;
 }
 
 #be-settings-menu {
     width: max-content;
     padding: 10px;
 }
-
 
 #diplo-panel .content-container {
     overflow-y: auto;
@@ -681,7 +674,7 @@ i.panel-icon {
     display: block;
     line-height: 1.7rem;
     overflow-wrap: break-word;
-    margin-right: .5rem;
+    margin-right: 0.5rem;
 }
 
 #diplomatic-lines div:before {
@@ -691,19 +684,19 @@ i.panel-icon {
     display: inline-block;
     content: counter(line);
     border-right: 1px solid #ddd;
-    margin-right: .5rem;
+    margin-right: 0.5rem;
     margin-left: 0;
     width: 50px;
     color: #888;
 }
 
 #diplomatic-lines div.selected {
-  background-color:#33A2FF;
-  border: solid #33A2FF 1px;
+    background-color: #33a2ff;
+    border: solid #33a2ff 1px;
 }
 
 #diplomatic-lines div.ghost {
-  background-color: lightyellow;
+    background-color: lightyellow;
 }
 
 .cmp-add {
@@ -711,11 +704,11 @@ i.panel-icon {
 }
 
 .cmp-del {
-    background-color: #FFAAAA;
+    background-color: #ffaaaa;
 }
 
-#contact-form{
- width: 100%;
+#contact-form {
+    width: 100%;
 }
 
 input[type="range"]#confidence-range {
@@ -742,13 +735,14 @@ input[type="checkbox"].toggle-switch + label {
     display: inline-block;
     height: 1.5em;
     width: 3em;
-    background: #ECECEC;
+    background: #ececec;
     border-radius: 20em;
     vertical-align: middle;
     margin-bottom: 0;
     margin-left: -4rem;
 }
-input[type="checkbox"].toggle-switch + label:before, input[type=checkbox].toggle-switch + label:after {
+input[type="checkbox"].toggle-switch + label:before,
+input[type="checkbox"].toggle-switch + label:after {
     position: absolute;
     top: 0;
     left: 0;
@@ -800,10 +794,11 @@ input[type="checkbox"].toggle-switch + label span {
     width: 170px;
 }
 .r6o-widget {
-    padding: .4rem;
+    padding: 0.4rem;
 }
 
-.r6o-widget input,  .r6o-widget select {
+.r6o-widget input,
+.r6o-widget select {
     width: 100%;
 }
 
@@ -828,4 +823,371 @@ small.context {
 /* force transcription names to wrap in transcriptions management modal */
 .transcription-name {
     word-break: break-all;
+}
+
+/*
+ * New UI for non-vue pages
+ */
+
+/* typography */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .text-muted {
+    color: var(--text2) !important;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) small {
+    font-weight: 400;
+    font-size: 12px !important;
+    font-family: 'Noto Sans';
+    font-style: normal;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) a:not(.btn) {
+    color: var(--secondary);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) a:not(.btn):hover {
+    color: var(--secondary-dark);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) a.breadcrumbs {
+    display: block;
+    font-weight: 600;
+    text-decoration-line: underline;
+    color: var(--text1);
+    font-size: 14px;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+/* tables */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) table,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container {
+    background-color: var(--background1);
+    color: var(--text1);
+    border-radius: 15px;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 14px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) table tr {
+    background-color: transparent;
+    color: var(--text1);
+}
+
+main:has(.escr-vue-enabled):not(:has(.escr-page)) table th {
+    border-top: none;
+    border-bottom: none;
+    font-size: 12px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) table td {
+    vertical-align: middle;
+    border-top: 1px solid var(--background);
+}
+
+/* buttons */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn:not(.fas) {
+    font-family: "Noto Sans", sans-serif;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn {
+    vertical-align: middle;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 14px;
+    min-height: 38px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn.btn-sm {
+    min-height: 32px;
+}
+
+/* success --> primary */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-success,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-info:hover {
+    border: 1px solid var(--primary);
+    background-color: var(--primary);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-success:focus,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-success:active:focus,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-info:focus,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-info:active:focus {
+    box-shadow: 0 0 0 0.2rem var(--primary-focus);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-success:hover,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-info:active {
+    border-color: var(--primary-dark);
+    background-color: var(--primary-dark);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-success:active {
+    border-color: var(--primary-darker);
+    background-color: var(--primary-darker);
+}
+
+/* info --> outline-primary */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-info {
+    background-color: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-info:hover,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-info:active,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .pagination li a:hover,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .pagination li select:hover {
+    color: var(--button-text);
+}
+
+/* primary --> secondary */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-primary,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .pagination li a:hover,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .pagination li select:hover {
+    border: 1px solid var(--secondary);
+    background-color: var(--secondary);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-primary:focus,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-primary:active:focus {
+    box-shadow: 0 0 0 0.2rem var(--secondary-focus);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-primary:hover {
+    border-color: var(--secondary-dark);
+    background-color: var(--secondary-dark);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-primary:active {
+    border-color: var(--secondary-darker);
+    background-color: var(--secondary-darker);
+}
+
+/* danger */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-danger {
+    border: 1px solid var(--alert);
+    background-color: var(--alert);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-danger:focus,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-danger:active:focus {
+    box-shadow: 0 0 0 0.2rem var(--alert-focus);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-danger:hover {
+    background-color: var(--alert-dark);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .btn-danger:active {
+    background-color: var(--alert-darker);
+}
+
+/* forms */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .form-group * {
+    font-family: "Noto Sans", sans-serif;
+    font-size: 14px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) label {
+    display: block;
+    font-weight: 600;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) select {
+    border-radius: 4px;
+    min-height: 32px;
+    font-family: "Noto Sans";
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    cursor: pointer;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) input.form-control {
+    box-sizing: border-box;
+    border: none;
+    border-radius: 4px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) input.form-control::placeholder {
+    color: var(--text3);
+}
+
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container input.form-control {
+    background-color: var(--background2);
+    color: var(--text1);
+    border: none;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container select,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) table select {
+    border: none;
+    background: none;
+    background-color: var(--background2);
+    color: var(--text1);
+    appearance: auto;
+    border-right: 8px solid transparent;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container form + p {
+    margin: 1rem 0;
+}
+
+/* pagination */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .pagination li a,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .pagination li select {
+    background-color: var(--background1);
+    border: 1px solid var(--background3);
+    color: var(--secondary);
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 14px;
+    min-height: 38px;
+    max-height: 38px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .pagination li select {
+    border-radius: 0;
+}
+
+/* cards */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .card {
+    font-family: "Noto Sans", sans-serif;
+    font-size: 14px;
+    border: none;
+    border-radius: 15px;
+    background-color: var(--background1);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .card-header {
+    background-color: var(--background3);
+    border: none;
+    border-radius: 15px 15px 0 0;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .card-subtitle {
+    font-size: 14px;
+}
+
+/* models page */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) #models-table .btn.btn-sm,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) #rights-table .btn.btn-sm,
+body.search main:has(.escr-vue-enabled) table .btn.btn-sm {
+    min-width: 32px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) #rights-table .form-group {
+    margin: 0;
+}
+
+/* tasks list */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .page-link {
+    cursor: pointer;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert {
+    padding: 8px;
+    border-radius: 5px;
+    font-family: "Noto Sans";
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert-warning {
+    background: var(--at-risk-light);
+    border: 1px solid var(--at-risk);
+    color: var(--text1);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert-danger {
+    background-color: var(--background-alert);
+    border: 1px solid var(--foreground-alert);
+    color: var(--foreground-alert);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .alert-primary {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--foreground-secondary);
+    color: var(--tag-text);
+}
+
+/* profile */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container:not(table) {
+    margin: 0 !important;
+    padding: 16px;
+    max-width: 50%;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-8,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-6,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-4 {
+    max-width: 100%;
+    width: 100%;
+    flex-basis: 100%;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .container .col-md-6,
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .panel {
+    padding: 0 !important;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills {
+    display: flex;
+    flex-flow: row nowrap;
+    max-width: 100%;
+    margin-bottom: 16px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link {
+    display: flex;
+    flex-flow: row nowrap;
+    flex: 1 0;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    padding: 0px 10px;
+    min-height: 32px;
+    height: 32px;
+    color: var(--button-text);
+    font-size: 12px;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        font-weight 0.15s ease-in-out;
+    cursor: pointer;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:not(:last-of-type) {
+    margin-right: 1px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:first-of-type {
+    border-radius: 5px 0px 0px 5px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:last-of-type {
+    border-radius: 0px 5px 5px 0px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:not(:first-of-type):not(:last-of-type) {
+    border-radius: 0px;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:first-of-type:last-of-type {
+    border-radius: 5px;
+}
+/* inactive button(s) */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:not(.active) {
+    color: var(--text2);
+    background-color: var(--background2);
+    font-weight: 400;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:hover {
+    background-color: var(--background2-dark);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:active {
+    background-color: var(--background2-darker);
+}
+/* active button */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link.active {
+    font-weight: 600;
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link.active {
+    background-color: var(--secondary);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link.active:hover {
+    color: var(--button-text);
+    background-color: var(--secondary-dark);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link.active:active {
+    background-color: var(--secondary-darker);
+}
+/* focus */
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:focus-within {
+    z-index: var(--segmented-button-focus-z);
+}
+main:has(.escr-vue-enabled):not(:has(.escr-page)) .nav-pills .nav-link:focus {
+    box-shadow: 0 0 0 0.1rem var(--secondary-focus);
+}
+
+/* homepage */
+body.homepage main:has(.escr-vue-enabled) .container {
+    max-width: 100%;
+}
+body.homepage main:has(.escr-vue-enabled) .jumbotron {
+    background-color: var(--background1) !important;
+    border-radius: 15px;
+    margin-top: 1rem;
+}
+body.homepage main:has(.escr-vue-enabled) footer {
+    background-color: transparent !important;
+    margin: 2rem 0 1rem !important;
+}
+
+/* search page */
+body.search main:has(.escr-vue-enabled) .text-success {
+    color: var(--primary-dark) !important;
+}
+body.search main:has(.escr-vue-enabled) select {
+    min-height: 38px;
 }

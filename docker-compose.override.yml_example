@@ -1,14 +1,20 @@
 version: "3.9"
 
 ### to customize the homepage, uncomment this
-#x-app:
+# x-app:
+#  image: escriptorium:latest
 #  volumes:
 #    - $PWD/app/homepage
 
-services:
 
+services:
     web: &web
       restart: always
+
+      ### to customize the homepage, uncomment this
+      # environment:
+      #   - CUSTOM_HOME=True
+
       # deploy:
       #   mode: replicated
       #   replicas: 1

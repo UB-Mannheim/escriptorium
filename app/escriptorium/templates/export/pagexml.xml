@@ -2,12 +2,10 @@
 <PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
   <Metadata{% if part.source %} externalRef="{{part.source}}"{% endif %}>
 	<Creator>escriptorium</Creator>
-	<Created>{% current_time %}</Created>
-        <LastChange>{% current_time %}</LastChange>
-
+	<Created>{{ part.created_at|date:'c' }}</Created>
+        <LastChange>{{ part.updated_at|date:'c' }}</LastChange>
   </Metadata>
   <Page imageFilename="{{ part.filename }}" imageWidth="{{ part.image.width  }}" imageHeight="{{ part.image.height  }}">
-
     {% for block in blocks %}
     <TextRegion id="{{ block.external_id }}"  {% if block.typology %}custom="structure {type:{{block.typology.name}};}"{% endif %}>
       <Coords points="{% pagexml_points block.box %}"/>

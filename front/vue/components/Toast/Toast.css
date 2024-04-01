@@ -1,9 +1,13 @@
-.escr-toast-group {
+.escr-toast-group,
+#alerts-container {
     display: flex;
     flex-flow: column;
     position: absolute;
     left: 6rem;
     bottom: 2rem;
+    width: auto;
+    right: auto;
+    top: auto;
 }
 .toast-group-enter, .toast-group-leave-to {
     opacity: 0;

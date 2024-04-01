@@ -2,50 +2,57 @@
 {% load i18n bootstrap %}
 
 {% block body %}
-<a href="{% url 'profile-team-list' %}">{% trans "Back to profile" %}</a>
-<br><br>
-<h4>{% trans "Team:" %} {{object}}</h4>
+<a class="breadcrumbs" href="{% url 'profile-team-list' %}">{% trans "Back to profile" %}</a>
+{% if request.user.legacy_mode %}
+    <br><br>
+    <h4>{% trans "Team:" %} {{object}}</h4>
+{% else %}
+    <h1>{% trans "Team:" %} {{object}}</h1>
+{% endif %}
 
-<form method="post">
-    {% trans "Invite a user to this team." %}
-        <div class="form-row">
-            <div class="col">
-                {% csrf_token %}
-                <input type="hidden" name="group" value="{{object.pk}}"/>
-		{% trans "Make sure to use a correct email as you will not receive an error message if it is not the case (in order to avoid phishing)." as help_text  %}
-		{% render_field form.recipient_id help_text=help_text %}
+<div class="container">
+    <h2>{% trans 'Invite' %}</h2>
+    <form method="post">
+        {% trans "Invite a user to this team." %}
+            <div class="form-row">
+                <div class="col">
+                    {% csrf_token %}
+                    <input type="hidden" name="group" value="{{object.pk}}"/>
+            {% trans "Make sure to use a correct email as you will not receive an error message if it is not the case (in order to avoid phishing)." as help_text  %}
+            {% render_field form.recipient_id help_text=help_text %}
+                </div>
+                <div class="col-auto">
+                    <input type="submit" value="{% trans 'Send invitation' %}" title="{% trans "Send invitation" %}" class="btn btn-success btn-block">
+                </div>
             </div>
-            <div class="col-auto">
-                <input type="submit" value="{% trans 'Send invitation' %}" title="{% trans "Send invitation" %}" class="btn btn-success btn-block">
-            </div>
-        </div>
-</form>
+    </form>
 
-<h4>{% trans 'Users' %}</h4>
-<table class="table table-hover">
-    {% for user in other_users %}
-    <tr>
-        <td class="col">{{user}}</td>
-        <td class="col-auto">
-            <form method="post" action="{% url 'team-transfer-ownership' object.pk %}">
+    <h2>{% trans 'Users' %}</h2>
+    <table class="table table-hover">
+        {% for user in other_users %}
+        <tr>
+            <td class="col">{{user}}</td>
+            <td class="col-auto">
+                <form method="post" action="{% url 'team-transfer-ownership' object.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="user" value="{{ user.pk }}">
+                    <input type="submit"
+                        class="btn btn-warning btn-small"
+                        value="{% trans 'Transfer ownership' %}"
+                        title="{% trans "Transfer ownership" %}">
+                </form>
+            </td>
+            <td class="col-auto">
+                <form method="post" action="{% url 'team-remove-user' object.pk %}">
                 {% csrf_token %}
                 <input type="hidden" name="user" value="{{ user.pk }}">
-                <input type="submit"
-                       class="btn btn-warning btn-small"
-                       value="{% trans 'Transfer ownership' %}"
-                       title="{% trans "Transfer ownership" %}">
-            </form>
-        </td>
-        <td class="col-auto">
-            <form method="post" action="{% url 'team-remove-user' object.pk %}">
-            {% csrf_token %}
-            <input type="hidden" name="user" value="{{ user.pk }}">
-            <input type="submit" value="{% trans 'Remove' %}" class="btn btn-danger btn-small" title="{% trans "Remove user from group" %}">
-            </form>
-        </td>
-    </tr>
-    {% empty %}
-    {% trans "No other user in this team." %}
-    {% endfor %}
-</table>
+                <input type="submit" value="{% trans 'Remove' %}" class="btn btn-danger btn-small" title="{% trans "Remove user from group" %}">
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        {% trans "No other user in this team." %}
+        {% endfor %}
+    </table>
+</div>
 {% endblock %}

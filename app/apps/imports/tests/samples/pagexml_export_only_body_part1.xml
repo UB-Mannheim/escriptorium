@@ -3,8 +3,8 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
   <Metadata>
     <Creator>escriptorium</Creator>
-    <Created>2022-01-01T00:00:00</Created>
-    <LastChange>2022-01-01T00:00:00</LastChange>
+    <Created>2022-01-01T00:00:00+00:00</Created>
+    <LastChange>2022-01-01T00:00:00+00:00</LastChange>
   </Metadata>
   <Page imageFilename="default.png" imageWidth="864" imageHeight="206">
     <TextRegion id="eSc_textblock_02" custom="structure {type:body;}">

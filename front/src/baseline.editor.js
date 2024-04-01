@@ -600,6 +600,8 @@ export class Segmenter {
             newUiEnabled = false,
             // the new UI segmentation toolbar ref, for click handlers
             toolbar = null,
+            // detachable segmentation toolbar ref, for click handlers
+            detachableToolbar = null,
             // the new UI type select dropdown, for click handlers
             toolbarSubmenuIds = [],
             // the active tool from state, see editor/store/globalTools for info
@@ -629,6 +631,7 @@ export class Segmenter {
         /** New UI */
         this.newUiEnabled = newUiEnabled;
         this.toolbar = toolbar;
+        this.detachableToolbar = detachableToolbar;
         this.toolbarSubmenuIds = toolbarSubmenuIds;
         this.activeTool = activeTool;
         this.setActiveTool = setActiveTool;
@@ -984,17 +987,27 @@ export class Segmenter {
                         } else if (this.newUiEnabled) {
                             if (this.mode === "lines") {
                                 // add lines
-                                this.setActiveTool("add-lines");
+                                this.setActiveTool(
+                                    this.activeTool === "add-lines"
+                                        ? "select"
+                                        : "add-lines",
+                                );
                             } else if (this.mode === "regions") {
                                 // add regions
-                                this.setActiveTool("add-regions");
+                                this.setActiveTool(
+                                    this.activeTool === "add-regions"
+                                        ? "select"
+                                        : "add-regions",
+                                );
                             }
                         }
                         break;
                     case "c":
                         // activate cutting tool
                         if (this.newUiEnabled) {
-                            this.setActiveTool("cut");
+                            this.setActiveTool(
+                                this.activeTool === "cut" ? "select" : "cut",
+                            );
                         } else {
                             this.splitting = !this.splitting;
                             if (this.splitBtn) {
@@ -1013,10 +1026,11 @@ export class Segmenter {
                         this.mergeSelection();
                         break;
                     case "l":
-                        // toggle line numbers overlay
                         if (this.newUiEnabled) {
-                            this.setOrdering(!this.showLineNumbers);
+                            // lines mode
+                            this.setMode("lines");
                         } else {
+                            // toggle line numbers overlay
                             this.toggleOrdering();
                         }
                         break;
@@ -1026,6 +1040,12 @@ export class Segmenter {
                             this.setMode("masks");
                         } else {
                             this.toggleLineMode();
+                        }
+                        break;
+                    case "n":
+                        // toggle line numbers overlay
+                        if (this.newUiEnabled) {
+                            this.setOrdering(!this.showLineNumbers);
                         }
                         break;
                     case "r":
@@ -1112,6 +1132,10 @@ export class Segmenter {
                     event.target != this.canvas &&
                     !this.contextMenu?.contains(event.target) &&
                     !this.toolbar?.contains(event.target) &&
+                    !(
+                        this.newUiEnabled &&
+                        this.detachableToolbar?.contains(event.target)
+                    ) &&
                     !(this.newUiEnabled && isInToolbarSubmenu)
                 ) {
                     this.purgeSelection();
@@ -3209,7 +3233,7 @@ export class Segmenter {
         }
         this.purgeSelection();
         this.mode = mode;
-        switch(mode) {
+        switch (mode) {
             case "lines":
                 this.toggleMasks(false);
                 this.toggleLineStrokes(true);
@@ -3254,6 +3278,14 @@ export class Segmenter {
      */
     setDisabled(disabled) {
         this.disableShortcuts = disabled;
+    }
+
+    /**
+     * Set the segmenter's detachableToolbar to the detached toolbar element
+     * @param {HTMLElement} element
+     */
+    setDetachableToolbar(element) {
+        this.detachableToolbar = element;
     }
 }
 

@@ -7,7 +7,7 @@
     {% if not request.user.legacy_mode %}
     <div id="project-dashboard">
         <project-dashboard
-            :id={{ project_id }}
+            :id={{ project.id }}
             :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
         ></project-dashboard>
     </div>

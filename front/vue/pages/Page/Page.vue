@@ -1,5 +1,5 @@
 <template>
-    <div class="escr-body escr-vue-enabled">
+    <div class="escr-page-container">
         <div class="escr-page">
             <EscrBreadcrumbs
                 v-if="breadcrumbs && breadcrumbs.length"

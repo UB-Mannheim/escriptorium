@@ -67,6 +67,10 @@ export default {
         overwrite: false,
         uploadFile: "",
     },
+    moveImages: {
+        index: "",
+        location: "before",
+    },
     ontology: {
         imageAnnotations: [],
         lines: [],
@@ -83,6 +87,12 @@ export default {
     share: {
         group: "",
         user: "",
+    },
+    train: {
+        model: "",
+        modelName: "",
+        override: false,
+        transcription: "",
     },
     transcribe: {
         model: "",

@@ -1,0 +1,22 @@
+.escr-moveimages-modal h3 {
+    font-size: 14px;
+}
+.escr-moveimages-modal .escr-text-field {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    padding-left: 1px;
+}
+.escr-moveimages-modal .escr-text-field * {
+    display: block;
+    flex: 1 1 50%;
+}
+.escr-moveimages-modal .modal-actions button + div {
+    margin-left: 16px;
+}
+.escr-moveimages-modal .modal-actions .escr-button:disabled {
+    pointer-events: all;
+    cursor: default;
+}
