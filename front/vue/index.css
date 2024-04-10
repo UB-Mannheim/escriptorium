@@ -91,7 +91,8 @@
     --menu-z: 12;
     --modal-backdrop-z: 13;
     --modal-z: 14;
-    --toast-z: 15;
+    --modal-menu-z: 15;
+    --toast-z: 16;
 }
 .light-mode {
     /* light mode backgrounds */

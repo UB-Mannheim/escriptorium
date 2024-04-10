@@ -131,8 +131,8 @@
                         <input
                             type="text"
                             :disabled="disabled"
-                            :value="item.newTypology || (item.typology && item.typology.name)"
-                            @input="(e) => onChange(e, 'newTypology', item)"
+                            :value="(item.typology && item.typology.name) || ''"
+                            @input="(e) => onChange(e, 'typology.name', item)"
                         >
                     </td>
                     <!-- marker type -->
@@ -339,20 +339,34 @@ export default {
          * Populate the marker type dropdown, including which element is selected, for an item
          */
         getMarkerTypeOptions(item) {
-            return [
-                {
-                    label: "Background Color",
-                    value: "Background Color",
-                    selected: item.marker_type === "Background Color",
-                },
-                {
-                    label: "Text Color",
-                    value: "Text Color",
-                    selected: item.marker_type === "Text Color",
-                },
-                { label: "Bold", value: "Bold", selected: item.marker_type === "Bold" },
-                { label: "Italic", value: "Italic", selected: item.marker_type === "Italic" },
-            ];
+            if (this.tab === "text") {
+                return [
+                    {
+                        label: "Background Color",
+                        value: "Background Color",
+                        selected: item.marker_type === "Background Color",
+                    },
+                    {
+                        label: "Text Color",
+                        value: "Text Color",
+                        selected: item.marker_type === "Text Color",
+                    },
+                    { label: "Bold", value: "Bold", selected: item.marker_type === "Bold" },
+                    { label: "Italic", value: "Italic", selected: item.marker_type === "Italic" },
+                ];
+            } else if (this.tab === "image") {
+                return [
+                    {
+                        label: "Rectangle",
+                        value: "Rectangle",
+                        selected: item.marker_type === "Rectangle"
+                    },
+                    {
+                        label: "Polygon", value: "Polygon", selected: item.marker_type === "Polygon"
+                    },
+                ];
+            }
+            return [];
         },
         /**
          * Callback to create a new component
@@ -366,7 +380,11 @@ export default {
          */
         onChange(e, field, item) {
             const value = structuredClone(item);
-            value[field] = e.target.value;
+            if (field === "typology.name") {
+                value["typology"] = { name: e.target.value };
+            } else {
+                value[field] = e.target.value;
+            }
             this.handleGenericArrayInput({
                 form: "ontology", field: this.tab, action: "update", value
             });

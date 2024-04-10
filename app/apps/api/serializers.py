@@ -246,7 +246,9 @@ class AnnotationComponentSerializer(serializers.ModelSerializer):
 
 class AnnotationTaxonomySerializer(serializers.ModelSerializer):
     typology = AnnotationTypeSerializer(required=False)
-    components = AnnotationComponentSerializer(many=True, required=False)
+    components = serializers.PrimaryKeyRelatedField(
+        many=True, required=False, queryset=AnnotationComponent.objects.all()
+    )
     marker_type = DisplayChoiceField(AnnotationTaxonomy.MARKER_TYPE_CHOICES, required=True)
 
     class Meta:
@@ -254,6 +256,10 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         fields = ('pk', 'name', 'abbreviation',
                   'marker_type', 'marker_detail', 'has_comments',
                   'typology', 'components')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['components'].queryset = AnnotationComponent.objects.filter(document=self.context['view'].kwargs['document_pk'])
 
     def create(self, data):
         try:
@@ -274,6 +280,30 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         for compo in components_data:
             taxo.components.add(compo)
         return taxo
+
+    def to_representation(self, instance):
+        # only use AnnotationComponentSerializer on GET; otherwise, use pks
+        repr = super().to_representation(instance)
+        repr['components'] = [AnnotationComponentSerializer(c).data for c in instance.components.all()]
+        return repr
+
+    def update(self, instance, data):
+        try:
+            components_data = data.pop('components')
+        except KeyError:
+            components_data = []
+        try:
+            typo_data = data.pop('typology')
+        except KeyError:
+            typo_data = None
+        if typo_data:
+            typo, _ = AnnotationType.objects.get_or_create(name=typo_data['name'])
+        else:
+            typo = None
+        data['typology'] = typo
+        super().update(instance, data)
+        instance.components.set(components_data)
+        return instance
 
 
 class ImageAnnotationComponentSerializer(serializers.ModelSerializer):

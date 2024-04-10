@@ -72,11 +72,11 @@ export default {
         location: "before",
     },
     ontology: {
-        imageAnnotations: [],
+        image: [],
         lines: [],
         parts: [],
         regions: [],
-        textAnnotations: [],
+        text: [],
     },
     segment: {
         model: "",

@@ -56,11 +56,28 @@ export const retrieveDefaultOntology = async (category) =>
 export const createType = async (category, data) =>
     await axios.post(`/${ontologyMap[category]}/`, data);
 
+export const createAnnotationType = async ({ documentId, target, data }) =>
+    await axios.post(
+        `/documents/${documentId}/taxonomies/annotations/?target=${target}`,
+        data,
+    );
+
 export const updateType = async (category, { typePk, ...data }) =>
     await axios.patch(`/${ontologyMap[category]}/${typePk}/`, data);
 
+export const updateAnnotationType = async ({ documentId, typePk, data }) =>
+    await axios.patch(
+        `/documents/${documentId}/taxonomies/annotations/${typePk}/`,
+        data,
+    );
+
 export const deleteType = async (category, { typePk, ...data }) =>
     await axios.delete(`/${ontologyMap[category]}/${typePk}/`, data);
+
+export const deleteAnnotationType = async ({ documentId, typePk }) =>
+    await axios.delete(
+        `/documents/${documentId}/taxonomies/annotations/${typePk}/`,
+    );
 
 export const updateDocumentOntology = async (documentId, data) =>
     await axios.patch(`/documents/${documentId}/modify_ontology/`, data);

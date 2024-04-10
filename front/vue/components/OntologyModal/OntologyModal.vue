@@ -21,7 +21,7 @@
                 :options="tabOptions"
                 :on-change-selection="onTabChange"
             />
-            <h3 v-if="!tab.includes('Annotation')">
+            <h3 v-if="!['image', 'text'].includes(tab)">
                 Default {{ tabLabel }} Types
             </h3>
             <table
@@ -74,8 +74,8 @@
                     </tr>
                 </tbody>
             </table>
-            <h3 :class="{'anno-header': tab.includes('Annotations') }">
-                <span v-if="!tab.includes('Annotations')">Custom {{ tabLabel }} Types</span>
+            <h3 :class="{'anno-header': ['image', 'text'].includes(tab) }">
+                <span v-if="!['image', 'text'].includes(tab)">Custom {{ tabLabel }} Types</span>
                 <span v-else>{{ tabLabel }}</span>
                 <EscrButton
                     :disabled="disabled"
@@ -89,7 +89,7 @@
                 </EscrButton>
             </h3>
             <AnnotationOntologyTable
-                v-if="tab.includes('Annotations')"
+                v-if="['image', 'text'].includes(tab)"
                 :disabled="disabled"
                 :on-remove-type="onRemoveType"
                 :types="formState[tab]"
@@ -226,11 +226,10 @@ export default {
             // default colors for types (from baseline editor)
             defaultColors: { lines: "#9A56FF", regions: "#11FF76" },
             // index counter for newly added types
-            newTypeIndex: { lines: 1, regions: 1, parts: 1, textAnnotations: 1 },
+            newTypeIndex: { lines: 1, regions: 1, parts: 1, text: 1, image: 1 },
             // local storage settings names (from baseline editor)
             settingKeys: { lines: "color-directions", regions: "color-regions" },
-            // should be one of regions, lines, parts, textAnnotations
-            // (TODO: imageAnnotations)
+            // should be one of regions, lines, parts, text, image
             tab: "regions",
         }
     },
@@ -317,8 +316,13 @@ export default {
                 },
                 {
                     label: "Text Annotations",
-                    value: "textAnnotations",
-                    selected: this.tab === "textAnnotations",
+                    value: "text",
+                    selected: this.tab === "text",
+                },
+                {
+                    label: "Image Annotations",
+                    value: "image",
+                    selected: this.tab === "image",
                 },
             ];
         },
@@ -333,8 +337,10 @@ export default {
                     return "Line";
                 case "parts":
                     return "Part";
-                case "textAnnotations":
+                case "text":
                     return "Text Annotations";
+                case "image":
+                    return "Image Annotations";
                 default:
                     return "";
             }
@@ -353,13 +359,13 @@ export default {
         async onAddType() {
             // annotation tabs have additional defaults
             let extraValues = {};
-            if (this.tab.includes("Annotations")) {
+            if (["image", "text"].includes(this.tab)) {
                 extraValues = {
                     abbreviation: "",
                     components: [],
-                    newTypology: "",
+                    typology: { name: "" },
                     marker_detail: "#28a696",
-                    marker_type: "Background Color",
+                    marker_type: this.tab === "text" ? "Background Color" : "Rectangle",
                     has_comments: false,
                 }
             }
