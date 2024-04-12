@@ -13,6 +13,9 @@
 .escr-table.annotation-ontology .escr-dropdown-field .escr-chevron-down-icon {
     top: 16px;
 }
+.escr-table.annotation-ontology .escr-text-field input {
+    margin: 0;
+}
 .escr-table.annotation-ontology input[type="text"] {
     background-color: var(--background);
 }
