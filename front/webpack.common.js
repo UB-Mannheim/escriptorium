@@ -24,6 +24,7 @@ module.exports = {
         publicPath: "",
         sourcePrefix: "/sourcePrefix/",
         workerPublicPath: "/workerPublicPath/",
+        clean: true,
     },
 
     plugins: [
