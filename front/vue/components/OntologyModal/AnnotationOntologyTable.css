@@ -57,9 +57,6 @@
 }
 
 /* component selector */
-.v-popper--theme-vertical-menu.v-popper__popper:has(.escr-component-selector) {
-    z-index: var(--modal-menu-z) !important;
-}
 .escr-component-selector {
     min-width: 220px;
 }

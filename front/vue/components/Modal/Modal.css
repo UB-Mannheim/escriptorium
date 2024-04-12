@@ -13,14 +13,18 @@
     background-color: var(--background1);
     padding: 8px 0 16px 16px;
     border-radius: 15px;
-    filter: drop-shadow(2px 4px 4px var(--drop-shadow))
-        drop-shadow(-1px -1px 2px var(--drop-shadow));
-
     /* the following will generally be overridden, but it's similar for enough to factor out */
     width: 460px;
     position: fixed;
     top: 15%;
     left: calc(50% - 250px);
+}
+.escr-modal:not(:has(.escr-modal-backdrop)) {
+    /* apply drop shadow to modals, with the exception of modals containing other modals:
+    modal backdrop needs fixed positioning relative to viewport, but "filter" results in the
+    creation of a new containing block and breaks that */
+    filter: drop-shadow(2px 4px 4px var(--drop-shadow))
+        drop-shadow(-1px -1px 2px var(--drop-shadow));
 }
 .escr-modal .escr-modal-content {
     overflow: auto;

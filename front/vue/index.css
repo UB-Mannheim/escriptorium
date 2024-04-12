@@ -91,8 +91,9 @@
     --menu-z: 12;
     --modal-backdrop-z: 13;
     --modal-z: 14;
-    --modal-menu-z: 15;
-    --toast-z: 16;
+    --toast-z: 15;
+    /* modal menus must be above bootstrap modals, which are z-index 1050 */
+    --modal-menu-z: 1100;
 }
 .light-mode {
     /* light mode backgrounds */
