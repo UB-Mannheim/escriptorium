@@ -91,6 +91,7 @@
                     :display-mode="displayMode"
                     :has-points-selection="hasPointsSelection"
                     :has-selection="hasSelection"
+                    :is-drawing="isDrawing"
                     :on-change-selection-type="onChangeSelectionType"
                     :on-delete="onDelete"
                     :on-join="onJoin"
@@ -151,6 +152,14 @@ export default {
          * True if undo is currently possible
          */
         canUndo: {
+            type: Boolean,
+            required: true,
+        },
+        /**
+         * True if a drawing is currently in progress, in which case the toolbar should
+         * not add or remove icons.
+         */
+        isDrawing: {
             type: Boolean,
             required: true,
         },

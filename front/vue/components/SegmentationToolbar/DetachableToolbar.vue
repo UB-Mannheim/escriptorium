@@ -85,7 +85,7 @@
 
         <!-- selection-dependent tools -->
         <div
-            v-if="hasSelection"
+            v-if="hasSelection && !isDrawing"
             class="new-section with-separator"
         >
             <!-- link/unlink -->
@@ -221,7 +221,7 @@
             </VDropdown>
         </div>
         <div
-            v-if="hasSelection"
+            v-if="hasSelection && !isDrawing"
             class="new-section with-separator"
         >
             <!-- delete -->
@@ -376,6 +376,14 @@ export default {
         startDrag: {
             type: Function,
             default: () => {},
+        },
+        /**
+         * True if a drawing is currently in progress, in which case the toolbar should
+         * not add or remove icons.
+         */
+        isDrawing: {
+            type: Boolean,
+            required: true,
         },
     },
     data() {
