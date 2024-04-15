@@ -417,7 +417,11 @@ export default {
                 // regions mode may only be active when sort mode is also active
                 this.isRegionsModeEnabled = false;
             }
-        }
+        },
+        async annotationTaxonomies() {
+            // reload text annotations on taxonomy update (i.e. colors)
+            await this.loadAnnotations();
+        },
     },
 
     created() {
