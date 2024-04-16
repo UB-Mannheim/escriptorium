@@ -385,13 +385,16 @@ class DocumentSerializer(serializers.ModelSerializer):
                                            queryset=Project.objects.all())
     project_name = serializers.SerializerMethodField()
     project_id = serializers.SerializerMethodField()
+    shared_with_users = UserSerializer(many=True, read_only=True)
+    shared_with_groups = GroupSerializer(many=True, read_only=True)
 
     class Meta:
         model = Document
         fields = ('pk', 'name', 'project', 'transcriptions',
                   'main_script', 'read_direction', 'line_offset', 'show_confidence_viz',
                   'valid_block_types', 'valid_line_types', 'valid_part_types',
-                  'parts_count', 'tags', 'created_at', 'updated_at', 'project_name', 'project_id')
+                  'parts_count', 'tags', 'created_at', 'updated_at', 'project_name', 'project_id',
+                  'shared_with_users', 'shared_with_groups')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
