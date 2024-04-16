@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
     retrieveCurrentUser,
     retrieveGroups,
@@ -53,23 +54,33 @@ const actions = {
      * Fetch segmentation models the user has access to.
      */
     async fetchSegmentModels({ commit }) {
+        let models = [];
         const { data } = await retrieveModels("segment");
-        if (data?.results) {
-            commit("setSegmentationModels", data.results);
-        } else {
-            throw new Error("Unable to retrieve segmentation models");
+        if (!data?.results) throw new Error("Unable to retrieve segmentation models");
+        models = data.results;
+        let nextPage = data.next;
+        while (nextPage) {
+            const res = await axios.get(nextPage);
+            nextPage = res.data.next;
+            models = [...models, ...res.data.results];
         }
+        commit("setSegmentationModels", models);
     },
     /**
      * Fetch recognition models the user has access to.
      */
     async fetchRecognizeModels({ commit }) {
+        let models = [];
         const { data } = await retrieveModels("recognize");
-        if (data?.results) {
-            commit("setRecognitionModels", data.results);
-        } else {
-            throw new Error("Unable to retrieve recognition models");
+        if (!data?.results) throw new Error("Unable to retrieve recognition models");
+        models = data.results;
+        let nextPage = data.next;
+        while (nextPage) {
+            const res = await axios.get(nextPage);
+            nextPage = res.data.next;
+            models = [...models, ...res.data.results];
         }
+        commit("setRecognitionModels", models);
     },
 };
 

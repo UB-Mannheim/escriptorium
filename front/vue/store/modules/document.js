@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
     createDocumentMetadata,
     deleteDocument,
@@ -534,12 +535,17 @@ const actions = {
      */
     async fetchDocumentModels({ commit, state }) {
         commit("setLoading", { key: "models", loading: true });
+        let models = [];
         const { data } = await retrieveDocumentModels(state.id);
-        if (data?.results) {
-            commit("setModels", data.results);
-        } else {
-            throw new Error("Unable to retrieve document models");
+        if (!data?.results) throw new Error("Unable to retrieve document models");
+        models = data.results;
+        let nextPage = data.next;
+        while (nextPage) {
+            const res = await axios.get(nextPage);
+            nextPage = res.data.next;
+            models = [...models, ...res.data.results];
         }
+        commit("setModels", models);
         commit("setLoading", { key: "models", loading: false });
     },
     /**
