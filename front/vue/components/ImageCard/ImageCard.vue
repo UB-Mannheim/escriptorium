@@ -417,6 +417,7 @@ export default {
     computed: {
         ...mapState({
             loading: (state) => state.images.loading,
+            parts: (state) => state.document.parts,
             selectedParts: (state) => state.images.selectedParts,
             isDragging: (state) => state.images.isDragging,
         })
@@ -500,6 +501,11 @@ export default {
             this.setDragOver(idx);
             e.dataTransfer.dropEffect = "move";
         },
+        isConsecutive(array) {
+            // check if every item in an array is consecutive
+            // from https://stackoverflow.com/a/63009660/394067
+            return array.every((value, i) => i === 0 || +value === +array[i-1] + 1)
+        },
         /**
          * On drop, perform the reordering operation, then turn off all drag-related
          * component and store states.
@@ -513,9 +519,24 @@ export default {
                 newIndex--;
             }
             if (this.selectedParts.length > 1 && this.selectedParts.includes(draggingPk)) {
-                await this.moveSelectedParts({ index: newIndex });
+                // multiple selected:
+                // if all selected images are consecutive, and the new index is between
+                // the first and last index of the selected images, don't bother making
+                // the API request since they will not move
+                const selectedIndices = this.parts.filter(
+                    (p) => this.selectedParts.includes(p.pk)
+                ).map((p) => p.order).toSorted((a, b) => a - b);
+                const shouldMove = !(
+                    this.isConsecutive(selectedIndices) &&
+                    newIndex >= selectedIndices[0] &&
+                    (newIndex - 1) <= selectedIndices[selectedIndices.length - 1]
+                );
+                if (shouldMove) {
+                    await this.moveSelectedParts({ index: newIndex });
+                }
             } else if (draggingPk !== this.part.pk && oldIndex !== newIndex) {
-                // if not moving, don't bother making the API request
+                // single selected:
+                // make the API request if the old index is not the same as the new index
                 await this.movePart({ partPk: draggingPk, index: newIndex });
             }
 
