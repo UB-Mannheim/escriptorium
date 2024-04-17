@@ -27,6 +27,9 @@
             <label
                 :for="`select-${part.pk}`"
                 class="image-checkbox"
+                @click="(e) => onToggleSelected(
+                    e, parseInt(part.pk), part.order + 1
+                )"
             >
                 <input
                     :id="`select-${part.pk}`"
@@ -34,9 +37,6 @@
                     class="sr-only"
                     :name="`select-${part.pk}`"
                     :checked="selectedParts.includes(parseInt(part.pk))"
-                    @click="(e) => onToggleSelected(
-                        e, parseInt(part.pk), part.order + 1
-                    )"
                 >
                 <CheckCircleFilledIcon aria-hidden="true" />
                 <span aria-hidden="true" />

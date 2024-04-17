@@ -900,13 +900,19 @@ export default {
          * Handle the checkbox input to select/deselect parts
          */
         onToggleSelected(e, partPk, order) {
+            // preventDefault to delegate input checking entirely to selectedParts
+            e.preventDefault();
+            // checked = the input is actively being checked, in other words, it was
+            // previously not selected
+            const checked = !this.selectedParts.includes(partPk);
+            // then we toggle its selection
             this.togglePartSelected(partPk);
             if (this.lastSelected && e.shiftKey) {
                 // handle multiple selection with shift key
                 const start = order;
                 const end = this.lastSelected;
                 const selected = [...range(Math.min(start,end), Math.max(start,end) + 1)];
-                this.modifySelectedPartsByOrder({ selected, checked: e.target.checked });
+                this.modifySelectedPartsByOrder({ selected, checked });
             }
             // save the last selected item (for multiple selection with shift key)
             this.lastSelected = order;
