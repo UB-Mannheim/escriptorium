@@ -310,7 +310,6 @@
                             :open-context-menu="openContextMenu"
                             :context-menu-open="contextMenuOpen === part.pk"
                             :on-toggle-selected="onToggleSelected"
-                            :on-click-select="onClickSelect"
                             :is-draggable="isReorderMode"
                         />
                         <li
@@ -318,7 +317,7 @@
                             class="not-shown"
                             dir="ltr"
                         >
-                            <span>
+                            <span v-if="filteredParts.length < parts.length">
                                 {{ parts.length - filteredParts.length }}
                                 images hidden by search filter
                             </span>
@@ -328,6 +327,7 @@
                                 including {{ hiddenSelectedCount }} selected images
                             </span>
                             <EscrButton
+                                v-if="filteredParts.length < parts.length"
                                 label="Clear search filter"
                                 color="outline-secondary"
                                 size="small"
@@ -810,6 +810,7 @@ export default {
             "handleSubmitSegmentation",
             "handleSubmitTraining",
             "handleSubmitTranscribe",
+            "modifySelectedPartsByOrder",
             "moveSelectedParts",
             "onCancelMove",
             "onSubmitMove",
@@ -900,32 +901,15 @@ export default {
          */
         onToggleSelected(e, partPk, order) {
             this.togglePartSelected(partPk);
-            if (e.target.checked && !this.lastSelected) {
-                // save the last selected item (for multiple selection with shift key)
-                this.lastSelected = order;
-            } else if (!e.target.checked) {
-                // clear last selected
-                this.lastSelected = null;
+            if (this.lastSelected && e.shiftKey) {
+                // handle multiple selection with shift key
+                const start = order;
+                const end = this.lastSelected;
+                const selected = [...range(Math.min(start,end), Math.max(start,end) + 1)];
+                this.modifySelectedPartsByOrder({ selected, checked: e.target.checked });
             }
-        },
-        /**
-         * Handle multiple selection with shift key
-         */
-        onClickSelect(e, clicked) {
-            if (
-                e.target.checked &&
-                e.shiftKey &&
-                this.lastSelected &&
-                this.lastSelected !== clicked
-            ) {
-                // generate range based on whether beginning or end of selection is larger
-                if (clicked < this.lastSelected) {
-                    // exclude clicked item itself from range; handled in onToggleSelected!
-                    this.setSelectedPartsByOrder([...range(clicked + 1, this.lastSelected + 1)]);
-                } else {
-                    this.setSelectedPartsByOrder([...range(this.lastSelected, clicked)]);
-                }
-            }
+            // save the last selected item (for multiple selection with shift key)
+            this.lastSelected = order;
         },
         /**
          * Set loading state on, run the document module's import code, set loading off

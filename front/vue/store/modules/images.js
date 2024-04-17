@@ -502,6 +502,29 @@ const actions = {
         commit("setSelectedParts", parts);
     },
     /**
+     * Modify the selected parts list by adding or removing, using an array of numbers which
+     * correspond to the `order` attribute to determine which parts to add/remove. Use the
+     * `checked` parameter to tell whether to add (true) or remove (false).
+     */
+    modifySelectedPartsByOrder({ commit, rootState, state }, { selected, checked }) {
+        const partPksByOrder = rootState.document.parts
+            .filter((part) => selected.includes(part.order + 1))
+            .map((part) => part.pk);
+        let selectedPartsClone = structuredClone(state.selectedParts);
+        if (checked) {
+            partPksByOrder.forEach((partPk) => {
+                if (!selectedPartsClone.includes(partPk)) {
+                    selectedPartsClone.push(partPk);
+                }
+            });
+        } else {
+            selectedPartsClone = selectedPartsClone.filter(
+                (partPk) => !partPksByOrder.includes(partPk)
+            );
+        }
+        commit("setSelectedParts", selectedPartsClone);
+    },
+    /**
      * Select or deselect a part, depending on its current state.
      */
     togglePartSelected({ commit, state }, pk) {

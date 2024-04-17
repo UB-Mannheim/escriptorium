@@ -34,10 +34,9 @@
                     class="sr-only"
                     :name="`select-${part.pk}`"
                     :checked="selectedParts.includes(parseInt(part.pk))"
-                    @change="(e) => onToggleSelected(
+                    @click="(e) => onToggleSelected(
                         e, parseInt(part.pk), part.order + 1
                     )"
-                    @click="(e) => onClickSelect(e, part.order + 1)"
                 >
                 <CheckCircleFilledIcon aria-hidden="true" />
                 <span aria-hidden="true" />
@@ -377,13 +376,6 @@ export default {
          */
         isDraggable: {
             type: Boolean,
-            required: true,
-        },
-        /**
-         * Callback for clicking the select button for this image
-         */
-        onClickSelect: {
-            type: Function,
             required: true,
         },
         /**
