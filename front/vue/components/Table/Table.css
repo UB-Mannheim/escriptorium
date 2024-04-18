@@ -88,6 +88,16 @@
 .escr-table tr {
     position: relative;
 }
+/*
+ * safari specific hack until the following are fixed:
+ * https://bugs.webkit.org/show_bug.cgi?id=253147
+ * https://bugs.webkit.org/show_bug.cgi?id=258886
+ */
+@supports (hanging-punctuation: first) and (font: -apple-system-body) and (-webkit-appearance: none) {
+    .escr-table tr td {
+        position: relative;
+    }
+}
 .escr-table tr td a.row-link {
     position: absolute;
     display: block;
