@@ -1,7 +1,7 @@
 <template>
     <VMenu
         placement="bottom-end"
-        theme="vertical-menu"
+        theme="modal-menu"
         :distance="8"
         :shown="isOpen"
         :triggers="[]"

@@ -635,6 +635,7 @@ export class Segmenter {
         this.toolbarSubmenuIds = toolbarSubmenuIds;
         this.activeTool = activeTool;
         this.setActiveTool = setActiveTool;
+        this.isDrawing = false;
         /** end New UI */
 
         // paper.js helpers
@@ -985,6 +986,7 @@ export class Segmenter {
                                     this.regions[i].select();
                             }
                         } else if (this.newUiEnabled) {
+                            console.log(this.activeTool);
                             if (this.mode === "lines") {
                                 // add lines
                                 this.setActiveTool(
@@ -1280,6 +1282,7 @@ export class Segmenter {
             this.bindLineEvents(line);
             line.updateDataFromCanvas();
         }
+        this.isDrawing = false;
         this.resetToolEvents(); // unregistering
     }
 
@@ -1309,6 +1312,7 @@ export class Segmenter {
             this.bindRegionEvents(region);
             region.updateDataFromCanvas();
         }
+        this.isDrawing = false;
         this.resetToolEvents();
     }
 
@@ -1726,6 +1730,7 @@ export class Segmenter {
 
     startNewLine(event) {
         this.purgeSelection();
+        this.isDrawing = true;
 
         let clickLocation = [event.point.x, event.point.y];
         // check if we start from a known region, if we do we bind the line to it.
@@ -1747,6 +1752,7 @@ export class Segmenter {
                 // escape
                 newLine.remove();
                 this.resetToolEvents();
+                this.isDrawing = false;
                 document.removeEventListener("keyup", onCancel);
                 return false;
             }
@@ -1785,6 +1791,7 @@ export class Segmenter {
 
     startNewRegion(event) {
         this.purgeSelection();
+        this.isDrawing = true;
         var originPoint = event.point;
         let newRegion = this.createRegion(
             null,
@@ -1805,6 +1812,7 @@ export class Segmenter {
                 newRegion.remove();
                 this.resetToolEvents();
                 document.removeEventListener("keyup", onCancel);
+                this.isDrawing = false;
                 return false;
             }
             return null;

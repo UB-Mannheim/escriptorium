@@ -1,6 +1,10 @@
 // Utility to store the initial state for each form, so that forms can easily be cleared by key/name
 
 export default {
+    addComponent: {
+        name: "",
+        values: "",
+    },
     align: {
         beamSize: "",
         gap: 600,
@@ -68,9 +72,11 @@ export default {
         location: "before",
     },
     ontology: {
+        image: [],
         lines: [],
         parts: [],
         regions: [],
+        text: [],
     },
     segment: {
         model: "",

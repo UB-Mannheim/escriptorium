@@ -1,10 +1,15 @@
 import * as api from "../api";
 import {
+    createComponentTaxonomy,
+    retrieveComponentTaxonomies,
+    retrieveDefaultOntology,
     createType,
     deleteType,
-    retrieveDefaultOntology,
     updateDocumentOntology,
     updateType,
+    createAnnotationType,
+    updateAnnotationType,
+    deleteAnnotationType,
 } from "../../api";
 
 export const initialState = () => ({
@@ -20,6 +25,7 @@ export const initialState = () => ({
     blockShortcuts: false,
 
     annotationTaxonomies: {},
+    componentTaxonomies: [],
 
     // Manage panels visibility through booleans
     // Those values are initially populated by localStorage
@@ -98,7 +104,12 @@ export const mutations = {
         state.visible_panels = Object.assign({}, state.visible_panels, payload);
     },
     setAnnotationTaxonomies(state, { type, taxos }) {
-        state.annotationTaxonomies[type] = taxos;
+        const taxosClone = structuredClone(state.annotationTaxonomies);
+        taxosClone[type] = taxos;
+        state.annotationTaxonomies = taxosClone;
+    },
+    setComponentTaxonomies(state, taxos) {
+        state.componentTaxonomies = taxos;
     },
     setEnabledVKs(state, vks) {
         state.enabledVKs = Object.assign([], state.enabledVKs, vks);
@@ -172,27 +183,6 @@ export const actions = {
             { root: true },
         );
 
-        // set types on state
-        const types = {
-            regions: data.valid_block_types,
-            lines: data.valid_line_types,
-            parts: valid_part_types,
-        };
-        commit("setTypes", types);
-        // set types form state
-        commit(
-            "forms/setFormState",
-            {
-                form: "ontology",
-                formState: { ...types },
-            },
-            { root: true },
-        );
-        commit("setProjectSlug", data.project);
-        commit("setProjectName", data.project_name);
-        commit("setPartsCount", data.parts_count);
-        commit("setConfidenceVizGloballyEnabled", data.show_confidence_viz);
-
         let page = 1;
         var img_taxos = [];
         while (page) {
@@ -220,6 +210,40 @@ export const actions = {
             else page = null;
         }
         commit("setAnnotationTaxonomies", { type: "text", taxos: text_taxos });
+
+        // fetch annotation components
+        page = 1;
+        let componentTaxonomies = [];
+        while (page) {
+            let resp = await retrieveComponentTaxonomies(data.pk);
+            componentTaxonomies = componentTaxonomies.concat(resp.data.results);
+            if (resp.data.next) page++;
+            else page = null;
+        }
+        commit("setComponentTaxonomies", componentTaxonomies);
+
+        // set types on state
+        const types = {
+            regions: data.valid_block_types || [],
+            lines: data.valid_line_types || [],
+            parts: valid_part_types || [],
+            text: text_taxos || [],
+            image: img_taxos || [],
+        };
+        commit("setTypes", types);
+        // set types form state
+        commit(
+            "forms/setFormState",
+            {
+                form: "ontology",
+                formState: { ...types },
+            },
+            { root: true },
+        );
+        commit("setProjectSlug", data.project);
+        commit("setProjectName", data.project_name);
+        commit("setPartsCount", data.parts_count);
+        commit("setConfidenceVizGloballyEnabled", data.show_confidence_viz);
 
         await dispatch("fetchDefaultTypes");
     },
@@ -253,6 +277,38 @@ export const actions = {
                 root: true,
             });
         }
+    },
+
+    /**
+     * Create a new annotation component
+     */
+    async createComponent({ commit, dispatch, state, rootState }) {
+        const { name, values } = rootState.forms.addComponent;
+        const documentId = state.id;
+        commit("setLoading", true);
+        try {
+            await createComponentTaxonomy({
+                documentId,
+                name,
+                allowedValues: values.split(","),
+            });
+        } catch (err) {
+            commit("setLoading", false);
+            dispatch("alerts/addError", err, { root: true });
+        }
+
+        let page = 1;
+        let componentTaxonomies = [];
+        while (page) {
+            const resp = await retrieveComponentTaxonomies(documentId);
+            componentTaxonomies = componentTaxonomies.concat(resp.data.results);
+            if (resp.data.next) page++;
+            else page = null;
+        }
+        commit("document/setComponentTaxonomies", componentTaxonomies, {
+            root: true,
+        });
+        commit("setLoading", false);
     },
 
     /**
@@ -302,10 +358,10 @@ export const actions = {
         await Promise.all(
             Object.entries(rootState.forms.ontology).map(
                 async ([category, newTypes]) => {
-                    const oldTypes = state.types[category];
+                    const oldTypes = state.types[category] || [];
                     // default types: we can't make changes to them, but we can choose if they
                     // should be enabled or disabled for this document.
-                    const defaultTypes = state.defaultTypes[category];
+                    const defaultTypes = state.defaultTypes[category] || [];
 
                     // prepare types from form state
                     typesToUpdate[category] = [];
@@ -314,6 +370,24 @@ export const actions = {
                     await Promise.all(
                         newTypes.map(async (type) => {
                             let typePk = type.pk;
+
+                            // annotation types have some extra data
+                            let annotationParams = null;
+                            if (["image", "text"].includes(category)) {
+                                annotationParams = {
+                                    name: type.name,
+                                    abbreviation: type.abbreviation,
+                                    components: type.components?.map((c) => c.pk),
+                                    has_comments: type.has_comments,
+                                    marker_detail: type.marker_detail,
+                                    marker_type: type.marker_type,
+                                };
+                                // only add this if it exists, serializer doesn't like it blank
+                                if (type.typology?.name) {
+                                    annotationParams["typology"] = type.typology;
+                                }
+                            }
+
                             // non-default types: create/queue for update
                             if (
                                 !defaultTypes.find(
@@ -322,25 +396,59 @@ export const actions = {
                                         (typePk && typePk === b.pk),
                                 )
                             ) {
+                                let oldType = oldTypes.find((o) => o.pk === type.pk);
                                 if (!typePk) {
                                     // create new types
-                                    const { data } = await createType(
-                                        category,
-                                        { name: type.name },
-                                    );
-                                    typePk = data.pk;
-                                } else if (
-                                    oldTypes.find(
-                                        (o) =>
-                                            o.pk === type.pk &&
-                                            o.name !== type.name,
-                                    )
-                                ) {
+                                    if (annotationParams) {
+                                        // annotation types are document-scoped in API
+                                        const { data } =
+                                            await createAnnotationType({
+                                                documentId: state.id,
+                                                target: category,
+                                                data: annotationParams,
+                                            });
+                                        typePk = data.pk;
+                                    } else {
+                                        const { data } = await createType(
+                                            category,
+                                            { name: type.name },
+                                        );
+                                        typePk = data.pk;
+                                    }
+                                } else if (oldType) {
                                     // update changed existing types (non-default)
-                                    await updateType(category, {
-                                        typePk: type.pk,
-                                        name: type.name,
-                                    });
+                                    if (
+                                        annotationParams &&
+                                        (
+                                            oldType.name !== type.name ||
+                                            oldType.abbreviation !== type.abbreviation ||
+                                            oldType.marker_type !== type.marker_type ||
+                                            oldType.marker_detail !== type.marker_detail ||
+                                            oldType.has_comments !== type.has_comments ||
+                                            (!oldType.typology && type.typology) ||
+                                            oldType.typology?.name !== type.typology?.name ||
+                                            (!oldType.components && annotationParams.components) ||
+                                            oldType.components?.some(
+                                                (c) => !annotationParams.components?.includes(c.pk)
+                                            ) ||
+                                            annotationParams.components?.some(
+                                                (c) => !oldType.components.map(
+                                                    (oc) => oc.pk
+                                                ).includes(c.pk)
+                                            )
+                                        )
+                                    ) {
+                                        await updateAnnotationType({
+                                            documentId: state.id,
+                                            typePk: type.pk,
+                                            data: annotationParams,
+                                        });
+                                    } else if (oldType.name !== type.name) {
+                                        await updateType(category, {
+                                            typePk: type.pk,
+                                            name: type.name,
+                                        });
+                                    }
                                 }
                             }
                             if (typePk) {
@@ -359,10 +467,18 @@ export const actions = {
                                 (a) => !defaultTypes.find((b) => a.pk === b.pk),
                             )
                             .map(
-                                async (type) =>
-                                    await deleteType(category, {
-                                        typePk: type.pk,
-                                    }),
+                                async (type) => {
+                                    if (["image", "text"].includes(category)) {
+                                        return await deleteAnnotationType({
+                                            documentId: state.id,
+                                            typePk: type.pk,
+                                        });
+                                    } else {
+                                        return await deleteType(category, {
+                                            typePk: type.pk,
+                                        });
+                                    }
+                                }
                             ),
                     );
                 },
@@ -374,11 +490,63 @@ export const actions = {
             valid_part_types: validTypes["parts"],
             valid_block_types: validTypes["regions"],
         });
-        commit("setTypes", {
-            regions: data.valid_block_types,
-            lines: data.valid_line_types,
-            parts: data.valid_part_types,
-        });
+
+        let page = 1;
+        var img_taxos = [];
+        while (page) {
+            let resp = await api.retrieveAnnotationTaxonomies(
+                data.pk,
+                "image",
+                page,
+            );
+            img_taxos = img_taxos.concat(resp.data.results);
+            if (resp.data.next) page++;
+            else page = null;
+        }
+        commit("setAnnotationTaxonomies", { type: "image", taxos: img_taxos });
+
+        page = 1;
+        var text_taxos = [];
+        while (page) {
+            let resp = await api.retrieveAnnotationTaxonomies(
+                data.pk,
+                "text",
+                page,
+            );
+            text_taxos = text_taxos.concat(resp.data.results);
+            if (resp.data.next) page++;
+            else page = null;
+        }
+        commit("setAnnotationTaxonomies", { type: "text", taxos: text_taxos });
+
+        // fetch annotation components
+        page = 1;
+        let componentTaxonomies = [];
+        while (page) {
+            let resp = await retrieveComponentTaxonomies(data.pk);
+            componentTaxonomies = componentTaxonomies.concat(resp.data.results);
+            if (resp.data.next) page++;
+            else page = null;
+        }
+        commit("setComponentTaxonomies", componentTaxonomies);
+
+        // set types on state
+        const types = {
+            regions: data.valid_block_types || [],
+            lines: data.valid_line_types || [],
+            parts: data.valid_part_types || [],
+            text: text_taxos || [],
+            image: img_taxos || [],
+        };
+        commit("setTypes", types);
+        commit(
+            "forms/setFormState",
+            {
+                form: "ontology",
+                formState: { ...types },
+            },
+            { root: true },
+        );
         commit("setLoading", false);
     },
 

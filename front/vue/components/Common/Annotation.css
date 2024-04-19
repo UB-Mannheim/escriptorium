@@ -1,0 +1,132 @@
+/* annotation toolbar styling */
+.escr-annotation-toolbar {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 24px;
+    min-height: 34px;
+    padding: 4px 16px;
+    background: var(--background3);
+}
+.escr-annotation-toolbar .escr-anno-group {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 4px;
+}
+
+/* individual pill button (taxonomy) */
+.escr-annotation-toolbar .escr-anno-pill {
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+    max-height: 28px;
+    padding: 4px 10px;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    color: var(--tag-text);
+    font-size: 14px;
+    font-weight: 400;
+}
+.escr-annotation-toolbar .escr-anno-pill.selected {
+    border-color: var(--text1);
+}
+
+/* RecogitoJS base editor styling */
+.escr-editor-tabcontent .r6o-editor {
+    font-family: "Noto Sans";
+    border-radius: 5px;
+    box-shadow: 0px -1px 2px 0px rgba(0, 0, 0, 0.15);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-arrow:after {
+    box-shadow: 0px -1px 2px 0px rgba(0, 0, 0, 0.15);
+}
+.escr-editor-tabcontent .r6o-editor .editable {
+    background-color: #f0f0f0;
+}
+.escr-editor-tabcontent .r6o-editor-inner {
+    border-radius: 5px;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+.escr-editor-tabcontent .r6o-editor-inner .r6o-footer,
+.escr-editor-tabcontent .r6o-editor-inner .r6o-widget.keyvalue-widget {
+    padding: 16px;
+}
+.escr-editor-tabcontent .r6o-widget.keyvalue-widget select {
+    font-family: "Noto Sans";
+    background-color: #f0f0f0;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.escr-editor-tabcontent .r6o-editor-inner label {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+/* RecogitoJS button styling */
+.escr-editor-tabcontent .r6o-editor .r6o-btn {
+    color: var(--button-text);
+    border-radius: 5px;
+    min-height: 38px;
+    padding: 0px 16px;
+    font-family: "Noto Sans", sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn:last-of-type {
+    margin: 0;
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn,
+.escr-editor-tabcontent .r6o-editor .r6o-btn.outline:hover {
+    color: var(--button-text);
+    border: 1px solid var(--primary);
+    background-color: var(--primary);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn:focus {
+    box-shadow: 0 0 0 0.2rem var(--primary-focus);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn:hover,
+.escr-editor-tabcontent .r6o-editor .r6o-btn.outline:active {
+    color: var(--button-text);
+    border-color: var(--primary-dark);
+    background-color: var(--primary-dark);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn:active {
+    border-color: var(--primary-darker);
+    background-color: var(--primary-darker);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn.outline {
+    color: var(--primary);
+    background-color: transparent;
+    border: 1px solid var(--primary);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn.delete-annotation {
+    min-height: 32px;
+    top: calc(50% - 16px);
+    color: var(--tag-text);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn.delete-annotation:hover,
+.escr-editor-tabcontent .r6o-editor .r6o-btn.delete-annotation:active {
+    color: var(--button-text);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn.delete-annotation:hover {
+    background-color: var(--alert);
+}
+.escr-editor-tabcontent .r6o-editor .r6o-btn.delete-annotation:active {
+    background-color: var(--alert-darker);
+}
+
+/* new UI annotation underlines */
+.escr-editor-tabcontent .r6o-annotation {
+    text-underline-offset: 0px;
+}
+.escr-editor-tabcontent .r6o-annotation > .r6o-annotation {
+    text-underline-offset: 4px;
+}
+.escr-editor-tabcontent .r6o-annotation > .r6o-annotation > .r6o-annotation {
+    text-underline-offset: 8px;
+}

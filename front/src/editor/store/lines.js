@@ -9,6 +9,8 @@ export const initialState = () => ({
     masksToRecalc: [],
     debouncedRecalculateMasks: null,
     debouncedRecalculateOrdering: null,
+    isDragging: false,
+    loading: false,
 });
 
 export const getters = {
@@ -142,6 +144,9 @@ export const mutations = {
             state.debouncedRecalculateOrdering.flush();
         }
         assign(state, initialState());
+    },
+    setIsDragging(state, dragging) {
+        state.isDragging = dragging;
     },
 };
 

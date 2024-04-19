@@ -21,7 +21,9 @@
                 :options="tabOptions"
                 :on-change-selection="onTabChange"
             />
-            <h3>Default {{ tabLabel }} Types</h3>
+            <h3 v-if="!['image', 'text'].includes(tab)">
+                Default {{ tabLabel }} Types
+            </h3>
             <table
                 v-if="defaultTypesWithColor && defaultTypesWithColor[tab]"
                 class="escr-table"
@@ -72,8 +74,9 @@
                     </tr>
                 </tbody>
             </table>
-            <h3>
-                <span>Custom {{ tabLabel }} Types</span>
+            <h3 :class="{'anno-header': ['image', 'text'].includes(tab) }">
+                <span v-if="!['image', 'text'].includes(tab)">Custom {{ tabLabel }} Types</span>
+                <span v-else>{{ tabLabel }}</span>
                 <EscrButton
                     :disabled="disabled"
                     :on-click="async () => { await onAddType(); scroll(); }"
@@ -85,8 +88,15 @@
                     </template>
                 </EscrButton>
             </h3>
+            <AnnotationOntologyTable
+                v-if="['image', 'text'].includes(tab)"
+                :disabled="disabled"
+                :on-remove-type="onRemoveType"
+                :types="formState[tab]"
+                :tab="tab"
+            />
             <table
-                v-if="customTypes && customTypes[tab]"
+                v-else-if="customTypes && customTypes[tab]"
                 class="escr-table"
             >
                 <thead>
@@ -127,7 +137,7 @@
                                 aria-label="select color"
                                 :disabled="disabled"
                                 :value="item.color"
-                                @change="(e) => setTypeColor(e, item)"
+                                @focusout="(e) => setTypeColor(e, item)"
                             >
                         </td>
                         <td class="remove-column">
@@ -165,6 +175,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import AnnotationOntologyTable from "./AnnotationOntologyTable.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
 import PlusIcon from "../Icons/PlusIcon/PlusIcon.vue";
@@ -178,6 +189,7 @@ import { changeHue } from "../../store/util/color";
 export default {
     name: "EscrOntologyModal",
     components: {
+        AnnotationOntologyTable,
         EscrButton,
         EscrModal,
         PlusIcon,
@@ -214,11 +226,10 @@ export default {
             // default colors for types (from baseline editor)
             defaultColors: { lines: "#9A56FF", regions: "#11FF76" },
             // index counter for newly added types
-            newTypeIndex: { lines: 1, regions: 1, parts: 1 },
+            newTypeIndex: { lines: 1, regions: 1, parts: 1, text: 1, image: 1 },
             // local storage settings names (from baseline editor)
             settingKeys: { lines: "color-directions", regions: "color-regions" },
-            // should be one of regions, lines, parts
-            // (TODO: imageAnnotations, textAnnotations)
+            // should be one of regions, lines, parts, text, image
             tab: "regions",
         }
     },
@@ -303,6 +314,16 @@ export default {
                     value: "parts",
                     selected: this.tab === "parts",
                 },
+                {
+                    label: "Text Annotations",
+                    value: "text",
+                    selected: this.tab === "text",
+                },
+                {
+                    label: "Image Annotations",
+                    value: "image",
+                    selected: this.tab === "image",
+                },
             ];
         },
         /**
@@ -316,6 +337,10 @@ export default {
                     return "Line";
                 case "parts":
                     return "Part";
+                case "text":
+                    return "Text Annotations";
+                case "image":
+                    return "Image Annotations";
                 default:
                     return "";
             }
@@ -332,6 +357,18 @@ export default {
     methods: {
         ...mapActions("forms", ["handleGenericArrayInput"]),
         async onAddType() {
+            // annotation tabs have additional defaults
+            let extraValues = {};
+            if (["image", "text"].includes(this.tab)) {
+                extraValues = {
+                    abbreviation: "",
+                    components: [],
+                    typology: { name: "" },
+                    marker_detail: "#28a696",
+                    marker_type: this.tab === "text" ? "Background Color" : "Rectangle",
+                    has_comments: false,
+                }
+            }
             // update the form with the current index
             await this.handleGenericArrayInput({
                 form: "ontology",
@@ -340,6 +377,7 @@ export default {
                 value: {
                     name: "",
                     index: `newMeta${this.newTypeIndex[this.tab]}`,
+                    ...extraValues,
                 },
             });
             // increment index of added types so that we can properly track them individually

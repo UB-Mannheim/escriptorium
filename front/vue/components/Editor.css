@@ -45,9 +45,13 @@ div.escr-editor-tabcontent .col.panel .js-wheelzoom-container {
 }
 
 /* DiploPanel height override */
-.panel#diplo-panel .content-container {
+div.escr-editor-tabcontent #diplo-panel .content-container {
     overflow-y: auto;
+    overflow-x: hidden;
     max-height: calc(100vh - 180px);
+}
+div.escr-editor-tabcontent #diplo-panel #save-notif {
+    color: var(--primary);
 }
 
 /* ensure the page background is white for VisuPanel and DiploPanel */
@@ -79,9 +83,13 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
 /* DiploPanel sort mode toggle */
 .sort-mode-toggle.escr-toggle-button {
     margin-left: 16px;
+    margin-right: 4px;
 }
 
 /* DiploPanel line and cursor styling */
+.escr-editor-tabcontent #diplo-panel {
+    color: black;
+}
 .escr-editor-tabcontent #diplomatic-lines > div {
     border: 1px solid transparent;
     border-left: 3px solid transparent;
@@ -93,6 +101,8 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
 }
 .escr-editor-tabcontent #diplomatic-lines div:before {
     border: none;
+    font-family: "Noto Sans";
+    font-size: 14px;
     font-weight: 600;
     margin-right: 1rem;
     margin-left: 0;
@@ -105,30 +115,36 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
     cursor: pointer;
     border-bottom: 1px solid var(--line-ordering-border);
 }
-.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected,
+.escr-diplo-container.sortmode li.selected .draggable-overlay {
     cursor: grab;
     background-color: var(--line-ordering-selected);
     border-left-color: var(--secondary);
 }
-.escr-editor-tabcontent .rtl #diplomatic-lines.sortmode div.selected {
+.escr-editor-tabcontent .rtl #diplomatic-lines.sortmode div.selected,
+.escr-diplo-container.sortmode.rtl li.selected .draggable-overlay {
     border-left-color: transparent;
     border-right-color: var(--secondary);
 }
-.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected + div.selected {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div.selected + div.selected,
+.escr-diplo-container.sortmode li.selected + li.selected .draggable-overlay {
     border-bottom-color: var(--line-ordering-border);
     border-top-color: transparent;
 }
 .escr-editor-tabcontent
     #diplomatic-lines.sortmode
-    div:not(.selected):has(+ div.selected) {
+    div:not(.selected):has(+ div.selected),
+.escr-diplo-container.sortmode li:not(.selected):has(+ li.selected .draggable-overlay) {
     border-bottom-color: transparent;
 }
 .escr-editor-tabcontent
     #diplomatic-lines.sortmode
     div:not(.selected)
-    + div.selected {
+    + div.selected,
+.escr-diplo-container.sortmode li:not(.selected) + li.selected .draggable-overlay {
     border-top-color: var(--line-ordering-border);
 }
-.escr-editor-tabcontent #diplomatic-lines.sortmode div[draggable="true"] {
+.escr-editor-tabcontent #diplomatic-lines.sortmode div[draggable="true"],
+.escr-diplo-container.sortmode li[draggable="true"] {
     cursor: grabbing;
 }

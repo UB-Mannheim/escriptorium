@@ -130,9 +130,14 @@
                 <div :class="'modal-body ' + defaultTextDirection">
                     <p
                         v-if="line.mask == null"
+                        dir="ltr"
                         class="text-warning"
                     >
-                        No mask found for the line, preview unavailable! Calculate masks by hitting the green thumbs up button in the segmentation panel.
+                        No mask found for the line, preview unavailable!
+                        <span v-if="legacyModeEnabled">
+                            Calculate masks by hitting the green thumbs up button in the
+                            segmentation panel.
+                        </span>
                     </p>
                     <div
                         id="modal-img-container"
@@ -854,20 +859,33 @@ export default Vue.extend({
         toggleVK() {
             this.isVKEnabled = !this.isVKEnabled;
             let vks = this.enabledVKs;
+            const keyboardEnabledInputs = document.getElementsByClassName(
+                "display-virtual-keyboard"
+            );
             if (this.isVKEnabled) {
                 vks.push(this.documentId);
                 this.$store.commit("document/setEnabledVKs", vks);
+                // eslint-disable-next-line no-undef
                 userProfile.set("VK-enabled", vks);
-                for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+                for (const input of [...keyboardEnabledInputs]) {
+                    // eslint-disable-next-line no-undef
                     enableVirtualKeyboard(input);
+                    input.focus();
+                }
             } else {
                 // Make sure we save changes made before we remove the VK
                 this.localTranscription = this.$refs.transInput.value;
                 vks.splice(vks.indexOf(this.documentId), 1);
                 this.$store.commit("document/setEnabledVKs", vks);
+                // eslint-disable-next-line no-undef
                 userProfile.set("VK-enabled", vks);
-                for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+                for (const input of [...keyboardEnabledInputs]) {
                     input.onfocus = (e) => { e.preventDefault() };
+                    input.focus();
+                    input.blur();
+                    // delay is required to refocus, to ensure vk removed
+                    setTimeout(() => input.focus(), 200);
+                }
             }
         }
     },

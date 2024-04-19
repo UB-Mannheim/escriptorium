@@ -1,0 +1,130 @@
+.escr-diplo-container {
+    text-align: left;
+    padding: 0 1rem 1rem;
+}
+.escr-diplo-container.rtl {
+    text-align: right;
+}
+.escr-diplo-container summary {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    padding: 10px 0;
+    font-family: "Noto Sans";
+    font-size: 14px;
+    font-weight: 600;
+    list-style: none;
+}
+.escr-diplo-container summary svg {
+    fill: var(--text2);
+}
+.escr-diplo-container details:not([open]) > summary svg {
+    transform: rotate(-90deg);
+}
+.escr-diplo-container summary::marker,
+.escr-diplo-container summary::-webkit-details-marker {
+    display: none;
+}
+.escr-diplo-container summary span {
+    padding-right: 21px;
+}
+.escr-diplo-container.rtl summary {
+    flex-flow: row-reverse nowrap;
+    justify-content: flex-end;
+}
+.escr-diplo-container.rtl summary {
+    padding-right: 22px;
+}
+.escr-lines-region {
+    margin-bottom: 0;
+    padding-inline-start: 32px;
+}
+.escr-lines-region li {
+    position: relative;
+    line-height: 1.45rem;
+    font-size: 1rem;
+    overflow-wrap: break-word;
+    border: 1px solid transparent;
+    border-left: 3px solid transparent;
+    margin: 0;
+    padding: 0;
+}
+.rtl .escr-lines-region li {
+    border-left: 1px solid transparent;
+    border-right: 3px solid transparent;
+}
+.escr-lines-region li::marker {
+    margin: 0;
+    padding: 0;
+    color: #888;
+    font-family: "Noto Sans";
+    font-size: 14px;
+    font-weight: 600;
+}
+.escr-lines-region li::before {
+    content: ".";
+    font-size: 26px;
+    margin-left: -12px;
+    color: white;
+    /* color: yellow; */
+}
+.rtl .escr-lines-region li::before {
+    margin-left: 32px;
+    margin-right: -12px;
+}
+
+.escr-lines-region li .draggable-overlay {
+    display: block;
+    position: absolute;
+    top: -2px;
+    left: -17px;
+    border: 1px solid transparent;
+    border-left: 3px solid transparent;
+    width: calc(100% + 68px);
+    height: calc(100% + 2px);
+    z-index: var(--editor-global-toolbar-z);
+}
+.rtl .escr-lines-region li .draggable-overlay {
+    border-left: 1px solid transparent;
+    border-right: 3px solid transparent;
+}
+.escr-lines-region li .draggable-overlay {
+    cursor: pointer;
+    border-bottom: 1px solid var(--line-ordering-border);
+}
+.escr-lines-region li:first-of-type .draggable-overlay {
+    border-top: 1px solid var(--line-ordering-border);
+}
+
+/* drop zones for drag and drop reordering */
+.escr-line-dropzone-before,
+.escr-line-dropzone-after {
+    position: absolute;
+    top: -2px;
+    left: -17px;
+    width: calc(100% + 68px);
+    height: calc(50% + 2px);
+    background-color: transparent;
+    z-index: var(--editor-toolbar-z);
+}
+.escr-line-dropzone-before.is-dragging,
+.escr-line-dropzone-after.is-dragging {
+    pointer-events: all;
+    z-index: var(--global-nav-z);
+}
+.escr-line-dropzone-after {
+    top: auto;
+    bottom: 0;
+    border-bottom: 6px solid transparent;
+}
+.escr-line-dropzone-after.drag-over {
+    border-bottom-color: var(--secondary-focus);
+}
+.escr-line-dropzone-before {
+    top: -2px;
+    bottom: auto;
+    border-top: 6px solid transparent;
+}
+.escr-line-dropzone-before.drag-over {
+    border-top-color: var(--secondary-focus);
+}

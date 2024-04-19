@@ -56,14 +56,48 @@ export const retrieveDefaultOntology = async (category) =>
 export const createType = async (category, data) =>
     await axios.post(`/${ontologyMap[category]}/`, data);
 
+export const createAnnotationType = async ({ documentId, target, data }) =>
+    await axios.post(
+        `/documents/${documentId}/taxonomies/annotations/?target=${target}`,
+        data,
+    );
+
 export const updateType = async (category, { typePk, ...data }) =>
     await axios.patch(`/${ontologyMap[category]}/${typePk}/`, data);
+
+export const updateAnnotationType = async ({ documentId, typePk, data }) =>
+    await axios.patch(
+        `/documents/${documentId}/taxonomies/annotations/${typePk}/`,
+        data,
+    );
 
 export const deleteType = async (category, { typePk, ...data }) =>
     await axios.delete(`/${ontologyMap[category]}/${typePk}/`, data);
 
+export const deleteAnnotationType = async ({ documentId, typePk }) =>
+    await axios.delete(
+        `/documents/${documentId}/taxonomies/annotations/${typePk}/`,
+    );
+
 export const updateDocumentOntology = async (documentId, data) =>
     await axios.patch(`/documents/${documentId}/modify_ontology/`, data);
+
+// retrieve the taxonomies for annotation components
+export const retrieveComponentTaxonomies = async (documentId) =>
+    await axios.get(
+        `/documents/${documentId}/taxonomies/components/?paginate_by=50`,
+    );
+
+// retrieve the taxonomies for annotation components
+export const createComponentTaxonomy = async ({
+    documentId,
+    name,
+    allowedValues,
+}) =>
+    await axios.post(`/documents/${documentId}/taxonomies/components/`, {
+        name,
+        allowed_values: allowedValues,
+    });
 
 // retrieve characters, sorted by character or frequency, for a specific transcription on a document
 export const retrieveTranscriptionCharacters = async ({
