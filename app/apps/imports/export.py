@@ -85,8 +85,16 @@ class TextExporter(BaseExporter):
                 "line__document_part", "line__document_part__order", "line__order"
             )
         )
+        docid = None
         with open(self.filepath, "w") as fh:
-            fh.writelines(["%s\n" % line.content for line in lines])
+            for trans in lines:
+                if trans.line.document_part.pk != docid:
+                    fh.write("--------------- %s (%s) ---------------\n" % (
+                        trans.line.document_part.title,
+                        trans.line.document_part.filename
+                    ))
+                    docid = trans.line.document_part.pk
+                fh.write("%s\n" % trans.content)
             fh.close()
 
 
