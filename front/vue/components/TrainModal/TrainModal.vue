@@ -1,5 +1,5 @@
 <template>
-    <EscrModal class="escr-train-modal">
+    <EscrModal :class="`escr-train-modal--${scope}`">
         <template #modal-header>
             <h2>Train {{ scope }} Model</h2>
             <EscrButton
@@ -38,28 +38,29 @@
                 required
             />
             <TextField
-                label="New Model"
+                label="Model Name"
                 placeholder="Name"
                 :disabled="disabled"
                 :max-length="512"
-                :on-input="(e) => {
-                    handleTextFieldInput('model', '');
-                    handleTextFieldInput('modelName', e.target.value);
-                }"
+                :on-input="(e) => handleTextFieldInput('modelName', e.target.value)"
                 :value="modelName"
-                :invalid="!!modelName && !!model"
+                :invalid="dirty && !modelName && !model"
                 :errors="dirty ? errors.modelName : []"
+                required
             />
             <DropdownField
-                label="Or Select Existing"
-                :disabled="disabled || !!modelName"
+                label="Base Model (optional)"
+                help-text="You may select an existing model to fine-tune. If left unselected,
+                the model will be trained from scratch."
+                :disabled="disabled"
                 :on-change="(e) => handleTextFieldInput('model', e.target.value)"
                 :options="modelOptions"
                 :errors="dirty ? errors.model : []"
             />
-            <label class="escr-form-field">
+            <label class="escr-form-field model-override-label">
                 <input
                     type="checkbox"
+                    :disabled="!model"
                     value="override"
                     :checked="override === true"
                     @change="(e) => handleTextFieldInput('override', e.target.checked)"
@@ -91,6 +92,7 @@ import EscrModal from "../Modal/Modal.vue";
 import TextField from "../TextField/TextField.vue";
 import XIcon from "../Icons/XIcon/XIcon.vue";
 import "../Common/Form.css";
+import "./TrainModal.css";
 
 export default {
     name: "EscrTrainModal",
@@ -178,14 +180,8 @@ export default {
             if (this.modalOpen.trainRecognizer && !this.transcription) {
                 errors.transcription = ["Required field."];
             }
-            if (!!this.modelName && !!this.model) {
-                let err = "Cannot both create a new model and choose an existing model."
-                errors.modelName = [err];
-                errors.model = [err];
-            } else if (!this.modelName && !this.model) {
-                let err = "Must either create a new model or choose an existing model."
-                errors.modelName = [err];
-                errors.model = [err];
+            if (!this.modelName && !this.model) {
+                errors.modelName = ["Required field."];
             }
             return errors;
         },

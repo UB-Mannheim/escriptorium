@@ -1037,11 +1037,11 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         override = self.validated_data.get('override')
 
         if self.validated_data.get('model_name'):
-            file_ = model and model.file or None
+            file_ = model.file if model else None
             model = OcrModel.objects.create(
                 owner=self.user,
                 name=self.validated_data['model_name'],
-                job=OcrModel.MODEL_JOB_RECOGNIZE,
+                job=OcrModel.MODEL_JOB_SEGMENT,
                 file=file_,
                 file_size=file_.size if file_ else 0
             )
@@ -1118,7 +1118,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         override = self.validated_data.get('override')
 
         if self.validated_data.get('model_name'):
-            file_ = model and model.file or None
+            file_ = model.file if model else None
             model = OcrModel.objects.create(
                 owner=self.user,
                 name=self.validated_data['model_name'],
