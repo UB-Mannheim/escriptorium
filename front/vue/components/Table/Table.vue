@@ -350,6 +350,10 @@ export default {
             };
             this.onSort({ field: header.value, direction: newDirection });
         },
+        /**
+         * Apply with-img class to a th or td with images, and apply any other
+         * classes supplied in the header.class property
+         */
         getClasses(header) {
             const classes = {};
             if (header.image) classes["with-img"] = true

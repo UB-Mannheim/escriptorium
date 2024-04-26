@@ -116,6 +116,13 @@
                                 </template>
                             </ToggleButton>
                         </div>
+                        <SegmentedButtonGroup
+                            color="secondary"
+                            name="images-display-mode"
+                            :disabled="loading && loading.images"
+                            :options="viewOptions"
+                            :on-change-selection="onChangeDisplayMode"
+                        />
                     </div>
                 </div>
 
@@ -296,7 +303,7 @@
 
                 <!-- image grid -->
                 <div
-                    v-if="parts && parts.length"
+                    v-if="displayMode === 'grid' && parts && parts.length"
                     class="escr-image-grid"
                     :dir="readDirection"
                 >
@@ -314,34 +321,13 @@
                         />
                         <li
                             v-if="filteredParts.length < parts.length || parts.length < partsCount"
-                            class="not-shown"
                             dir="ltr"
                         >
-                            <span v-if="filteredParts.length < parts.length">
-                                {{ parts.length - filteredParts.length }}
-                                images hidden by search filter
-                            </span>
-                            <span
-                                v-if="hiddenSelectedCount > 0"
-                            >
-                                including {{ hiddenSelectedCount }} selected images
-                            </span>
-                            <EscrButton
-                                v-if="filteredParts.length < parts.length"
-                                label="Clear search filter"
-                                color="outline-secondary"
-                                size="small"
-                                :disabled="loading && loading.images"
-                                :on-click="() => textFilter = ''"
-                            >
-                                <template #button-icon>
-                                    <XCircleFilledIcon />
-                                </template>
-                            </EscrButton>
-                            <span v-if="parts.length < partsCount">
-                                Only searching the first {{ parts.length }} images;
-                                click "Load More" below to include the rest.
-                            </span>
+                            <HiddenImagesIndicator
+                                :filtered-parts="filteredParts"
+                                :hidden-selected-count="hiddenSelectedCount"
+                                :on-clear-text-filter="() => textFilter = ''"
+                            />
                         </li>
                     </ul>
                     <EscrButton
@@ -351,7 +337,50 @@
                         color="outline-primary"
                         size="small"
                         :disabled="loading && loading.images"
-                        :on-click="async () => await fetchNextPage()"
+                        :on-click="onLoadMore"
+                    />
+                    <div
+                        v-if="loading && loading.images"
+                        class="images-loading-overlay"
+                    >
+                        <div
+                            class="escr-spinner"
+                            role="status"
+                        >
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    v-else-if="displayMode === 'list' && parts && parts.length"
+                    class="escr-image-list"
+                >
+                    <EscrTable
+                        :disabled="loading && loading.images"
+                        :headers="partsHeaders"
+                        :items="filteredParts"
+                        item-key="pk"
+                        linkable
+                        :on-select-all="onToggleSelectAll"
+                        :on-toggle-selected="onToggleSelected"
+                        selectable
+                        :selected-items="selectedParts"
+                    />
+                    <HiddenImagesIndicator
+                        v-if="filteredParts.length < parts.length || parts.length < partsCount"
+                        dir="ltr"
+                        :filtered-parts="filteredParts"
+                        :hidden-selected-count="hiddenSelectedCount"
+                        :on-clear-text-filter="() => textFilter = ''"
+                    />
+                    <EscrButton
+                        v-if="nextPage"
+                        label="Load more"
+                        class="escr-load-more-btn"
+                        color="outline-primary"
+                        size="small"
+                        :disabled="loading && loading.images"
+                        :on-click="onLoadMore"
                     />
                     <div
                         v-if="loading && loading.images"
@@ -510,13 +539,17 @@ import ChevronDownIcon from "../../components/Icons/ChevronDownIcon/ChevronDownI
 import EscrButton from "../../components/Button/Button.vue";
 import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
+import EscrTable from "../../components/Table/Table.vue";
 import ExportIcon from "../../components/Icons/ExportIcon/ExportIcon.vue";
 import ExportModal from "../../components/ExportModal/ExportModal.vue";
+import GridIcon from "../../components/Icons/GridIcon/GridIcon.vue";
+import HiddenImagesIndicator from "./HiddenImagesIndicator.vue";
 import HorizMenuIcon from "../../components/Icons/HorizMenuIcon/HorizMenuIcon.vue";
 import ImageCard from "../../components/ImageCard/ImageCard.vue";
 import ImportIcon from "../../components/Icons/ImportIcon/ImportIcon.vue";
 import ImportModal from "../../components/ImportModal/ImportModal.vue";
 import LineOrderingIcon from "../../components/Icons/LineOrderingIcon/LineOrderingIcon.vue";
+import ListIcon from "../../components/Icons/ListIcon/ListIcon.vue";
 import ModelsIcon from "../../components/Icons/ModelsIcon/ModelsIcon.vue";
 import ModelsPanel from "../../components/ModelsPanel/ModelsPanel.vue";
 import MoveImageIcon from "../../components/Icons/MoveImageIcon/MoveImageIcon.vue";
@@ -528,6 +561,7 @@ import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import SegmentIcon from "../../components/Icons/SegmentIcon/SegmentIcon.vue";
 import SegmentModal from "../../components/SegmentModal/SegmentModal.vue";
+import SegmentedButtonGroup from "../../components/SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import SharePanel from "../../components/SharePanel/SharePanel.vue";
 import TextField from "../../components/TextField/TextField.vue";
 import ToggleButton from "../../components/ToggleButton/ToggleButton.vue";
@@ -550,13 +584,19 @@ export default {
         EscrButton,
         EscrLoader,
         EscrPage,
+        EscrTable,
         ExportIcon,
         ExportModal,
+        // eslint-disable-next-line vue/no-unused-components
+        GridIcon,
+        HiddenImagesIndicator,
         HorizMenuIcon,
         ImageCard,
         ImportIcon,
         ImportModal,
         LineOrderingIcon,
+        // eslint-disable-next-line vue/no-unused-components
+        ListIcon,
         // eslint-disable-next-line vue/no-unused-components
         ModelsIcon,
         // eslint-disable-next-line vue/no-unused-components
@@ -573,6 +613,7 @@ export default {
         SearchPanel,
         SegmentIcon,
         SegmentModal,
+        SegmentedButtonGroup,
         // eslint-disable-next-line vue/no-unused-components
         SharePanel,
         TextField,
@@ -619,6 +660,7 @@ export default {
     data() {
         return {
             contextMenuOpen: null,
+            displayMode: "grid",
             isReorderMode: false,
             lastSelected: null,
             rangeValidationError: null,
@@ -745,6 +787,47 @@ export default {
             return this.selectedParts.filter(
                 (pk) => !this.filteredParts.map((part) => part.pk).includes(pk)
             ).length;
+        },
+        /**
+         * Get objects for the two view modes (grid, list)
+         */
+        viewOptions() {
+            return [
+                {
+                    value: "grid",
+                    label: GridIcon,
+                    selected: this.displayMode === "grid",
+                    tooltip: "Grid view",
+                },
+                {
+                    value: "list",
+                    label: ListIcon,
+                    selected: this.displayMode === "list",
+                    tooltip: "List view",
+                },
+            ]
+        },
+        /**
+         * Headers formatted for EscrTable, for list view
+         */
+        partsHeaders() {
+            return [
+                {
+                    label: "Number",
+                    value: "order",
+                    format: (val) => val + 1,
+                    class: "number",
+                },
+                { label: "Name", value: "title", image: "thumbnail" },
+                {
+                    label: "Last Edited",
+                    value: "updated_at",
+                    format: (val) => new Date(val).toLocaleDateString(
+                        undefined,
+                        { year: "numeric", month: "long", day: "numeric" },
+                    ),
+                },
+            ];
         },
     },
     /**
@@ -908,6 +991,8 @@ export default {
             // then we toggle its selection
             this.togglePartSelected(partPk);
             if (this.lastSelected && e.shiftKey) {
+                // remove text selection highlight
+                document.getSelection().removeAllRanges();
                 // handle multiple selection with shift key
                 const start = order;
                 const end = this.lastSelected;
@@ -916,6 +1001,18 @@ export default {
             }
             // save the last selected item (for multiple selection with shift key)
             this.lastSelected = order;
+        },
+        /**
+         * Handle the "select all" checkbox in the list view, which functions as "select none"
+         * if any images are selected
+         */
+        onToggleSelectAll(e) {
+            e.preventDefault();
+            if (this.selectedParts?.length > 0) {
+                this.selectNone();
+            } else {
+                this.selectAll();
+            }
         },
         /**
          * Set loading state on, run the document module's import code, set loading off
@@ -1038,6 +1135,20 @@ export default {
                 }
             }
         },
+        /**
+         * Switch between list and grid view
+         */
+        onChangeDisplayMode(value) {
+            this.displayMode = value;
+        },
+        /**
+         * Callback for clicking the "load more" button, which fetches the next page
+         */
+        async onLoadMore() {
+            this.setLoading({ key: "images", loading: true });
+            await this.fetchNextPage();
+            this.setLoading({ key: "images", loading: false });
+        }
     },
 }
 </script>
