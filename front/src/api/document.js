@@ -381,10 +381,12 @@ export const trainRecognizerModel = async ({
         override,
         parts,
         transcription,
+        model_name: modelName,
     };
     if (model) {
         params.model = model;
-    } else {
+    }
+    if (modelName) {
         params.model_name = modelName;
     }
     return await axios.post(`/documents/${documentId}/train/`, params);
@@ -403,7 +405,8 @@ export const trainSegmenterModel = async ({
     };
     if (model) {
         params.model = model;
-    } else {
+    }
+    if (modelName) {
         params.model_name = modelName;
     }
     return await axios.post(`/documents/${documentId}/segtrain/`, params);
