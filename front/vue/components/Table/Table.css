@@ -135,11 +135,6 @@
     z-index: var(--table-actions-z);
 }
 /* custom select checkboxes */
-.escr-table th.escr-select-all {
-    display: flex;
-    align-items: center;
-    height: 32px;
-}
 .escr-table .escr-select-checkbox {
     position: relative;
     z-index: var(--table-actions-z);

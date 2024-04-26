@@ -32,7 +32,7 @@
                 </th>
                 <th
                     v-for="header in headers"
-                    :key="header.value"
+                    :key="header.key || header.value"
                     :class="getClasses(header)"
                 >
                     <div>
@@ -99,7 +99,7 @@
                 </td>
                 <td
                     v-for="(header, index) in headers"
-                    :key="header.value"
+                    :key="header.key || header.value"
                     :class="getClasses(header)"
                 >
                     <img

@@ -215,7 +215,8 @@
     background-color: transparent;
 }
 .escr-image-list .escr-table th {
-    position: sticky; top: 0;
+    position: sticky;
+    top: 0;
     background-color: var(--background);
     z-index: var(--sticky-table-header-z);
 }
@@ -226,7 +227,8 @@
     font-size: 0.75rem;
 }
 .escr-image-list .escr-table td.with-img,
-.escr-image-list .escr-table td.number {
+.escr-image-list .escr-table td.number,
+.escr-image-list .escr-table td.workflow {
     font-weight: 600;
 }
 .escr-image-list .escr-table th.number div {
@@ -237,7 +239,7 @@
 }
 .escr-image-list .escr-table tr td:first-of-type,
 .escr-image-list .escr-table tr th:first-of-type {
-    padding: 0 0 0 3rem;
+    padding: 0 0 0 2rem;
 }
 
 /* hidden images indicator */

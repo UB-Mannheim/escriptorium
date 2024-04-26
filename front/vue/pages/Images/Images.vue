@@ -820,11 +820,40 @@ export default {
                 },
                 { label: "Name", value: "title", image: "thumbnail" },
                 {
+                    label: "Segment",
+                    value: "workflow",
+                    key: "segment",
+                    class: "workflow",
+                    format: (val) => ImageCard.filters.workflowString(val.segment)
+                },
+                {
+                    label: "Transcribe",
+                    value: "workflow",
+                    key: "transcribe",
+                    class: "workflow",
+                    format: (val) => ImageCard.filters.workflowString(val.transcribe)
+                },
+                {
+                    label: "Align",
+                    value: "workflow",
+                    key: "align",
+                    class: "workflow",
+                    format: (val) => ImageCard.filters.workflowString(val.align)
+                },
+                {
                     label: "Last Edited",
                     value: "updated_at",
                     format: (val) => new Date(val).toLocaleDateString(
                         undefined,
-                        { year: "numeric", month: "long", day: "numeric" },
+                        {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                            hourCycle: "h23",
+                        },
                     ),
                 },
             ];
