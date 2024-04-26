@@ -81,7 +81,7 @@
                             :headers="headers"
                             :items="documents"
                             :on-sort="sortDocuments"
-                            :sort-disabled="loading"
+                            :disabled="loading"
                             :linkable="true"
                         >
                             <template #actions="{ item }">

@@ -55,6 +55,8 @@
     width: 50px;
     height: 50px;
     vertical-align: middle;
+    border-radius: 5px;
+    margin-right: 1.25rem;
 }
 .escr-table tr td.with-img img ~ * {
     vertical-align: middle;
@@ -131,4 +133,44 @@
 /* ensure tags dropdown above table row link */
 .escr-table .v-popper--theme-tags-dropdown {
     z-index: var(--table-actions-z);
+}
+/* custom select checkboxes */
+.escr-table th.escr-select-all {
+    display: flex;
+    align-items: center;
+    height: 32px;
+}
+.escr-table .escr-select-checkbox {
+    position: relative;
+    z-index: var(--table-actions-z);
+    margin: 0;
+}
+.escr-table .escr-select-checkbox:disabled,
+.escr-table .escr-select-checkbox:has(input:disabled) {
+    pointer-events: none;
+}
+.escr-table .escr-select-checkbox .checked,
+.escr-table .escr-select-checkbox .unchecked {
+    cursor: pointer;
+    display: none;
+}
+.escr-table .escr-select-checkbox:has(input:checked) .checked {
+    color: var(--secondary);
+    display: block;
+}
+.escr-table .escr-select-checkbox:not(:has(input:checked)) .unchecked {
+    color: var(--text1);
+    display: block;
+}
+.escr-table .escr-select-checkbox:disabled .checked,
+.escr-table .escr-select-checkbox:disabled .unchecked,
+.escr-table .escr-select-checkbox:has(input:disabled) .checked,
+.escr-table .escr-select-checkbox:has(input:disabled) .unchecked,
+.escr-table--selectable tbody tr:has(input:disabled) {
+    color: var(--text3);
+    pointer-events: none;
+}
+.escr-table--selectable tbody tr:has(input:checked) {
+    background-color: var(--line-ordering-selected);
+    box-shadow: inset 4px 0px 0px 0px var(--secondary);
 }

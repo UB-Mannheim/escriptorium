@@ -19,7 +19,7 @@
                 :items="sortedTranscriptions.filter((t) => !t.archived)"
                 :on-edit="onEditTranscription"
                 :on-sort="sortTranscriptions"
-                :sort-disabled="disabled"
+                :disabled="disabled"
                 :editing-key="editing && editing.pk.toString()"
             >
                 <template #actions="{ item }">

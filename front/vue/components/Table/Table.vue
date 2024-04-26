@@ -4,8 +4,36 @@
         <thead>
             <tr>
                 <th
+                    v-if="selectable"
+                    class="escr-select-all"
+                >
+                    <label
+                        class="escr-select-checkbox"
+                        :disabled="disabled"
+                        @click="onSelectAll"
+                    >
+                        <input
+                            id="select-all"
+                            class="sr-only"
+                            type="checkbox"
+                            name="select-all"
+                            :checked="selectedItems && selectedItems.length > 0"
+                            :disabled="disabled"
+                        >
+                        <CheckSquareIcon
+                            class="unchecked"
+                            aria-hidden="true"
+                        />
+                        <CheckSquareFilledIcon
+                            class="checked"
+                            aria-hidden="true"
+                        />
+                    </label>
+                </th>
+                <th
                     v-for="header in headers"
                     :key="header.value"
+                    :class="getClasses(header)"
                 >
                     <div>
                         <span v-if="!header.sortable">
@@ -15,7 +43,7 @@
                         <button
                             v-else
                             class="escr-sort-button"
-                            :disabled="sortDisabled"
+                            :disabled="disabled"
                             @click="() => setSort(header)"
                         >
                             <span>
@@ -35,13 +63,44 @@
         </thead>
         <tbody>
             <tr
-                v-for="item in items"
+                v-for="(item, itemIndex) in items"
                 :key="item[itemKey]"
             >
                 <td
+                    v-if="selectable"
+                    class="escr-select-column"
+                >
+                    <!-- select button -->
+                    <label
+                        :for="`select-${item[itemKey]}`"
+                        class="escr-select-checkbox"
+                        :disabled="disabled"
+                        @click="(e) => onToggleSelected(
+                            e, parseInt(item[itemKey]), itemIndex + 1
+                        )"
+                    >
+                        <input
+                            :id="`select-${item[itemKey]}`"
+                            class="sr-only"
+                            type="checkbox"
+                            :name="`select-${item[itemKey]}`"
+                            :disabled="disabled"
+                            :checked="selectedItems.includes(parseInt(item[itemKey]))"
+                        >
+                        <CheckSquareIcon
+                            class="unchecked"
+                            aria-hidden="true"
+                        />
+                        <CheckSquareFilledIcon
+                            class="checked"
+                            aria-hidden="true"
+                        />
+                    </label>
+                </td>
+                <td
                     v-for="(header, index) in headers"
                     :key="header.value"
-                    :class="header.image ? 'with-img' : ''"
+                    :class="getClasses(header)"
                 >
                     <img
                         v-if="header.image"
@@ -52,11 +111,13 @@
                         v-if="linkable && item.href && index == 0"
                         class="row-link"
                         :href="item.href"
+                        :disabled="disabled"
                     >
                         <component
                             :is="header.component"
                             v-if="header.component && item[header.value]"
                             class="sr-only"
+                            :disabled="disabled"
                             v-bind="item[header.value]"
                         />
                         <span
@@ -75,12 +136,14 @@
                         :is="header.component"
                         v-if="header.component && item[header.value]"
                         v-bind="item[header.value]"
+                        :disabled="disabled"
                     />
                     <input
                         v-else-if="header.editable && editingKey === item[itemKey].toString()"
                         type="text"
                         :value="item[header.value]"
                         :maxlength="512"
+                        :disabled="disabled"
                         @input="(e) => onEdit({ field: header.value, value: e.target.value })"
                     >
                     <span
@@ -110,12 +173,16 @@
     </table>
 </template>
 <script>
+import CheckSquareIcon from "../Icons/CheckSquareIcon/CheckSquareIcon.vue";
+import CheckSquareFilledIcon from "../Icons/CheckSquareFilledIcon/CheckSquareFilledIcon.vue";
 import SortIcon from "../Icons/SortIcon/SortIcon.vue";
 import "./Table.css";
 
 export default {
     name: "EscrTable",
     components: {
+        CheckSquareIcon,
+        CheckSquareFilledIcon,
         SortIcon,
     },
     props: {
@@ -124,6 +191,14 @@ export default {
          * and uses a smaller font size.
          */
         compact: {
+            type: Boolean,
+            default: false,
+        },
+        /**
+         * Boolean indicating whether or not the sort buttons, links, select buttons, etc.
+         * should be disabled, e.g. during loading.
+         */
+        disabled: {
             type: Boolean,
             default: false,
         },
@@ -213,13 +288,33 @@ export default {
             default: ({ field, direction }) => {},
         },
         /**
-         * Boolean indicating whether or not the sort buttons should be disabled, e.g. during
-         * loading.
+         * Callback function for selecting all items, for tables with `selectable` set `true`.
          */
-        sortDisabled: {
+        onSelectAll: {
+            type: Function,
+            default: () => {},
+        },
+        /**
+         * Callback function for toggling a selected item, for tables with `selectable` set `true`.
+         */
+        onToggleSelected: {
+            type: Function,
+            default: () => {},
+        },
+        /**
+         * Boolean indicating whether or not items should be selectable with checkbox inputs.
+         */
+        selectable: {
             type: Boolean,
             default: false,
-        }
+        },
+        /**
+         * List of currently selected items, by key, for tables with `selectable` set `true`.
+         */
+        selectedItems: {
+            type: Array,
+            default: () => [],
+        },
     },
     data() {
         return {
@@ -232,6 +327,7 @@ export default {
         classes() {
             return {
                 "escr-table": true,
+                "escr-table--selectable": this.selectable,
                 "escr-table--compact": this.compact,
             };
         },
@@ -253,6 +349,12 @@ export default {
                 sortFn: this.sortState.sortFn || undefined,
             };
             this.onSort({ field: header.value, direction: newDirection });
+        },
+        getClasses(header) {
+            const classes = {};
+            if (header.image) classes["with-img"] = true
+            if (header.class) classes[header.class] = true
+            return classes;
         },
     },
 }

@@ -36,7 +36,7 @@
                 :headers="tableHeaders"
                 :items="items"
                 :on-sort="onSort"
-                :sort-disabled="loading"
+                :disabled="loading"
             />
         </div>
         <EscrLoader
