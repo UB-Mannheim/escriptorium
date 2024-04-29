@@ -970,20 +970,21 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
         model = self.validated_data.get('model')
         parts = self.validated_data.get('parts') or self.document.parts.all()
 
-        ocr_model_document, created = OcrModelDocument.objects.get_or_create(
-            document=self.document,
-            ocr_model=model,
-            defaults={'executed_on': timezone.now()}
-        )
-        if not created:
-            ocr_model_document.executed_on = timezone.now()
-            ocr_model_document.save()
+        if model:
+            ocr_model_document, created = OcrModelDocument.objects.get_or_create(
+                document=self.document,
+                ocr_model=model,
+                defaults={'executed_on': timezone.now()}
+            )
+            if not created:
+                ocr_model_document.executed_on = timezone.now()
+                ocr_model_document.save()
 
         for part in parts:
             part.chain_tasks(
                 segment.si(instance_pk=part.pk,
                            user_pk=self.user.pk,
-                           model_pk=model.pk,
+                           model_pk=model.pk if model else None,  # None means default model
                            steps=self.validated_data.get('steps'),
                            text_direction=self.validated_data.get('text_direction'),
                            override=self.validated_data.get('override'))

@@ -206,13 +206,18 @@ const actions = {
             rootState?.forms?.segment?.include?.length === 2
                 ? "both"
                 : rootState?.forms?.segment?.include[0];
-        await segmentDocument({
+        const params = {
             documentId,
-            override: rootState?.forms?.segment?.overwrite,
-            model: rootState?.forms?.segment?.model,
             steps,
             parts,
-        });
+        };
+        if (rootState?.forms?.segment?.model) {
+            params["model"] = rootState.forms.segment.model;
+        }
+        if (rootState?.forms?.segment?.overwrite) {
+            params["override"] = rootState.forms.segment.overwrite;
+        }
+        await segmentDocument(params);
     },
     /**
      * Set the selected task pk on the state (e.g. for cancellation)

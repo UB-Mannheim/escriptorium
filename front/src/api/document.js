@@ -245,13 +245,16 @@ export const segmentDocument = async ({
     model,
     steps,
     parts,
-}) =>
-    await axios.post(`/documents/${documentId}/segment/`, {
-        override,
-        model,
-        steps,
-        parts,
-    });
+}) => {
+    const params = { steps, parts };
+    if (override) {
+        params["override"] = override;
+    }
+    if (model) {
+        params["model"] = model;
+    }
+    await axios.post(`/documents/${documentId}/segment/`, params);
+};
 
 // queue the transcription task for this document
 export const transcribeDocument = async ({
