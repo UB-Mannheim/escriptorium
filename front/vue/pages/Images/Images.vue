@@ -358,7 +358,7 @@
                     <EscrTable
                         :disabled="loading && loading.images"
                         :headers="partsHeaders"
-                        :items="filteredParts"
+                        :items="tableParts"
                         item-key="pk"
                         linkable
                         :on-select-all="onToggleSelectAll"
@@ -546,6 +546,7 @@ import GridIcon from "../../components/Icons/GridIcon/GridIcon.vue";
 import HiddenImagesIndicator from "./HiddenImagesIndicator.vue";
 import HorizMenuIcon from "../../components/Icons/HorizMenuIcon/HorizMenuIcon.vue";
 import ImageCard from "../../components/ImageCard/ImageCard.vue";
+import ImageWorkflowStatus from "./ImageWorkflowStatus.vue";
 import ImportIcon from "../../components/Icons/ImportIcon/ImportIcon.vue";
 import ImportModal from "../../components/ImportModal/ImportModal.vue";
 import LineOrderingIcon from "../../components/Icons/LineOrderingIcon/LineOrderingIcon.vue";
@@ -729,6 +730,14 @@ export default {
                 return this.sortedParts;
             }
         },
+        tableParts() {
+            return this.filteredParts.map((part) => ({
+                ...part,
+                alignWorkflow: { status: part.workflow.align },
+                segmentWorkflow: { status: part.workflow.segment },
+                transcribeWorkflow: { status: part.workflow.transcribe },
+            }));
+        },
         /**
          * Parts sorted by order
          */
@@ -821,24 +830,24 @@ export default {
                 { label: "Name", value: "title", image: "thumbnail" },
                 {
                     label: "Segment",
-                    value: "workflow",
+                    value: "segmentWorkflow",
                     key: "segment",
                     class: "workflow",
-                    format: (val) => ImageCard.filters.workflowString(val.segment)
+                    component: ImageWorkflowStatus,
                 },
                 {
                     label: "Transcribe",
-                    value: "workflow",
+                    value: "transcribeWorkflow",
                     key: "transcribe",
                     class: "workflow",
-                    format: (val) => ImageCard.filters.workflowString(val.transcribe)
+                    component: ImageWorkflowStatus,
                 },
                 {
                     label: "Align",
-                    value: "workflow",
+                    value: "alignWorkflow",
                     key: "align",
                     class: "workflow",
-                    format: (val) => ImageCard.filters.workflowString(val.align)
+                    component: ImageWorkflowStatus,
                 },
                 {
                     label: "Last Edited",

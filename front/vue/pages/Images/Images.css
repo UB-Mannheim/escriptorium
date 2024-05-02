@@ -262,3 +262,53 @@
     background-color: var(--background1);
     padding: 1rem;
 }
+
+/* task status */
+
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata,
+td .task-metadata {
+    display: flex;
+    flex-flow: column;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata {
+    align-items: flex-end;
+    justify-content: flex-end;
+    font-size: 10px;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .date,
+td .task-metadata .date {
+    font-weight: 400;
+}
+
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status,
+td .task-metadata .status {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    gap: 5px;
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status::before,
+td .task-metadata .status::before {
+    content: " ";
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--text2);
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.done::before,
+td .task-metadata .status.done::before {
+    background-color: var(--completed);
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.pending::before,
+td .task-metadata .status.pending::before {
+    background-color: var(--initiated);
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.ongoing::before,
+td .task-metadata .status.ongoing::before {
+    background-color: var(--in-progress);
+}
+.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.error::before,
+td.task-metadata .status.error::before {
+    background-color: var(--alert);
+}
