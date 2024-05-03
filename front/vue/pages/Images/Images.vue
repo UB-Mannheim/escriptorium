@@ -358,11 +358,15 @@
                     <EscrTable
                         :disabled="loading && loading.images"
                         :headers="partsHeaders"
+                        :is-dragging="isDragging"
                         :items="tableParts"
                         item-key="pk"
                         linkable
+                        :on-drag-start="handleDragStart"
+                        :on-drop="handleDrop"
                         :on-select-all="onToggleSelectAll"
                         :on-toggle-selected="onToggleSelected"
+                        :orderable="isReorderMode"
                         selectable
                         :selected-items="selectedParts"
                     />
@@ -675,6 +679,7 @@ export default {
         ...mapState({
             deleteModalOpen: (state) => state.images.deleteModalOpen,
             documentName: (state) => state.document.name,
+            isDragging: (state) => state.images.isDragging,
             loading: (state) => state.images.loading,
             models: (state) => state.document.models,
             moveModalOpen: (state) => state.images.moveModalOpen,
@@ -932,6 +937,7 @@ export default {
             "handleSubmitTraining",
             "handleSubmitTranscribe",
             "modifySelectedPartsByOrder",
+            "movePart",
             "moveSelectedParts",
             "onCancelMove",
             "onSubmitMove",
@@ -949,7 +955,7 @@ export default {
             transcribe: "transcribeImages",
         }),
         ...mapActions("user", ["fetchGroups", "fetchRecognizeModels", "fetchSegmentModels"]),
-        ...mapMutations("images", ["setLoading", "setSelectedParts"]),
+        ...mapMutations("images", ["setLoading", "setSelectedParts", "setIsDragging"]),
         /**
          * Close a context menu for an image.
          */
@@ -1186,6 +1192,55 @@ export default {
             this.setLoading({ key: "images", loading: true });
             await this.fetchNextPage();
             this.setLoading({ key: "images", loading: false });
+        },
+
+        /**
+         * On drag, set dragged part's pk on the event data so that it can be retrieved on drop.
+         */
+        handleDragStart(e, part) {
+            e.dataTransfer.setData("draggingPk", part.pk);
+            e.dataTransfer.setData("draggingOrder", part.order);
+        },
+        /**
+         * check if every item in an array is consecutive
+         * from https://stackoverflow.com/a/63009660/394067
+         */
+        isConsecutive(array) {
+            return array.every((value, i) => i === 0 || +value === +array[i-1] + 1)
+        },
+        /**
+         * On drop, perform the reordering operation, then turn off all drag-related
+         * component and store states.
+         */
+        async handleDrop(e, part, idx) {
+            const draggingPk = parseInt(e.dataTransfer.getData("draggingPk"));
+            const oldIndex = parseInt(e.dataTransfer.getData("draggingOrder"));
+            // determine the index to move to
+            let newIndex = idx;
+            if (this.selectedParts.length <= 1 && oldIndex < newIndex) {
+                newIndex--;
+            }
+            if (this.selectedParts.length > 1 && this.selectedParts.includes(draggingPk)) {
+                // multiple selected:
+                // if all selected images are consecutive, and the new index is between
+                // the first and last index of the selected images, don't bother making
+                // the API request since they will not move
+                const selectedIndices = this.parts.filter(
+                    (p) => this.selectedParts.includes(p.pk)
+                ).map((p) => p.order).toSorted((a, b) => a - b);
+                const shouldMove = !(
+                    this.isConsecutive(selectedIndices) &&
+                    newIndex >= selectedIndices[0] &&
+                    (newIndex - 1) <= selectedIndices[selectedIndices.length - 1]
+                );
+                if (shouldMove) {
+                    await this.moveSelectedParts({ index: newIndex });
+                }
+            } else if (draggingPk !== part.pk && oldIndex !== newIndex) {
+                // single selected:
+                // make the API request if the old index is not the same as the new index
+                await this.movePart({ partPk: draggingPk, index: newIndex });
+            }
         }
     },
 }

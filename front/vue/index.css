@@ -65,6 +65,7 @@
     --tag-text-ondark: #ffffff;
     /* drop shadow */
     --drop-shadow: rgba(0, 0, 0, 0.15);
+    --drag-overlay: rgba(0, 0, 0, 0.3);
 
     /* color combinations on some components (e.g. Alert) */
     --foreground-secondary: #104581;
@@ -106,6 +107,7 @@
     --background2-darker: #b5b5b5;
     --background2-focus: rgb(202 202 202 / 50%);
     --background3: #dfdfdf;
+    --selected-background: #d1dff0;
     /* modal backdrop */
     --modal-backdrop: rgb(0 0 0 / 10%);
     /* light mode text */
@@ -123,6 +125,7 @@
     --background2-darker: #666a6c;
     --background2-focus: rgb(86 90 91 / 50%);
     --background3: #383b3c;
+    --selected-background: #2b3a4c;
     /* modal backdrop */
     --modal-backdrop: rgb(0 0 0 / 33%);
     /* dark mode text */

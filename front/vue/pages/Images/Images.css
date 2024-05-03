@@ -1,3 +1,7 @@
+body:has(.escr-images-page) {
+    overflow-x: hidden;
+}
+
 /* special styling for images page */
 .escr-body #main.escr-vue-enabled .escr-images-page .escr-page {
     padding: 0;
@@ -213,6 +217,7 @@
 }
 .escr-image-list .escr-table {
     background-color: transparent;
+    margin-bottom: 2rem;
 }
 .escr-image-list .escr-table th {
     position: sticky;
