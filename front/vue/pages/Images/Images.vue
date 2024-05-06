@@ -121,7 +121,7 @@
                             name="images-display-mode"
                             :disabled="loading && loading.images"
                             :options="viewOptions"
-                            :on-change-selection="onChangeDisplayMode"
+                            :on-change-selection="setDisplayMode"
                         />
                     </div>
                 </div>
@@ -877,6 +877,10 @@ export default {
      * On load, fetch basic details about the document.
      */
     async created() {
+        // set mode based on user preference (grid or list view)
+        const initMode = this.getDisplayMode() || "grid";
+        this.setDisplayMode(initMode);
+        // set document id by url params
         this.setId(this.id);
         // join document websocket room
         const msg = `{"type": "join-room", "object_cls": "document", "object_pk": ${this.id}}`;
@@ -1180,12 +1184,6 @@ export default {
             }
         },
         /**
-         * Switch between list and grid view
-         */
-        onChangeDisplayMode(value) {
-            this.displayMode = value;
-        },
-        /**
          * Callback for clicking the "load more" button, which fetches the next page
          */
         async onLoadMore() {
@@ -1241,7 +1239,20 @@ export default {
                 // make the API request if the old index is not the same as the new index
                 await this.movePart({ partPk: draggingPk, index: newIndex });
             }
-        }
+        },
+        /**
+         * Get user preference for display mode from local storage
+         */
+        getDisplayMode() {
+            return localStorage.getItem("images-display-mode");
+        },
+        /**
+         * Set user preference for display mode in local storage and on component
+         */
+        setDisplayMode(mode) {
+            localStorage.setItem("images-display-mode", mode);
+            this.displayMode = mode;
+        },
     },
 }
 </script>
