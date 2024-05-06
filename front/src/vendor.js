@@ -9,7 +9,7 @@ import "dropzone/dist/min/dropzone.min.css";
 // import '@recogito/annotorious/dist/annotorious.min.css';
 import "lodash";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import "moment-timezone/builds/moment-timezone-with-data-2012-2022.min.js";
+import "moment-timezone/builds/moment-timezone-with-data-10-year-range.min.js";
 import "@teklia/virtual-keyboard/dist-lib/content.js";
 import "bootstrap-select/dist/css/bootstrap-select.css";
 
