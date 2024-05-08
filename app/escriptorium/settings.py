@@ -223,6 +223,7 @@ DISABLE_ES_SEARCH = os.getenv('DISABLE_ES_SEARCH', 'True').lower() not in ('fals
 ES_SEARCH_URL = os.getenv('ES_SEARCH_URL', 'http://localhost:9200')
 ES_SEARCH_COMMON_INDEX = os.getenv('ES_SEARCH_COMMON_INDEX', 'es-transcriptions')
 
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = False
 CELERY_BROKER_URL = 'redis://%s:%d/0' % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'redis://%s:%d' % (REDIS_HOST, REDIS_PORT)
 CELERY_ACCEPT_CONTENT = ['application/json']
