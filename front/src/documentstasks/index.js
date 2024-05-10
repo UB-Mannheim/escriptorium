@@ -32,7 +32,7 @@ const actions = {
             commit("setDocumentsTasks", {});
             return resp.data;
         } catch (err) {
-            console.log(`couldnt cancel tasks for document ${id}!`, err);
+            console.log(`couldn't cancel tasks for document ${id}!`, err);
             throw err;
         }
     },

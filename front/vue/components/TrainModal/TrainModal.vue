@@ -20,7 +20,7 @@
                             modalOpen.trainRecognizer
                         "
                     >
-                        and trasncription. Empty lines will be ignored.
+                        and transcription. Empty lines will be ignored.
                     </span><span v-else>.</span>
                 </p>
                 <p>
