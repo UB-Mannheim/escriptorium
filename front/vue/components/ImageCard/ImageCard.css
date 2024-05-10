@@ -264,43 +264,6 @@
 .v-popper--theme-escr-task-tooltip .v-popper__inner svg {
     max-height: 16px;
 }
-.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata {
-    display: flex;
-    flex-flow: column;
-    align-items: flex-end;
-    justify-content: flex-end;
-    font-size: 10px;
-}
-.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .date {
-    font-weight: 400;
-}
-
-.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status {
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: center;
-    gap: 5px;
-}
-.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status::before {
-    content: " ";
-    display: block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--text2);
-}
-.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.done::before {
-    background-color: var(--completed);
-}
-.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.pending::before {
-    background-color: var(--initiated);
-}
-.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.ongoing::before {
-    background-color: var(--in-progress);
-}
-.v-popper--theme-escr-task-tooltip .v-popper__inner .task-metadata .status.error::before {
-    background-color: var(--alert);
-}
 
 /* special styling for normal tooltips */
 .v-popper--theme-escr-tooltip-small .v-popper__inner {

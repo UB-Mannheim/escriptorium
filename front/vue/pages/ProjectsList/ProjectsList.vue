@@ -66,7 +66,7 @@
                         item-key="slug"
                         :headers="headers"
                         :on-sort="sortProjects"
-                        :sort-disabled="loading"
+                        :disabled="loading"
                         :linkable="true"
                     >
                         <template #actions="{ item }">

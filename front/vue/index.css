@@ -65,6 +65,7 @@
     --tag-text-ondark: #ffffff;
     /* drop shadow */
     --drop-shadow: rgba(0, 0, 0, 0.15);
+    --drag-overlay: rgba(0, 0, 0, 0.3);
 
     /* color combinations on some components (e.g. Alert) */
     --foreground-secondary: #104581;
@@ -84,14 +85,16 @@
     --global-nav-z: 5;
     --segmented-button-focus-z: 6;
     --table-actions-z: 7;
-    --taggroup-overflow-z: 8;
-    --sidebar-backdrop-z: 9;
-    --sidebar-container-z: 10;
-    --sidebar-z: 11;
-    --menu-z: 12;
-    --modal-backdrop-z: 13;
-    --modal-z: 14;
-    --toast-z: 15;
+    --sticky-table-header-z: 8;
+    --loading-overlay-z: 9;
+    --taggroup-overflow-z: 10;
+    --sidebar-backdrop-z: 11;
+    --sidebar-container-z: 12;
+    --sidebar-z: 13;
+    --menu-z: 14;
+    --modal-backdrop-z: 15;
+    --modal-z: 16;
+    --toast-z: 17;
     /* modal menus must be above bootstrap modals, which are z-index 1050 */
     --modal-menu-z: 1100;
 }
@@ -104,6 +107,7 @@
     --background2-darker: #b5b5b5;
     --background2-focus: rgb(202 202 202 / 50%);
     --background3: #dfdfdf;
+    --selected-background: #d1dff0;
     /* modal backdrop */
     --modal-backdrop: rgb(0 0 0 / 10%);
     /* light mode text */
@@ -121,6 +125,7 @@
     --background2-darker: #666a6c;
     --background2-focus: rgb(86 90 91 / 50%);
     --background3: #383b3c;
+    --selected-background: #2b3a4c;
     /* modal backdrop */
     --modal-backdrop: rgb(0 0 0 / 33%);
     /* dark mode text */

@@ -55,6 +55,8 @@
     width: 50px;
     height: 50px;
     vertical-align: middle;
+    border-radius: 5px;
+    margin-right: 1.25rem;
 }
 .escr-table tr td.with-img img ~ * {
     vertical-align: middle;
@@ -131,4 +133,152 @@
 /* ensure tags dropdown above table row link */
 .escr-table .v-popper--theme-tags-dropdown {
     z-index: var(--table-actions-z);
+}
+/* custom select checkboxes */
+.escr-table .escr-select-checkbox {
+    position: relative;
+    z-index: var(--table-actions-z);
+    margin: 0;
+}
+.escr-table .escr-select-checkbox:disabled,
+.escr-table .escr-select-checkbox:has(input:disabled) {
+    pointer-events: none;
+}
+.escr-table .escr-select-checkbox .checked,
+.escr-table .escr-select-checkbox .unchecked {
+    cursor: pointer;
+    display: none;
+}
+.escr-table .escr-select-checkbox:has(input:checked) .checked {
+    color: var(--secondary);
+    display: block;
+}
+.escr-table .escr-select-checkbox:not(:has(input:checked)) .unchecked {
+    color: var(--text1);
+    display: block;
+}
+.escr-table .escr-select-checkbox:disabled .checked,
+.escr-table .escr-select-checkbox:disabled .unchecked,
+.escr-table .escr-select-checkbox:has(input:disabled) .checked,
+.escr-table .escr-select-checkbox:has(input:disabled) .unchecked,
+.escr-table--selectable tbody tr:has(input:disabled) {
+    color: var(--text3);
+    pointer-events: none;
+}
+.escr-table--selectable tbody tr:has(input:checked) {
+    background-color: var(--line-ordering-selected);
+    box-shadow: inset 4px 0px 0px 0px var(--secondary);
+}
+.escr-table--selectable .escr-select-column > div {
+    display: flex;
+    flex-flow: row;
+}
+
+/* drag and drop reorder functionality */
+/* drag handle */
+.escr-table--orderable tr td div .escr-drag-handle {
+    position: absolute;
+    left: 0;
+    text-align: left;
+    cursor: move;
+    z-index: var(--table-actions-z);
+    width: 100%;
+    height: 100%;
+}
+/* drop zone */
+.escr-table.escr-table--orderable tbody tr.escr-dropzone {
+    position: relative;
+    height: 1px;
+    background-color: var(--background);
+}
+.escr-table.escr-table--orderable tbody tr.escr-dropzone td {
+    position: absolute;
+    width: 100%;
+    border-top: 5px solid transparent;
+    height: 32px;
+    pointer-events: none;
+}
+.escr-table.escr-table--orderable tbody tr.escr-dropzone td.is-dragging {
+    pointer-events: all;
+    z-index: var(--sticky-table-header-z);
+}
+.escr-table.escr-table--orderable tbody tr.escr-dropzone td.is-dragging::before {
+    display: block;
+    position: absolute;
+    margin-top: -36px;
+    content: "";
+    height: 32px;
+    width: 100%;
+    top: 0;
+    left: 0;
+}
+.escr-table.escr-table--orderable tbody tr.escr-dropzone td.drag-over {
+    border-top-color: var(--secondary-focus);
+    z-index: var(--sticky-table-header-z);
+}
+.escr-table.escr-table--orderable thead tr,
+.escr-table.escr-table--orderable tbody tr {
+    border-width: 0;
+}
+.escr-table.escr-table--orderable thead tr {
+    height: 31px;
+}
+.escr-table.escr-table--orderable tbody tr {
+    height: 63px;
+}
+/*
+ * safari specific hack
+ */
+@supports (hanging-punctuation: first) and (font: -apple-system-body) and (-webkit-appearance: none) {
+    .escr-table.escr-table--orderable thead tr {
+        height: 32px;
+    }
+}
+/* disable links during drag */
+.escr-table.escr-table--orderable tr td a.row-link {
+    width: 0%;
+    height: 0%;
+}
+/* drag image (what shows up while dragging) */
+tr#is-drag-image {
+    position: absolute;
+    top: -1000px;
+    color: var(--text1);
+    background-color: var(--background1);
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+}
+tr#is-drag-image:has(input:checked) {
+    background-color: var(--selected-background);
+}
+tr#is-drag-image .drag-overlay {
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: var(--drag-overlay);
+}
+/* element counter */
+tr#is-drag-image .elements-count {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    margin-bottom: 3px;
+    font-weight: 600;
+    font-size: 12px;
+    background-color: var(--tag-text);
+    color: var(--button-text);
+    z-index: var(--editor-nav-z);
+}
+body:has(#is-drag-image) {
+    cursor: grabbing !important;
 }

@@ -4,8 +4,36 @@
         <thead>
             <tr>
                 <th
+                    v-if="selectable"
+                    class="escr-select-all"
+                >
+                    <label
+                        class="escr-select-checkbox"
+                        :disabled="disabled"
+                        @click="onSelectAll"
+                    >
+                        <input
+                            id="select-all"
+                            class="sr-only"
+                            type="checkbox"
+                            name="select-all"
+                            :checked="selectedItems && selectedItems.length > 0"
+                            :disabled="disabled"
+                        >
+                        <CheckSquareIcon
+                            class="unchecked"
+                            aria-hidden="true"
+                        />
+                        <CheckSquareFilledIcon
+                            class="checked"
+                            aria-hidden="true"
+                        />
+                    </label>
+                </th>
+                <th
                     v-for="header in headers"
-                    :key="header.value"
+                    :key="header.key || header.value"
+                    :class="getClasses(header)"
                 >
                     <div>
                         <span v-if="!header.sortable">
@@ -15,7 +43,7 @@
                         <button
                             v-else
                             class="escr-sort-button"
-                            :disabled="sortDisabled"
+                            :disabled="disabled"
                             @click="() => setSort(header)"
                         >
                             <span>
@@ -34,34 +62,142 @@
             </tr>
         </thead>
         <tbody>
-            <tr
-                v-for="item in items"
-                :key="item[itemKey]"
+            <template
+                v-for="(item, itemIndex) in items"
             >
-                <td
-                    v-for="(header, index) in headers"
-                    :key="header.value"
-                    :class="header.image ? 'with-img' : ''"
+                <!-- drop zone for table with orderable = true -->
+                <tr
+                    v-if="orderable"
+                    :key="`order-before-${itemIndex}`"
+                    class="escr-dropzone"
                 >
-                    <img
-                        v-if="header.image"
-                        :src="item[header.image]"
+                    <td
+                        colspan="100%"
+                        aria-hidden
+                        :class="{
+                            ['is-dragging']: isDragging,
+                            ['drag-over']: dragOver === itemIndex,
+                        }"
+                        @dragover="(e) => handleDragOver(e, itemIndex)"
+                        @dragenter="(e) => e.preventDefault()"
+                        @dragleave="() => setDragOver(null)"
+                        @drop="(e) => handleDrop(e, item, itemIndex)"
+                        @mouseup="handleDragEnd"
+                    />
+                </tr>
+                <!-- table row (with some drag'n'drop and selecting logic) -->
+                <tr
+                    v-if="item"
+                    :key="item[itemKey]"
+                    :draggable="draggedItem === itemIndex"
+                    @dragstart="(e) => handleDragStart(e, item)"
+                    @dragend="handleDragEnd"
+                >
+                    <!-- select checkbox -->
+                    <td
+                        v-if="selectable"
+                        class="escr-select-column"
                     >
-                    <!-- linkable: component (e.g. tags) or simple span -->
-                    <a
-                        v-if="linkable && item.href && index == 0"
-                        class="row-link"
-                        :href="item.href"
+                        <div>
+                            <!-- order drag handle -->
+                            <div
+                                v-if="orderable"
+                                class="escr-drag-handle"
+                                aria-hidden
+                                @mousedown="() => handleDragMousedown(itemIndex)"
+                                @mouseup="handleDragEnd"
+                            >
+                                <DragVerticalIcon />
+                            </div>
+                            <!-- select button -->
+                            <label
+                                :for="`select-${item[itemKey]}`"
+                                class="escr-select-checkbox"
+                                :disabled="disabled"
+                                @click="(e) => onToggleSelected(
+                                    e, parseInt(item[itemKey]), itemIndex + 1
+                                )"
+                            >
+                                <input
+                                    :id="`select-${item[itemKey]}`"
+                                    class="sr-only"
+                                    type="checkbox"
+                                    :name="`select-${item[itemKey]}`"
+                                    :disabled="disabled"
+                                    :checked="selectedItems.includes(parseInt(item[itemKey]))"
+                                >
+                                <CheckSquareIcon
+                                    class="unchecked"
+                                    aria-hidden="true"
+                                />
+                                <CheckSquareFilledIcon
+                                    class="checked"
+                                    aria-hidden="true"
+                                />
+                            </label>
+                        </div>
+                    </td>
+                    <!-- actual data for this row -->
+                    <td
+                        v-for="(header, index) in headers"
+                        :key="header.key || header.value"
+                        :class="getClasses(header)"
                     >
+                        <div
+                            v-if="!selectable && index === 0 && orderable"
+                            class="escr-drag-handle"
+                            aria-hidden
+                            @mousedown="() => handleDragMousedown(itemIndex)"
+                            @mouseup="handleDragEnd"
+                        >
+                            <DragVerticalIcon />
+                        </div>
+                        <img
+                            v-if="header.image"
+                            :src="item[header.image]"
+                        >
+                        <!-- linkable: component (e.g. tags) or simple span -->
+                        <a
+                            v-if="linkable && item.href && index == 0"
+                            class="row-link"
+                            :href="item.href"
+                            :disabled="disabled"
+                        >
+                            <component
+                                :is="header.component"
+                                v-if="header.component && item[header.value]"
+                                class="sr-only"
+                                :disabled="disabled"
+                                v-bind="item[header.value]"
+                            />
+                            <span
+                                v-else
+                                class="sr-only"
+                            >
+                                {{
+                                    header.format
+                                        ? header.format(item[header.value])
+                                        : item[header.value]
+                                }}
+                            </span>
+                        </a>
+                        <!-- non-linkable: component or span -->
                         <component
                             :is="header.component"
                             v-if="header.component && item[header.value]"
-                            class="sr-only"
                             v-bind="item[header.value]"
+                            :disabled="disabled"
                         />
+                        <input
+                            v-else-if="header.editable && editingKey === item[itemKey].toString()"
+                            type="text"
+                            :value="item[header.value]"
+                            :maxlength="512"
+                            :disabled="disabled"
+                            @input="(e) => onEdit({ field: header.value, value: e.target.value })"
+                        >
                         <span
                             v-else
-                            class="sr-only"
                         >
                             {{
                                 header.format
@@ -69,53 +205,56 @@
                                     : item[header.value]
                             }}
                         </span>
-                    </a>
-                    <!-- non-linkable: component or span -->
-                    <component
-                        :is="header.component"
-                        v-if="header.component && item[header.value]"
-                        v-bind="item[header.value]"
-                    />
-                    <input
-                        v-else-if="header.editable && editingKey === item[itemKey].toString()"
-                        type="text"
-                        :value="item[header.value]"
-                        :maxlength="512"
-                        @input="(e) => onEdit({ field: header.value, value: e.target.value })"
+                    </td>
+                    <!-- row actions -->
+                    <td
+                        v-if="!!$scopedSlots['actions']"
+                        class="escr-row-actions"
                     >
-                    <span
-                        v-else
-                    >
-                        {{
-                            header.format
-                                ? header.format(item[header.value])
-                                : item[header.value]
-                        }}
-                    </span>
-                </td>
-                <!-- row actions -->
-                <td
-                    v-if="!!$scopedSlots['actions']"
-                    class="escr-row-actions"
+                        <div>
+                            <slot
+                                name="actions"
+                                :item="item"
+                            />
+                        </div>
+                    </td>
+                </tr>
+                <!-- one extra drop zone after the bottom row -->
+                <tr
+                    v-if="orderable && itemIndex === items.length - 1"
+                    :key="`order-after-${itemIndex}`"
+                    class="escr-dropzone"
                 >
-                    <div>
-                        <slot
-                            name="actions"
-                            :item="item"
-                        />
-                    </div>
-                </td>
-            </tr>
+                    <td
+                        colspan="100%"
+                        aria-hidden
+                        :class="{
+                            ['is-dragging']: isDragging,
+                            ['drag-over']: dragOver === itemIndex + 1,
+                        }"
+                        @dragover="(e) => handleDragOver(e, itemIndex + 1)"
+                        @dragenter="(e) => e.preventDefault()"
+                        @dragleave="() => setDragOver(null)"
+                        @drop="(e) => handleDrop(e, item, itemIndex + 1)"
+                    />
+                </tr>
+            </template>
         </tbody>
     </table>
 </template>
 <script>
+import CheckSquareIcon from "../Icons/CheckSquareIcon/CheckSquareIcon.vue";
+import CheckSquareFilledIcon from "../Icons/CheckSquareFilledIcon/CheckSquareFilledIcon.vue";
+import DragVerticalIcon from "../Icons/DragVerticalIcon/DragVerticalIcon.vue";
 import SortIcon from "../Icons/SortIcon/SortIcon.vue";
 import "./Table.css";
 
 export default {
     name: "EscrTable",
     components: {
+        CheckSquareIcon,
+        CheckSquareFilledIcon,
+        DragVerticalIcon,
         SortIcon,
     },
     props: {
@@ -124,6 +263,14 @@ export default {
          * and uses a smaller font size.
          */
         compact: {
+            type: Boolean,
+            default: false,
+        },
+        /**
+         * Boolean indicating whether or not the sort buttons, links, select buttons, etc.
+         * should be disabled, e.g. during loading.
+         */
+        disabled: {
             type: Boolean,
             default: false,
         },
@@ -187,6 +334,23 @@ export default {
             default: false,
         },
         /**
+         * Optional callback for additional logic on drag start, such as setting event data.
+         */
+        onDragStart: {
+            type: Function,
+            // eslint-disable-next-line no-unused-vars
+            default: (e, item) => {},
+        },
+        /**
+         * Required callback for drag-n-drop reordering; passed the drop event, the item being
+         * dropped on, and the index of that item.
+         */
+        onDrop: {
+            type: Function,
+            // eslint-disable-next-line no-unused-vars
+            default: (e, item, idx) => {},
+        },
+        /**
          * Callback for editing a field in a row. Currently only supports text.
          *
          * Must be a function that accepts a single object param with the following two keys:
@@ -213,26 +377,58 @@ export default {
             default: ({ field, direction }) => {},
         },
         /**
-         * Boolean indicating whether or not the sort buttons should be disabled, e.g. during
-         * loading.
+         * Callback function for selecting all items, for tables with `selectable` = `true`.
          */
-        sortDisabled: {
+        onSelectAll: {
+            type: Function,
+            default: () => {},
+        },
+        /**
+         * Callback function for toggling a selected item, for tables with `selectable` = `true`.
+         */
+        onToggleSelected: {
+            type: Function,
+            default: () => {},
+        },
+        /**
+         * Set `true` to allow reordering items by drag and drop.
+         */
+        orderable: {
             type: Boolean,
             default: false,
-        }
+        },
+        /**
+         * Boolean indicating whether or not items should be selectable with checkbox inputs.
+         */
+        selectable: {
+            type: Boolean,
+            default: false,
+        },
+        /**
+         * List of currently selected items, by key, for tables with `selectable` set `true`.
+         */
+        selectedItems: {
+            type: Array,
+            default: () => [],
+        },
     },
     data() {
         return {
             sortState: {
                 direction: 0,
             },
+            dragOver: null,
+            draggedItem: null,
+            isDragging: false,
         };
     },
     computed: {
         classes() {
             return {
                 "escr-table": true,
+                "escr-table--selectable": this.selectable,
                 "escr-table--compact": this.compact,
+                "escr-table--orderable": this.orderable,
             };
         },
     },
@@ -254,6 +450,110 @@ export default {
             };
             this.onSort({ field: header.value, direction: newDirection });
         },
+        /**
+         * Apply with-img class to a th or td with images, and apply any other
+         * classes supplied in the header.class property
+         */
+        getClasses(header) {
+            const classes = {};
+            if (header.image) classes["with-img"] = true
+            if (header.class) classes[header.class] = true
+            return classes;
+        },
+        /**
+         * When one of this table's drop zones are dragged over, tell component which drop zone;
+         * also, set the drop effect on the event
+         */
+        handleDragOver(e, idx) {
+            e.preventDefault();
+            this.setDragOver(idx);
+            e.dataTransfer.dropEffect = "move";
+        },
+        /**
+         * Set the component state to indicate whether or not a drop zone is being dragged over
+         */
+        setDragOver(idx) {
+            this.dragOver = idx;
+        },
+        /**
+         * Change the current value of isDragging in the component data.
+         */
+        setIsDragging(isDragging) {
+            this.isDragging = isDragging;
+        },
+        /**
+         * On dragging an item, create and set the drag image.
+         */
+        handleDragStart(e, item) {
+            // timeout hack to prevent z-fighting with drop zones
+            setTimeout(() => {
+                this.setIsDragging(true);
+            }, 200);
+            // create a copy of this node
+            const clonedNode = e.target.cloneNode(true);
+            clonedNode.id = "is-drag-image";
+            const style = getComputedStyle(e.target);
+            const width = style.getPropertyValue("width");
+            clonedNode.style.setProperty("max-width", width, "important");
+
+            // if more than one selected, add the elements count label
+            if (this.selectedItems && this.selectedItems.length > 1) {
+                const elementsLabel = document.createElement("div");
+                elementsLabel.innerText = `${this.selectedItems.length} elements`;
+                elementsLabel.classList.add("elements-count");
+                clonedNode.prepend(elementsLabel);
+            }
+
+            // add the overlay
+            const overlay = document.createElement("div");
+            overlay.classList.add("drag-overlay");
+            clonedNode.appendChild(overlay);
+            // append the cloned node to the DOM (it will be positioned offscreen)
+            e.target.parentNode.appendChild(clonedNode);
+            // call onDragStart after drag-image mounted, in case we want to change it
+            this.onDragStart(e, item);
+            // attach it to event as the drag image
+            let mouseY = clonedNode.clientHeight / 2;
+            if (this.selectedItems && this.selectedItems.length > 1) {
+                mouseY += 20;
+            }
+            e.dataTransfer.setDragImage(clonedNode, 15, mouseY);
+        },
+        /**
+         * Tell this component which child is being dragged; tell state that dragging has started
+         */
+        handleDragMousedown(idx) {
+            this.draggedItem = idx;
+        },
+        /**
+         * Tell this component that nothing is being dragged; tell state that dragging has stopped
+         */
+        handleDragEnd() {
+            this.draggedItem = null;
+            // clean up drag image if present (which has to be added to DOM, unfortunately!)
+            const dragImage = document.getElementById("is-drag-image");
+            if (dragImage) {
+                dragImage.remove();
+            }
+            // timeout hack to prevent z-fighting with drag handle
+            setTimeout(() => {
+                this.setIsDragging(false);
+            }, 100);
+        },
+        /**
+         * On drop, perform the reordering operation, then turn off all drag-related
+         * component and store states.
+         */
+        async handleDrop(e, item, idx) {
+            await this.onDrop(e, item, idx);
+
+            this.draggedItem = null;
+            this.dragOver = null;
+            // timeout hack to prevent z-fighting with drag handle
+            setTimeout(() => {
+                this.setIsDragging(false);
+            }, 100);
+        }
     },
 }
 </script>
