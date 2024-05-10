@@ -423,9 +423,9 @@ class METSZipParser(ZipParser, METSBaseParser):
 
             mets_file_content = None
             for xml_filename in xml_filenames:
-                with archive.open(xml_filename) as ziped_file:
+                with archive.open(xml_filename) as zipped_file:
                     try:
-                        root = etree.parse(ziped_file).getroot()
+                        root = etree.parse(zipped_file).getroot()
                         schemas = root.nsmap.values()
                     except (etree.XMLSyntaxError, KeyError):
                         logger.debug(f"Skipping file {xml_filename} in archive as it isn't a METS file")
@@ -461,11 +461,11 @@ class METSZipParser(ZipParser, METSBaseParser):
                     if info_list.index(mets_page.image) < start_at:
                         continue
 
-                    with archive.open(mets_page.image) as ziped_image:
-                        filename = os.path.basename(ziped_image.name)
+                    with archive.open(mets_page.image) as zipped_image:
+                        filename = os.path.basename(zipped_image.name)
                         image_source = "mets//{0}/{1}".format(os.path.basename(self.file.name), filename)
                         part = self.parse_image(user, total, index, start_at, filename,
-                                                ziped_image, image_source)
+                                                zipped_image, image_source)
                         # If we have a page with an image + multiple sources, we don't want to
                         # store the same metadata multiple times and spam the database for nothing
                         if not metadata_already_stored:
@@ -476,11 +476,11 @@ class METSZipParser(ZipParser, METSBaseParser):
                     if info_list.index(source) < start_at:
                         continue
 
-                    with archive.open(source) as ziped_source:
-                        filename = os.path.basename(ziped_source.name)
+                    with archive.open(source) as zipped_source:
+                        filename = os.path.basename(zipped_source.name)
 
                         try:
-                            parser = make_parser(self.document, ziped_source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
+                            parser = make_parser(self.document, zipped_source, name=f"{self.name} | {layer_name}", report=self.report, zip_allowed=False, pdf_allowed=False)
                             # We only want to override for the first imported source if there are multiple ones
                             for part in parser.parse(override=(override and index == 0), user=user):
                                 # If we have a page with an image + multiple sources, we don't want to

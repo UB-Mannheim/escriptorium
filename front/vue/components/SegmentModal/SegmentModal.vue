@@ -136,7 +136,7 @@ export default {
          * text direction, or segmentation steps to include
          */
         invalid() {
-            return !this.textDirection || !this.model || this.include.length === 0;
+            return !this.textDirection || this.include.length === 0;
         },
         /**
          * convert include to options for checkbox elements
@@ -159,11 +159,17 @@ export default {
          * convert models to options for select element
          */
         modelOptions() {
-            return this.models.map((model) => ({
+            const defaultModel = [{
+                label: "Default Segmentation Model",
+                value: null,
+                selected: !this.model,
+            }];
+            const otherModels = this.models.map((model) => ({
                 label: model.name,
                 value: model.pk,
                 selected: this.model.toString() === model.pk.toString(),
             }));
+            return defaultModel.concat(otherModels);
         },
         /**
          * collect text direction options for select element

@@ -16,9 +16,9 @@ export function bootOntologyForm() {
         });
     }
 
-    var submitedForm = false;
+    var submittedForm = false;
     let form = document.querySelector("#ontology-form");
-    form.addEventListener("submit", (ev) => (submitedForm = true));
+    form.addEventListener("submit", (ev) => (submittedForm = true));
 
     function addTypeOption(parent, pk, name) {
         let checks = document.querySelectorAll(parent + " .form-check");
@@ -32,7 +32,7 @@ export function bootOntologyForm() {
 
         // if trying to leave the page without updating show a warning
         window.addEventListener("beforeunload", function (ev) {
-            if (!submitedForm) {
+            if (!submittedForm) {
                 var confirmationMessage =
                     "It looks like you have unsaved Types. " +
                     "If you leave before saving, your changes will be lost.";

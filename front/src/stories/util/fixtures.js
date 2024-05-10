@@ -199,7 +199,7 @@ export const textualWitnesses = [
         pk: 1,
     },
     {
-        name: "witness_exmaple",
+        name: "witness_example",
         pk: 2,
     },
 ];

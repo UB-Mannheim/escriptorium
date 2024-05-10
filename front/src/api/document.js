@@ -245,13 +245,16 @@ export const segmentDocument = async ({
     model,
     steps,
     parts,
-}) =>
-    await axios.post(`/documents/${documentId}/segment/`, {
-        override,
-        model,
-        steps,
-        parts,
-    });
+}) => {
+    const params = { steps, parts };
+    if (override) {
+        params["override"] = override;
+    }
+    if (model) {
+        params["model"] = model;
+    }
+    await axios.post(`/documents/${documentId}/segment/`, params);
+};
 
 // queue the transcription task for this document
 export const transcribeDocument = async ({
@@ -381,10 +384,12 @@ export const trainRecognizerModel = async ({
         override,
         parts,
         transcription,
+        model_name: modelName,
     };
     if (model) {
         params.model = model;
-    } else {
+    }
+    if (modelName) {
         params.model_name = modelName;
     }
     return await axios.post(`/documents/${documentId}/train/`, params);
@@ -403,7 +408,8 @@ export const trainSegmenterModel = async ({
     };
     if (model) {
         params.model = model;
-    } else {
+    }
+    if (modelName) {
         params.model_name = modelName;
     }
     return await axios.post(`/documents/${documentId}/segtrain/`, params);

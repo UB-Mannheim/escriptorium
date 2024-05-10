@@ -1,5 +1,4 @@
 import { assign } from "lodash";
-import * as api from "../api";
 
 export const initialState = () => ({
     all: [],
