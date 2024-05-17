@@ -14,7 +14,7 @@
         <p class="lead text-muted">{% trans "eScriptorium: A Digital Text Production Pipeline for Print and Handwritten Texts using machine learning techniques." %}</p>
     {% endif %}
     {% if not user.is_authenticated %}
-        <a class="btn btn-primary" href="/login" role="button">{% trans "Sign in" %}</a>
+        <a class="btn btn-primary" href="{% url 'login' %}" role="button">{% trans "Sign in" %}</a>
     {% endif %}
 </div>
 
