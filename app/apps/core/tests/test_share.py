@@ -1,6 +1,10 @@
+import random
+import time
+
 from django.test import TestCase
 from django.urls import reverse
 
+from core.models import Document, Project
 from core.tests.factory import CoreFactory
 from users.models import Group, User
 
@@ -74,3 +78,76 @@ class DocumentShareTestCase(TestCase):
         })
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(self.doc.shared_with_groups.count(), 0)
+
+
+class PerformanceShareTestCase(TestCase):
+    def setUp(self):
+        factory = CoreFactory()
+
+        # make a bunch of groups
+        groups = []
+        for i in range(100):
+            groups.append(factory.make_group())
+
+        # make a bunch of users and assign them to some groups
+        users = []
+        for i in range(1000):
+            u = factory.make_user()
+            users.append(u)
+            for i in range(i % 3 + 1):
+                u.groups.add(random.choice(groups))
+
+        # make a bunch of projects & documents in each
+        projects = []
+        for i in range(25):
+            proj = factory.make_project(owner=random.choice(users), name='proj-%i' % i)
+            projects.append(proj)
+            for j in range(30):
+                factory.make_document(project=proj, name='doc-%i-%i' % (i, j))
+
+        # main user
+        user = factory.make_user()
+        for group in groups:
+            user.groups.add(group)
+
+        # owner of first 5 projects = 150docs
+        for proj in projects[:5]:
+            proj.owner = user
+            proj.save()
+
+        # have been shared 5 projects = 150docs
+        for proj in projects[5:10]:
+            proj.shared_with_users.add(user)
+
+        # have been shared 5 other projects through one of the groups = 150docs
+        for proj in projects[10:15]:
+            proj.shared_with_groups.add(random.choice(groups))
+
+        # have been shared some docs of 5 projects = 25docs
+        for proj in projects[15:20]:
+            for doc in proj.documents.order_by('?')[:5]:
+                doc.shared_with_users.add(user)
+
+        # have been shared some docs of 5 projects through one of the groups = 25docs
+        for proj in projects[20:25]:
+            for doc in proj.documents.order_by('?')[:5]:
+                doc.shared_with_groups.add(random.choice(groups))
+
+        self.user = user
+        self.startAt = time.time()
+
+    def tearDown(self):
+        t = time.time() - self.startAt
+        print('%s: %.3f sec' % (self.id(), t))
+
+    def test_project_share_perf(self):
+        list(Project.objects.for_user_read(self.user))
+        self.assertEqual(Project.objects.for_user_read(self.user).count(), 25)
+
+    def test_doc_share_perf(self):
+        print(Document.objects.for_user(self.user).query)
+        print('------------------------------')
+        print(Document.objects.for_user(self.user).explain(verbose=True, analyze=True))
+        print('------------------------------')
+        list(Document.objects.for_user(self.user))
+        self.assertEqual(Document.objects.for_user(self.user).count(), 150 + 150 + 150 + 25 + 25)

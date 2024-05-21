@@ -380,8 +380,9 @@ class ProjectManager(models.Manager):
         # return the list of EDITABLE projects
         # allows to add documents to it
         return (
-            self.filter(Q(owner=user) | Q(shared_with_users=user))
-            #   | Q(shared_with_groups__user=user))
+            self.filter(Q(owner=user)
+                        | Q(shared_with_users=user)
+                        | Q(shared_with_groups__user=user))
             .distinct()
         )
 
@@ -391,7 +392,7 @@ class ProjectManager(models.Manager):
         return self.filter(
             Q(owner=user)
             | Q(shared_with_users=user)
-            #   | Q(shared_with_groups__user=user))
+            | Q(shared_with_groups__user=user)
             | (
                 Q(documents__shared_with_users=user)
                 | Q(documents__shared_with_groups__user=user)
@@ -454,7 +455,7 @@ class DocumentManager(models.Manager):
                 Q(owner=user)
                 | Q(project__owner=user)
                 | Q(project__shared_with_users=user)
-                #   | Q(project__shared_with_groups__user=user))
+                | Q(project__shared_with_groups__user=user)
                 | (Q(shared_with_users=user) | Q(shared_with_groups__user=user))
             )
             .exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
