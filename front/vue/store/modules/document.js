@@ -16,6 +16,7 @@ import {
     shareDocument,
     updateDocumentMetadata,
 } from "../../../src/api";
+import { retrieveAnnotationTaxonomies } from "../../../src/editor/api";
 import { tagColorToVariant } from "../util/color";
 import { getMetadataCRUD } from "../util/metadata";
 import forms from "../util/initialFormState";
@@ -144,6 +145,7 @@ const state = () => ({
      * }]
      */
     transcriptions: [],
+    types: [],
 });
 
 const getters = {};
@@ -421,6 +423,32 @@ const actions = {
                 },
                 { root: true },
             );
+
+            // borrowed from editor API
+            let page = 1;
+            let img_taxos = [];
+            while (page) {
+                let resp = await retrieveAnnotationTaxonomies(data.pk, "image", page);
+                img_taxos = img_taxos.concat(resp.data.results);
+                if (resp.data.next) page++;
+                else page = null;
+            }
+            page = 1;
+            let text_taxos = [];
+            while (page) {
+                let resp = await retrieveAnnotationTaxonomies(data.pk, "text", page);
+                text_taxos = text_taxos.concat(resp.data.results);
+                if (resp.data.next) page++;
+                else page = null;
+            }
+            // set types on state
+            const types = {
+                regions: data.valid_block_types || [],
+                lines: data.valid_line_types || [],
+                text: text_taxos || [],
+                image: img_taxos || [],
+            };
+            commit("setTypes", types);
             if (data.parts_count > 0) {
                 // kickoff parts fetch
                 try {
@@ -1197,6 +1225,9 @@ const mutations = {
     },
     setTranscriptions(state, transcriptions) {
         state.transcriptions = transcriptions;
+    },
+    setTypes(state, types) {
+        state.types = types;
     },
     updateMetadatum(state, metadatumToUpdate) {
         const metadata = structuredClone(state.metadata).map((m) => {

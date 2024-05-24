@@ -208,12 +208,7 @@
                         class="escr-document-ontology"
                         context="Document"
                         compact
-                        :items="ontology"
-                        :loading="ontologyLoading"
-                        :on-view="() => openOntologyModal"
-                        :on-select-category="changeOntologyCategory"
-                        :on-sort="sortOntology"
-                        :selected-category="ontologyCategory"
+                        :loading="loading && loading.document"
                     />
                 </div>
                 <!-- delete document modal -->
@@ -455,9 +450,6 @@ export default {
             mainScript: (state) => state.document.mainScript,
             models: (state) => state.document.models,
             nextPage: (state) => state.document.nextPage,
-            ontology: (state) => state.ontology.ontology,
-            ontologyCategory: (state) => state.ontology.category,
-            ontologyLoading: (state) => state.ontology.loading,
             parts: (state) => state.document.parts,
             partsCount: (state) => state.document.partsCount,
             projectId: (state) => state.document.projectId,
@@ -634,7 +626,6 @@ export default {
     },
     methods: {
         ...mapActions("document", [
-            "changeOntologyCategory",
             "changeSelectedTranscription",
             "closeDeleteModal",
             "closeDocumentMenu",
@@ -656,7 +647,6 @@ export default {
             "openDeleteModal",
             "openDocumentMenu",
             "openEditModal",
-            "openOntologyModal",
             "openShareModal",
             "openTagsModal",
             "saveDocument",
@@ -665,7 +655,6 @@ export default {
             "setLoading",
             "shareDocument",
             "sortCharacters",
-            "sortOntology",
             "viewTasks",
         ]),
         ...mapActions("alerts", ["addError"]),
