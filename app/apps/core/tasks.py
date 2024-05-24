@@ -2,7 +2,11 @@ import logging
 import os
 import os.path
 import shutil
+import tempfile
+from collections import defaultdict
 from itertools import groupby
+from pathlib import Path
+from typing import List
 
 import numpy as np
 from celery import shared_task
@@ -14,10 +18,12 @@ from django.utils.html import strip_tags
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from easy_thumbnails.files import get_thumbnailer
+from kraken.containers import BaselineLine, Region, Segmentation
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
+from kraken.lib.arrow_dataset import build_binary_dataset
 from kraken.lib.default_specs import RECOGNITION_HYPER_PARAMS, SEGMENTATION_HYPER_PARAMS
 from kraken.lib.train import KrakenTrainer, RecognitionModel, SegmentationModel
-from pytorch_lightning.callbacks import Callback
+from lightning.pytorch.callbacks import Callback
 
 from core.search import (
     REGEX_SEARCH_MODE,
@@ -134,24 +140,62 @@ def binarize(instance_pk=None, user_pk=None, binarizer=None, threshold=None, **k
                         id="binarization-success", level='success')
 
 
-def make_segmentation_training_data(part):
-    data = {
-        'image': part.image.path,
-        'baselines': [{'tags': {'type': line.typology and line.typology.name or 'default'},
-                       'baseline': line.baseline}
-                      for line in part.lines.only('baseline', 'typology')
-                      if line.baseline],
-        'regions': {typo: list(reg.box for reg in regs)
-                    for typo, regs in groupby(
-            part.blocks.only('box', 'typology').order_by('typology'),
-            key=lambda reg: reg.typology and reg.typology.name or 'default')}
-    }
-    return data
+def make_recognition_segmentation(lines) -> List[Segmentation]:
+    """
+    Groups training data by image for optimized compilation and returns a list
+    of Segmentation objects.
+    """
+    lines_by_img = defaultdict(list)
+    for lt in lines:
+        lines_by_img[lt['image']].append(BaselineLine(id='foo',
+                                                      baseline=lt['baseline'],
+                                                      boundary=lt['mask'],
+                                                      text=lt['content']))
+    segs = []
+    for img, lines in lines_by_img.items():
+        segs.append(Segmentation(text_direction='horizontal-lr',
+                                 imagename=os.path.join(settings.MEDIA_ROOT, img),
+                                 type='baselines',
+                                 lines=lines,
+                                 script_detection=False))
+    return segs
+
+
+def make_segmentation_training_data(parts) -> List[Segmentation]:
+    """
+    Converts eScriptorium data model to list of Segmentation objects.
+    """
+    segs = []
+    for part in parts:
+        blls = []
+        for line in part.lines.only('baseline', 'typology'):
+            if line.baseline:
+                blls.append(BaselineLine(id='foo',
+                                         baseline=line.baseline,
+                                         boundary=line.mask,
+                                         tags={'type': line.typology and line.typology.name or 'default'}))
+
+        regions = {}
+        for typo, regs in groupby(part.blocks.only('box',
+                                                   'typology').order_by('typology'),
+                                  key=lambda reg: reg.typology and reg.typology.name or 'default'):
+            regions[typo] = [Region(id='bar',
+                                    boundary=reg.box,
+                                    tags={'type': 'typo'}) for reg in regs]
+
+        segs.append(Segmentation(text_direction='horizontal-lr',
+                                 imagename=part.image.path,
+                                 type='baselines',
+                                 lines=blls,
+                                 regions=regions,
+                                 script_detection=False))
+    return segs
 
 
 class FrontendFeedback(Callback):
     """
-    Callback that sends websocket messages to the front for feedback display
+    Lightning callback that sends websocket messages to the front for feedback
+    display.
     """
     def __init__(self, es_model, model_directory, document_pk, *args, **kwargs):
         self.es_model = es_model
@@ -163,6 +207,7 @@ class FrontendFeedback(Callback):
         self.es_model.refresh_from_db()
         self.es_model.training_epoch = trainer.current_epoch
         val_metric = float(trainer.logged_metrics['val_accuracy'])
+        logger.info(f'Epoch {trainer.current_epoch} finished.')
         self.es_model.training_accuracy = val_metric
         # model.training_total = chars
         # model.training_errors = error
@@ -249,16 +294,17 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
         np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 
-        training_data = []
-        evaluation_data = []
-        for part in qs[partition:]:
-            training_data.append(make_segmentation_training_data(part))
-        for part in qs[:partition]:
-            evaluation_data.append(make_segmentation_training_data(part))
+        training_data = make_segmentation_training_data(qs[partition:])
+        evaluation_data = make_segmentation_training_data(qs[:partition])
 
         accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
 
         LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+        AMP_MODE = getattr(settings, 'KRAKEN_TRAINING_PRECISION', '32')
+
+        logger.info(f'Starting segmentation training on {accelerator}/{device} '
+                    f'(precision: {AMP_MODE}, workers: {LOAD_THREADS}) with '
+                    f'{len(training_data)} files')
 
         kraken_model = SegmentationModel(SEGMENTATION_HYPER_PARAMS,
                                          output=os.path.join(model_dir, 'version'),
@@ -285,6 +331,8 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
                                 devices=device,
                                 # max_epochs=2,
                                 # min_epochs=5,
+                                precision=AMP_MODE,
+                                enable_summary=False,
                                 enable_progress_bar=False,
                                 val_check_interval=1.0,
                                 callbacks=[FrontendFeedback(model, model_dir, document_pk)])
@@ -292,14 +340,17 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, user_pk=None, **kwarg
         trainer.fit(kraken_model)
 
         if kraken_model.best_epoch == -1:
+            logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
             raise DidNotConverge
 
         best_version = os.path.join(model_dir, kraken_model.best_model)
 
         try:
+            logger.info(f'Moving best model {best_version} (accuracy: {kraken_model.best_metric}) to {model.file.path}.')
             shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
             model.training_accuracy = kraken_model.best_metric
         except FileNotFoundError:
+            logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
             user.notify(_("Training didn't get better results than base model!"),
                         id="seg-no-gain-error", level='warning')
             shutil.copy(load, model.file.path)
@@ -426,76 +477,90 @@ def train_(qs, document, transcription, model=None, user=None):
                                   mask=F('line__mask'),
                                   image=F('line__document_part__image')))
 
+    # shuffle ground truth lines
     np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
-
     partition = int(len(ground_truth) / 10)
-
-    training_data = [{'image': os.path.join(settings.MEDIA_ROOT, lt['image']),
-                      'text': lt['content'],
-                      'baseline': lt['baseline'],
-                      'boundary': lt['mask']} for lt in ground_truth[partition:]]
-    evaluation_data = [{'image': os.path.join(settings.MEDIA_ROOT, lt['image']),
-                        'text': lt['content'],
-                        'baseline': lt['baseline'],
-                        'boundary': lt['mask']} for lt in ground_truth[:partition]]
-
-    load = None
-    try:
-        load = model.file.path
-    except ValueError:  # model is empty
-        filename = slugify(model.name) + '.mlmodel'
-        model.file = model.file.field.upload_to(model, filename)
-        model.save()
-
-    model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
-
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
-
-    accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
 
     LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
 
-    if (document.main_script
-        and (document.main_script.text_direction == 'horizontal-rl'
-             or document.main_script.text_direction == 'vertical-rl')):
-        reorder = 'R'
-    else:
-        reorder = 'L'
+    AMP_MODE = getattr(settings, 'KRAKEN_TRAINING_PRECISION', '32')
 
-    kraken_model = RecognitionModel(hyper_params=RECOGNITION_HYPER_PARAMS,
-                                    output=os.path.join(model_dir, 'version'),
-                                    # spec=spec,
-                                    # append=append,
-                                    model=load,
-                                    reorder=reorder,
-                                    format_type=None,
-                                    training_data=training_data,
-                                    evaluation_data=evaluation_data,
-                                    partition=partition,
-                                    # binary_dataset_split=fixed_splits,
-                                    num_workers=LOAD_THREADS,
-                                    load_hyper_parameters=True,
-                                    repolygonize=False,
-                                    # force_binarization=force_binarization,
-                                    # codec=codec,
-                                    resize='add')
+    RECOGNITION_HYPER_PARAMS['batch_size'] = getattr(settings,
+                                                     'KRAKEN_TRAINING_BATCH_SIZE',
+                                                     RECOGNITION_HYPER_PARAMS['batch_size'])
 
-    trainer = KrakenTrainer(accelerator=accelerator,
-                            devices=device,
-                            # max_epochs=,
-                            # min_epochs=hyper_params['min_epochs'],
-                            enable_progress_bar=False,
-                            val_check_interval=1.0,
-                            # deterministic=ctx.meta['deterministic'],
-                            callbacks=[FrontendFeedback(model, model_dir, document.pk)])
+    with tempfile.TemporaryDirectory() as tmp_dir:
 
-    trainer.fit(kraken_model)
+        train_dir = Path(tmp_dir)
+
+        logger.info(f'Compiling training dataset to {train_dir}/train.arrow')
+        train_segs = make_recognition_segmentation(ground_truth[partition:])
+        build_binary_dataset(train_segs,
+                             output_file=str(train_dir / 'train.arrow'),
+                             num_workers=LOAD_THREADS,
+                             format_type=None)
+
+        logger.info(f'Compiling validation dataset to {train_dir}/val.arrow')
+        val_segs = make_recognition_segmentation(ground_truth[:partition])
+        build_binary_dataset(val_segs,
+                             output_file=str(train_dir / 'val.arrow'),
+                             num_workers=LOAD_THREADS,
+                             format_type=None)
+
+        load = None
+        try:
+            load = model.file.path
+        except ValueError:  # model is empty
+            filename = slugify(model.name) + '.mlmodel'
+            model.file = model.file.field.upload_to(model, filename)
+            model.save()
+
+        model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
+
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+
+        accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
+
+        if (document.main_script
+            and (document.main_script.text_direction == 'horizontal-rl'
+                 or document.main_script.text_direction == 'vertical-rl')):
+            reorder = 'R'
+        else:
+            reorder = 'L'
+
+        logger.info(f'Starting recognition training on {accelerator}/{device} '
+                    f'(precision: {AMP_MODE}, batch_size {RECOGNITION_HYPER_PARAMS["batch_size"]} '
+                    f', workers: {LOAD_THREADS}) with {len(ground_truth[partition:])} lines')
+
+        kraken_model = RecognitionModel(hyper_params=RECOGNITION_HYPER_PARAMS,
+                                        output=os.path.join(model_dir, 'version'),
+                                        model=load,
+                                        reorder=reorder,
+                                        format_type='binary',
+                                        training_data=[str(train_dir / 'train.arrow')],
+                                        evaluation_data=[str(train_dir / 'val.arrow')],
+                                        partition=partition,
+                                        num_workers=LOAD_THREADS,
+                                        load_hyper_parameters=True,
+                                        resize='union')
+
+        trainer = KrakenTrainer(accelerator=accelerator,
+                                devices=device,
+                                precision=AMP_MODE,
+                                enable_summary=False,
+                                enable_progress_bar=False,
+                                val_check_interval=1.0,
+                                callbacks=[FrontendFeedback(model, model_dir, document.pk)])
+
+        trainer.fit(kraken_model)
 
     if kraken_model.best_epoch == -1:
+        logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
         raise DidNotConverge
     else:
         best_version = os.path.join(model_dir, kraken_model.best_model)
+        logger.info(f'Moving best model {best_version} (accuracy: {kraken_model.best_metric}) to {model.file.path}.')
         shutil.copy(best_version, model.file.path)
         model.training_accuracy = kraken_model.best_metric
 

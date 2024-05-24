@@ -34,6 +34,7 @@ from django_prometheus.models import ExportModelOperationsMixin
 from easy_thumbnails.files import get_thumbnailer
 from kraken import blla, rpred
 from kraken.binarization import nlbin
+from kraken.containers import BaselineLine, Segmentation
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib import models as kraken_models
 from kraken.lib import vgsl
@@ -1330,7 +1331,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
             res = blla.segment(im, **options)
 
             if steps in ["regions", "both"]:
-                for region_type, regions in res["regions"].items():
+                for region_type, regions in res.regions.items():
                     try:
                         typo, created = self.document.valid_block_types.get_or_create(
                             name=region_type)
@@ -1342,14 +1343,14 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                         Block.objects.create(
                             document_part=self,
                             typology=typo,
-                            box=region,
+                            box=region.boundary,
                         )
 
             regions = self.blocks.all()
             if steps in ["lines", "both"]:
-                for line in res["lines"]:
-                    mask = line["boundary"] if line["boundary"] is not None else None
-                    baseline = line["baseline"]
+                for line in res.lines:
+                    mask = line.boundary if line.boundary is not None else None
+                    baseline = line.baseline
 
                     # calculate if the center of the line is contained in one of the region
                     # (pick the first one that matches)
@@ -1359,11 +1360,11 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                     )
                     try:
                         typo, created = self.document.valid_line_types.get_or_create(
-                            name=line["tags"].get("type"))
+                            name=line.tags.get("type"))
                     except LineType.MultipleObjectsReturned:
                         # Note: this should not happen if the modelisation was alright
                         # but for now we hack
-                        typo = self.document.valid_line_types.filter(name=line["tags"].get("type"))[0]
+                        typo = self.document.valid_line_types.filter(name=line.tags.get("type"))[0]
                     Line.objects.create(
                         document_part=self,
                         typology=typo,
@@ -1402,24 +1403,20 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), OrderedModel):
                     # bypass lines without baseline
                     continue
                 else:
-                    bounds = {
-                        "lines": [
-                            {
-                                "baseline": line.baseline,
-                                "boundary": line.mask,
-                                "text_direction": text_direction,
-                                "tags": {'type': line.typology and line.typology.name or 'default'},
-                            }
-                        ],  # self.document.main_script.name
-                        "type": "baselines",
-                        # 'selfcript_detection': True
-                    }
+                    bll = BaselineLine(id='foo',
+                                       baseline=line.baseline,
+                                       boundary=line.mask)
+                    seg = Segmentation(type='baselines',
+                                       imagename='/dummy.png',
+                                       text_direction=text_direction,
+                                       script_detection=False,
+                                       lines=[bll])
 
                 it = rpred.rpred(
                     model_,
                     im,
-                    bounds=bounds,
-                    pad=16,  # TODO: % of the image?
+                    bounds=seg,
+                    pad=16,
                     bidi_reordering=reorder
                 )
                 lt, created = LineTranscription.objects.get_or_create(
