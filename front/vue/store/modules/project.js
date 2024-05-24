@@ -487,14 +487,16 @@ const actions = {
     setLoading({ commit }, loading) {
         commit("setLoading", loading);
     },
+    /**
+     * Share a project with a group or user, then update based on returned data.
+     */
     async share({ commit, dispatch, rootState, state }) {
         const { user, group } = rootState.forms.share;
+        const params = { projectId: state.id };
+        if (user) params["user"] = user;
+        else if (group) params["group"] = group;
         try {
-            const { data } = await shareProject({
-                projectId: state.id,
-                user,
-                group,
-            });
+            const { data } = await shareProject(params);
             if (data) {
                 // show toast alert on success
                 dispatch(
