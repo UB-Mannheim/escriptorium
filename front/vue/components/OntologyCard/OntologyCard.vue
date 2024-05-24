@@ -1,10 +1,7 @@
 <template>
     <div :class="classes">
         <div class="escr-card-header">
-            <h2 v-if="!compact">
-                {{ context }} Ontology
-            </h2>
-            <h2 v-else>
+            <h2>
                 Ontology
             </h2>
             <div class="escr-card-actions">
@@ -27,7 +24,7 @@
             :on-change-selection="onSelectCategory"
         />
         <div
-            v-if="items.length"
+            v-if="items && items.length"
             class="escr-ontology-table-container"
         >
             <EscrTable
@@ -47,6 +44,7 @@
     </div>
 </template>
 <script>
+import { mapState } from "vuex";
 import EscrLoader from "../Loader/Loader.vue";
 import EscrTable from "../Table/Table.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
@@ -64,53 +62,25 @@ export default {
             default: false,
         },
         /**
-         * The context for the ontology card; should be Project or Document.
-         */
-        context: {
-            type: String,
-            required: true,
-        },
-        /**
-         * A list of ontology items, each of which should have a `name` and `count` field.
-         */
-        items: {
-            type: Array,
-            default: () => [],
-        },
-        /**
-         * The currently selected ontology category, which should be one of the four types
-         * `regions`, `lines`, `text`, or `image`.
-         */
-        selectedCategory: {
-            type: String,
-            default: "regions",
-            validator(value) {
-                return ["regions", "lines", "text", "image"].includes(value);
-            },
-        },
-        /**
          * Boolean indicating whether or not data is loading.
          */
         loading: {
             type: Boolean,
             default: false,
         },
-        /**
-         * Callback function for changing the category (regions, lines, text, image).
-         */
-        onSelectCategory: {
-            type: Function,
-            default: () => {},
-        },
-        /**
-         * Callback function for sorting table columns.
-         */
-        onSort: {
-            type: Function,
-            default: () => {},
-        },
+    },
+    data() {
+        return {
+            // should be one of regions, lines, text, image
+            category: "regions",
+            sort: null,
+        }
     },
     computed: {
+        ...mapState({
+            defaultTypes: (state) => state.document.defaultTypes,
+            validTypes: (state) => state.document.types,
+        }),
         /**
          * Mapping of ontology categories to label/value pairs, passing the `selected` prop to the
          * currently selected one.
@@ -123,7 +93,7 @@ export default {
                 { label: "Images", value: "image" },
             ].map((category) => ({
                 ...category,
-                selected: this.selectedCategory === category.value,
+                selected: this.category === category.value,
             }));
         },
         /**
@@ -138,13 +108,61 @@ export default {
             };
         },
         /**
-         * Headers for all ontology tables (type, # in project/document).
+         * Get the list of items for the selected category and apply any sort
+         */
+        items() {
+            if (this.validTypes && this.category) {
+                let items = this.validTypes[this.category];
+                if (items && this.sort) {
+                    // case insensitive sort
+                    return items.toSorted(
+                        (a, b) => {
+                            let afield = a[this.sort.field];
+                            let bfield = b[this.sort.field];
+                            if (typeof afield === "string") {
+                                afield = afield.toLowerCase();
+                                bfield = bfield.toLowerCase();
+                            }
+                            if (afield < bfield) {
+                                return -1 * this.sort.direction;
+                            }
+                            if (afield > bfield) {
+                                return this.sort.direction;
+                            }
+                            return 0;
+                        }
+                    );
+                }
+                return items;
+            }
+            return [];
+        },
+        /**
+         * Headers for all ontology tables (type, # in document).
          */
         tableHeaders() {
             return [
                 { label: "Type", value: "name", sortable: true },
-                { label: `# in ${this.context}`, value: "count", sortable: true },
+                { label: "# in Document", value: "count", sortable: true },
             ];
+        },
+    },
+    methods: {
+        /**
+         * Callback for changing the category on component state
+         */
+        onSelectCategory(category) {
+            this.category = category;
+        },
+        /**
+         * Callback for changing the component sort state
+         */
+        onSort(sort) {
+            if (sort.direction === 0) {
+                this.sort = null;
+            } else {
+                this.sort = sort;
+            }
         },
     },
 }
