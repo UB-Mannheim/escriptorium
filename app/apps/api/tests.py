@@ -187,7 +187,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         group = self.factory.make_group()  # owner is not part of the group
 
-        uri = reverse('api:project-share', kwargs={'pk': self.doc.pk})
+        uri = reverse('api:document-share', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, {'group': group.pk})
 
         self.assertEqual(resp.status_code, 400)
@@ -196,7 +196,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         user = self.factory.make_user()
 
-        uri = reverse('api:project-share', kwargs={'pk': self.doc.pk})
+        uri = reverse('api:document-share', kwargs={'pk': self.doc.pk})
         resp = self.client.post(uri, {'user': user.username})
 
         self.assertEqual(resp.status_code, 201)
