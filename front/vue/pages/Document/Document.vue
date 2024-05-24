@@ -226,7 +226,7 @@
                 <ShareModal
                     v-if="shareModalOpen"
                     :groups="groups"
-                    :disabled="loading && (loading.document || loading.user)"
+                    :disabled="loading && loading.document"
                     :on-cancel="closeShareModal"
                     :on-submit="shareDocument"
                 />
@@ -610,17 +610,10 @@ export default {
         // handle document-related websocket events
         msgSocket.addEventListener("message", this.websocketTaskListener);
         try {
+            await this.fetchGroups();
             await this.fetchDocument();
         } catch (error) {
             this.setLoading({ key: "document", loading: false });
-            this.addError(error);
-        }
-        try {
-            this.setLoading({ key: "user", loading: true });
-            await this.fetchGroups();
-            this.setLoading({ key: "user", loading: false });
-        } catch(error) {
-            this.setLoading({ key: "user", loading: false });
             this.addError(error);
         }
     },

@@ -142,6 +142,12 @@ DATABASES = {
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
         'HOST': os.getenv('SQL_HOST', 'localhost'),
         'PORT': os.getenv('SQL_PORT', '5432'),
+        "OPTIONS": {
+            # This is required as jit seems to be buggy
+            # and maybe even have memory leak for multiple-layered joined queries
+            # the document fetching query performs extremely poorly with it enabled.
+            "options": "-c jit=off",
+        }
     }
 }
 

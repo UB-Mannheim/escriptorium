@@ -173,6 +173,35 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.json()['error'], {'parts': [
             'Segmentation training requires at least 2 images.']})
 
+    def test_share_group(self):
+        self.client.force_login(self.doc.owner)
+        group = self.factory.make_group(users=[self.doc.owner])
+
+        uri = reverse('api:document-share', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, {'group': group.pk})
+
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.data['shared_with_groups'][0]['pk'], group.pk)
+
+    def test_share_group_not_part_of(self):
+        self.client.force_login(self.doc.owner)
+        group = self.factory.make_group()  # owner is not part of the group
+
+        uri = reverse('api:document-share', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, {'group': group.pk})
+
+        self.assertEqual(resp.status_code, 400)
+
+    def test_share_user(self):
+        self.client.force_login(self.doc.owner)
+        user = self.factory.make_user()
+
+        uri = reverse('api:document-share', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, {'user': user.username})
+
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.data['shared_with_users'][0]['pk'], user.pk)
+
     @unittest.skip
     def test_segtrain_new_model(self):
         # This test breaks CI as it consumes too many resources
@@ -1250,6 +1279,35 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
 
         resp = self.client.get(uri + '?tags=none|' + str(tag1.pk))
         self.assertEqual(resp.json()['count'], 2)
+
+    def test_share_group(self):
+        self.client.force_login(self.project.owner)
+        group = self.factory.make_group(users=[self.project.owner])
+
+        uri = reverse('api:project-share', kwargs={'pk': self.project.pk})
+        resp = self.client.post(uri, {'group': group.pk})
+
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.data['shared_with_groups'][0]['pk'], group.pk)
+
+    def test_share_group_not_part_of(self):
+        self.client.force_login(self.project.owner)
+        group = self.factory.make_group()  # owner is not part of the group
+
+        uri = reverse('api:project-share', kwargs={'pk': self.project.pk})
+        resp = self.client.post(uri, {'group': group.pk})
+
+        self.assertEqual(resp.status_code, 400)
+
+    def test_share_user(self):
+        self.client.force_login(self.project.owner)
+        user = self.factory.make_user()
+
+        uri = reverse('api:project-share', kwargs={'pk': self.project.pk})
+        resp = self.client.post(uri, {'user': user.username})
+
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.data['shared_with_users'][0]['pk'], user.pk)
 
 
 class DocumentPartMetadataTestCase(CoreFactoryTestCase):

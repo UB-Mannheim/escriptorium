@@ -1047,12 +1047,11 @@ const actions = {
     async shareDocument({ commit, dispatch, state, rootState }) {
         commit("setLoading", { key: "document", loading: true });
         const { user, group } = rootState.forms.share;
+        const params = { documentId: state.id };
+        if (user) params["user"] = user;
+        else if (group) params["group"] = group;
         try {
-            const { data } = await shareDocument({
-                documentId: state.id,
-                user,
-                group,
-            });
+            const { data } = await shareDocument(params);
             if (data) {
                 // show toast alert on success
                 dispatch(
