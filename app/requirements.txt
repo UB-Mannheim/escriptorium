@@ -1,7 +1,7 @@
 albumentations
 beautifulsoup4~=4.7.1
 bleach~=5.0.1
-celery~=4.4.0  # for python 3.5+ you need recent versions of celery (> 4.2)
+celery~=5.3.6
 channels~=3.0.4
 channels-redis~=3.4.0
 daphne~=3.0.2
@@ -16,8 +16,7 @@ django-simple-captcha~=0.5.16
 djangorestframework~=3.13.1
 drf-nested-routers~=0.91
 easy-thumbnails~=2.8.1
-elasticsearch==7.17.0
-kombu~=4.6.11
+elasticsearch~=7.17.0
 kraken>=5.2.5,~=5.2
 oitei~=1.1.1
 # passim, "seriatim" branch
@@ -25,7 +24,7 @@ git+https://github.com/dasmiq/passim.git@9ec8622981f2f4a4578af8f9354801893b01c17
 Pillow>=5.4.1
 psycopg2-binary<2.9
 pyvips~=2.1.12
-redis~=4.3.3
+redis~=4.4.4
 requests>=2.21
 sentry-sdk>=1.10
 uWSGI~=2.0.20
