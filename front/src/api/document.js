@@ -99,6 +99,22 @@ export const createComponentTaxonomy = async ({
         allowed_values: allowedValues,
     });
 
+// update an annotation component
+export const updateComponentTaxonomy = async ({
+    documentId,
+    name,
+    allowedValues,
+    pk,
+}) =>
+    await axios.patch(`/documents/${documentId}/taxonomies/components/${pk}/`, {
+        name,
+        allowed_values: allowedValues,
+    });
+
+// delete an annotation component
+export const deleteComponentTaxonomy = async ({ documentId, pk }) =>
+    await axios.delete(`/documents/${documentId}/taxonomies/components/${pk}/`);
+
 // retrieve characters, sorted by character or frequency, for a specific transcription on a document
 export const retrieveTranscriptionCharacters = async ({
     documentId,
