@@ -26,9 +26,8 @@ export const retrieveDocument = async (documentId) =>
     await axios.get(`/documents/${documentId}/`);
 
 // retrieve types list for a document
-export const retrieveDocumentOntology = async ({
+export const retrieveDocumentStats = async ({
     documentId,
-    category,
     sortField,
     sortDirection,
 }) => {
@@ -39,11 +38,8 @@ export const retrieveDocumentOntology = async ({
             direction: sortDirection,
         });
     }
-    if (["image", "text"].includes(category)) {
-        params.target = category;
-    }
     return await axios.get(
-        `/documents/${documentId}/${ontologyMap[category]}/`,
+        `/documents/${documentId}/stats/`,
         { params },
     );
 };
@@ -100,7 +96,7 @@ export const createComponentTaxonomy = async ({
     });
 
 // retrieve characters, sorted by character or frequency, for a specific transcription on a document
-export const retrieveTranscriptionCharacters = async ({
+export const retrieveTranscriptionStats = async ({
     documentId,
     transcriptionId,
     field,
@@ -110,15 +106,10 @@ export const retrieveTranscriptionCharacters = async ({
     if (field && direction) {
         ordering = getSortParam({ field, direction });
     }
-    if (ordering === "char") {
-        return await axios.get(
-            `/documents/${documentId}/transcriptions/${transcriptionId}/characters_by_char/`,
-        );
-    } else {
-        return await axios.get(
-            `/documents/${documentId}/transcriptions/${transcriptionId}/characters/`,
-        );
-    }
+    return await axios.get(
+        // eslint-disable-next-line max-len
+        `/documents/${documentId}/transcriptions/${transcriptionId}/stats/?ordering=${ordering}`,
+    );
 };
 
 // retrieve the total number of characters in a specific transcription level on a document

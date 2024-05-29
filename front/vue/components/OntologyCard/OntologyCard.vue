@@ -28,7 +28,7 @@
             class="escr-ontology-table-container"
         >
             <EscrTable
-                item-key="pk"
+                item-key="typology_id"
                 compact
                 :headers="tableHeaders"
                 :items="items"
@@ -78,7 +78,6 @@ export default {
     },
     computed: {
         ...mapState({
-            defaultTypes: (state) => state.document.defaultTypes,
             validTypes: (state) => state.document.types,
         }),
         /**
@@ -143,7 +142,7 @@ export default {
         tableHeaders() {
             return [
                 { label: "Type", value: "name", sortable: true },
-                { label: "# in Document", value: "count", sortable: true },
+                { label: "# in Document", value: "frequency", sortable: true },
             ];
         },
     },

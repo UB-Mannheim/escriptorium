@@ -154,36 +154,40 @@
                         <div class="escr-card-header">
                             <h2>Total Lines</h2>
                         </div>
+                        <EscrLoader
+                            v-if="!lineCount ||
+                                (transcriptionLoading && transcriptionLoading.characterCount)
+                            "
+                            class="escr-stat"
+                            :loading="transcriptionLoading && transcriptionLoading.characterCount"
+                            no-data-message="-"
+                        />
                         <span
-                            v-if="lineCount"
+                            v-else-if="lineCount"
                             class="escr-stat"
                         >
                             {{ lineCount.toLocaleString() }}
                         </span>
-                        <EscrLoader
-                            v-else
-                            class="escr-stat"
-                            :loading="loading && loading.document"
-                            no-data-message="-"
-                        />
                     </div>
                     <!-- Document total characters card -->
                     <div class="escr-card escr-card-padding chars-stats">
                         <div class="escr-card-header">
                             <h2>Total Characters</h2>
                         </div>
-                        <span
-                            v-if="charCount"
-                            class="escr-stat"
-                        >
-                            {{ charCount.toLocaleString() }}
-                        </span>
                         <EscrLoader
-                            v-else
+                            v-if="!charCount ||
+                                (transcriptionLoading && transcriptionLoading.characterCount)
+                            "
                             class="escr-stat"
                             :loading="transcriptionLoading && transcriptionLoading.characterCount"
                             no-data-message="-"
                         />
+                        <span
+                            v-else-if="charCount"
+                            class="escr-stat"
+                        >
+                            {{ charCount.toLocaleString() }}
+                        </span>
                     </div>
                     <!-- Document transcription status card -->
                     <div class="escr-card escr-card-padding transcription-status">
