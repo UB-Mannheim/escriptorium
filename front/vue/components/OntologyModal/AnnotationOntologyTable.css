@@ -69,12 +69,19 @@
     list-style: none;
     border-bottom: 1px solid var(--background2);
 }
+.escr-component-selector ul li {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    flex-flow: row nowrap;
+    padding-right: 12px;
+}
 .escr-component-selector ul li label {
     cursor: pointer;
     display: flex;
     align-items: center;
-    width: 100%;
-    padding-left: 24px;
+    flex: 1 0 auto;
+    padding: 0 12px 0 24px;
     height: 42px;
     margin: 0;
 }
