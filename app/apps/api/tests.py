@@ -650,6 +650,32 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.get(uri + '?tags=none|' + str(tag1.pk))
         self.assertEqual(resp.json()['count'], 2)
 
+    def test_stats(self):
+        part = self.factory.make_part(document=self.doc)
+        transcription = self.factory.make_transcription(document=self.doc)
+        self.factory.make_content(part, transcription=transcription)
+        self.factory.make_img_annotations(part)
+        self.factory.make_text_annotations(part, transcription)
+
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-stats', kwargs={'pk': self.doc.pk})
+        with self.assertNumQueries(9):
+            resp = self.client.get(uri)
+            self.assertEqual(resp.status_code, 200)
+
+            self.assertEqual(resp.data["regions"][0]["typology_name"], "blocktype")
+            self.assertEqual(resp.data["regions"][0]["frequency"], 1)
+            self.assertEqual(resp.data["lines"][0]["typology_name"], "linetype0")
+            self.assertEqual(resp.data["lines"][0]["frequency"], 6)
+            self.assertEqual(resp.data["lines"][1]["typology_name"], "linetype1")
+            self.assertEqual(resp.data["lines"][1]["frequency"], 6)
+
+            self.assertEqual(resp.data["image_annotations"][0]["taxonomy_name"], "imgtaxo")
+            self.assertEqual(resp.data["image_annotations"][0]["frequency"], 3)
+
+            self.assertEqual(resp.data["text_annotations"][0]["taxonomy_name"], "texttaxo")
+            self.assertEqual(resp.data["text_annotations"][0]["frequency"], 3)
+
 
 class PartViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
@@ -968,25 +994,39 @@ class TranscriptionViewSetTestCase(CoreFactoryTestCase):
         self.user = self.part.document.owner
         self.transcription = self.factory.make_transcription(document=self.part.document)
 
-    def test_characters_frequency(self):
+    def test_stats(self):
         self.factory.make_content(self.part, transcription=self.transcription)
         self.client.force_login(self.user)
-        uri = reverse('api:transcription-characters', kwargs={
+        uri = reverse('api:transcription-stats', kwargs={
             'document_pk': self.part.document.pk,
             'pk': self.transcription.pk
         })
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             resp = self.client.get(uri)
             self.assertEqual(resp.status_code, 200)
-            self.assertEqual(resp.data[0]['char'], ' ')
-            self.assertEqual(resp.data[0]['frequency'], 191)
-            self.assertEqual(resp.data[1]['char'], 'e')
-            self.assertEqual(resp.data[1]['frequency'], 44)
-            self.assertEqual(resp.data[2]['char'], 'M')
-            self.assertEqual(resp.data[2]['frequency'], 43)
-            self.assertEqual(resp.data[-1]['char'], 'I')
-            self.assertEqual(resp.data[-1]['frequency'], 20)
+            self.assertEqual(resp.data['characters'][0]['char'], ' ')
+            self.assertEqual(resp.data['characters'][0]['frequency'], 191)
+            self.assertEqual(resp.data['characters'][1]['char'], 'e')
+            self.assertEqual(resp.data['characters'][1]['frequency'], 44)
+            self.assertEqual(resp.data['characters'][2]['char'], 'M')
+            self.assertEqual(resp.data['characters'][2]['frequency'], 43)
+            self.assertEqual(resp.data['characters'][-1]['char'], 'I')
+            self.assertEqual(resp.data['characters'][-1]['frequency'], 20)
+
+            self.assertEqual(resp.data['line_count'], 30)
+
+    def test_stats_ordering(self):
+        self.factory.make_content(self.part, transcription=self.transcription)
+        self.client.force_login(self.user)
+        uri = reverse('api:transcription-stats', kwargs={
+            'document_pk': self.part.document.pk,
+            'pk': self.transcription.pk
+        }) + '?ordering=char'
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['characters'][0]['char'], ' ')
+        self.assertEqual(resp.data['characters'][-1]['char'], 'Z')
 
 
 class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
