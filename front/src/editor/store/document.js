@@ -10,6 +10,8 @@ import {
     createAnnotationType,
     updateAnnotationType,
     deleteAnnotationType,
+    updateComponentTaxonomy,
+    deleteComponentTaxonomy,
 } from "../../api";
 
 export const initialState = () => ({
@@ -297,10 +299,18 @@ export const actions = {
             dispatch("alerts/addError", err, { root: true });
         }
 
+        await dispatch("retrieveComponents");
+        commit("setLoading", false);
+    },
+
+    /**
+     * Helper method to retrieve the list of annotation components
+     */
+    async retrieveComponents({ commit, state }) {
         let page = 1;
         let componentTaxonomies = [];
         while (page) {
-            const resp = await retrieveComponentTaxonomies(documentId);
+            const resp = await retrieveComponentTaxonomies(state.id);
             componentTaxonomies = componentTaxonomies.concat(resp.data.results);
             if (resp.data.next) page++;
             else page = null;
@@ -308,6 +318,46 @@ export const actions = {
         commit("document/setComponentTaxonomies", componentTaxonomies, {
             root: true,
         });
+    },
+
+    /**
+     * Update an annotation component
+     */
+    async updateComponent({ commit, dispatch, rootState, state }) {
+        const { name, pk, values } = rootState.forms.addComponent;
+        const documentId = state.id;
+        commit("setLoading", true);
+        try {
+            await updateComponentTaxonomy({
+                documentId,
+                pk,
+                name,
+                allowedValues: values.split(","),
+            });
+        } catch (err) {
+            commit("setLoading", false);
+            dispatch("alerts/addError", err, { root: true });
+        }
+
+        await dispatch("retrieveComponents");
+        commit("setLoading", false);
+    },
+
+    /**
+     * Delete an annotation component
+     */
+    async deleteComponent({ commit, dispatch, state }, component) {
+        const { pk } = component;
+        const documentId = state.id;
+        commit("setLoading", true);
+        try {
+            await deleteComponentTaxonomy({ documentId, pk });
+        } catch (err) {
+            commit("setLoading", false);
+            dispatch("alerts/addError", err, { root: true });
+        }
+
+        await dispatch("retrieveComponents");
         commit("setLoading", false);
     },
 

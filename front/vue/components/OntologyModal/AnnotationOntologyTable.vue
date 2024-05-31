@@ -101,6 +101,26 @@
                                                 >
                                                 <span>{{ component.name }}</span>
                                             </label>
+                                            <EscrButton
+                                                size="small"
+                                                color="text"
+                                                :on-click="() => openEditComponentModal(component)"
+                                            >
+                                                <template #button-icon>
+                                                    <PencilIcon />
+                                                </template>
+                                            </EscrButton>
+                                            <EscrButton
+                                                size="small"
+                                                color="text"
+                                                :on-click="() => openConfirmDeleteComponent(
+                                                    component
+                                                )"
+                                            >
+                                                <template #button-icon>
+                                                    <XIcon />
+                                                </template>
+                                            </EscrButton>
                                         </li>
                                     </ul>
                                     <div
@@ -196,7 +216,7 @@
             class="escr-add-component"
         >
             <template #modal-header>
-                <h2>Add New Component</h2>
+                <h2>{{ editComponentMode === 'add' ? "Add New" : "Edit" }} Component</h2>
                 <EscrButton
                     color="text"
                     :on-click="closeAddComponentModal"
@@ -239,21 +259,33 @@
                 />
                 <EscrButton
                     color="primary"
-                    label="Add"
+                    :label="editComponentMode === 'add' ? 'Add' : 'Save'"
                     :disabled="disabled"
-                    :on-click="onAddComponent"
+                    :on-click="editComponentMode === 'add' ? onAddComponent : onUpdateComponent"
                 />
             </template>
         </EscrModal>
+        <ConfirmModal
+            v-if="confirmDeleteComponentModalOpen"
+            :body-text="`Are you sure you want to delete ${componentToDelete.name}?`"
+            confirm-verb="Delete"
+            title="Delete Component"
+            :cannot-undo="true"
+            :disabled="disabled"
+            :on-cancel="closeConfirmDeleteComponent"
+            :on-confirm="onDeleteComponent"
+        />
     </div>
 </template>
 <script>
 import { Menu as VMenu } from "floating-vue";
 import { mapActions, mapState } from "vuex";
 import ChevronDownIcon from "../Icons/ChevronDownIcon/ChevronDownIcon.vue";
+import ConfirmModal from "../ConfirmModal/ConfirmModal.vue";
 import DropdownField from "../Dropdown/DropdownField.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
+import PencilIcon from "../Icons/PencilIcon/PencilIcon.vue";
 import PlusIcon from "../Icons/PlusIcon/PlusIcon.vue";
 import TextField from "../TextField/TextField.vue";
 import ToggleOffIcon from "../Icons/ToggleOffIcon/ToggleOffIcon.vue";
@@ -265,9 +297,11 @@ export default {
     name: "AnnotationOntologyTable",
     components: {
         ChevronDownIcon,
+        ConfirmModal,
         DropdownField,
         EscrButton,
         EscrModal,
+        PencilIcon,
         PlusIcon,
         TextField,
         ToggleOffIcon,
@@ -309,6 +343,9 @@ export default {
         return {
             addComponentModalOpen: false,
             componentDropdownOpen: null,
+            componentToDelete: null,
+            confirmDeleteComponentModalOpen: false,
+            editComponentMode: "",
         };
     },
     computed: {
@@ -318,13 +355,14 @@ export default {
         }),
     },
     methods: {
-        ...mapActions("document", ["createComponent"]),
+        ...mapActions("document", ["createComponent", "deleteComponent", "updateComponent"]),
         ...mapActions("forms", ["clearForm", "handleGenericInput", "handleGenericArrayInput"]),
         /**
          * Close the "add new component" modal and clear its state
          */
         closeAddComponentModal() {
             this.addComponentModalOpen = false;
+            this.editComponentMode = "";
             this.clearForm("addComponent");
         },
         /**
@@ -376,6 +414,13 @@ export default {
             this.closeAddComponentModal();
         },
         /**
+         * Callback to save changes to a component
+         */
+        async onUpdateComponent() {
+            await this.updateComponent();
+            this.closeAddComponentModal();
+        },
+        /**
          * Generic form fields event handler
          */
         onChange(e, field, item) {
@@ -411,6 +456,48 @@ export default {
         openAddComponentModal() {
             this.componentDropdownOpen = null;
             this.addComponentModalOpen = true;
+            this.editComponentMode = "add";
+        },
+        /**
+         * Open the "edit component" modal
+         */
+        openEditComponentModal(component) {
+            // set the form values to the existing values from db
+            this.handleGenericInput({
+                form: "addComponent", field: "name", value: component.name
+            });
+            this.handleGenericInput({
+                form: "addComponent", field: "values", value: component.allowed_values.join(",")
+            });
+            this.handleGenericInput({
+                form: "addComponent", field: "pk", value: component.pk
+            });
+            // then open the modal and set the mode to edit mode
+            this.componentDropdownOpen = null;
+            this.addComponentModalOpen = true;
+            this.editComponentMode = "edit";
+        },
+        /**
+         * Open a modal to confirm deletion of an annotation component
+         */
+        openConfirmDeleteComponent(component) {
+            this.componentToDelete = component;
+            this.componentDropdownOpen = null;
+            this.confirmDeleteComponentModalOpen = true;
+        },
+        /**
+         * Close the modal to confirm deletion of an annotation component
+         */
+        closeConfirmDeleteComponent() {
+            this.componentToDelete = null;
+            this.confirmDeleteComponentModalOpen = false;
+        },
+        /**
+         * Open a modal to confirm deletion of an annotation component
+         */
+        async onDeleteComponent() {
+            await this.deleteComponent(this.componentToDelete);
+            this.closeConfirmDeleteComponent();
         },
         /**
          * Handler for toggling a component choice on and off for an item

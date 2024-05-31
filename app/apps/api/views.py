@@ -924,9 +924,7 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         except ProtectedObjectException:
             return Response("This transcription can not be deleted.", status=400)
 
-    def characters_query(self, order_param):
-        transcription = self.get_object()
-
+    def characters_query(self, transcription, order_param):
         if order_param == 'frequency':
             order_by = "frequency ASC"
         elif order_param == 'char':
@@ -956,7 +954,7 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         transcription = self.get_object()
         # Note: we don't have access to OrderingFilter goodies in an @action
         order_param = self.request.query_params.get('ordering')
-        chars = self.characters_query(order_param)
+        chars = self.characters_query(transcription, order_param)
         line_count = transcription.linetranscription_set.exclude(content='').count()
 
         return Response({

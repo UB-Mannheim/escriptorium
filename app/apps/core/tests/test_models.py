@@ -107,7 +107,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             for entry in in_json:
                 if entry["id"] != "witness":
                     self.assertEqual(len(entry["lineIDs"]), 30)
-                    self.assertEqual(len(entry["text"]), 1980)
+                    self.assertEqual(len(entry["text"]), 1950)
 
             # should have an entry with id "witness" and text of witness txt
             witness_dict = next(filter(lambda d: d["id"] == "witness", in_json))
@@ -303,7 +303,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             for entry in in_json:
                 if entry["id"] != "witness":
                     self.assertEqual(len(entry["lineIDs"]), 90)
-                    self.assertEqual(len(entry["text"]), 5940)
+                    self.assertEqual(len(entry["text"]), 5850)
 
     @patch("core.models.hex")
     @patch("core.models.subprocess")
