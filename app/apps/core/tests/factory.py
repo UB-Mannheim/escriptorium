@@ -9,17 +9,21 @@ from kraken.lib import vgsl
 from PIL import Image, ImageDraw
 
 from core.models import (
+    AnnotationTaxonomy,
     Block,
     BlockType,
     Document,
     DocumentPart,
     DocumentTag,
+    ImageAnnotation,
     Line,
     LineTranscription,
+    LineType,
     Metadata,
     OcrModel,
     Project,
     ProjectTag,
+    TextAnnotation,
     TextualWitness,
     Transcription,
 )
@@ -156,21 +160,29 @@ class CoreFactory():
 
         # Lines of randomized garbage text to use for transcription content
         f = open(os.path.join(os.path.dirname(__file__), "assets", "lines.txt"), "r")
-        lines = f.readlines()
+        lines = f.read().splitlines()
 
         if transcription is None:
             transcription = self.make_transcription(document=part.document)
         block_type = BlockType.objects.create(name="blocktype", public=True, default=True)
         part.document.valid_block_types.add(block_type)
+
+        block = Block.objects.create(
+            document_part=part,
+            typology=block_type,
+            box=[
+                line_margin, line_height - line_margin,
+                line_margin + line_width, line_height - line_margin
+            ],
+        )
+
+        line_types = []
+        for i in range(5):
+            line_type = LineType.objects.create(name="linetype" + str(i), public=True, default=True)
+            part.document.valid_line_types.add(line_type)
+            line_types.append(line_type)
+
         for i in range(amount):
-            block = Block.objects.create(
-                document_part=part,
-                typology=block_type,
-                box=[
-                    line_margin, i * line_height - line_margin,
-                    line_margin + line_width, i * line_height - line_margin
-                ],
-            )
             line = Line.objects.create(document_part=part,
                                        baseline=[
                                            [line_margin, i * line_height],
@@ -181,11 +193,39 @@ class CoreFactory():
                                            [line_margin + line_width, i * line_height - line_margin],
                                            [line_margin, i * line_height - line_margin],
                                        ],
+                                       typology=line_types[i % 5],
                                        block=block)
 
             LineTranscription.objects.create(transcription=transcription,
                                              line=line,
                                              content=lines[i])
+
+    def make_img_annotations(self, part):
+        taxo = AnnotationTaxonomy.objects.create(document=part.document,
+                                                 name="imgtaxo",
+                                                 marker_type=AnnotationTaxonomy.MARKER_TYPE_RECTANGLE
+                                                 )
+        for i in range(3):
+            ImageAnnotation.objects.create(taxonomy=taxo,
+                                           part=part,
+                                           coordinates=[[10 + 50 * i, 10 + 50 * i],
+                                                        [50 + 50 * i, 50 + 50 * i]])
+
+    def make_text_annotations(self, part, transcription):
+        taxo = AnnotationTaxonomy.objects.create(document=part.document,
+                                                 name="texttaxo",
+                                                 marker_type=AnnotationTaxonomy.MARKER_TYPE_BG_COLOR
+                                                 )
+        lines = part.lines.all()
+        for i in range(3):
+            TextAnnotation.objects.create(taxonomy=taxo,
+                                          part=part,
+                                          transcription=transcription,
+                                          start_line=lines[0 + i],
+                                          start_offset=1,
+                                          end_line=lines[0 + i + 1],
+                                          end_offset=5,
+                                          )
 
     def make_witness(self, **kwargs):
         """Generate a textual witness (reference text) for use in alignment"""
