@@ -1,8 +1,10 @@
+--------------- Element 1 (default.png) ---------------
 A simple test for eScriptorium
 Some text to be exported during a document_export Celery task.
 Some text to be exported during a document_export Celery task.
 Some text to be exported during a document_export Celery task.
 A beautiful signature
+--------------- Element 2 (default2.png) ---------------
 Another simple test for eScriptorium
 More text to be exported during a document_export Celery task.
 More text to be exported during a document_export Celery task.

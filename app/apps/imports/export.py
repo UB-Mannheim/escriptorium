@@ -79,6 +79,7 @@ class TextExporter(BaseExporter):
                 transcription=self.transcription,
                 line__document_part__pk__in=self.part_pks,
             )
+            .select_related("line__document_part")
             .filter(region_filters)
             .exclude(content="")
             .order_by(

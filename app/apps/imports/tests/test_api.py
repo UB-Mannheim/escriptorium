@@ -631,11 +631,11 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                     transcription=self.trans,
                     content='line %d:%d' % (i, j))
         self.client.force_login(self.user)
-        with self.assertNumQueries(22):
+        with self.assertNumQueries(32):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
-                                         'file_format': 'text',
+                                         'file_format': 'alto',
                                          'parts': [str(p.pk) for p in self.parts],
                                          'region_types': self.region_types_choices})
             self.assertEqual(response.status_code, 200)

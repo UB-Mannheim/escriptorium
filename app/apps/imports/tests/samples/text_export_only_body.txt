@@ -1,6 +1,8 @@
+--------------- Element 1 (default.png) ---------------
 Some text to be exported during a document_export Celery task.
 Some text to be exported during a document_export Celery task.
 Some text to be exported during a document_export Celery task.
+--------------- Element 2 (default2.png) ---------------
 More text to be exported during a document_export Celery task.
 More text to be exported during a document_export Celery task.
 More text to be exported during a document_export Celery task.
