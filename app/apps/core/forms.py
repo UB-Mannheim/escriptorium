@@ -736,8 +736,7 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
 
 class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
     model = forms.ModelChoiceField(
-        queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
-        required=False)
+        queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE))
     transcription = forms.ModelChoiceField(
         queryset=Transcription.objects.filter(archived=False),
         empty_label=_('-- New --'),
