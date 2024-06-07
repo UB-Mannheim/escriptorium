@@ -27,8 +27,8 @@ from django.db.models.functions import Coalesce, Length
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.forms import ValidationError
-from django.template.defaultfilters import slugify
 from django.utils.functional import cached_property
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django_prometheus.models import ExportModelOperationsMixin
 from easy_thumbnails.files import get_thumbnailer
@@ -435,7 +435,7 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
         return self.name
 
     def make_slug(self):
-        slug = slugify(self.name)
+        slug = slugify(self.name, allow_unicode=True)
         # check unicity
         exists = Project.objects.filter(slug=slug).count()
         if not exists:
@@ -444,7 +444,7 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
             self.slug = slug[:40] + hex(int(time.time()))[2:]
 
     def save(self, *args, **kwargs):
-        if not self.pk:
+        if not self.slug:
             self.make_slug()
         super().save(*args, **kwargs)
 
