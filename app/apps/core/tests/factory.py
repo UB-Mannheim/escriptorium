@@ -5,6 +5,7 @@ from io import BytesIO
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TransactionTestCase
+from django.utils.text import slugify
 from kraken.lib import vgsl
 from PIL import Image, ImageDraw
 
@@ -58,10 +59,10 @@ class CoreFactory():
 
     def make_project(self, **kwargs):
         project, _ = Project.objects.get_or_create(
-            slug="test",
+            slug=slugify(kwargs.get('name')) or "unit-test",
             defaults={
                 "owner": kwargs.get('owner') or self.make_user(),
-                "name": kwargs.get('name') or "Unit test"
+                "name": kwargs.get('name') or "Unit test",
             }
         )
         return project

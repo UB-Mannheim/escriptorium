@@ -108,8 +108,10 @@ class UserViewSetTestCase(CoreFactoryTestCase):
 class DocumentViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()
-        self.doc = self.factory.make_document()
-        self.doc2 = self.factory.make_document(owner=self.doc.owner)
+        self.proj1 = self.factory.make_project(name='proj1')
+        self.proj2 = self.factory.make_project(name='proj2', owner=self.proj1.owner)
+        self.doc = self.factory.make_document(project=self.proj1, owner=self.proj1.owner)
+        self.doc2 = self.factory.make_document(project=self.proj2, owner=self.proj1.owner)
         self.part = self.factory.make_part(document=self.doc)
         self.part2 = self.factory.make_part(document=self.doc)
 
@@ -1305,7 +1307,8 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
     def test_filter_no_tag(self):
         tag1 = self.factory.make_project_tag(user=self.project.owner)
         self.project.tags.add(tag1)
-        project_without_tag = self.factory.make_project(owner=self.project.owner)
+        project_without_tag = self.factory.make_project(name="proj without tags",
+                                                        owner=self.project.owner)
 
         self.client.force_login(self.project.owner)
         uri = reverse('api:project-list')
