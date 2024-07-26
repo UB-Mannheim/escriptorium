@@ -43,9 +43,6 @@ LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
 ]
 
-# Workaround for buggy CPU cost calculation (factor is 1 / number of threads = 1 / 48).
-CPU_COST_FACTOR = 0.02083333
-
 DEBUG = True
 
 # https://stackoverflow.com/questions/62047354/build-absolute-uri-with-https-behind-reverse-proxy
