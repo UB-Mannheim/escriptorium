@@ -418,7 +418,6 @@ REST_FRAMEWORK = {
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
-CPU_COST_FACTOR = os.getenv('CPU_COST_FACTOR', 1.0)
 GPU_COST = os.getenv('GPU_COST', 1.0)
 
 # Boolean used to defuse quotas enforcement

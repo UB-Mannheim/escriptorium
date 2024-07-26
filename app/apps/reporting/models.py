@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+import psutil
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -9,6 +10,9 @@ from django.utils.translation import gettext_lazy as _
 from escriptorium.celery import app
 
 User = get_user_model()
+
+# Dictionary to store CPU times for tasks.
+task_cpu_times = {}
 
 
 class TaskGroup(models.Model):
@@ -82,6 +86,9 @@ class TaskReport(models.Model):
     def start(self):
         self.workflow_state = self.WORKFLOW_STATE_STARTED
         self.started_at = datetime.now(timezone.utc)
+        # Start tracking CPU time when the task starts.
+        task_id = self.task_id
+        task_cpu_times[task_id] = psutil.Process().cpu_times()
         self.save()
 
     def cancel(self, username):
@@ -108,13 +115,20 @@ class TaskReport(models.Model):
         self.done_at = datetime.now(timezone.utc)
         self.save()
 
-    def calc_cpu_cost(self, nb_cores):
+    def calc_cpu_cost(self):
         # No need to calculate the CPU usage if the task was canceled/crashed before even starting
         if not self.started_at:
             return
 
-        task_duration = (self.done_at - self.started_at).total_seconds()
-        self.cpu_cost = (task_duration * nb_cores * settings.CPU_COST_FACTOR) / 60
+        task_id = self.task_id
+        if task_id in task_cpu_times:
+            start_cpu_times = task_cpu_times.pop(task_id)
+            end_cpu_times = psutil.Process().cpu_times()
+            user_cpu_time = end_cpu_times.user - start_cpu_times.user
+            system_cpu_time = end_cpu_times.system - start_cpu_times.system
+            self.cpu_cost = (user_cpu_time + system_cpu_time) / 60
+        else:
+            self.cpu_cost = 0
         self.save()
 
     def calc_gpu_cost(self):
