@@ -21,6 +21,7 @@ kraken>=5.2.5,~=5.2
 oitei~=1.1.1
 git+https://github.com/dasmiq/passim.git@v2.0.1#egg=passim
 Pillow>=5.4.1
+psutil
 psycopg2-binary
 pyvips~=2.1.12
 redis~=4.4.4
