@@ -1,5 +1,4 @@
 import logging
-import os
 
 from celery import states
 from celery.signals import before_task_publish, task_postrun, task_prerun
@@ -167,7 +166,7 @@ def end_task_reporting(task_id, task, *args, **kwargs):
     if report.workflow_state in client_status_mapping:
         update_client_state(kwargs.get("kwargs", {}), task.name, client_status_mapping[report.workflow_state], task_id=task_id, data=kwargs.get('result'))
 
-    report.calc_cpu_cost(os.cpu_count())
+    report.calc_cpu_cost()
     # Listing tasks parametrized to run on 'gpu' Celery queue
     if task.name in [route for route, queue in settings.CELERY_TASK_ROUTES.items() if queue == {'queue': 'gpu'}]:
         report.calc_gpu_cost()
