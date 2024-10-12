@@ -733,6 +733,7 @@ class XMLParser(ParserDocument):
 
                         lines = self.get_lines(blockTag)
                         n_lines += len(lines)
+                        # logger.debug(f"{lines=}")
 
                         for line_id, lineTag in lines:
                             if line_id:
@@ -783,6 +784,70 @@ class XMLParser(ParserDocument):
                 logger.info("Uncompressed and parsed %s (%i page(s), %i block(s), %i line(s))" % (self.file.name, n_pages, n_blocks, n_lines))
                 part.calculate_progress()
                 yield part
+
+
+class AbbyyParser(XMLParser):
+    DEFAULT_NAME = _("Default ABBYY Import")
+    ACCEPTED_SCHEMAS = (
+        "http://www.abbyy.com/FineReader_xml/FineReader10-schema-v1.xml"
+    )
+
+    @property
+    def total(self):
+        # Assume that an ABBYY file always describes 1 'document part'
+        return 1
+
+    def get_avg_confidence(self, lineTag):
+        return None
+
+    def get_blocks(self, pageTag):
+        return [
+            (b.get("blockName"), b)
+            for b in pageTag.findall("block", self.root.nsmap)
+        ]
+
+    def get_filename(self, pageTag):
+        logger.debug(f"{self.file.name=}")
+        return f"680749.jpg"
+        # return f"{os.path.basename(self.file.name)}"
+
+    def get_graphs(self, lineTag):
+        graphs = []
+        return graphs
+
+    def get_lines(self, blockTag):
+        return [(None, line) for line in blockTag.findall("text/par/line", self.root.nsmap)]
+
+    def get_pages(self):
+        return self.root.findall("page", self.root.nsmap)
+
+    def get_transcription_content(self, lineTag):
+        logger.debug(f'{lineTag.findall("formatting", self.root.nsmap)}')
+        return " ".join(
+            [
+                e.text if e.text is not None else ""
+                for e in lineTag.findall("formatting", self.root.nsmap)
+            ]
+        )
+
+    def update_line(self, line, lineTag):
+        baseline = lineTag.get("baseline")
+        l = lineTag.get("l")
+        t = lineTag.get("t")
+        r = lineTag.get("r")
+        b = lineTag.get("b")
+        # logger.debug(f"{baseline=}, {l=}, {t=}, {r=}, {b=}")
+        baseline = int(baseline)
+        l = int(l)
+        t = int(t)
+        r = int(r)
+        b = int(b)
+        # logger.debug(f"{baseline=}, {l=}, {t=}, {r=}, {b=}")
+        baseline = t + (b - t) * 3 / 4
+        line.baseline = [(l, baseline), (r, baseline)]
+        line.box = [l, t, r, b]
+        line.mask = [(l, t), (r, t), (r, b), (l, b)]
+        logger.debug(f"{line.baseline=}, {line.box=}, {line.mask=}")
 
 
 class AltoParser(XMLParser):
@@ -906,6 +971,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
                 int(float(lineTag.get("VPOS"))) + int(float(lineTag.get("HEIGHT"))),
             ]
 
+        logger.debug(f"{line.baseline=}, {line.box=}, {line.mask=}")
         try:
             tag = lineTag.get("TAGREFS").strip().split(" ")[0]
             type_ = self.root.find("./Tags/*[@ID='" + tag + "']", self.root.nsmap).get("LABEL")
@@ -1023,6 +1089,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
         except ParseError:
             line.mask = None
 
+        logger.debug(f"{line.baseline=}, {line.box=}, {line.mask=}")
         type_ = lineTag.get("type")
         if not type_:
             custom = lineTag.get("custom")
@@ -1297,9 +1364,11 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
             raise ParseError(
                 "Couldn't determine xml schema, xmlns attribute missing on root element."
             )
-        # if 'abbyy' in schema:  # Not super robust
-        #     return AbbyyParser(root, name=name)
-        if "alto" in schema.lower():
+        if "abbyy" in schema:  # Not super robust
+            return AbbyyParser(
+                document, file_handler, report, transcription_name=name, xml_root=root
+            )
+        elif "alto" in schema.lower():
             return AltoParser(
                 document, file_handler, report, transcription_name=name, xml_root=root
             )
@@ -1317,7 +1386,7 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
 
         else:
             raise ParseError(
-                "Couldn't determine xml schema, check the content of the root tag."
+                f"Couldn't determine XML schema, check the content of the root tag, {schema=}."
             )
     elif ext == "json":
         return IIIFManifestParser(document, file_handler, report)
