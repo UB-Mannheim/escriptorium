@@ -13,7 +13,7 @@ export SPARK_SUBMIT_ARGS='--master local[4] --driver-memory 8G --executor-memory
 # The following setting has no effect (therefore disabled).
 #export SPARK_LAUNCHER_OPTS=-Xmx512m
 
-celery --app escriptorium worker --concurrency 8 --queues default --loglevel INFO --max-tasks-per-child=10 --optimization fair &
+celery --app escriptorium worker --concurrency 16 --queues default --loglevel INFO --max-tasks-per-child=16 --optimization fair &
 # for everything that needs a java virtual machine (except elasticsearch)
 celery --app escriptorium worker --concurrency 2 --queues jvm --loglevel INFO --optimization fair &
 # for everything that needs to be done on the spot to update the ui
