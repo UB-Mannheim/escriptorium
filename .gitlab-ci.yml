@@ -54,6 +54,7 @@ tests:
   #   - schedules
 
   script:
+    - pip install -r app/requirements.txt
     - python app/manage.py test -v 2 users api versioning imports core
 
 build:
