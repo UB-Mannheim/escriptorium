@@ -13,10 +13,11 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import cache_page
 from django_filters import Filter, FilterSet
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin
@@ -1346,3 +1347,14 @@ class RegenerableAuthToken(ObtainAuthToken):
             token, created = Token.objects.get_or_create(user=user)
 
         return Response({'token': token.key})
+
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Description of API operation",
+    responses={200: 'OK Response', 400: 'Invalid request'}
+)
+@api_view(['GET'])
+def example_view(request):
+    # View Logic hier
+    pass
