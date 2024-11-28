@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'django.forms',
 
     'django_cleanup',
+    'drf_yasg',
     'ordered_model',
     'easy_thumbnails',
     'easy_thumbnails.optimize',
@@ -99,6 +100,14 @@ MIDDLEWARE = [
 PROMETHEUS_EXPORT_MIGRATIONS = False
 
 ROOT_URLCONF = 'escriptorium.urls'
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {},
+    'USE_SESSION_AUTH': True,  # Keep Django login
+    'SECURITY_SCHEMES': {},    # Remove other auth schemes
+    # 'SUPPORTED_SUBMIT_METHODS': []  # This removes the "Try it out" buttons if you want
+    'LOGOUT_URL': 'logout',    # Changed to point to /logout
+}
 
 TEMPLATES = [
     {
