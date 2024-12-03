@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'django.forms',
 
     'django_cleanup',
+    'drf_spectacular',
     'drf_yasg',
     'ordered_model',
     'easy_thumbnails',
@@ -100,6 +101,12 @@ MIDDLEWARE = [
 PROMETHEUS_EXPORT_MIGRATIONS = False
 
 ROOT_URLCONF = 'escriptorium.urls'
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'eScriptorium API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {},
@@ -444,6 +451,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.CustomPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
