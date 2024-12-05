@@ -3508,3 +3508,19 @@ msgstr "Sie haben noch keine Einladungen verschickt."
 #: homepage_example/additional_footer.html
 msgid "Powered by"
 msgstr "Mit Hilfe von"
+
+#: homepage/additional_heading.html
+msgid "eScriptorium for OCR-BW"
+msgstr "eScriptorium für OCR-BW"
+
+#: homepage/additional_heading.html
+msgid "New: "
+msgstr "Neu: "
+
+#: homepage/additional_heading.html
+msgid "eScriptorium Discussions"
+msgstr "eScriptorium Diskussionsforum"
+
+#: homepage/additional_heading.html
+msgid "(on GitHub)"
+msgstr "(auf GitHub)"
