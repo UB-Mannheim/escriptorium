@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-21 22:07+0200\n"
+"POT-Creation-Date: 2024-11-24 20:46+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -2992,3 +2992,15 @@ msgstr "Datenschutzerklärung"
 #: homepage/additional_heading.html
 msgid "eScriptorium for OCR-BW"
 msgstr "eScriptorium für OCR-BW"
+
+#: homepage/additional_heading.html
+msgid "New: "
+msgstr "Neu: "
+
+#: homepage/additional_heading.html
+msgid "eScriptorium Discussions"
+msgstr "eScriptorium Diskussionsforum"
+
+#: homepage/additional_heading.html
+msgid "(on GitHub)"
+msgstr "(auf GitHub)"
