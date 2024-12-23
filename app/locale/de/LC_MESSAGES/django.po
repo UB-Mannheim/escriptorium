@@ -92,7 +92,7 @@ msgstr "Lokale Datei hochladen"
 
 #: apps/api/serializers.py
 msgid "download file from url"
-msgstr ""
+msgstr "Datei von URL herunterladen"
 
 #: apps/api/serializers.py apps/imports/forms.py
 #, python-format
@@ -142,10 +142,13 @@ msgid ""
 "(20–80) difference between the aligned witness text and the original "
 "transcription."
 msgstr ""
+"Ermöglicht maximale Abweichung und deaktiviert die Strahlensuche. Maximale "
+"Anzahl von Zeichen (20–80) Unterschied zwischen dem ausgerichteten Referenztext "
+"und der ursprünglichen Transkription."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Beam size"
-msgstr ""
+msgstr "Strahlengröße"
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid ""
@@ -153,6 +156,9 @@ msgid ""
 "be on and beam size set to 20. Higher beam size (1-100) will result in "
 "slower computation but more accurate results."
 msgstr ""
+"Ermöglicht Strahlensuche; wenn dies und die maximale Abweichung nicht gesetzt "
+"sind, wird die Strahlensuche aktiviert und die Strahlengröße auf 20 gesetzt. "
+"Höhere Strahlengröße (1-100) führt zu langsameren Berechnungen, aber genaueren Ergebnissen."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Gap"
@@ -164,6 +170,10 @@ msgid ""
 "OCR or texts where passages align to different portions of the witness text. "
 "To force end-to-end alignment of two documents, increase to 1,000,000."
 msgstr ""
+"Der Abstand zwischen übereinstimmenden einzigartigen N-Grammen; 600 sollte "
+"für saubere OCR oder Texte, bei denen Passagen zu verschiedenen Teilen des "
+"Referenztextes passen, gut funktionieren. Um eine durchgehende Ausrichtung "
+"zweier Dokumente zu erzwingen, erhöhen Sie auf 1000000."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Merge aligned text with existing transcription"
@@ -175,20 +185,26 @@ msgid ""
 "when alignment could not be performed; if unchecked, those lines will be "
 "blank."
 msgstr ""
+"Wenn aktiviert, wird der Abgleicher den Text der ursprünglichen Transkription "
+"wiederverwenden, wenn der Abgleich nicht durchgeführt werden konnte; wenn "
+"nicht aktiviert, bleiben diese Zeilen leer."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Use full transcribed document"
-msgstr ""
+msgstr "Vollständig transkribiertes Dokument verwenden"
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid ""
 "If checked, the aligner will use all transcribed pages of the document to "
 "find matches. If unchecked, it will compare each page to the text separately."
 msgstr ""
+"Wenn aktiviert, wird der Abgleicher alle transkribierten Seiten des Dokuments "
+"verwenden, um Übereinstimmungen zu finden. Wenn nicht aktiviert, wird jede "
+"Seite getrennt mit dem Text verglichen."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Line length match threshold"
-msgstr ""
+msgstr "Schwellenwert für Zeilenlängenübereinstimmung"
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid ""
@@ -196,10 +212,13 @@ msgid ""
 "transcription, below which matches are ignored. At 0.0, all matches are "
 "accepted."
 msgstr ""
+"Mindestanteil (0.0–1.0) der abgeglichenen Zeilenlänge zur ursprünglichen "
+"Transkription, unterhalb dessen Übereinstimmungen ignoriert werden. Bei 0.0 "
+"werden alle Übereinstimmungen akzeptiert."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Region types to include in the alignment."
-msgstr ""
+msgstr "Bereichstypen, die in den Abgleich einbezogen werden sollen."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Layer name"
@@ -213,21 +232,23 @@ msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You must supply a textual witness (reference text)."
-msgstr ""
+msgstr "Sie müssen einen Referenztext angeben."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You may only supply one witness text (file upload or existing text)."
-msgstr ""
+msgstr "Sie dürfen nur einen Referenztext angeben (hochgeladene Datei oder vorhandener Text)."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid ""
 "Alignment layer name cannot be the same as the transcription you are trying "
 "to align."
 msgstr ""
+"Der Name der Abgleichsebene darf nicht mit der Transkription übereinstimmen, "
+"die Sie abgleichen möchten."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Max offset and beam size cannot both be non-zero."
-msgstr ""
+msgstr "Maximaler Offset und Strahlengröße können nicht beide ungleich null sein."
 
 #: apps/api/views.py apps/core/models.py
 msgid "Canceled."
@@ -235,7 +256,7 @@ msgstr "Abgebrochen."
 
 #: apps/api/views.py
 msgid "'lines' is mandatory."
-msgstr ""
+msgstr "'Zeilen' ist erforderlich."
 
 #: apps/core/forms.py
 msgid "All projects"
@@ -251,25 +272,25 @@ msgstr ""
 
 #: apps/core/forms.py
 msgid "Word by word"
-msgstr ""
+msgstr "Wort für Wort"
 
 #: apps/core/forms.py
 msgid "Regular expression"
-msgstr ""
+msgstr "Regulärer Ausdruck"
 
 #: apps/core/forms.py
 msgid "Text to replace"
-msgstr ""
+msgstr "Text, der ersetzt werden soll"
 
 #: apps/core/forms.py
 msgid "Text to find"
-msgstr ""
+msgstr "Text, der gesucht werden soll"
 
 #: apps/core/forms.py
 msgid ""
 "You cannot find and replace text across multiple projects at once, please "
 "pick a single project before submitting your request."
-msgstr ""
+msgstr "Suchen und ersetzen funktioniert nicht für mehrere Projekte auf einmal, bitte wählen Sie ein einziges Projekt, bevor Sie diese Funktion anfordern"
 
 #: apps/core/forms.py escriptorium/templates/core/models_list/rights/main.html
 msgid "Type"
@@ -317,7 +338,7 @@ msgstr "-- Neu --"
 
 #: apps/core/forms.py
 msgid "The model is already training."
-msgstr ""
+msgstr "Das Modell wird bereits trainiert."
 
 #: apps/core/forms.py
 msgid "Either choose a model name or overwrite an existing one."
@@ -332,7 +353,7 @@ msgstr ""
 
 #: apps/core/forms.py
 msgid "You can't overwrite the existing file of a model you don't own."
-msgstr ""
+msgstr "Sie können nicht die vorhandene Datei eines Modells, das Ihnen nicht gehört, überschreiben."
 
 #: apps/core/forms.py
 msgid "Empty Ground Truth data."
@@ -687,7 +708,7 @@ msgid ""
 "Destroys existing regions, lines and any bound transcription before "
 "importing."
 msgstr ""
-"Beseitigt vorhandene Bereiche, Zeilen und gebundene Transkriptionen vor dem "
+"Löscht vorhandene Bereiche, Zeilen und zugehörige Transkriptionen vor dem "
 "Importieren."
 
 #: apps/imports/forms.py
