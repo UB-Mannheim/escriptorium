@@ -1,7 +1,7 @@
 # German translations for eScriptorium.
-# Copyright (C) 2021
+# Copyright (C) 2021, 2023
 # This file is distributed under the same license as the eScriptorium package.
-# Stefan Weil <sw@weilnetz.de, 2021
+# Stefan Weil <sw@weilnetz.de, 2021-2023
 #
 # This file was created like this:
 # django-admin makemessages -l de
@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-06-08 20:07+0000\n"
+"POT-Creation-Date: 2024-12-23 07:04+0000\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -32,14 +32,27 @@ msgstr ""
 "PDF ist kein gültiges Bildformat, bitte verwenden Sie die dafür bestimmte "
 "Importfunktion."
 
-#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
-#: escriptorium/templates/core/document_images.html
-msgid "You don't have any disk storage left."
-msgstr "Sie haben keinen Speicherplatz mehr übrig."
+#: apps/api/serializers.py
+msgid "Upload local file"
+msgstr "Lokale Datei hochladen"
+
+#: apps/api/serializers.py
+msgid "download file from url"
+msgstr "Datei von URL herunterladen"
 
 #: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
 msgid "You don't have any CPU minutes left."
 msgstr "Sie haben keine CPU-Minuten mehr übrig."
+
+#: apps/api/serializers.py apps/imports/forms.py
+#, python-format
+msgid "Import in %(document_name)s"
+msgstr "Importieren in %(document_name)s"
+
+#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
+#: escriptorium/templates/core/document_images.html
+msgid "You don't have any disk storage left."
+msgstr "Sie haben keinen Speicherplatz mehr übrig."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You don't have any GPU minutes left."
@@ -87,6 +100,19 @@ msgstr ""
 "beides, um ein neues Modell aus einem bestehenden zu erstellen."
 
 #: apps/api/serializers.py
+msgid "Upload local file"
+msgstr "Lokale Datei hochladen"
+
+#: apps/api/serializers.py
+msgid "download file from url"
+msgstr ""
+
+#: apps/api/serializers.py apps/imports/forms.py
+#, python-format
+msgid "Import in %(document_name)s"
+msgstr "Importieren in %(document_name)s"
+
+#: apps/api/serializers.py
 msgid ""
 "Either use model_name to create a new model, or add a model pk to retrain an "
 "existing one."
@@ -94,9 +120,135 @@ msgstr ""
 "Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, oder "
 "fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren."
 
+#: apps/api/serializers.py apps/core/forms.py
+msgid "The transcription on which to perform alignment."
+msgstr "Die Transkription, anhand derer der Abgleich durchgeführt werden soll."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "The reference text for alignment; must be a .txt file."
+msgstr "Der Referenztext für den Abgleich; eine .txt Datei wird erwartet."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Reuse a previously-uploaded reference text."
+msgstr "Verwenden Sie einen zuvor hochgeladenen Referenztext wieder."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "N-gram"
+msgstr "N-Gramm"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Length (2–25) of token sequences to compare; 25 should work well for at "
+"least moderately clean OCR. For very poor OCR, lower to 3 or 4."
+msgstr ""
+"Länge (2-25) der zu vergleichenden Zeichensequenz; 25 sollte zumindest mit "
+"einigermaßen sauberer OCR gut funktionieren. Bei sehr schlechter OCR auf 3 "
+"oder 4 verringern."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Max offset"
+msgstr "Maximaler Offset"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Enables max-offset and disables beam search. Maximum number of characters "
+"(20–80) difference between the aligned witness text and the original "
+"transcription."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Beam size"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Enables beam search; if this and max offset are left unset, beam search will "
+"be on and beam size set to 20. Higher beam size (1-100) will result in "
+"slower computation but more accurate results."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Gap"
+msgstr "Lücke"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"The distance between matching unique n-grams; 600 should work well for clean "
+"OCR or texts where passages align to different portions of the witness text. "
+"To force end-to-end alignment of two documents, increase to 1,000,000."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Merge aligned text with existing transcription"
+msgstr "Mische den abgeglichenen Text mit der vorhandenen Transkription"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will reuse the text of the original transcription "
+"when alignment could not be performed; if unchecked, those lines will be "
+"blank."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Use full transcribed document"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will use all transcribed pages of the document to "
+"find matches. If unchecked, it will compare each page to the text separately."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Line length match threshold"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Minimum proportion (0.0–1.0) of aligned line length to original "
+"transcription, below which matches are ignored. At 0.0, all matches are "
+"accepted."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Region types to include in the alignment."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Layer name"
+msgstr "Name der Ebene"
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Name for the new transcription layer produced by this alignment. If you "
+"reuse an existing layer name, the layer will be overwritten; use caution."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You must supply a textual witness (reference text)."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You may only supply one witness text (file upload or existing text)."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"Alignment layer name cannot be the same as the transcription you are trying "
+"to align."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Max offset and beam size cannot both be non-zero."
+msgstr ""
+
 #: apps/api/views.py apps/core/models.py
 msgid "Canceled."
 msgstr "Abgebrochen."
+
+#: apps/api/views.py
+msgid "'lines' is mandatory."
+msgstr ""
 
 #: apps/core/forms.py
 #, python-brace-format
@@ -111,19 +263,60 @@ msgid "You requested to search text in a {self.obj_name} that doesn't exist."
 msgstr "Sie wollten Text in {self.obj_name} suchen, aber das existiert nicht."
 
 #: apps/core/forms.py
-msgid "Text to search in all of your projects"
-msgstr "Text, der in allen Ihren Projekten gesucht wird"
-
-#: apps/core/forms.py
 msgid "All projects"
 msgstr "Alle Projekte"
 
 #: apps/core/forms.py
 msgid ""
-", surround one or more terms with quotation marks to deactivate fuzziness"
+"Text to search in all of your projects, surround one or more terms with "
+"quotation marks to deactivate fuzziness"
 msgstr ""
-", setzen Sie einen oder mehrere Suchbegriffe in Anführungszeichen, um die "
-"unscharfe Suche zu deaktivieren"
+"Text für die Suche in allen Ihren Projekten, setzen Sie einen oder mehrere "
+"Suchbegriffe in Anführungszeichen, um die unscharfe Suche zu deaktivieren"
+
+#: apps/core/forms.py
+msgid "Word by word"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Regular expression"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Text to replace"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Text to find"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"You cannot find and replace text across multiple projects at once, please "
+"pick a single project before submitting your request."
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Word by word"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Regular expression"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Text to replace"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Text to find"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"You cannot find and replace text across multiple projects at once, please "
+"pick a single project before submitting your request."
+msgstr ""
 
 #: apps/core/forms.py escriptorium/templates/core/models_list/rights/main.html
 msgid "Type"
@@ -154,28 +347,6 @@ msgid "eScriptorium is not compatible with bounding box models."
 msgstr "eScriptorium ist nicht mit Bounding-Box-Modellen kompatibel."
 
 #: apps/core/forms.py
-msgid ""
-"Increase it for low contrast documents, if the letters are not visible "
-"enough."
-msgstr ""
-"Erhöhen Sie den Wert bei kontrastarmen Dokumenten, wenn die Buchstaben nicht "
-"ausreichend sichtbar sind."
-
-#: apps/core/forms.py
-msgid "Uploaded image with more than one selected image."
-msgstr "Hochgeladenes Bild mit mehr als einem ausgewählten Bild."
-
-#: apps/core/forms.py
-msgid "Uploaded image should be black and white."
-msgstr "Hochgeladenes Bild sollte schwarz-weiß sein."
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid "Uploaded image should be the same size as original image {size}."
-msgstr ""
-"Hochgeladenes Bild sollte dieselbe Größe wie das Original-Bild haben {size}."
-
-#: apps/core/forms.py
 msgid "Model"
 msgstr "Modell"
 
@@ -190,128 +361,6 @@ msgstr ""
 #: apps/core/forms.py
 msgid "-- New --"
 msgstr "-- Neu --"
-
-#: apps/core/forms.py
-msgid "The transcription on which to perform alignment."
-msgstr "Die Transkription, anhand derer der Abgleich durchgeführt werden soll."
-
-#: apps/core/forms.py
-msgid "The reference text for alignment; must be a .txt file."
-msgstr "Der Referenztext für den Abgleich; eine .txt Datei wird erwartet."
-
-#: apps/core/forms.py
-msgid "Reuse a previously-uploaded reference text."
-msgstr "Verwenden Sie einen zuvor hochgeladenen Referenztext wieder."
-
-#: apps/core/forms.py
-msgid "N-gram"
-msgstr "N-Gramm"
-
-#: apps/core/forms.py
-msgid ""
-"Length (2–25) of token sequences to compare; 25 should work well for at "
-"least moderately clean OCR. For very poor OCR, lower to 3 or 4."
-msgstr ""
-"Länge (2-25) der zu vergleichenden Zeichensequenz; 25 sollte zumindest mit "
-"einigermaßen sauberer OCR gut funktionieren. Bei sehr schlechter OCR auf 3 "
-"oder 4 verringern."
-
-#: apps/core/forms.py
-msgid "Max offset"
-msgstr "Maximaler Offset"
-
-#: apps/core/forms.py
-msgid ""
-"Enables max-offset and disables beam search. Maximum number of characters "
-"(20–80) difference between the aligned witness text and the original "
-"transcription."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Beam size"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Enables beam search; if this and max offset are left unset, beam search will "
-"be on and beam size set to 20. Higher beam size (1-100) will result in "
-"slower computation but more accurate results."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Gap"
-msgstr "Lücke"
-
-#: apps/core/forms.py
-msgid ""
-"The distance between matching unique n-grams; 600 should work well for clean "
-"OCR or texts where passages align to different portions of the witness text. "
-"To force end-to-end alignment of two documents, increase to 1,000,000."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Merge aligned text with existing transcription"
-msgstr "Mische den abgeglichenen Text mit der vorhandenen Transkription"
-
-#: apps/core/forms.py
-msgid ""
-"If checked, the aligner will reuse the text of the original transcription "
-"when alignment could not be performed; if unchecked, those lines will be "
-"blank."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Use full transcribed document"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"If checked, the aligner will use all transcribed pages of the document to "
-"find matches. If unchecked, it will compare each page to the text separately."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Line length match threshold"
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Minimum proportion (0.0–1.0) of aligned line length to original "
-"transcription, below which matches are ignored. At 0.0, all matches are "
-"accepted."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Region types to include in the alignment."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Layer name"
-msgstr "Name der Ebene"
-
-#: apps/core/forms.py
-msgid ""
-"Name for the new transcription layer produced by this alignment. If you "
-"reuse an existing layer name, the layer will be overwritten; use caution."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You must supply a textual witness (reference text)."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You may only supply one witness text (file upload or existing text)."
-msgstr ""
-
-#: apps/core/forms.py
-msgid ""
-"Alignment layer name cannot be the same as the transcription you are trying "
-"to align."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "Max offset and beam size cannot both be non-zero."
-msgstr ""
 
 #: apps/core/forms.py
 msgid "The model is already training."
@@ -339,6 +388,7 @@ msgstr "Leere Ground Truth Daten."
 #: apps/core/models.py
 msgid "Comma separated list of possible value, leave it empty for free input."
 msgstr ""
+"Liste möglicher Werte (mit Komma getrennt), leer lassen für freie Eingabe."
 
 #: apps/core/models.py
 msgid "Rectangle"
@@ -367,6 +417,13 @@ msgstr "Kursiv"
 #: apps/core/models.py
 msgid "Top to bottom"
 msgstr "Von oben nach unten"
+
+#: apps/core/models.py
+msgid ""
+"An optional URL pointing to an external document that explains content "
+"editing and authorship guidelines for this project, in order to guide a team "
+"or group towards consistent practices for manual segmentation/transcription."
+msgstr ""
 
 #: apps/core/models.py
 msgid "Share with users"
@@ -435,11 +492,6 @@ msgstr ""
 #: apps/core/models.py
 msgid "Couldn't find the alignment task."
 msgstr "Konnte die Abgleichsaufgabe nicht finden."
-
-#: apps/core/models.py
-msgid "Binarized image needs to be the same size as original image."
-msgstr ""
-"Das binarisierte Bild muss die gleiche Größe wie das Originalbild haben."
 
 #: apps/core/models.py apps/users/models.py
 msgid "Created"
@@ -510,14 +562,6 @@ msgid "Couldn't find the training task."
 msgstr "Konnte die Trainings-Aufgabe nicht finden."
 
 #: apps/core/tasks.py
-msgid "Something went wrong during the binarization!"
-msgstr "Bei der Binarisierung ist etwas schiefgelaufen!"
-
-#: apps/core/tasks.py
-msgid "Binarization done!"
-msgstr "Binarisierung abgeschlossen!"
-
-#: apps/core/tasks.py
 msgid "Training didn't get better results than base model!"
 msgstr ""
 "Das Training hat keine besseren Ergebnisse als das Basis-Modell erzielt!"
@@ -562,9 +606,29 @@ msgstr "Etwas ist während des Abgleichs schiefgelaufen!"
 msgid "Alignment done!"
 msgstr "Abgleich abgeschlossen!"
 
+#: apps/core/tasks.py
+msgid "Your replacements are being applied..."
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "All replacements failed"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Replacements applied with some errors"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Replacements applied!"
+msgstr ""
+
 #: apps/core/views.py
 msgid "Project created successfully!"
 msgstr "Projekt erfolgreich angelegt!"
+
+#: apps/core/views.py
+msgid "Project updated successfully!"
+msgstr "Projekt erfolgreich aktualisiert!"
 
 #: apps/core/views.py
 msgid "Document created successfully!"
@@ -645,6 +709,14 @@ msgstr ""
 "fehlgeschlagen"
 
 #: apps/imports/forms.py
+msgid ""
+"You're not allowed to import files from this domain, please contact your "
+"instance administrator."
+msgstr ""
+"Sie dürfen keine Dateien von dieser Domain importieren, bitte wenden Sie "
+"sich an den Administrator Ihrer Installation."
+
+#: apps/imports/forms.py
 #, python-brace-format
 msgid ""
 "The name of the target transcription. Will default to '{format} Import'."
@@ -689,21 +761,8 @@ msgid "A single ALTO or PAGE XML file."
 msgstr "Eine einzelne ALTO oder PAGE XML Datei."
 
 #: apps/imports/forms.py
-msgid ""
-"You're not allowed to import files from this domain, please contact your "
-"instance administrator."
-msgstr ""
-"Sie dürfen keine Dateien von dieser Domain importieren, bitte wenden Sie "
-"sich an den Administrator Ihrer Installation."
-
-#: apps/imports/forms.py
 msgid "Choose one type of import."
 msgstr "Wählen Sie einen Import-Typ."
-
-#: apps/imports/forms.py
-#, python-format
-msgid "Import in %(document_name)s"
-msgstr "Importieren in %(document_name)s"
 
 #: apps/imports/forms.py
 msgid "Include images"
@@ -717,8 +776,14 @@ msgstr ""
 "Exports benötigt wird."
 
 #: apps/imports/forms.py
-msgid "Select at least one image to export."
-msgstr "Wählen Sie mindestens ein Bild für den Export aus."
+msgid "Include character bounding boxes."
+msgstr ""
+
+#: apps/imports/forms.py
+msgid ""
+"This data is only present for transcriptions coming from automatic "
+"recognition and is invalidated by manual edition."
+msgstr ""
 
 #: apps/imports/forms.py
 #, python-format
@@ -732,14 +797,6 @@ msgstr "Datei, die eine Dokumenten-Ontologie im JSON-Format enthält"
 #: apps/imports/parsers.py
 msgid "Invalid PDF file."
 msgstr "Ungültige PDF Datei."
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {n_pages - page_nb} pages were left to import "
-"(over {n_pages - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {n_pages - page_nb} Seiten wurden zum "
-"Importieren überlassen (over {n_pages - start_at})"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -757,14 +814,6 @@ msgstr "Datei scheint ein ungültiges zip-Format zu sein."
 #: apps/imports/parsers.py
 msgid "Zip file appears to be corrupted."
 msgstr "Zip-Datei scheint korrupt zu sein."
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - index} files were left to import (over "
-"{total - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {total - index} Dateien wurden zum "
-"Importieren übrig gelassen (over {total - start_at})"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -838,14 +887,6 @@ msgstr "Ungültiges Manifest konnte nicht dekodiert werden ({error})"
 #: apps/imports/parsers.py
 msgid "Empty or invalid manifest, no images found."
 msgstr "Leeres oder ungültiges Manifest, keine Bilder gefunden."
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - i} canvases were left to import (over "
-"{total - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {total - i} Bilder wurden zum Import "
-"übrig gelassen (over {total - start_at})"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -940,6 +981,13 @@ msgstr "GPU-Minuten"
 #: apps/users/models.py
 msgid "email address"
 msgstr "E-Mail-Adresse"
+
+#: apps/users/models.py
+msgid ""
+"Use the legacy version of the user interface. If unchecked, features that "
+"have not yet been ported to the new interface may become unavailable. "
+"Likewise, if checked, newer features may become unavailable."
+msgstr ""
 
 #: apps/users/models.py
 msgid "Error"
@@ -1044,12 +1092,20 @@ msgid "Search in all your projects"
 msgstr "Suche in allen Ihren Projekten"
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/core/search/search.html
+msgid "Search"
+msgstr "Suchen"
+
+#: escriptorium/templates/base.html
+msgid "Find & Replace"
+msgstr ""
+
+#: escriptorium/templates/base.html
 #: escriptorium/templates/core/project_list.html
 msgid "My Projects"
 msgstr "Meine Projekte"
 
 #: escriptorium/templates/base.html
-#: escriptorium/templates/core/models_list/main.html
 msgid "My Models"
 msgstr "Meine Modelle"
 
@@ -1076,6 +1132,7 @@ msgid "Tasks monitoring"
 msgstr "Aufgabenüberwachung"
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Leaderboard"
 msgstr "Spitzenreiter"
 
@@ -1084,6 +1141,7 @@ msgid "Site administration"
 msgstr "Website-Administration"
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/users/group_detail_invite.html
 msgid "Invite"
 msgstr "Einladen"
 
@@ -1094,6 +1152,13 @@ msgstr "Abmelden"
 #: escriptorium/templates/base.html
 msgid "Login"
 msgstr "Anmelden"
+
+#: escriptorium/templates/core/document_dashboard.html
+#: escriptorium/templates/core/project_dashboard.html
+msgid ""
+"This page is not available in legacy mode. Visit your user settings to "
+"disable legacy mode."
+msgstr ""
 
 #: escriptorium/templates/core/document_form.html
 #: escriptorium/templates/core/document_nav.html
@@ -1210,14 +1275,6 @@ msgid "Cancel training"
 msgstr "Training abbrechen"
 
 #: escriptorium/templates/core/document_images.html
-msgid "Binarize selected images."
-msgstr "Binarisieren ausgewählter Bilder."
-
-#: escriptorium/templates/core/document_images.html
-msgid "Binarize"
-msgstr "Binarisieren"
-
-#: escriptorium/templates/core/document_images.html
 msgid "Segment selected images."
 msgstr "Segmentieren ausgewählte Bilder."
 
@@ -1251,6 +1308,7 @@ msgstr "Aufgaben abbrechen"
 
 #: escriptorium/templates/core/document_images.html
 #: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/project_nav.html
 #: escriptorium/templates/core/search/base.html
 msgid "Edit"
 msgstr "Bearbeiten"
@@ -1359,6 +1417,7 @@ msgid "Images"
 msgstr "Bilder"
 
 #: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/models_list/main.html
 msgid "Models"
 msgstr "Modelle"
 
@@ -1396,6 +1455,8 @@ msgstr ""
 #: escriptorium/templates/core/document_ontology.html
 msgid "It is not recommended to mix semantic, stylistic and layout types."
 msgstr ""
+"Es wird nicht empfohlen, semantische, stilistische und Layouttypen zu "
+"mischen."
 
 #: escriptorium/templates/core/document_ontology.html
 msgid ""
@@ -1415,12 +1476,17 @@ msgid ""
 "<b>Components needs to be saved first before adding them to Annotation "
 "definitions.</b>"
 msgstr ""
+"<b>Komponenten müssen zuerst gespeichert werden, bevor sie den "
+"Annotationsdefinitionen hinzugefügt werden.</b>"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid ""
 "Annotation types allow to regroup the corresponding buttons in the editing "
 "interface (and may be used as a hint for import/export)."
 msgstr ""
+"Annotationstypen gestatten es, die entsprechenden Bedienelemente im "
+"Bearbeitungsinterface umzugruppieren (und können als Hinweis beim Import/"
+"Export verwendet werden)."
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Region types"
@@ -1448,15 +1514,19 @@ msgstr "Füge eine Teileart hinzu"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Annotations components"
-msgstr ""
+msgstr "Annotationskomponenten"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Image Annotations"
-msgstr ""
+msgstr "Bildannotationen"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Text Annotations"
-msgstr ""
+msgstr "Textannotationen"
+
+#: escriptorium/templates/core/documents_tasks_list.html
+msgid "Task Monitoring"
+msgstr "Aufgabenüberwachung"
 
 #: escriptorium/templates/core/home.html
 msgid "Homepage"
@@ -1469,6 +1539,10 @@ msgid ""
 msgstr ""
 "Erzeugen von Text für Drucke und handgeschriebene Dokumente mit Hilfe "
 "maschineller Lerntechniken."
+
+#: escriptorium/templates/core/home.html
+msgid "Sign in"
+msgstr "Anmelden"
 
 #: escriptorium/templates/core/home.html
 msgid "Automatic<br>Transcription"
@@ -1676,6 +1750,12 @@ msgstr "Hochladen"
 msgid "Import an ontology in this document"
 msgstr "Importiere eine Ontologie in dieses Dokument"
 
+#: escriptorium/templates/core/project_dashboard.html
+msgid ""
+"This page is not available in legacy mode. Visit your user settings to "
+"disable legacy mode."
+msgstr ""
+
 #: escriptorium/templates/core/project_form.html
 msgid "Update a Project"
 msgstr "Aktualisiere ein Projekt"
@@ -1729,6 +1809,10 @@ msgstr "Ergebnisse"
 #: escriptorium/templates/core/search/base.html
 msgid "Content"
 msgstr "Inhalt"
+
+#: escriptorium/templates/core/search/base.html
+msgid "Replacement preview"
+msgstr "Vorschau für Ersetzung"
 
 #: escriptorium/templates/core/search/base.html
 msgid "Image preview"
@@ -1804,6 +1888,10 @@ msgid "Find"
 msgstr ""
 
 #: escriptorium/templates/core/search/find_and_replace.html
+msgid "Replace all"
+msgstr "Alle ersetzen"
+
+#: escriptorium/templates/core/search/find_and_replace.html
 msgid "Filter results by this part"
 msgstr "Ergebnisse nach diesem Teil filtern"
 
@@ -1818,10 +1906,6 @@ msgstr "Suche Text in Projekten"
 #: escriptorium/templates/core/search/search.html
 msgid "Search feature is deactivated on this instance."
 msgstr "Suchfunktion ist in dieser Instanz abgeschaltet."
-
-#: escriptorium/templates/core/search/search.html
-msgid "Search"
-msgstr "Suchen"
 
 #: escriptorium/templates/core/search/search.html
 msgid ""
@@ -1880,30 +1964,6 @@ msgstr ""
 #: escriptorium/templates/core/wizards/align.html
 msgid "Settings"
 msgstr "Einstellungen"
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid ""
-"Binarization is NOT a mandatory step any more, and might even decrease "
-"quality."
-msgstr ""
-"Die Binarisierung ist NICHT mehr zwingend erforderlich und kann sogar die "
-"Qualität beeinträchtigen."
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Manually"
-msgstr "Manuell"
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Or automatically"
-msgstr "Oder automatisch"
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Contrast"
-msgstr "Kontrast"
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Upload or Binarize"
-msgstr "Hochladen oder Binarisieren"
 
 #: escriptorium/templates/core/wizards/import.html
 #, python-format
@@ -2233,6 +2293,9 @@ msgid ""
 "          Show %(page)s\n"
 "          "
 msgstr ""
+"\n"
+"          Zeige %(page)s\n"
+"          "
 
 #: escriptorium/templates/includes/pagination.html
 msgid "First page"
@@ -2299,9 +2362,8 @@ msgid "Your password has successfully been changed."
 msgstr "Ihr Passwort wurde erfolgreich geändert."
 
 #: escriptorium/templates/registration/password_change_form.html
-#: escriptorium/templates/registration/password_reset_form.html
-msgid "Change your password"
-msgstr "Ändern Sie Ihr Passwort"
+msgid "Change Password"
+msgstr "Passwort ändern"
 
 #: escriptorium/templates/registration/password_change_form.html
 msgid ""
@@ -2401,6 +2463,10 @@ msgstr ""
 "Falls Sie keine Mail erhalten, stellen Sie sicher, dass Sie die Adresse "
 "eingegeben haben, mit der Sie sich registriert haben. Prüfen Sie auch Ihren "
 "Spam-Ordner."
+
+#: escriptorium/templates/registration/password_reset_form.html
+msgid "Change your password"
+msgstr "Ändern Sie Ihr Passwort"
 
 #: escriptorium/templates/registration/password_reset_form.html
 msgid ""
@@ -2659,6 +2725,10 @@ msgid "Ended at:"
 msgstr "Beendet um:"
 
 #: escriptorium/templates/reporting/taskreport_list.html
+msgid "Task Usage"
+msgstr "Verbrauch der Aufgaben"
+
+#: escriptorium/templates/reporting/taskreport_list.html
 msgid "Calculated from your images and models"
 msgstr "Berechnet aus Ihren Bildern und Modellen"
 
@@ -2811,6 +2881,10 @@ msgid "Recipient's information"
 msgstr "Angaben zum Empfänger"
 
 #: escriptorium/templates/users/profile.html
+msgid "Profile Settings"
+msgstr "Profileinstellungen"
+
+#: escriptorium/templates/users/profile.html
 msgid "Information"
 msgstr "Informationen"
 
@@ -2891,21 +2965,37 @@ msgid "You are not part of any team yet."
 msgstr "Sie sind noch in keinem Team."
 
 #: escriptorium/templates/users/profile_invitations.html
+msgid "Recipient"
+msgstr "Empfänger"
+
+#: escriptorium/templates/users/profile_invitations.html
+msgid "Group"
+msgstr "Gruppe"
+
+#: escriptorium/templates/users/profile_invitations.html
+msgid "Status"
+msgstr "Status"
+
+#: escriptorium/templates/users/profile_invitations.html
 msgid "You didn't send any invitations yet."
 msgstr "Sie haben noch keine Einladungen verschickt."
 
-#: homepage_example/additional_footer.html
+#: homepage/additional_footer.html homepage_example/additional_footer.html
 msgid "Powered by"
 msgstr "Mit Hilfe von"
 
-#~ msgid "Show onboarding"
-#~ msgstr "Onboarding anzeigen"
+#: homepage/additional_footer.html
+msgid "Imprint"
+msgstr "Impressum"
 
-#~ msgid "Errors"
-#~ msgstr "Fehler"
+#: homepage/additional_footer.html
+msgid "Privacy Policy"
+msgstr "Datenschutzerklärung"
 
-#~ msgid "Number of errors/Total number of characters"
-#~ msgstr "Anzahl der Fehler/Gesamtzahl der Zeichen"
+#: homepage/additional_heading.html
+msgid "eScriptorium (University of Mannheim)"
+msgstr ""
 
-#~ msgid "Reset onboarding"
-#~ msgstr "Starthilfe zurücksetzen"
+#: homepage/additional_heading.html
+msgid "This instance is only for testing (not public)"
+msgstr ""
