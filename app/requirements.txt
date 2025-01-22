@@ -17,7 +17,7 @@ djangorestframework~=3.15.1
 drf-nested-routers~=0.91
 drf-spectacular
 drf-yasg
-easy-thumbnails~=2.8.1
+easy-thumbnails~=2.8
 kraken>=5.2.9,~=5.2
 oitei~=1.1.1
 opensearch-py
