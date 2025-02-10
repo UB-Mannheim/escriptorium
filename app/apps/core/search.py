@@ -1,3 +1,4 @@
+import logging
 import re
 from urllib.parse import unquote_plus
 
@@ -5,6 +6,8 @@ from django.conf import settings
 from django.contrib.postgres.search import SearchHeadline, SearchQuery
 from django.db.models import CharField, F, Func, Value
 from opensearchpy import OpenSearch as Search
+
+logger = logging.getLogger(__name__)
 
 EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
 WORD_BY_WORD_SEARCH_MODE = "word-by-word"
@@ -22,6 +25,8 @@ def search_content_es(current_page, page_size, user_id, terms, projects=None, do
         terms_fuzzy = re.split(EXTRACT_EXACT_TERMS_REGEXP, cleaned_terms)
     else:
         terms_fuzzy = [terms]
+
+    logger.info(f'search_content_es {user_id=}, {projects=}')
 
     body = {
         "from": (current_page - 1) * page_size,
