@@ -1,3 +1,4 @@
+import logging
 import re
 from urllib.parse import unquote_plus
 
@@ -7,6 +8,8 @@ if settings.USE_OPENSEARCH:
     from opensearchpy import OpenSearch as Elasticsearch
 else:
     from elasticsearch import Elasticsearch
+
+logger = logging.getLogger(__name__)
 
 EXTRACT_EXACT_TERMS_REGEXP = '"[^"]+"'
 
@@ -22,6 +25,8 @@ def search_content_es(current_page, page_size, user_id, terms, projects=None, do
         terms_fuzzy = re.split(EXTRACT_EXACT_TERMS_REGEXP, cleaned_terms)
     else:
         terms_fuzzy = [terms]
+
+    logger.info(f'search_content_es {user_id=}, {projects=}')
 
     body = {
         "from": (current_page - 1) * page_size,
