@@ -1,6 +1,6 @@
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const VueLoaderPlugin = require("vue-loader/lib/plugin");
+const { VueLoaderPlugin } = require('vue-loader');
 const CompressionPlugin = require("compression-webpack-plugin");
 
 module.exports = {
@@ -48,11 +48,5 @@ module.exports = {
                 use: [{ loader: "vue-loader", options: { prettify: false } }],
             },
         ],
-    },
-
-    resolve: {
-        alias: {
-            vue$: "vue/dist/vue",
-        },
     },
 };
