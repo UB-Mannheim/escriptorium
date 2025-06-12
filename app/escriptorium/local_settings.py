@@ -14,7 +14,7 @@ ADMINS = [
 # ADMINS = ['Administrator <stefan.weil@uni-mannheim.de>']
 
 # Settings for running from a subpath behind a proxy.
-FORCE_SCRIPT_NAME = '/escriptorium2'
+FORCE_SCRIPT_NAME = '/es-next'
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -37,7 +37,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2024-04-26'
+VERSION_DATE = 'next-20250612'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
@@ -51,7 +51,7 @@ DEBUG = True
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('SQL_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('SQL_DATABASE', 'escriptorium'),
+        'NAME': os.getenv('SQL_DATABASE', 'es_next'),
 
         # Needed for some configuration
         # 'USER': os.getenv('POSTGRES_USER', 'provideyourusernamehere'),
@@ -92,6 +92,30 @@ DEBUG_TOOLBAR_PANELS = [
 USE_CELERY = True
 # CELERY_TASK_ALWAYS_EAGER = True
 
+CELERY_TASK_QUEUES = (
+    Queue('next-default', routing_key='next-default'),
+    Queue('next-live', routing_key='next-live'),  # for everything that needs to be done on the spot to update the ui
+    Queue('next-low-priority', routing_key='next-low-priority'),
+    Queue('next-gpu', routing_key='next-gpu'),  # for everything that could use a GPU
+    Queue('next-jvm', routing_key='next-jvm'),  # for everything that needs a java virtual machine (excepts elasticsearch)
+)
+CELERY_TASK_DEFAULT_QUEUE = 'next-default'
+# When updating 'gpu' queue don't forget to add or remove the GPU quota check in the affected tasks
+CELERY_TASK_ROUTES = {
+    # 'core.tasks.*': {'queue': 'default'},
+    'core.tasks.recalculate_masks': {'queue': 'next-live'},
+    'core.tasks.generate_part_thumbnails': {'queue': 'next-low-priority'},
+    'core.tasks.train': {'queue': 'next-gpu'},
+    'core.tasks.segtrain': {'queue': 'next-gpu'},
+    'core.tasks.align': {'queue': 'next-jvm'},
+    # 'escriptorium.celery.debug_task': '',
+    'imports.tasks.*': {'queue': 'next-low-priority'},
+    'users.tasks.async_email': {'queue': 'next-low-priority'},
+}
+
+# Avoid TooManyFieldsSent exception when many records should be deleted.
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 200000
+
 # LOGGING['loggers']['kraken']['level'] = 'DEBUG'
 LOGGING['handlers']['console_info']['level'] = 'DEBUG'
 
@@ -102,18 +126,14 @@ EXPORT_OPENITI_MARKDOWN_ENABLED = True
 EXPORT_TEI_XML_ENABLED = True
 
 # --- SEARCH FEATURE ---
-USE_OPENSEARCH = True
+# Uncomment the following line to enable search (Elasticsearch, OpenSearch)
+DISABLE_ES_SEARCH = False
 
-# Uncomment the following line to enable Elasticsearch
-DISABLE_ELASTICSEARCH = False
+# Set this variable to point to your ES or OS instance (defaults to 'http://localhost:9200')
+ES_SEARCH_URL = 'http://localhost:9200/'
 
-# Set this variable to point to your ES instance (defaults to 'localhost:9200')
-ELASTICSEARCH_URL = 'http://localhost:9200/'
-
-# Set this variable to define the common ES index (defaults to 'es-transcriptions')
-# ELASTICSEARCH_COMMON_INDEX = <common_index_name>
-# if USE_OPENSEARCH:
-#    ELASTICSEARCH_COMMON_INDEX = 'transcriptions'
+# Set this variable to define the common search index (defaults to 'es-transcriptions')
+# ES_SEARCH_COMMON_INDEX = <common_index_name>
 
 # Uncomment the following line to enable text alignment with Passim
 TEXT_ALIGNMENT_ENABLED = True
