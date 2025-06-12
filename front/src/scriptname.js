@@ -4,4 +4,4 @@ function scriptName() {
 }
 
 //export const SCRIPT_NAME = scriptName();
-export const SCRIPT_NAME = '/escriptorium2';
+export const SCRIPT_NAME = '/es-next';
