@@ -1824,7 +1824,7 @@ class Line(CascadeUpdate, OrderedModel):
             (box[2], box[1]),
         ]
 
-    box = cached_property(get_box, set_box)
+    box = cached_property(get_box)
 
     def make_external_id(self):
         self.external_id = "eSc_line_%s" % str(uuid.uuid4())[:8]
