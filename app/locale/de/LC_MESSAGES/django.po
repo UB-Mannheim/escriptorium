@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-12 11:09+0200\n"
+"POT-Creation-Date: 2025-07-28 18:03+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -1063,6 +1063,10 @@ msgstr "Französisch"
 msgid "German"
 msgstr "Deutsch"
 
+#: escriptorium/settings.py
+msgid "Spanish"
+msgstr "Spanisch"
+
 #: escriptorium/templates/403.html
 msgid "You don't have permission to view or edit this document."
 msgstr ""
@@ -1899,8 +1903,8 @@ msgid ""
 "Couldn't connect to Elasticsearch/OpenSearch, please contact your instance "
 "administrator."
 msgstr ""
-"Verbindung zu Elasticsearch/OpenSearch nicht möglich, bitte wenden Sie sich an Ihren "
-"Administrator."
+"Verbindung zu Elasticsearch/OpenSearch nicht möglich, bitte wenden Sie sich "
+"an Ihren Administrator."
 
 #: escriptorium/templates/core/search/search.html
 #: escriptorium/templates/core/wizards/import.html

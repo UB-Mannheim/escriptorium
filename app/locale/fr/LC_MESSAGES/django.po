@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-12 11:09+0200\n"
+"POT-Creation-Date: 2025-07-28 18:03+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -1026,6 +1026,10 @@ msgstr ""
 #: escriptorium/settings.py
 msgid "German"
 msgstr ""
+
+#: escriptorium/settings.py
+msgid "Spanish"
+msgstr "Espagnol"
 
 #: escriptorium/templates/403.html
 msgid "You don't have permission to view or edit this document."

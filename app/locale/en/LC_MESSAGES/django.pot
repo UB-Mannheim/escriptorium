@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-28 13:41+0200\n"
+"POT-Creation-Date: 2025-07-28 18:03+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English <https://hosted.weblate.org/projects/escriptorium/>\n"
@@ -1009,6 +1009,10 @@ msgstr ""
 
 #: escriptorium/settings.py
 msgid "German"
+msgstr ""
+
+#: escriptorium/settings.py
+msgid "Spanish"
 msgstr ""
 
 #: escriptorium/templates/403.html
