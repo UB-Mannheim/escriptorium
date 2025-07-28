@@ -43,7 +43,10 @@ if [ "$HOSTNAME" = "ocr-01" ]; then
 
     cd $basedir/app
     celery --app escriptorium worker --concurrency 4 --queues next-default --loglevel DEBUG &
+    celery --app escriptorium worker --concurrency 1 --queues next-jvm --loglevel INFO --optimization fair &
     celery --app escriptorium worker --concurrency 2 --queues next-live --loglevel DEBUG --max-tasks-per-child=16 --optimization fair &
+    celery --app escriptorium worker --concurrency 1 --queues next-low-priority --loglevel INFO --optimization fair &
+    celery --app escriptorium worker --concurrency 1 --queues next-gpu --loglevel INFO --max-tasks-per-child=1 --optimization fair &
     python -Wa manage.py runserver --settings escriptorium.local_settings --verbosity 3 0.0.0.0:8081
 
   fi
