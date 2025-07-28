@@ -28,6 +28,7 @@ npm run production
 cd ../app
 # export DJANGO_SETTINGS_MODULE=escriptorium.local_settings
 python manage.py migrate --settings escriptorium.local_settings
+# Update localized texts.
 python manage.py makemessages --all --add-location file --settings escriptorium.local_settings
 python manage.py compilemessages --settings escriptorium.local_settings
 
