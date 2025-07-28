@@ -2,7 +2,7 @@
 
 source /home/stweil/src/gitlab/scripta/venv3.11/bin/activate
 export DJANGO_SETTINGS_MODULE=escriptorium.local_settings
-export ESC_LANGUAGES="de,en,fr"
+export ESC_LANGUAGES="de,en,es,fr"
 export LANG=C.UTF-8
 export OMP_NUM_THREADS=2
 
