@@ -1,5 +1,5 @@
 # Spanish translations for eScriptorium.
-# Copyright (C) 2022–2023
+# Copyright (C) 2022–2025
 # This file is distributed under the same license as the eScriptorium package.
 # Translation created automatically, 2025
 #
