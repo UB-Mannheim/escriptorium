@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-12 11:09+0200\n"
+"POT-Creation-Date: 2025-08-08 17:58+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -236,18 +236,6 @@ msgstr "Abgebrochen."
 #: apps/api/views.py
 msgid "'lines' is mandatory."
 msgstr ""
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid ""
-"You requested to search text in a {self.obj_name} you don't have access to."
-msgstr ""
-"Sie wollten Text in {self.obj_name} suchen, haben aber keinen Zugriff darauf."
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid "You requested to search text in a {self.obj_name} that doesn't exist."
-msgstr "Sie wollten Text in {self.obj_name} suchen, aber das existiert nicht."
 
 #: apps/core/forms.py
 msgid "All projects"
@@ -764,14 +752,6 @@ msgid "Invalid PDF file."
 msgstr "Ungültige PDF Datei."
 
 #: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {n_pages - page_nb} pages were left to import "
-"(over {n_pages - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {n_pages - page_nb} Seiten wurden zum "
-"Importieren überlassen (over {n_pages - start_at})"
-
-#: apps/imports/parsers.py
 #, python-brace-format
 msgid "Parse error in {filename}: {page}: {error}, skipping it."
 msgstr "Verarbeitungsfehler in {filename}: {page}: {error}, überspringt ihn."
@@ -787,14 +767,6 @@ msgstr "Datei scheint ein ungültiges zip-Format zu sein."
 #: apps/imports/parsers.py
 msgid "Zip file appears to be corrupted."
 msgstr "Zip-Datei scheint korrupt zu sein."
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - index} files were left to import (over "
-"{total - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {total - index} Dateien wurden zum "
-"Importieren übrig gelassen (over {total - start_at})"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -874,14 +846,6 @@ msgid "Empty or invalid manifest, no images found."
 msgstr "Leeres oder ungültiges Manifest, keine Bilder gefunden."
 
 #: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - i} canvases were left to import (over "
-"{total - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {total - i} Bilder wurden zum Import "
-"übrig gelassen (over {total - start_at})"
-
-#: apps/imports/parsers.py
 #, python-brace-format
 msgid "Error while fetching {filename}: {error}"
 msgstr "Fehler beim Abrufen von {filename}: {error}"
@@ -948,6 +912,55 @@ msgid_plural "%d invitations were resent."
 msgstr[0] "%d Einladung wurde noch einmal verschickt."
 msgstr[1] "%d Einladungen wurden noch einmal verschickt."
 
+#: apps/users/admin.py
+msgid "You do not have permission to send invitations."
+msgstr ""
+"Sie haben keine Berechtigung, Einladungen zu versenden."
+
+#: apps/users/admin.py
+#, python-brace-format
+msgid "Successfully sent {count} invitations."
+msgstr ""
+
+#: apps/users/admin.py
+#, python-brace-format
+msgid " The following emails were invalid and were skipped: {emails}"
+msgstr ""
+
+#: apps/users/admin.py
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Bulk Invite"
+msgstr "Masseneinladung"
+
+#: apps/users/forms.py
+msgid "CSV file with emails"
+msgstr "CSV-Datei mit E-Mails"
+
+#: apps/users/forms.py
+msgid "Upload a CSV file with one email per line."
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Emails"
+msgstr "E-Mails"
+
+#: apps/users/forms.py
+msgid "Enter one email per line."
+msgstr ""
+
+#: apps/users/forms.py apps/users/models.py
+#: escriptorium/templates/users/invitation_form.html
+msgid "Team"
+msgstr "Team"
+
+#: apps/users/forms.py
+msgid "Optional: set an expiry date for these accounts"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Please provide either a CSV file or enter emails directly."
+msgstr ""
+
 #: apps/users/forms.py
 msgid "Email or username."
 msgstr "E-Mail oder Benutzerkennung."
@@ -999,10 +1012,6 @@ msgid "Accepted"
 msgstr "Akzeptiert"
 
 #: apps/users/models.py
-msgid "Team"
-msgstr "Team"
-
-#: apps/users/models.py
 #, python-brace-format
 msgid "{username} accepted your invitation!"
 msgstr "{username} hat Ihre Einladung angenommen!"
@@ -1012,8 +1021,27 @@ msgid "Invitation sent successfully!"
 msgstr "Einladung erfolgreich verschickt!"
 
 #: apps/users/views.py
+msgid "You do not have permission to invite users."
+msgstr ""
+"Sie haben keine Berechtigung, Nutzende einzuladen."
+
+#: apps/users/views.py
+#, python-format
+msgid "Successfully sent %(count)d invitations."
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Skipped invalid: %(emails)s"
+msgstr ""
+
+#: apps/users/views.py
 msgid "Successfully registered, you can now log in!"
 msgstr "Registrierung erfolgreich, Sie können sich jetzt einloggen!"
+
+#: apps/users/views.py
+msgid "Invitation sent to %(email)s."
+msgstr "Einladung verschickt an %{email}s."
 
 #: apps/users/views.py
 #, python-brace-format
@@ -1071,6 +1099,20 @@ msgstr ""
 #: escriptorium/templates/404.html
 msgid "Page not found."
 msgstr "Seite nicht gefunden."
+
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "OR"
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "Send Invitations"
+msgstr "Versende Einladungen"
+
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Add invitation"
+msgstr "Einladung hinzufügen"
 
 #: escriptorium/templates/base.html
 msgid "About"
@@ -1899,8 +1941,8 @@ msgid ""
 "Couldn't connect to Elasticsearch/OpenSearch, please contact your instance "
 "administrator."
 msgstr ""
-"Verbindung zu Elasticsearch/OpenSearch nicht möglich, bitte wenden Sie sich an Ihren "
-"Administrator."
+"Verbindung zu Elasticsearch/OpenSearch nicht möglich, bitte wenden Sie sich "
+"an Ihren Administrator."
 
 #: escriptorium/templates/core/search/search.html
 #: escriptorium/templates/core/wizards/import.html
@@ -2768,6 +2810,16 @@ msgstr "GPU-Kosten"
 msgid "You don't have any task report yet."
 msgstr "Sie haben noch keinen Aufgabenbericht."
 
+#: escriptorium/templates/users/account_expired.html
+msgid "Account Expired"
+msgstr ""
+
+#: escriptorium/templates/users/account_expired.html
+msgid ""
+"Your account has expired. Please reach out to the person who invited you for "
+"assistance."
+msgstr ""
+
 #: escriptorium/templates/users/contactus.html
 #: escriptorium/templates/users/invitation_form.html
 msgid "Send"
@@ -2864,8 +2916,36 @@ msgid "Signup"
 msgstr "Anmelden"
 
 #: escriptorium/templates/users/invitation_form.html
+msgid "Invite Users"
+msgstr "Nutzende einladen"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Invite mode"
+msgstr "Einladungsmodus"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Single"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Bulk"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
 msgid "Recipient's information"
 msgstr "Angaben zum Empfänger"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Upload CSV file"
+msgstr "CSV-Datei hochladen"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Paste emails (one per line)"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Expiry date (optional)"
+msgstr ""
 
 #: escriptorium/templates/users/profile.html
 msgid "Profile Settings"
@@ -2986,3 +3066,38 @@ msgstr ""
 #: homepage/additional_heading.html
 msgid "This instance is only for testing (not public)"
 msgstr ""
+
+#, python-brace-format
+#~ msgid ""
+#~ "You requested to search text in a {self.obj_name} you don't have access "
+#~ "to."
+#~ msgstr ""
+#~ "Sie wollten Text in {self.obj_name} suchen, haben aber keinen Zugriff "
+#~ "darauf."
+
+#, python-brace-format
+#~ msgid ""
+#~ "You requested to search text in a {self.obj_name} that doesn't exist."
+#~ msgstr ""
+#~ "Sie wollten Text in {self.obj_name} suchen, aber das existiert nicht."
+
+#~ msgid ""
+#~ "You ran out of disk storage. {n_pages - page_nb} pages were left to "
+#~ "import (over {n_pages - start_at})"
+#~ msgstr ""
+#~ "Sie haben keinen Speicherplatz mehr. {n_pages - page_nb} Seiten wurden "
+#~ "zum Importieren überlassen (over {n_pages - start_at})"
+
+#~ msgid ""
+#~ "You ran out of disk storage. {total - index} files were left to import "
+#~ "(over {total - start_at})"
+#~ msgstr ""
+#~ "Sie haben keinen Speicherplatz mehr. {total - index} Dateien wurden zum "
+#~ "Importieren übrig gelassen (over {total - start_at})"
+
+#~ msgid ""
+#~ "You ran out of disk storage. {total - i} canvases were left to import "
+#~ "(over {total - start_at})"
+#~ msgstr ""
+#~ "Sie haben keinen Speicherplatz mehr. {total - i} Bilder wurden zum Import "
+#~ "übrig gelassen (over {total - start_at})"
