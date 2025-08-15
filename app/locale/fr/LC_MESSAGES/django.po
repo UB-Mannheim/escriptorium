@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-12 11:09+0200\n"
+"POT-Creation-Date: 2025-08-08 17:58+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -230,17 +230,6 @@ msgstr "Supprimé."
 
 #: apps/api/views.py
 msgid "'lines' is mandatory."
-msgstr ""
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid ""
-"You requested to search text in a {self.obj_name} you don't have access to."
-msgstr ""
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid "You requested to search text in a {self.obj_name} that doesn't exist."
 msgstr ""
 
 #: apps/core/forms.py
@@ -741,12 +730,6 @@ msgid "Invalid PDF file."
 msgstr ""
 
 #: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {n_pages - page_nb} pages were left to import "
-"(over {n_pages - start_at})"
-msgstr ""
-
-#: apps/imports/parsers.py
 #, python-brace-format
 msgid "Parse error in {filename}: {page}: {error}, skipping it."
 msgstr ""
@@ -761,12 +744,6 @@ msgstr ""
 
 #: apps/imports/parsers.py
 msgid "Zip file appears to be corrupted."
-msgstr ""
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - index} files were left to import (over "
-"{total - start_at})"
 msgstr ""
 
 #: apps/imports/parsers.py
@@ -842,12 +819,6 @@ msgid "Empty or invalid manifest, no images found."
 msgstr ""
 
 #: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - i} canvases were left to import (over "
-"{total - start_at})"
-msgstr ""
-
-#: apps/imports/parsers.py
 #, python-brace-format
 msgid "Error while fetching {filename}: {error}"
 msgstr ""
@@ -914,6 +885,54 @@ msgid_plural "%d invitations were resent."
 msgstr[0] ""
 msgstr[1] ""
 
+#: apps/users/admin.py
+msgid "You do not have permission to send invitations."
+msgstr ""
+
+#: apps/users/admin.py
+#, python-brace-format
+msgid "Successfully sent {count} invitations."
+msgstr ""
+
+#: apps/users/admin.py
+#, python-brace-format
+msgid " The following emails were invalid and were skipped: {emails}"
+msgstr ""
+
+#: apps/users/admin.py
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Bulk Invite"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "CSV file with emails"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Upload a CSV file with one email per line."
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Emails"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Enter one email per line."
+msgstr ""
+
+#: apps/users/forms.py apps/users/models.py
+#: escriptorium/templates/users/invitation_form.html
+msgid "Team"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Optional: set an expiry date for these accounts"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Please provide either a CSV file or enter emails directly."
+msgstr ""
+
 #: apps/users/forms.py
 msgid "Email or username."
 msgstr ""
@@ -963,10 +982,6 @@ msgid "Accepted"
 msgstr ""
 
 #: apps/users/models.py
-msgid "Team"
-msgstr ""
-
-#: apps/users/models.py
 #, python-brace-format
 msgid "{username} accepted your invitation!"
 msgstr ""
@@ -976,7 +991,26 @@ msgid "Invitation sent successfully!"
 msgstr ""
 
 #: apps/users/views.py
+msgid "You do not have permission to invite users."
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Successfully sent %(count)d invitations."
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Skipped invalid: %(emails)s"
+msgstr ""
+
+#: apps/users/views.py
 msgid "Successfully registered, you can now log in!"
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Invitation sent to %(email)s."
 msgstr ""
 
 #: apps/users/views.py
@@ -1033,6 +1067,20 @@ msgstr ""
 
 #: escriptorium/templates/404.html
 msgid "Page not found."
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "OR"
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "Send Invitations"
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Add invitation"
 msgstr ""
 
 #: escriptorium/templates/base.html
@@ -2563,6 +2611,16 @@ msgstr ""
 msgid "You don't have any task report yet."
 msgstr ""
 
+#: escriptorium/templates/users/account_expired.html
+msgid "Account Expired"
+msgstr ""
+
+#: escriptorium/templates/users/account_expired.html
+msgid ""
+"Your account has expired. Please reach out to the person who invited you for "
+"assistance."
+msgstr ""
+
 #: escriptorium/templates/users/contactus.html
 #: escriptorium/templates/users/invitation_form.html
 msgid "Send"
@@ -2652,7 +2710,35 @@ msgid "Signup"
 msgstr ""
 
 #: escriptorium/templates/users/invitation_form.html
+msgid "Invite Users"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Invite mode"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Single"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Bulk"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
 msgid "Recipient's information"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Upload CSV file"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Paste emails (one per line)"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Expiry date (optional)"
 msgstr ""
 
 #: escriptorium/templates/users/profile.html
