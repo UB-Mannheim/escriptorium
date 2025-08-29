@@ -33,7 +33,11 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django_prometheus.models import ExportModelOperationsMixin
 from easy_thumbnails.files import get_thumbnailer
+
+# isort: off
+import torch  # noqa: F401  # must be imported before kraken to avoid 'random_device could not be read'
 from kraken import blla, rpred
+# isort: on
 from kraken.containers import BaselineLine, Segmentation
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib import models as kraken_models
