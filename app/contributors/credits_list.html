@@ -1,0 +1,48 @@
+{% load i18n %}
+<style>
+  .masonry-credits {
+    column-count: 2;
+    column-gap: 1rem;
+  }
+  .masonry-credits .card {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 1rem;
+    break-inside: avoid;
+  }
+</style>
+<div class="masonry-credits">
+  <!-- Funding & Support -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-dark text-white">
+      <h4 class="mb-0">{% trans "Institutions & Funding" %}</h4>
+    </div>
+    <div class="card-body">
+      <p>{% trans "In addition to the support of AOROC and the EPHE, eScriptorium has benefitted from a significant number of institutions and funding sources, including the following:" %}</p>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">2018–21: Université PSL programme IRIS, Scripta‑PSL. {% trans "Funded salaries of two developers for XX years, as well as …" %}</li>
+        <li class="list-group-item">2018–21: LectAuRep EPHE, INRIA, Archives Nationales. {% trans "Funded …???" %}</li>
+        <li class="list-group-item">2019–2021: EU Horizon 2020, Grant No 871127, RESILIENCE. {% trans "Funded salaries of two developers for XX years, as well as …" %}</li>
+        <li class="list-group-item">2020–21: DIM STCN, EPHE & IRHT, ManuscriptologIA. {% trans "Funded the acquisition of HPC hardware and servers…" %}</li>
+        <li class="list-group-item">2020–21: DIM STCN. {% trans "Funded the development of the virtual keyboard with Teklia." %}</li>
+        <li class="list-group-item">2021–29: ANR-21-ESRE-0005, Biblissima+. {% trans "Funded salaries of two developers for XX years, as well as sustaining the HPC…" %}</li>
+        <li class="list-group-item">2022–: Schmidt DataX Fund, HTR4PGP (Princeton). {% trans "Funded advanced line-joining interface…" %}</li>
+        <li class="list-group-item">???–2025: Mellon Foundation, OpenITI AOCP. {% trans "Funded UI development…" %}</li>
+        <li class="list-group-item">???–???: University of Geneva, FONDUE. {% trans "Funded SLURM-based task execution…" %}</li>
+        <li class="list-group-item">2023–29: EU Horizon 2020, Grant No 101071829, MIDRASH. {% trans "Funded salaries of two developers for XX years…" %}</li>
+        <li class="list-group-item">2024–???: INRIA, BACK IN TIME.</li>
+        <li class="list-group-item">2025–: PSL Grand Programme, Les Fabriques de l’Antique (FAN).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Other Contributions -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-dark text-white">
+      <h4 class="mb-0">{% trans "Other Contributions" %}</h4>
+    </div>
+    <div class="card-body">
+      <p>{% trans "We are also very grateful for other types of contribution, such as open datasets (particularly those on HTR-United), open models, tickets reporting bugs and improvements, documentation, organising training sessions, producing plugins and other tools…" %}</p>
+    </div>
+  </div>
+</div>
