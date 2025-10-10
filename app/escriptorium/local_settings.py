@@ -98,6 +98,8 @@ USE_CELERY = True
 # LOGGING['loggers']['kraken']['level'] = 'DEBUG'
 
 CUSTOM_HOME = True
+CUSTOM_CONTRIBUTORS = True
+CUSTOM_HOME = True
 
 # Uncomment the two following variables to enable customized OpenITI export modes
 EXPORT_OPENITI_MARKDOWN_ENABLED = True

@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-24 20:46+0100\n"
+"POT-Creation-Date: 2025-10-10 13:41+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -549,15 +549,15 @@ msgid "Segmentation done!"
 msgstr ""
 
 #: apps/core/tasks.py
-msgid "Something went wrong during the training process!"
-msgstr ""
-
-#: apps/core/tasks.py
 msgid "Something went wrong during the transcription!"
 msgstr ""
 
 #: apps/core/tasks.py
 msgid "Transcription done!"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the training process!"
 msgstr ""
 
 #: apps/core/tasks.py
@@ -1014,6 +1014,79 @@ msgstr ""
 msgid "Message successfully sent."
 msgstr ""
 
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Institutions & Funding"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid ""
+"In addition to the support of AOROC and the EPHE, eScriptorium has "
+"benefitted from a significant number of institutions and funding sources, "
+"including the following:"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded salaries of two developers for XX years, as well as …"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded …???"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded the acquisition of HPC hardware and servers…"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded the development of the virtual keyboard with Teklia."
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid ""
+"Funded salaries of two developers for XX years, as well as sustaining the "
+"HPC…"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded advanced line-joining interface…"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded UI development…"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded SLURM-based task execution…"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded salaries of two developers for XX years…"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Other Contributions"
+msgstr ""
+
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid ""
+"We are also very grateful for other types of contribution, such as open "
+"datasets (particularly those on HTR-United), open models, tickets reporting "
+"bugs and improvements, documentation, organising training sessions, "
+"producing plugins and other tools…"
+msgstr ""
+
+#: contributors/service_hosting.html contributors_example/service_hosting.html
+msgid "Service hosted and maintained by"
+msgstr ""
+
+#: contributors/service_hosting.html
+msgid "Mannheim University Library"
+msgstr ""
+
+#: contributors_example/service_hosting.html
+msgid "Inria Paris"
+msgstr ""
+
 #: escriptorium/settings.py
 msgid "English"
 msgstr ""
@@ -1097,6 +1170,38 @@ msgstr ""
 #: escriptorium/templates/base.html
 msgid "Login"
 msgstr "Login"
+
+#: escriptorium/templates/core/contributors.html
+#: escriptorium/templates/core/home.html
+msgid "Contributors"
+msgstr ""
+
+#: escriptorium/templates/core/contributors.html
+msgid "The contributors list will be available here soon."
+msgstr ""
+
+#: escriptorium/templates/core/credits.html
+#: escriptorium/templates/core/home.html
+msgid "Credits"
+msgstr ""
+
+#: escriptorium/templates/core/credits.html
+msgid ""
+"eScriptorium and kraken are Free and Open-Source Software developed by a "
+"team in the laboratoire AOROC (CNRS PSL, UMR 8546) at the École Pratique des "
+"Hautes Études – Université PSL."
+msgstr ""
+
+#: escriptorium/templates/core/credits.html
+msgid "The credits list will be available here soon."
+msgstr ""
+
+#: escriptorium/templates/core/document_dashboard.html
+#: escriptorium/templates/core/project_dashboard.html
+msgid ""
+"This page is not available in legacy mode. Visit your user settings to "
+"disable legacy mode."
+msgstr ""
 
 #: escriptorium/templates/core/document_form.html
 #: escriptorium/templates/core/document_nav.html
@@ -1518,6 +1623,31 @@ msgstr ""
 "formats. Accédez aux données via l'API RESTful."
 
 #: escriptorium/templates/core/home.html
+msgid "Service originally developed by"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "École Pratique des Hautes Études (EPHE)"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "See"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "contributors history"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "or"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "credits"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
 msgid "Resources"
 msgstr "Ressources"
 
@@ -1532,6 +1662,10 @@ msgstr "eScriptorium code open source"
 #: escriptorium/templates/core/home.html
 msgid "eScriptorium Blog"
 msgstr "eScriptorium blog"
+
+#: escriptorium/templates/core/home.html
+msgid "Acknowledgements"
+msgstr ""
 
 #: escriptorium/templates/core/home.html
 msgid "Legal mentions"
@@ -1582,10 +1716,6 @@ msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "Stop sharing"
-msgstr ""
-
-#: escriptorium/templates/core/models_list/rights/main.html
-msgid "or"
 msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
@@ -2768,4 +2898,8 @@ msgstr "Discussions sur l'eScriptorium"
 
 #: homepage/additional_heading.html
 msgid "(on GitHub)"
+msgstr ""
+
+#: homepage/additional_heading.html
+msgid "Please use our public instance:"
 msgstr ""
