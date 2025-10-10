@@ -120,6 +120,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 200000
 LOGGING['handlers']['console_info']['level'] = 'DEBUG'
 
 CUSTOM_HOME = True
+CUSTOM_CONTRIBUTORS = True
+CUSTOM_HOME = True
 
 # Uncomment the two following variables to enable customized OpenITI export modes
 EXPORT_OPENITI_MARKDOWN_ENABLED = True
