@@ -80,7 +80,7 @@ build:
 
 .docker-build:
   stage: build
-  image: docker:19.03.1
+  image: docker:24.0.7
   rules:
     # skip when building gitlab pages
     - if: '$LANDING == null'
@@ -88,10 +88,11 @@ build:
     - when: never
 
   services:
-    - docker:dind
+    - docker:24.0.7-dind
   variables:
     DOCKER_DRIVER: overlay2
-    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_HOST: tcp://docker:2376/
+    DOCKER_TLS_CERTDIR: "/certs"
 
 docker-build-app:
   extends: .docker-build
