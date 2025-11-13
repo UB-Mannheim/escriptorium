@@ -4,7 +4,7 @@ stages:
   - deploy
 
 lint:
-  image: python:3.8
+  image: python:3.12
   stage: test
 
   rules:
