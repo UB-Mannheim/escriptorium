@@ -38,7 +38,8 @@ if [ "$HOSTNAME" = "ocr-01" ]; then
   else
     # https://ocr-bw.bib.uni-mannheim.de/es-next
 
-    source $basedir/venv3.11/bin/activate
+    source $basedir/venv3.12/bin/activate
+    #source $basedir/venv3.11/bin/activate
     export OMP_NUM_THREADS=1
 
     cd $basedir/app
