@@ -37,14 +37,11 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2023-08-21'
+VERSION_DATE = 'UBMA-2025-12-23'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
 ]
-
-# Workaround for buggy CPU cost calculation (factor is 1 / number of threads = 1 / 64).
-CPU_COST_FACTOR = 0.015625
 
 DEBUG = True
 
@@ -71,7 +68,7 @@ INTERNAL_IPS = ['127.0.0.1']
 EMAIL_FILE_PATH = '/tmp/django-emails'
 
 KRAKEN_TRAINING_DEVICE = 'cuda:0'
-#KRAKEN_TRAINING_DEVICE = 'cpu'
+# KRAKEN_TRAINING_DEVICE = 'cpu'
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda r: False,  # disables it
@@ -106,18 +103,14 @@ EXPORT_OPENITI_MARKDOWN_ENABLED = True
 EXPORT_TEI_XML_ENABLED = True
 
 # --- SEARCH FEATURE ---
-USE_OPENSEARCH = True
+# Uncomment the following line to enable search (Elasticsearch, OpenSearch)
+DISABLE_ES_SEARCH = False
 
-# Uncomment the following line to enable Elasticsearch
-DISABLE_ELASTICSEARCH = False
+# Set this variable to point to your ES or OS instance (defaults to 'http://localhost:9200')
+ES_SEARCH_URL = 'http://localhost:9200/'
 
-# Set this variable to point to your ES instance (defaults to 'localhost:9200')
-ELASTICSEARCH_URL = 'http://localhost:9200'
-
-# Set this variable to define the common ES index (defaults to 'es-transcriptions')
-# ELASTICSEARCH_COMMON_INDEX = <common_index_name>
-# if USE_OPENSEARCH:
-#    ELASTICSEARCH_COMMON_INDEX = 'transcriptions'
+# Set this variable to define the common search index (defaults to 'es-transcriptions')
+# ES_SEARCH_COMMON_INDEX = <common_index_name>
 
 # Uncomment the following line to enable text alignment with Passim
 TEXT_ALIGNMENT_ENABLED = True
