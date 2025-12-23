@@ -996,7 +996,7 @@ msgid ""
 "Use the legacy version of the user interface. If unchecked, features that "
 "have not yet been ported to the new interface may become unavailable. "
 "Likewise, if checked, newer features may become unavailable."
-msgstr ""
+msgstr "Verwenden Sie die Legacy-Version der Benutzeroberfläche. Wenn diese Option deaktiviert ist, sind Funktionen, die noch nicht auf die neue Benutzeroberfläche portiert wurden, möglicherweise nicht verfügbar. Wenn diese Option aktiviert ist, sind möglicherweise neuere Funktionen nicht verfügbar."
 
 #: apps/users/models.py
 msgid "Error"
