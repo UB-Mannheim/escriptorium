@@ -786,7 +786,7 @@ msgstr "inválido PDF archivo."
 #: apps/imports/parsers.py
 #, python-brace-format
 msgid "Parse error in {filename}: {page}: {error}, skipping it."
-msgstr "Parse error in {filename}: {página}: {error}, skipping it."
+msgstr "Parse error in {filename}: {page}: {error}, skipping it."
 
 #: apps/imports/parsers.py
 msgid "Zip Import"
@@ -816,14 +816,14 @@ msgstr "no match found for archivo {} with filename \"{}\"."
 #: apps/imports/parsers.py
 #, python-brace-format
 msgid "Block in '{filen}' line N°{line} was skipped because: {error}"
-msgstr "Block in '{filen}' línea N°{línea} was skipped because: {error}"
+msgstr "Block in '{filen}' línea N°{line} was skipped because: {error}"
 
 #: apps/imports/parsers.py
 #, python-brace-format
 msgid ""
 "Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
 msgstr ""
-"línea in '{filen}' línea N°{línea} (id: {lineid}) was skipped because: "
+"línea in '{filen}' línea N°{line} (id: {lineid}) was skipped because: "
 "{error}"
 
 #: apps/imports/parsers.py
@@ -865,7 +865,7 @@ msgstr ""
 #: apps/imports/parsers.py
 #, python-brace-format
 msgid "Invalid coordinates for {tag} in {filen} line {line}"
-msgstr "inválido coordinates for {tag} in {filen} línea {línea}"
+msgstr "inválido coordinates for {tag} in {filen} línea {line}"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -1046,7 +1046,7 @@ msgstr "Accepted"
 #: apps/users/models.py
 #, python-brace-format
 msgid "{username} accepted your invitation!"
-msgstr "{nombre de usuario} accepted your invitation!"
+msgstr "{username} accepted your invitation!"
 
 #: apps/users/views.py
 msgid "Invitation sent successfully!"
@@ -1083,17 +1083,17 @@ msgstr "You are now a member of equipo {team_name}!"
 #: apps/users/views.py
 #, python-brace-format
 msgid "User {user} successfully removed from the team {team_name}."
-msgstr "usuario {usuario} successfully removed from the equipo {team_name}."
+msgstr "usuario {user} successfully removed from the equipo {team_name}."
 
 #: apps/users/views.py
 #, python-brace-format
 msgid "You successfully left {team}."
-msgstr "You successfully left {equipo}."
+msgstr "You successfully left {team}."
 
 #: apps/users/views.py
 #, python-brace-format
 msgid "Successfully transferred ownership to {user}."
-msgstr "Successfully transferred ownership to {usuario}."
+msgstr "Successfully transferred ownership to {user}."
 
 #: apps/users/views.py
 msgid "Profile successfully saved."
@@ -1255,7 +1255,7 @@ msgstr "My Models"
 #: escriptorium/templates/base.html
 #, python-format
 msgid "Hello %(username)s"
-msgstr "Hello %(nombre de usuario)s"
+msgstr "Hello %(username)s"
 
 #: escriptorium/templates/base.html
 msgid "Change password"
@@ -1606,7 +1606,7 @@ msgstr "todos levels"
 #: escriptorium/templates/core/project_nav.html
 #, python-format
 msgid "Search in %(name)s"
-msgstr "buscar in %(nombre)s"
+msgstr "buscar in %(name)s"
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Document Ontology"
@@ -1979,18 +1979,18 @@ msgid ""
 msgstr ""
 "\n"
 "          Currently searching entered texto in the documento named "
-"<strong>%(nombre)s</strong>.\n"
+"<strong>%(name)s</strong>.\n"
 "        "
 
 #: escriptorium/templates/core/search/base.html
 #, python-format
 msgid "And on the transcription level <strong>%(name)s</strong>."
-msgstr "And on the transcripción level <strong>%(nombre)s</strong>."
+msgstr "And on the transcripción level <strong>%(name)s</strong>."
 
 #: escriptorium/templates/core/search/base.html
 #, python-format
 msgid "And in the part named <strong>%(name)s</strong>."
-msgstr "And in the part named <strong>%(nombre)s</strong>."
+msgstr "And in the part named <strong>%(name)s</strong>."
 
 #: escriptorium/templates/core/search/base.html
 msgid "Results"
@@ -2031,7 +2031,7 @@ msgstr "Next línea"
 #: escriptorium/templates/core/search/base.html
 #, python-format
 msgid "Line <strong>#%(line)s</strong> of"
-msgstr "línea <strong>#%(línea)s</strong> of"
+msgstr "línea <strong>#%(line)s</strong> of"
 
 #: escriptorium/templates/core/search/base.html
 msgid "in document"
@@ -2468,7 +2468,7 @@ msgid ""
 "          "
 msgstr ""
 "\n"
-"          Show %(página)s\n"
+"          Show %(page)s\n"
 "          "
 
 #: escriptorium/templates/includes/pagination.html
