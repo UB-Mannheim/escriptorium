@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-23 11:16+0100\n"
+"POT-Creation-Date: 2025-12-23 11:25+0100\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -930,26 +930,22 @@ msgid "Canceled"
 msgstr "Canceled"
 
 #: apps/users/admin.py
-#, fuzzy, python-format
-#| msgid "%d user disabled."
+#, python-format
 msgid "%d user disabled."
 msgid_plural "%d users disabled."
 msgstr[0] "%d usuario deshabilitado."
-msgstr[1] "%d usuario deshabilitado."
+msgstr[1] "%d usuarios deshabilitado."
 
 #: apps/users/admin.py
-#, fuzzy, python-format
-#| msgid "%d invitation was resent."
+#, python-format
 msgid "%d invitation was resent."
 msgid_plural "%d invitations were resent."
 msgstr[0] "%d invitation was resent."
-msgstr[1] "%d invitation was resent."
+msgstr[1] "%d invitations were resent."
 
 #: apps/users/admin.py
-#, fuzzy
-#| msgid "You don't have permission to view or edit this document."
 msgid "You do not have permission to send invitations."
-msgstr "You don't have permission to view or editar this documento."
+msgstr ""
 
 #: apps/users/admin.py
 #, python-brace-format
@@ -963,26 +959,20 @@ msgstr ""
 
 #: apps/users/admin.py
 #: escriptorium/templates/admin/users/invitation/change_list.html
-#, fuzzy
-#| msgid "Invite"
 msgid "Bulk Invite"
-msgstr "Invite"
+msgstr ""
 
 #: apps/users/forms.py
-#, fuzzy
-#| msgid "Share with teams"
 msgid "CSV file with emails"
-msgstr "Share with teams"
+msgstr ""
 
 #: apps/users/forms.py
 msgid "Upload a CSV file with one email per line."
 msgstr ""
 
 #: apps/users/forms.py
-#, fuzzy
-#| msgid "Details"
 msgid "Emails"
-msgstr "Details"
+msgstr ""
 
 #: apps/users/forms.py
 msgid "Enter one email per line."
@@ -1063,10 +1053,8 @@ msgid "Invitation sent successfully!"
 msgstr "Invitation sent successfully!"
 
 #: apps/users/views.py
-#, fuzzy
-#| msgid "You don't have permission to view or edit this document."
 msgid "You do not have permission to invite users."
-msgstr "You don't have permission to view or editar this documento."
+msgstr ""
 
 #: apps/users/views.py
 #, python-format
@@ -1083,10 +1071,9 @@ msgid "Successfully registered, you can now log in!"
 msgstr "Successfully registered, you can now log in!"
 
 #: apps/users/views.py
-#, fuzzy, python-format
-#| msgid "Invitation sent successfully!"
+#, python-format
 msgid "Invitation sent to %(email)s."
-msgstr "Invitation sent successfully!"
+msgstr ""
 
 #: apps/users/views.py
 #, python-brace-format
@@ -1228,16 +1215,12 @@ msgstr ""
 
 #: escriptorium/templates/admin/users/invitation/bulk_invite.html
 #: escriptorium/templates/users/invitation_form.html
-#, fuzzy
-#| msgid "Send invitation"
 msgid "Send Invitations"
-msgstr "Send invitation"
+msgstr ""
 
 #: escriptorium/templates/admin/users/invitation/change_list.html
-#, fuzzy
-#| msgid "Send invitation"
 msgid "Add invitation"
-msgstr "Send invitation"
+msgstr ""
 
 #: escriptorium/templates/base.html
 msgid "About"
@@ -1566,12 +1549,11 @@ msgid "Last modified on"
 msgstr "Last modified on"
 
 #: escriptorium/templates/core/document_list.html
-#, fuzzy, python-format
-#| msgid "1 image."
+#, python-format
 msgid "1 image."
 msgid_plural "%(n)s images."
 msgstr[0] "1 imagen."
-msgstr[1] "1 imagen."
+msgstr[1] ""
 
 #: escriptorium/templates/core/document_list.html
 msgid "Edit last updated Element"
@@ -1785,10 +1767,8 @@ msgid "École Pratique des Hautes Études (EPHE)"
 msgstr ""
 
 #: escriptorium/templates/core/home.html
-#, fuzzy
-#| msgid "Select"
 msgid "See"
-msgstr "Select"
+msgstr ""
 
 #: escriptorium/templates/core/home.html
 msgid "contributors history"
@@ -1975,12 +1955,11 @@ msgid "Create new Project"
 msgstr "crear nuevo proyecto"
 
 #: escriptorium/templates/core/project_list.html
-#, fuzzy, python-format
-#| msgid "1 document."
+#, python-format
 msgid "1 document."
 msgid_plural "%(n)s documents."
 msgstr[0] "1 documento."
-msgstr[1] "1 documento."
+msgstr[1] ""
 
 #: escriptorium/templates/core/project_list.html
 msgid "Do you really want to remove the project from your list?"
@@ -2559,11 +2538,6 @@ msgid "Change Password"
 msgstr "Change contraseña"
 
 #: escriptorium/templates/registration/password_change_form.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                  Please correct the error below.\n"
-#| "              "
 msgid ""
 "\n"
 "                  Please correct the error below.\n"
@@ -2573,13 +2547,7 @@ msgid_plural ""
 "                  Please correct the errors below.\n"
 "              "
 msgstr[0] ""
-"\n"
-"                  Please correct the error below.\n"
-"              "
 msgstr[1] ""
-"\n"
-"                  Please correct the error below.\n"
-"              "
 
 #: escriptorium/templates/registration/password_change_form.html
 msgid ""
@@ -2685,10 +2653,8 @@ msgid "Document report"
 msgstr "documento report"
 
 #: escriptorium/templates/reporting/document_report.html
-#, fuzzy
-#| msgid "Transcription done!"
 msgid "Transcription"
-msgstr "transcripción done!"
+msgstr "transcripción"
 
 #: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
@@ -2841,36 +2807,32 @@ msgid "Last update on"
 msgstr "Last actualizar on"
 
 #: escriptorium/templates/reporting/project_reports.html
-#, fuzzy, python-format
-#| msgid "Project shared with 1 user"
+#, python-format
 msgid "Project shared with 1 user"
 msgid_plural "Project shared with %(n)s users"
-msgstr[0] "proyecto shared with 1 usuario"
-msgstr[1] "proyecto shared with 1 usuario"
+msgstr[0] ""
+msgstr[1] ""
 
 #: escriptorium/templates/reporting/project_reports.html
-#, fuzzy, python-format
-#| msgid "Project shared with 1 group"
+#, python-format
 msgid "Project shared with 1 group"
 msgid_plural "Project shared with %(n)s groups"
-msgstr[0] "proyecto shared with 1 grupo"
-msgstr[1] "proyecto shared with 1 grupo"
+msgstr[0] ""
+msgstr[1] ""
 
 #: escriptorium/templates/reporting/project_reports.html
-#, fuzzy, python-format
-#| msgid "Documents shared with 1 user"
+#, python-format
 msgid "Documents shared with 1 user"
 msgid_plural "Documents shared with %(n)s users"
-msgstr[0] "Documents shared with 1 usuario"
-msgstr[1] "Documents shared with 1 usuario"
+msgstr[0] ""
+msgstr[1] ""
 
 #: escriptorium/templates/reporting/project_reports.html
-#, fuzzy, python-format
-#| msgid "Documents shared with 1 group"
+#, python-format
 msgid "Documents shared with 1 group"
 msgid_plural "Documents shared with %(n)s groups"
-msgstr[0] "Documents shared with 1 grupo"
-msgstr[1] "Documents shared with 1 grupo"
+msgstr[0] ""
+msgstr[1] ""
 
 #: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Total"
@@ -3094,16 +3056,12 @@ msgid "Signup"
 msgstr "Signup"
 
 #: escriptorium/templates/users/invitation_form.html
-#, fuzzy
-#| msgid "Invite"
 msgid "Invite Users"
-msgstr "Invite"
+msgstr ""
 
 #: escriptorium/templates/users/invitation_form.html
-#, fuzzy
-#| msgid "Invite"
 msgid "Invite mode"
-msgstr "Invite"
+msgstr ""
 
 #: escriptorium/templates/users/invitation_form.html
 msgid "Single"
@@ -3118,10 +3076,8 @@ msgid "Recipient's information"
 msgstr "destinatario's information"
 
 #: escriptorium/templates/users/invitation_form.html
-#, fuzzy
-#| msgid "Upload local file"
 msgid "Upload CSV file"
-msgstr "Subir archivo local"
+msgstr ""
 
 #: escriptorium/templates/users/invitation_form.html
 msgid "Paste emails (one per line)"
@@ -3244,62 +3200,17 @@ msgid "Privacy Policy"
 msgstr "Política de privacidad"
 
 #: homepage/additional_heading.html
-#, fuzzy
-#| msgid "eScriptorium Blog"
 msgid "eScriptorium for OCR-BW"
-msgstr "eScriptorium Blog"
+msgstr ""
 
 #: homepage/additional_heading.html
 msgid "New: "
 msgstr ""
 
 #: homepage/additional_heading.html
-#, fuzzy
-#| msgid "eScriptorium Blog"
 msgid "eScriptorium Discussions"
-msgstr "eScriptorium Blog"
+msgstr ""
 
 #: homepage/additional_heading.html
 msgid "(on GitHub)"
 msgstr ""
-
-#, python-brace-format
-#~ msgid ""
-#~ "You requested to search text in a {self.obj_name} you don't have access "
-#~ "to."
-#~ msgstr ""
-#~ "You requested to buscar texto in a {self.obj_name} you don't have access "
-#~ "to."
-
-#, python-brace-format
-#~ msgid ""
-#~ "You requested to search text in a {self.obj_name} that doesn't exist."
-#~ msgstr ""
-#~ "You requested to buscar texto in a {self.obj_name} that doesn't exist."
-
-#~ msgid ""
-#~ "You ran out of disk storage. {n_pages - page_nb} pages were left to "
-#~ "import (over {n_pages - start_at})"
-#~ msgstr ""
-#~ "You ran out of disk storage. {n_pages - page_nb} pages were left to "
-#~ "importar (over {n_pages - start_at})"
-
-#~ msgid ""
-#~ "You ran out of disk storage. {total - index} files were left to import "
-#~ "(over {total - start_at})"
-#~ msgstr ""
-#~ "You ran out of disk storage. {total - index} files were left to importar "
-#~ "(over {total - start_at})"
-
-#~ msgid ""
-#~ "You ran out of disk storage. {total - i} canvases were left to import "
-#~ "(over {total - start_at})"
-#~ msgstr ""
-#~ "You ran out of disk storage. {total - i} canvases were left to importar "
-#~ "(over {total - start_at})"
-
-#~ msgid "eScriptorium (University of Mannheim)"
-#~ msgstr "eScriptorium (Universidad de Mannheim)"
-
-#~ msgid "This instance is only for testing (not public)"
-#~ msgstr "Esta instancia es solo para pruebas (no pública)"
