@@ -1,6 +1,5 @@
-import { SCRIPT_NAME } from '../scriptname.js';
 import axios from "axios";
-import { SCRIPT_NAME } from '../scriptname.js';
+import { SCRIPT_NAME } from "../scriptname.js";
 
 axios.defaults.baseURL = SCRIPT_NAME + '/api'
 axios.defaults.xsrfCookieName = "csrftoken";
