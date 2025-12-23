@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-24 20:46+0100\n"
+"POT-Creation-Date: 2025-12-23 11:04+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -32,27 +32,14 @@ msgstr ""
 "PDF ist kein gültiges Bildformat, bitte verwenden Sie die dafür bestimmte "
 "Importfunktion."
 
-#: apps/api/serializers.py
-msgid "Upload local file"
-msgstr "Lokale Datei hochladen"
-
-#: apps/api/serializers.py
-msgid "download file from url"
-msgstr ""
-
-#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
-msgid "You don't have any CPU minutes left."
-msgstr "Sie haben keine CPU-Minuten mehr übrig."
-
-#: apps/api/serializers.py apps/imports/forms.py
-#, python-format
-msgid "Import in %(document_name)s"
-msgstr "Importieren in %(document_name)s"
-
 #: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
 #: escriptorium/templates/core/document_images.html
 msgid "You don't have any disk storage left."
 msgstr "Sie haben keinen Speicherplatz mehr übrig."
+
+#: apps/api/serializers.py apps/core/forms.py apps/imports/forms.py
+msgid "You don't have any CPU minutes left."
+msgstr "Sie haben keine CPU-Minuten mehr übrig."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You don't have any GPU minutes left."
@@ -98,6 +85,19 @@ msgstr ""
 "Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, fügen "
 "Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren, oder "
 "beides, um ein neues Modell aus einem bestehenden zu erstellen."
+
+#: apps/api/serializers.py
+msgid "Upload local file"
+msgstr "Lokale Datei hochladen"
+
+#: apps/api/serializers.py
+msgid "download file from url"
+msgstr "Datei von URL herunterladen"
+
+#: apps/api/serializers.py apps/imports/forms.py
+#, python-format
+msgid "Import in %(document_name)s"
+msgstr "Importieren in %(document_name)s"
 
 #: apps/api/serializers.py
 msgid ""
@@ -238,18 +238,6 @@ msgid "'lines' is mandatory."
 msgstr ""
 
 #: apps/core/forms.py
-#, python-brace-format
-msgid ""
-"You requested to search text in a {self.obj_name} you don't have access to."
-msgstr ""
-"Sie wollten Text in {self.obj_name} suchen, haben aber keinen Zugriff darauf."
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid "You requested to search text in a {self.obj_name} that doesn't exist."
-msgstr "Sie wollten Text in {self.obj_name} suchen, aber das existiert nicht."
-
-#: apps/core/forms.py
 msgid "All projects"
 msgstr "Alle Projekte"
 
@@ -262,11 +250,25 @@ msgstr ""
 "Suchbegriffe in Anführungszeichen, um die unscharfe Suche zu deaktivieren"
 
 #: apps/core/forms.py
+msgid "Word by word"
+msgstr ""
+
+#: apps/core/forms.py
+msgid "Regular expression"
+msgstr ""
+
+#: apps/core/forms.py
 msgid "Text to replace"
 msgstr ""
 
 #: apps/core/forms.py
 msgid "Text to find"
+msgstr ""
+
+#: apps/core/forms.py
+msgid ""
+"You cannot find and replace text across multiple projects at once, please "
+"pick a single project before submitting your request."
 msgstr ""
 
 #: apps/core/forms.py escriptorium/templates/core/models_list/rights/main.html
@@ -296,28 +298,6 @@ msgstr ""
 #: apps/core/forms.py
 msgid "eScriptorium is not compatible with bounding box models."
 msgstr "eScriptorium ist nicht mit Bounding-Box-Modellen kompatibel."
-
-#: apps/core/forms.py
-msgid ""
-"Increase it for low contrast documents, if the letters are not visible "
-"enough."
-msgstr ""
-"Erhöhen Sie den Wert bei kontrastarmen Dokumenten, wenn die Buchstaben nicht "
-"ausreichend sichtbar sind."
-
-#: apps/core/forms.py
-msgid "Uploaded image with more than one selected image."
-msgstr "Hochgeladenes Bild mit mehr als einem ausgewählten Bild."
-
-#: apps/core/forms.py
-msgid "Uploaded image should be black and white."
-msgstr "Hochgeladenes Bild sollte schwarz-weiß sein."
-
-#: apps/core/forms.py
-#, python-brace-format
-msgid "Uploaded image should be the same size as original image {size}."
-msgstr ""
-"Hochgeladenes Bild sollte dieselbe Größe wie das Original-Bild haben {size}."
 
 #: apps/core/forms.py
 msgid "Model"
@@ -466,11 +446,6 @@ msgstr ""
 msgid "Couldn't find the alignment task."
 msgstr "Konnte die Abgleichsaufgabe nicht finden."
 
-#: apps/core/models.py
-msgid "Binarized image needs to be the same size as original image."
-msgstr ""
-"Das binarisierte Bild muss die gleiche Größe wie das Originalbild haben."
-
 #: apps/core/models.py apps/users/models.py
 msgid "Created"
 msgstr "Erstellt"
@@ -538,14 +513,6 @@ msgstr "Transkribieren"
 #: apps/core/models.py
 msgid "Couldn't find the training task."
 msgstr "Konnte die Trainings-Aufgabe nicht finden."
-
-#: apps/core/tasks.py
-msgid "Something went wrong during the binarization!"
-msgstr "Bei der Binarisierung ist etwas schiefgelaufen!"
-
-#: apps/core/tasks.py
-msgid "Binarization done!"
-msgstr "Binarisierung abgeschlossen!"
 
 #: apps/core/tasks.py
 msgid "Training didn't get better results than base model!"
@@ -766,8 +733,14 @@ msgstr ""
 "Exports benötigt wird."
 
 #: apps/imports/forms.py
-msgid "Select at least one image to export."
-msgstr "Wählen Sie mindestens ein Bild für den Export aus."
+msgid "Include character bounding boxes."
+msgstr ""
+
+#: apps/imports/forms.py
+msgid ""
+"This data is only present for transcriptions coming from automatic "
+"recognition and is invalidated by manual edition."
+msgstr ""
 
 #: apps/imports/forms.py
 #, python-format
@@ -781,14 +754,6 @@ msgstr "Datei, die eine Dokumenten-Ontologie im JSON-Format enthält"
 #: apps/imports/parsers.py
 msgid "Invalid PDF file."
 msgstr "Ungültige PDF Datei."
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {n_pages - page_nb} pages were left to import "
-"(over {n_pages - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {n_pages - page_nb} Seiten wurden zum "
-"Importieren überlassen (over {n_pages - start_at})"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -806,14 +771,6 @@ msgstr "Datei scheint ein ungültiges zip-Format zu sein."
 #: apps/imports/parsers.py
 msgid "Zip file appears to be corrupted."
 msgstr "Zip-Datei scheint korrupt zu sein."
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - index} files were left to import (over "
-"{total - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {total - index} Dateien wurden zum "
-"Importieren übrig gelassen (over {total - start_at})"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -841,6 +798,10 @@ msgid ""
 msgstr ""
 "Zeile in '{filen}' Zeile N°{line} (id: {lineid}) wurde übersprungen, weil: "
 "{error}"
+
+#: apps/imports/parsers.py
+msgid "Default ABBYY Import"
+msgstr "Standard ABBYY-Import"
 
 #: apps/imports/parsers.py
 msgid "Default ALTO Import"
@@ -887,14 +848,6 @@ msgstr "Ungültiges Manifest konnte nicht dekodiert werden ({error})"
 #: apps/imports/parsers.py
 msgid "Empty or invalid manifest, no images found."
 msgstr "Leeres oder ungültiges Manifest, keine Bilder gefunden."
-
-#: apps/imports/parsers.py
-msgid ""
-"You ran out of disk storage. {total - i} canvases were left to import (over "
-"{total - start_at})"
-msgstr ""
-"Sie haben keinen Speicherplatz mehr. {total - i} Bilder wurden zum Import "
-"übrig gelassen (over {total - start_at})"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -1039,6 +992,13 @@ msgid "email address"
 msgstr "E-Mail-Adresse"
 
 #: apps/users/models.py
+msgid ""
+"Use the legacy version of the user interface. If unchecked, features that "
+"have not yet been ported to the new interface may become unavailable. "
+"Likewise, if checked, newer features may become unavailable."
+msgstr ""
+
+#: apps/users/models.py
 msgid "Error"
 msgstr "Fehler"
 
@@ -1053,10 +1013,6 @@ msgstr "Empfangen"
 #: apps/users/models.py
 msgid "Accepted"
 msgstr "Akzeptiert"
-
-#: apps/users/models.py
-msgid "Team"
-msgstr "Team"
 
 #: apps/users/models.py
 #, python-brace-format
@@ -1218,6 +1174,10 @@ msgstr "Französisch"
 msgid "German"
 msgstr "Deutsch"
 
+#: escriptorium/settings.py
+msgid "Spanish"
+msgstr ""
+
 #: escriptorium/templates/403.html
 msgid "You don't have permission to view or edit this document."
 msgstr ""
@@ -1226,6 +1186,20 @@ msgstr ""
 #: escriptorium/templates/404.html
 msgid "Page not found."
 msgstr "Seite nicht gefunden."
+
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "OR"
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "Send Invitations"
+msgstr "Versende Einladungen"
+
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Add invitation"
+msgstr "Füge Einladung hinzu"
 
 #: escriptorium/templates/base.html
 msgid "About"
@@ -1240,12 +1214,20 @@ msgid "Search in all your projects"
 msgstr "Suche in allen Ihren Projekten"
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/core/search/search.html
+msgid "Search"
+msgstr "Suchen"
+
+#: escriptorium/templates/base.html
+msgid "Find & Replace"
+msgstr ""
+
+#: escriptorium/templates/base.html
 #: escriptorium/templates/core/project_list.html
 msgid "My Projects"
 msgstr "Meine Projekte"
 
 #: escriptorium/templates/base.html
-#: escriptorium/templates/core/models_list/main.html
 msgid "My Models"
 msgstr "Meine Modelle"
 
@@ -1272,6 +1254,7 @@ msgid "Tasks monitoring"
 msgstr "Aufgabenüberwachung"
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/reporting/quotas_leaderboard.html
 msgid "Leaderboard"
 msgstr "Spitzenreiter"
 
@@ -1280,6 +1263,7 @@ msgid "Site administration"
 msgstr "Website-Administration"
 
 #: escriptorium/templates/base.html
+#: escriptorium/templates/users/group_detail_invite.html
 msgid "Invite"
 msgstr "Einladen"
 
@@ -1441,14 +1425,6 @@ msgid "Cancel training"
 msgstr "Training abbrechen"
 
 #: escriptorium/templates/core/document_images.html
-msgid "Binarize selected images."
-msgstr "Binarisieren ausgewählter Bilder."
-
-#: escriptorium/templates/core/document_images.html
-msgid "Binarize"
-msgstr "Binarisieren"
-
-#: escriptorium/templates/core/document_images.html
 msgid "Segment selected images."
 msgstr "Segmentieren ausgewählte Bilder."
 
@@ -1591,6 +1567,7 @@ msgid "Images"
 msgstr "Bilder"
 
 #: escriptorium/templates/core/document_nav.html
+#: escriptorium/templates/core/models_list/main.html
 msgid "Models"
 msgstr "Modelle"
 
@@ -1699,6 +1676,10 @@ msgstr "Bildannotationen"
 msgid "Text Annotations"
 msgstr "Textannotationen"
 
+#: escriptorium/templates/core/documents_tasks_list.html
+msgid "Task Monitoring"
+msgstr "Aufgabenüberwachung"
+
 #: escriptorium/templates/core/home.html
 msgid "Homepage"
 msgstr "Homepage"
@@ -1710,6 +1691,10 @@ msgid ""
 msgstr ""
 "Erzeugen von Text für Drucke und handgeschriebene Dokumente mit Hilfe "
 "maschineller Lerntechniken."
+
+#: escriptorium/templates/core/home.html
+msgid "Sign in"
+msgstr "Anmelden"
 
 #: escriptorium/templates/core/home.html
 msgid "Automatic<br>Transcription"
@@ -2098,16 +2083,12 @@ msgid "Search feature is deactivated on this instance."
 msgstr "Suchfunktion ist in dieser Instanz abgeschaltet."
 
 #: escriptorium/templates/core/search/search.html
-msgid "Search"
-msgstr "Suchen"
-
-#: escriptorium/templates/core/search/search.html
 msgid ""
 "Couldn't connect to Elasticsearch/OpenSearch, please contact your instance "
 "administrator."
 msgstr ""
-"Verbindung zu Elasticsearch/OpenSearch nicht möglich, bitte wenden Sie sich an Ihren "
-"Administrator."
+"Verbindung zu Elasticsearch/OpenSearch nicht möglich, bitte wenden Sie sich "
+"an Ihren Administrator."
 
 #: escriptorium/templates/core/search/search.html
 #: escriptorium/templates/core/wizards/import.html
@@ -2158,30 +2139,6 @@ msgstr ""
 #: escriptorium/templates/core/wizards/align.html
 msgid "Settings"
 msgstr "Einstellungen"
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid ""
-"Binarization is NOT a mandatory step any more, and might even decrease "
-"quality."
-msgstr ""
-"Die Binarisierung ist NICHT mehr zwingend erforderlich und kann sogar die "
-"Qualität beeinträchtigen."
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Manually"
-msgstr "Manuell"
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Or automatically"
-msgstr "Oder automatisch"
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Contrast"
-msgstr "Kontrast"
-
-#: escriptorium/templates/core/wizards/binarize.html
-msgid "Upload or Binarize"
-msgstr "Hochladen oder Binarisieren"
 
 #: escriptorium/templates/core/wizards/import.html
 #, python-format
@@ -2580,9 +2537,8 @@ msgid "Your password has successfully been changed."
 msgstr "Ihr Passwort wurde erfolgreich geändert."
 
 #: escriptorium/templates/registration/password_change_form.html
-#: escriptorium/templates/registration/password_reset_form.html
-msgid "Change your password"
-msgstr "Ändern Sie Ihr Passwort"
+msgid "Change Password"
+msgstr "Passwort ändern"
 
 #: escriptorium/templates/registration/password_change_form.html
 msgid ""
@@ -2682,6 +2638,10 @@ msgstr ""
 "Falls Sie keine Mail erhalten, stellen Sie sicher, dass Sie die Adresse "
 "eingegeben haben, mit der Sie sich registriert haben. Prüfen Sie auch Ihren "
 "Spam-Ordner."
+
+#: escriptorium/templates/registration/password_reset_form.html
+msgid "Change your password"
+msgstr "Ändern Sie Ihr Passwort"
 
 #: escriptorium/templates/registration/password_reset_form.html
 msgid ""
@@ -2949,6 +2909,10 @@ msgid "Ended at:"
 msgstr "Beendet um:"
 
 #: escriptorium/templates/reporting/taskreport_list.html
+msgid "Task Usage"
+msgstr "Aufgabennutzung"
+
+#: escriptorium/templates/reporting/taskreport_list.html
 msgid "Calculated from your images and models"
 msgstr "Berechnet aus Ihren Bildern und Modellen"
 
@@ -3000,6 +2964,16 @@ msgstr "GPU-Kosten"
 #: escriptorium/templates/reporting/taskreport_list.html
 msgid "You don't have any task report yet."
 msgstr "Sie haben noch keinen Aufgabenbericht."
+
+#: escriptorium/templates/users/account_expired.html
+msgid "Account Expired"
+msgstr ""
+
+#: escriptorium/templates/users/account_expired.html
+msgid ""
+"Your account has expired. Please reach out to the person who invited you for "
+"assistance."
+msgstr ""
 
 #: escriptorium/templates/users/contactus.html
 #: escriptorium/templates/users/invitation_form.html
@@ -3097,8 +3071,40 @@ msgid "Signup"
 msgstr "Anmelden"
 
 #: escriptorium/templates/users/invitation_form.html
+msgid "Invite Users"
+msgstr "Benutzer einladen"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Invite mode"
+msgstr "Einladungsmodus"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Single"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Bulk"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
 msgid "Recipient's information"
 msgstr "Angaben zum Empfänger"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Upload CSV file"
+msgstr "CSV-Datei hochladen"
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Paste emails (one per line)"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Expiry date (optional)"
+msgstr ""
+
+#: escriptorium/templates/users/profile.html
+msgid "Profile Settings"
+msgstr "Profileinstellungen"
 
 #: escriptorium/templates/users/profile.html
 msgid "Information"
@@ -3181,6 +3187,18 @@ msgid "You are not part of any team yet."
 msgstr "Sie sind noch in keinem Team."
 
 #: escriptorium/templates/users/profile_invitations.html
+msgid "Recipient"
+msgstr "Empfängers"
+
+#: escriptorium/templates/users/profile_invitations.html
+msgid "Group"
+msgstr "Gruppe"
+
+#: escriptorium/templates/users/profile_invitations.html
+msgid "Status"
+msgstr "Status"
+
+#: escriptorium/templates/users/profile_invitations.html
 msgid "You didn't send any invitations yet."
 msgstr "Sie haben noch keine Einladungen verschickt."
 
@@ -3211,14 +3229,3 @@ msgstr "eScriptorium Diskussionsforum"
 #: homepage/additional_heading.html
 msgid "(on GitHub)"
 msgstr "(auf GitHub)"
-
-msgid "eScriptorium (University of Mannheim)"
-msgstr "eScriptorium (Universität Mannheim)"
-
-#: homepage/additional_heading.html
-msgid "This instance is only for testing (not public)"
-msgstr "Diese Instanz dient nur zu Testzwecken (nicht öffentlich)"
-
-#: homepage/additional_heading.html
-msgid "Please use our public instance:"
-msgstr "Bitte nutzen Sie unsere öffentliche Instanz:"
