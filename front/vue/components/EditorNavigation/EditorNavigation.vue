@@ -143,6 +143,7 @@ import InfoOutlineIcon from "../Icons/InfoOutlineIcon/InfoOutlineIcon.vue";
 import OntologyIcon from "../Icons/OntologyIcon/OntologyIcon.vue";
 import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
 import "./EditorNavigation.css";
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 
 export default {
     name: "EscrEditorNavigation",
@@ -184,19 +185,19 @@ export default {
             let breadcrumbs = [{ title: "Loading..." }];
             if (this.projectName && this.projectSlug && this.documentName && this.documentId) {
                 breadcrumbs = [
-                    { title: "My Projects", href: "/projects" },
+                    { title: "My Projects", href: SCRIPT_NAME + "/projects" },
                     {
                         title: this.projectName,
-                        href: `/project/${this.projectSlug}`
+                        href: SCRIPT_NAME + `/project/${this.projectSlug}`
                     },
                     {
                         title: this.documentName,
-                        href: `/document/${this.documentId}`
+                        href: SCRIPT_NAME + `/document/${this.documentId}`
                     },
                     {
                         title: "Images",
                         // include select=pk to select the image being edited in the list
-                        href: `/document/${this.documentId}/images${
+                        href: SCRIPT_NAME + `/document/${this.documentId}/images${
                             this.elementPk ? "?select=" + this.elementPk : ""
                         }`,
                     },
