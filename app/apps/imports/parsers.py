@@ -559,6 +559,7 @@ class XMLParser(ParserDocument):
         if self.schema_location in self.ACCEPTED_SCHEMAS:
             try:
                 response = requests.get(self.schema_location)
+                response.raise_for_status()
                 content = response.content
                 schema_root = etree.XML(content)
             except requests.exceptions.RequestException as e:
