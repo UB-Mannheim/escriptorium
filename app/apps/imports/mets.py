@@ -208,13 +208,13 @@ class METSProcessor:
         # Downloading the file content
         try:
             get_resp = requests.get(uri)
+            get_resp.raise_for_status()
             is_image, content_type = self.check_is_image(get_resp)
 
             # Pointing towards an image but we already found one for this METS page or its format isn't supported, we can skip it
             if is_image and (mets_page_image or content_type not in SUPPORTED_IMAGE_MIMETYPES):
                 return mets_page_image, mets_page_sources, layers_count
 
-            get_resp.raise_for_status()
             content = get_resp.content
             file = io.BytesIO(content)
             file.name = os.path.basename(uri)
