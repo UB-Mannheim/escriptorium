@@ -1181,7 +1181,7 @@ class IIIFManifestParser(ParserDocument):
                 headers = {
                     'User-Agent': 'eScriptorium'
                 }
-                response = requests.get(url, headers=headers, stream=True, verify=False, timeout=10)
+                response = requests.get(url, headers=headers, stream=True, timeout=10)
                 response.raise_for_status()
                 return response
 
