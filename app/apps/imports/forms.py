@@ -27,6 +27,7 @@ class FileImportError(Exception):
 def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
     try:
         resp = requests.get(uri)
+        resp.raise_for_status()
         content = resp.content
         buf = io.BytesIO(content)
         buf.name = tempfile
@@ -35,6 +36,8 @@ def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
                              mets_base_uri=mets_base_uri)
         parser.validate()
         return content, parser.total
+    except requests.exceptions.HTTPError as e:
+        raise FileImportError(_("Failed to download the document pointed to by the given uri ({error}).").format(error=e))
     except requests.exceptions.SSLError:
         raise forms.ValidationError(_("The document cannot be downloaded, certificate verify failed."))
     except requests.exceptions.RequestException:
