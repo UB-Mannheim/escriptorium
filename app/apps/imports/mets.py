@@ -216,6 +216,7 @@ class METSProcessor:
         # Downloading the file content
         try:
             get_resp = requests.get(uri)
+            get_resp.raise_for_status()
             is_image, content_type = self.check_is_image(get_resp)
 
             # Already have an image for this page — skip the duplicate
@@ -231,7 +232,6 @@ class METSProcessor:
                 )
                 return mets_page_image, mets_page_sources, layers_count
 
-            get_resp.raise_for_status()
             content = get_resp.content
             file = io.BytesIO(content)
             file.name = os.path.basename(uri)
