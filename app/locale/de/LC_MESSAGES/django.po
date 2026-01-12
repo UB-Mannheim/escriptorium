@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-23 11:04+0100\n"
+"POT-Creation-Date: 2026-01-08 16:58+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -644,6 +644,11 @@ msgid "Document was successfully migrated to the selected project!"
 msgstr "Dokument wurde erfolgreich zum ausgewählten Projekt migriert!"
 
 #: apps/imports/forms.py
+#, python-brace-format
+msgid "Failed to download the document pointed to by the given uri ({error})."
+msgstr ""
+
+#: apps/imports/forms.py
 msgid "The document cannot be downloaded, certificate verify failed."
 msgstr ""
 
@@ -996,7 +1001,12 @@ msgid ""
 "Use the legacy version of the user interface. If unchecked, features that "
 "have not yet been ported to the new interface may become unavailable. "
 "Likewise, if checked, newer features may become unavailable."
-msgstr "Verwenden Sie die Legacy-Version der Benutzeroberfläche. Wenn diese Option deaktiviert ist, sind Funktionen, die noch nicht auf die neue Benutzeroberfläche portiert wurden, möglicherweise nicht verfügbar. Wenn diese Option aktiviert ist, sind möglicherweise neuere Funktionen nicht verfügbar."
+msgstr ""
+"Verwenden Sie die Legacy-Version der Benutzeroberfläche. Wenn diese Option "
+"deaktiviert ist, sind Funktionen, die noch nicht auf die neue "
+"Benutzeroberfläche portiert wurden, möglicherweise nicht verfügbar. Wenn "
+"diese Option aktiviert ist, sind möglicherweise neuere Funktionen nicht "
+"verfügbar."
 
 #: apps/users/models.py
 msgid "Error"
@@ -1807,7 +1817,7 @@ msgstr "Recht entfernen"
 
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "shares"
-msgstr "Anteile"
+msgstr "Freigaben"
 
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "Full name or identifier"
@@ -1838,6 +1848,10 @@ msgstr "Gruppenkennung"
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "Stop sharing"
 msgstr "Teilen einstellen"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "No shares on this model."
+msgstr "Keine Freigaben für dieses Modell."
 
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "Add right"
