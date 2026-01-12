@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-23 11:25+0100\n"
+"POT-Creation-Date: 2026-01-08 16:55+0100\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -674,6 +674,11 @@ msgid "Document was successfully migrated to the selected project!"
 msgstr "documento was successfully migrated to the selected proyecto!"
 
 #: apps/imports/forms.py
+#, python-brace-format
+msgid "Failed to download the document pointed to by the given uri ({error})."
+msgstr ""
+
+#: apps/imports/forms.py
 msgid "The document cannot be downloaded, certificate verify failed."
 msgstr ""
 
@@ -823,8 +828,7 @@ msgstr "Block in '{filen}' línea N°{line} was skipped because: {error}"
 msgid ""
 "Line in '{filen}' line N°{line} (id: {lineid}) was skipped because: {error}"
 msgstr ""
-"línea in '{filen}' línea N°{line} (id: {lineid}) was skipped because: "
-"{error}"
+"línea in '{filen}' línea N°{line} (id: {lineid}) was skipped because: {error}"
 
 #: apps/imports/parsers.py
 msgid "Default ABBYY Import"
@@ -1853,6 +1857,10 @@ msgstr "grupo identifier"
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "Stop sharing"
 msgstr "detener sharing"
+
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "No shares on this model."
+msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
 msgid "Add right"
