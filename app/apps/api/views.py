@@ -418,7 +418,7 @@ class DocumentViewSet(ModelViewSet):
                 continue
 
             try:
-                send_event('document', document.pk, f'{task_name}:error', {'reason': _('Canceled.')})
+                send_event('document', document.pk, f'{task_name}: error', {'reason': _('Canceled.')})
             except Exception as e:
                 # don't crash on websocket error
                 logger.exception(e)
