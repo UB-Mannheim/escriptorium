@@ -811,7 +811,7 @@ class AbbyyParser(XMLParser):
 
     def get_filename(self, pageTag):
         logger.debug(f"{self.file.name=}")
-        return f"680749.jpg"
+        return "680749.jpg"
         # return f"{os.path.basename(self.file.name)}"
 
     def get_graphs(self, lineTag):
@@ -835,21 +835,21 @@ class AbbyyParser(XMLParser):
 
     def update_line(self, line, lineTag):
         baseline = lineTag.get("baseline")
-        l = lineTag.get("l")
+        left = lineTag.get("l")
         t = lineTag.get("t")
-        r = lineTag.get("r")
+        right = lineTag.get("r")
         b = lineTag.get("b")
-        # logger.debug(f"{baseline=}, {l=}, {t=}, {r=}, {b=}")
+        # logger.debug(f"{baseline=}, {left=}, {t=}, {right=}, {b=}")
         baseline = int(baseline)
-        l = int(l)
+        left = int(left)
         t = int(t)
-        r = int(r)
+        right = int(right)
         b = int(b)
-        # logger.debug(f"{baseline=}, {l=}, {t=}, {r=}, {b=}")
+        # logger.debug(f"{baseline=}, {left=}, {t=}, {right=}, {b=}")
         baseline = t + (b - t) * 3 / 4
-        line.baseline = [(l, baseline), (r, baseline)]
-        line.box = [l, t, r, b]
-        line.mask = [(l, t), (r, t), (r, b), (l, b)]
+        line.baseline = [(left, baseline), (right, baseline)]
+        line.box = [left, t, right, b]
+        line.mask = [(left, t), (right, t), (right, b), (left, b)]
         logger.debug(f"{line.baseline=}, {line.box=}, {line.mask=}")
 
 
