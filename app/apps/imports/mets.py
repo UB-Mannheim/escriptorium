@@ -223,7 +223,7 @@ class METSProcessor:
                 # {scheme}://{server}{/prefix}/{identifier}/{region}/{size}/{rotation}/{quality}.{format}
                 scheme_server_prefix, identifier, region, size, rotation, quality_format = uri.rsplit('/', 5)
                 file.name = identifier + '.jpg'
-        except requests.exceptions.SSLError:
+        except requests.exceptions.SSLError as e:
             self.report.append(f"File not downloaded, invalid certificate for remote URI {uri}: {e}", logger_fct=logger.error)
         except requests.exceptions.RequestException as e:
             self.report.append(f"File not found on remote URI {uri}: {e}", logger_fct=logger.error)
