@@ -143,10 +143,11 @@ def make_segmentation_training_data(parts) -> List[Segmentation]:
         blls = []
         for line in part.lines.only('baseline', 'typology'):
             if line.baseline:
+                tag_name = line.typology.name if line.typology else 'default'
                 blls.append(BaselineLine(id='foo',
                                          baseline=line.baseline,
                                          boundary=line.mask,
-                                         tags={'type': line.typology and line.typology.name or 'default'}))
+                                         tags={'type': [{'type': tag_name}]}))
 
         regions = {}
         for typo, regs in groupby(part.blocks.only('box',
@@ -154,7 +155,7 @@ def make_segmentation_training_data(parts) -> List[Segmentation]:
                                   key=lambda reg: reg.typology and reg.typology.name or 'default'):
             regions[typo] = [Region(id='bar',
                                     boundary=reg.box,
-                                    tags={'type': 'typo'}) for reg in regs]
+                                    tags={'type': [{'type': typo}]}) for reg in regs]
 
         segs.append(Segmentation(text_direction='horizontal-lr',
                                  imagename=part.image.path,
@@ -747,6 +748,7 @@ def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
     ).select_related('line')
 
     for lt in linetrans:
+        tag_name = lt.line.typology.name if lt.line.typology else 'default'
         data = {
             'image': part.image,
             "lines": [{
@@ -754,7 +756,7 @@ def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
                 "baseline": lt.line.baseline,
                 "boundary": lt.line.mask,
                 "text_direction": text_direction,
-                "tags": {'type': lt.line.typology and lt.line.typology.name or 'default'},
+                "tags": {'type': [{'type': tag_name}]},
             }],
             "type": "baselines"
         }
