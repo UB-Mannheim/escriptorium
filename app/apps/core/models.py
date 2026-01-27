@@ -1352,13 +1352,18 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                     region = next(
                         (r for r in regions if Polygon(r.box).contains(center)), None
                     )
+                    # Extract type from new tags structure: {'type': [{'type': 'value'}]}
+                    line_type_name = None
+                    if line.tags and "type" in line.tags and len(line.tags["type"]) > 0:
+                        line_type_name = line.tags["type"][0].get("type")
+
                     try:
                         typo, created = self.document.valid_line_types.get_or_create(
-                            name=line.tags.get("type"))
+                            name=line_type_name)
                     except LineType.MultipleObjectsReturned:
                         # Note: this should not happen if the modelisation was alright
                         # but for now we hack
-                        typo = self.document.valid_line_types.filter(name=line.tags.get("type"))[0]
+                        typo = self.document.valid_line_types.filter(name=line_type_name)[0]
                     Line.objects.create(
                         document_part=self,
                         typology=typo,
@@ -1399,12 +1404,14 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                 else:
                     bll = BaselineLine(id='foo',
                                        baseline=line.baseline,
-                                       boundary=line.mask)
+                                       boundary=line.mask,
+                                       language=None)
                     seg = Segmentation(type='baselines',
                                        imagename='/dummy.png',
                                        text_direction=text_direction,
                                        script_detection=False,
-                                       lines=[bll])
+                                       lines=[bll],
+                                       language=None)
 
                 it = rpred.rpred(
                     model_,

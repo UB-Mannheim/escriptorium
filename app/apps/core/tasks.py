@@ -123,14 +123,16 @@ def make_recognition_segmentation(lines) -> List[Segmentation]:
         lines_by_img[lt['image']].append(BaselineLine(id='foo',
                                                       baseline=lt['baseline'],
                                                       boundary=lt['mask'],
-                                                      text=lt['content']))
+                                                      text=lt['content'],
+                                                      language=None))
     segs = []
     for img, lines in lines_by_img.items():
         segs.append(Segmentation(text_direction='horizontal-lr',
                                  imagename=os.path.join(settings.MEDIA_ROOT, img),
                                  type='baselines',
                                  lines=lines,
-                                 script_detection=False))
+                                 script_detection=False,
+                                 language=None))
     return segs
 
 
@@ -147,7 +149,8 @@ def make_segmentation_training_data(parts) -> List[Segmentation]:
                 blls.append(BaselineLine(id='foo',
                                          baseline=line.baseline,
                                          boundary=line.mask,
-                                         tags={'type': [{'type': tag_name}]}))
+                                         tags={'type': [{'type': tag_name}]},
+                                         language=None))
 
         regions = {}
         for typo, regs in groupby(part.blocks.only('box',
@@ -155,14 +158,16 @@ def make_segmentation_training_data(parts) -> List[Segmentation]:
                                   key=lambda reg: reg.typology and reg.typology.name or 'default'):
             regions[typo] = [Region(id='bar',
                                     boundary=reg.box,
-                                    tags={'type': [{'type': typo}]}) for reg in regs]
+                                    tags={'type': [{'type': typo}]},
+                                    language=None) for reg in regs]
 
         segs.append(Segmentation(text_direction='horizontal-lr',
                                  imagename=part.image.path,
                                  type='baselines',
                                  lines=blls,
                                  regions=regions,
-                                 script_detection=False))
+                                 script_detection=False,
+                                 language=None))
     return segs
 
 
