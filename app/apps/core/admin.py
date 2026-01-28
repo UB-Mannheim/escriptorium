@@ -33,23 +33,23 @@ class MetadataInline(admin.TabularInline):
 class OcrModelDocumentInline(admin.TabularInline):
     model = OcrModelDocument
     extra = 0
-    max_num = 10
+    max_num = 50
     raw_id_fields = ('document',)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.select_related('document', 'ocr_model')
+        return qs.select_related('document', 'ocr_model')[:50]
 
 
 class OcrModelRightInline(admin.TabularInline):
     model = OcrModelRight
     extra = 0
-    max_num = 10
+    max_num = 50
     raw_id_fields = ('user', 'group')
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.select_related('user', 'group', 'ocr_model')
+        return qs.select_related('user', 'group', 'ocr_model')[:50]
 
 
 class TagInline(admin.TabularInline):
