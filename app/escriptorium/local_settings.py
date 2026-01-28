@@ -37,7 +37,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2025-12-23'
+VERSION_DATE = 'UBMA-2026-01-28'
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
