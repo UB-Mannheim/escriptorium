@@ -1160,7 +1160,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             | Q(owner=self.user)
             | Q(ocr_model_rights__user=self.user)
             | Q(ocr_model_rights__group__user=self.user)
-        )
+        ).distinct()  # prevent duplicates when model is shared with groups with multiple users
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate(self, data):
