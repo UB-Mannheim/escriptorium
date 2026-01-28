@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 from solo.admin import SingletonModelAdmin
 
 from core.models import (
@@ -30,28 +32,6 @@ class MetadataInline(admin.TabularInline):
     model = DocumentMetadata
 
 
-class OcrModelDocumentInline(admin.TabularInline):
-    model = OcrModelDocument
-    extra = 0
-    max_num = 50
-    raw_id_fields = ('document',)
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.select_related('document', 'ocr_model')[:50]
-
-
-class OcrModelRightInline(admin.TabularInline):
-    model = OcrModelRight
-    extra = 0
-    max_num = 50
-    raw_id_fields = ('user', 'group')
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.select_related('user', 'group', 'ocr_model')[:50]
-
-
 class TagInline(admin.TabularInline):
     model = DocumentTag
 
@@ -67,7 +47,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
 class DocumentAdmin(admin.ModelAdmin):
     list_display = ['pk', 'name', 'owner', 'project']
-    inlines = (MetadataInline, OcrModelDocumentInline, DocumentTagInline)
+    inlines = (MetadataInline, DocumentTagInline)
 
 
 class DocumentPartAdmin(admin.ModelAdmin):
@@ -94,21 +74,63 @@ class ScriptAdmin(admin.ModelAdmin):
 
 class OcrModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'job', 'owner', 'script', 'training', 'parent', 'public']
-    inlines = (OcrModelDocumentInline, OcrModelRightInline)
+    readonly_fields = ['documents_link', 'rights_link', 'finetuned_models_link']
     raw_id_fields = ('parent', 'owner')
     list_select_related = ('owner', 'script', 'parent')
+
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'job', 'owner', 'script', 'training', 'parent', 'public', 'file', 'file_size')
+        }),
+        ('Related Records', {
+            'fields': ('documents_link', 'rights_link', 'finetuned_models_link'),
+            'description': 'View related documents and access rights'
+        }),
+    )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('owner', 'script', 'parent')
 
+    def documents_link(self, obj):
+        if obj and obj.pk:
+            count = OcrModelDocument.objects.filter(ocr_model=obj).count()
+            url = reverse('admin:core_ocrmodeldocument_changelist') + f'?ocr_model__id__exact={obj.pk}'
+            return format_html('<a href="{}">{} documents</a>', url, count)
+        return '-'
+    documents_link.short_description = 'Training/Execution Documents'
+
+    def rights_link(self, obj):
+        if obj and obj.pk:
+            count = OcrModelRight.objects.filter(ocr_model=obj).count()
+            url = reverse('admin:core_ocrmodelright_changelist') + f'?ocr_model__id__exact={obj.pk}'
+            return format_html('<a href="{}">{} access rights</a>', url, count)
+        return '-'
+    rights_link.short_description = 'User/Group Access Rights'
+
+    def finetuned_models_link(self, obj):
+        if obj and obj.pk:
+            count = OcrModel.objects.filter(parent=obj).count()
+            url = reverse('admin:core_ocrmodel_changelist') + f'?parent__id__exact={obj.pk}'
+            return format_html('<a href="{}">{} fine-tuned models</a>', url, count)
+        return '-'
+    finetuned_models_link.short_description = 'Models Fine-tuned From This'
+
 
 class OcrModelDocumentAdmin(admin.ModelAdmin):
     list_display = ['document', 'ocr_model', 'trained_on', 'executed_on', 'created_at']
+    list_filter = ['trained_on', 'executed_on', 'created_at']
+    search_fields = ['document__name', 'ocr_model__name']
+    raw_id_fields = ['document', 'ocr_model']
+    list_select_related = ['document', 'ocr_model']
 
 
 class OcrModelRightAdmin(admin.ModelAdmin):
     list_display = ['ocr_model', 'user', 'group', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['ocr_model__name', 'user__username', 'group__name']
+    raw_id_fields = ['ocr_model', 'user', 'group']
+    list_select_related = ['ocr_model', 'user', 'group']
 
 
 class DocumentTagAdmin(admin.ModelAdmin):
