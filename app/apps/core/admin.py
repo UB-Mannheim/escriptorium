@@ -32,10 +32,24 @@ class MetadataInline(admin.TabularInline):
 
 class OcrModelDocumentInline(admin.TabularInline):
     model = OcrModelDocument
+    extra = 0
+    max_num = 10
+    raw_id_fields = ('document',)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('document', 'ocr_model')
 
 
 class OcrModelRightInline(admin.TabularInline):
     model = OcrModelRight
+    extra = 0
+    max_num = 10
+    raw_id_fields = ('user', 'group')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('user', 'group', 'ocr_model')
 
 
 class TagInline(admin.TabularInline):
@@ -81,6 +95,12 @@ class ScriptAdmin(admin.ModelAdmin):
 class OcrModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'job', 'owner', 'script', 'training', 'parent', 'public']
     inlines = (OcrModelDocumentInline, OcrModelRightInline)
+    raw_id_fields = ('parent', 'owner')
+    list_select_related = ('owner', 'script', 'parent')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('owner', 'script', 'parent')
 
 
 class OcrModelDocumentAdmin(admin.ModelAdmin):
