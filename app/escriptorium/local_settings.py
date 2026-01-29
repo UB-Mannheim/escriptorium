@@ -2,6 +2,7 @@
 
 import os
 
+from django.utils.translation import gettext_lazy as _
 from escriptorium.settings import *
 
 DOMAIN = 'ocr-bw.bib.uni-mannheim.de'
@@ -38,6 +39,13 @@ EMAIL_HOST = 'localhost'
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
 VERSION_DATE = 'UBMA-2026-01-30'
+
+LANGUAGES = [
+    ('de', _('German')),
+    ('en', _('English')),
+    ('fr', _('French')),
+    ('es', _('Spanish'))
+]
 
 LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
