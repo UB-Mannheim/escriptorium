@@ -243,6 +243,8 @@ class METSProcessor:
         except requests.exceptions.RequestException as e:
             self.report.append(f"File not found on remote URI {uri}: {e}", logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
+        except requests.exceptions.SSLError as e:
+            self.report.append(f"File not downloaded, invalid certificate for remote URI {uri}: {e}", logger_fct=logger.error)
 
         if is_image:
             mets_page_image = file
