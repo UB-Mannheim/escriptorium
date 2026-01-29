@@ -255,7 +255,7 @@ class ProjectViewSet(ModelViewSet):
                 project.shared_with_groups.add(target)
         elif 'user' in request.data:
             try:
-                target = User.objects.get(username=request.data['user'])
+                target = User.objects.get(username__iexact=request.data['user'])
             except User.DoesNotExist:
                 return Response({'error': 'invalid username.'},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -680,7 +680,7 @@ class DocumentViewSet(ModelViewSet):
                 document.shared_with_groups.add(target)
         elif 'user' in request.data:
             try:
-                target = User.objects.get(username=request.data['user'])
+                target = User.objects.get(username__iexact=request.data['user'])
             except User.DoesNotExist:
                 return Response({'error': 'invalid username.'},
                                 status=status.HTTP_400_BAD_REQUEST)
