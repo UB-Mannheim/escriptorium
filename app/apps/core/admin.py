@@ -78,7 +78,8 @@ class OcrModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'job', 'owner', 'script', 'training', 'parent', 'public']
     search_fields = ['name', 'owner__username']
     readonly_fields = ['documents_link', 'rights_link', 'finetuned_models_link']
-    raw_id_fields = ('parent', 'owner')
+    raw_id_fields = ('parent',)
+    autocomplete_fields = ('owner',)
     list_select_related = ('owner', 'script', 'parent')
 
     fieldsets = (
@@ -124,7 +125,7 @@ class OcrModelDocumentAdmin(admin.ModelAdmin):
     list_display = ['document', 'ocr_model', 'trained_on', 'executed_on', 'created_at']
     list_filter = ['trained_on', 'executed_on', 'created_at']
     search_fields = ['document__name', 'ocr_model__name']
-    raw_id_fields = ['document', 'ocr_model']
+    autocomplete_fields = ['document', 'ocr_model']
     list_select_related = ['document', 'ocr_model']
 
 
@@ -132,7 +133,7 @@ class OcrModelRightAdmin(admin.ModelAdmin):
     list_display = ['ocr_model', 'user', 'group', 'created_at']
     list_filter = ['created_at']
     search_fields = ['ocr_model__name', 'user__username', 'group__name']
-    raw_id_fields = ['ocr_model', 'user', 'group']
+    autocomplete_fields = ['ocr_model', 'user', 'group']
     list_select_related = ['ocr_model', 'user', 'group']
 
 
