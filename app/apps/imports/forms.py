@@ -43,6 +43,8 @@ def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
         raise FileImportError(_("Failed to download the document pointed to by the given uri ({error}).").format(error=e))
     except requests.exceptions.RequestException:
         raise FileImportError(_("The document is unreachable, unreadable or the host timed out."))
+    except requests.exceptions.SSLError:
+        raise forms.ValidationError(_("The document cannot be downloaded, certificate verify failed."))
     except json.decoder.JSONDecodeError:
         raise FileImportError(_("The document pointed to by the given uri doesn't seem to be valid json."))
     except ParseError as e:
