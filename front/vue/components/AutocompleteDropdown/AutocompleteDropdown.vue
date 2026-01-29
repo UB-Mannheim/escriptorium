@@ -106,6 +106,7 @@ export default {
         return {
             searchText: "",
             showDropdown: false,
+            blurTimeout: null,
         };
     },
     computed: {
@@ -152,12 +153,17 @@ export default {
             this.showDropdown = true;
         },
         handleFocus() {
+            if (this.blurTimeout) {
+                clearTimeout(this.blurTimeout);
+                this.blurTimeout = null;
+            }
             this.showDropdown = true;
         },
         handleBlur() {
             // Delay to allow click on option
-            setTimeout(() => {
+            this.blurTimeout = setTimeout(() => {
                 this.showDropdown = false;
+                this.blurTimeout = null;
             }, 200);
         },
         handleKeyDown(e) {
@@ -167,6 +173,10 @@ export default {
             }
         },
         selectOption(option) {
+            if (this.blurTimeout) {
+                clearTimeout(this.blurTimeout);
+                this.blurTimeout = null;
+            }
             this.searchText = option.label;
             this.showDropdown = false;
             this.onChange({ target: { value: option.value } });
