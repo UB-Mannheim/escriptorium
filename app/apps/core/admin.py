@@ -42,11 +42,13 @@ class DocumentTagInline(admin.TabularInline):
 
 class ProjectAdmin(admin.ModelAdmin):
     list_display = ['pk', 'name']
+    search_fields = ['name']
     inlines = (TagInline,)
 
 
 class DocumentAdmin(admin.ModelAdmin):
     list_display = ['pk', 'name', 'owner', 'project']
+    search_fields = ['name', 'owner__username', 'project__name']
     inlines = (MetadataInline, DocumentTagInline)
 
 
@@ -74,6 +76,7 @@ class ScriptAdmin(admin.ModelAdmin):
 
 class OcrModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'job', 'owner', 'script', 'training', 'parent', 'public']
+    search_fields = ['name', 'owner__username']
     readonly_fields = ['documents_link', 'rights_link', 'finetuned_models_link']
     raw_id_fields = ('parent', 'owner')
     list_select_related = ('owner', 'script', 'parent')
