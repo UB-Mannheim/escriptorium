@@ -19,10 +19,10 @@
                 color="secondary"
                 message="Check accuracy of segmentation prior to transcribing."
             />
-            <DropdownField
+            <AutocompleteField
                 label="Model"
                 :disabled="disabled || !models"
-                :options="modelOptions"
+                :option-groups="modelOptionGroups"
                 :on-change="handleModelChange"
                 required
             />
@@ -55,6 +55,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import AutocompleteField from "../AutocompleteDropdown/AutocompleteField.vue";
 import DropdownField from "../Dropdown/DropdownField.vue";
 import EscrAlert from "../Alert/Alert.vue";
 import EscrButton from "../Button/Button.vue";
@@ -66,6 +67,7 @@ import "../Common/Form.css";
 export default {
     name: "EscrTranscribeModal",
     components: {
+        AutocompleteField,
         DropdownField,
         EscrAlert,
         EscrButton,
@@ -125,14 +127,42 @@ export default {
             return !this.layerName || !this.model;
         },
         /**
-         * convert models to options for select element
+         * Group models into "Your Models", "Shared Models", and "Public Models"
          */
-        modelOptions() {
-            return this.models.map((model) => ({
-                label: model.name,
-                value: model.pk.toString(),
-                selected: this.model.toString() === model.pk.toString(),
-            }));
+        modelOptionGroups() {
+            const yourModels = [];
+            const sharedModels = [];
+            const publicModels = [];
+
+            this.models.forEach((model) => {
+                const option = {
+                    label: model.name,
+                    value: model.pk.toString(),
+                    selected: this.model.toString() === model.pk.toString(),
+                };
+
+                if (model.rights === "owner") {
+                    yourModels.push(option);
+                } else if (model.rights === "public") {
+                    publicModels.push(option);
+                } else {
+                    // model.rights === "user" (shared)
+                    sharedModels.push(option);
+                }
+            });
+
+            const groups = [];
+            if (yourModels.length > 0) {
+                groups.push({ label: "Your Models", options: yourModels });
+            }
+            if (sharedModels.length > 0) {
+                groups.push({ label: "Shared Models", options: sharedModels });
+            }
+            if (publicModels.length > 0) {
+                groups.push({ label: "Public Models", options: publicModels });
+            }
+
+            return groups;
         },
     },
     methods: {

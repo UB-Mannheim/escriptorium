@@ -15,10 +15,10 @@
             </EscrButton>
         </template>
         <template #modal-content>
-            <DropdownField
+            <AutocompleteField
                 label="Model"
                 :disabled="disabled || !models"
-                :options="modelOptions"
+                :option-groups="modelOptionGroups"
                 :on-change="handleModelChange"
                 required
             />
@@ -68,6 +68,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import AutocompleteField from "../AutocompleteDropdown/AutocompleteField.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
 import XIcon from "../Icons/XIcon/XIcon.vue";
@@ -80,6 +81,7 @@ export default {
     name: "EscrSegmentModal",
     components: {
         ArrayField,
+        AutocompleteField,
         DropdownField,
         EscrButton,
         EscrModal,
@@ -156,20 +158,50 @@ export default {
             ];
         },
         /**
-         * convert models to options for select element
+         * Group models into "Default", "Your Models", "Shared Models", and "Public Models"
          */
-        modelOptions() {
-            const defaultModel = [{
+        modelOptionGroups() {
+            const defaultModel = {
                 label: "Default Segmentation Model",
                 value: null,
                 selected: !this.model,
-            }];
-            const otherModels = this.models.map((model) => ({
-                label: model.name,
-                value: model.pk,
-                selected: this.model.toString() === model.pk.toString(),
-            }));
-            return defaultModel.concat(otherModels);
+            };
+
+            const yourModels = [];
+            const sharedModels = [];
+            const publicModels = [];
+
+            this.models.forEach((model) => {
+                const option = {
+                    label: model.name,
+                    value: model.pk,
+                    selected: this.model.toString() === model.pk.toString(),
+                };
+
+                if (model.rights === "owner") {
+                    yourModels.push(option);
+                } else if (model.rights === "public") {
+                    publicModels.push(option);
+                } else {
+                    // model.rights === "user" (shared)
+                    sharedModels.push(option);
+                }
+            });
+
+            const groups = [
+                { label: null, options: [defaultModel] },
+            ];
+            if (yourModels.length > 0) {
+                groups.push({ label: "Your Models", options: yourModels });
+            }
+            if (sharedModels.length > 0) {
+                groups.push({ label: "Shared Models", options: sharedModels });
+            }
+            if (publicModels.length > 0) {
+                groups.push({ label: "Public Models", options: publicModels });
+            }
+
+            return groups;
         },
         /**
          * collect text direction options for select element
