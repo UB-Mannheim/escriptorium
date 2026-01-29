@@ -6,7 +6,6 @@ hostname=$(hostname)
 # echo basedir=$basedir, hostname=$hostname, HOSTNAME=$HOSTNAME
 
 export DJANGO_SETTINGS_MODULE=escriptorium.local_settings
-export ESC_LANGUAGES="de,en,es,fr"
 export LANG=C.UTF-8
 
 if [ "$HOSTNAME" = "ocr-01" ]; then
