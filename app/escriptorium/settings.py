@@ -37,14 +37,14 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'a-beautiful-snowflake')
 
 # SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', False) == 'True'  # should be done by  nginx
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-USE_X_FORWARDED_HOST = os.getenv('USE_X_FORWARDED_HOST', False) == 'True'
+USE_X_FORWARDED_HOST = os.getenv('USE_X_FORWARDED_HOST', 'False').lower() == 'true'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
-CUSTOM_HOME = os.getenv('CUSTOM_HOME', False) == 'True'
+CUSTOM_HOME = os.getenv('CUSTOM_HOME', 'False').lower() == 'true'
 
-CUSTOM_CONTRIBUTORS = os.getenv('CUSTOM_CONTRIBUTORS', False) == 'True'
+CUSTOM_CONTRIBUTORS = os.getenv('CUSTOM_CONTRIBUTORS', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = ['*']
 

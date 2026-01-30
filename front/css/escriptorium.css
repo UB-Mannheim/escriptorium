@@ -1195,6 +1195,14 @@ body.homepage main:has(.escr-vue-enabled) .list-group-item {
     color:            var(--text1)       !important;
 }
 
+/* models list page */
+body.models main:has(.escr-vue-enabled) .jumbotron {
+    background-color: var(--background1) !important;
+    color: var(--text1) !important;
+    border-radius: 15px;
+    margin-top: 1rem;
+}
+
 /* search page */
 body.search main:has(.escr-vue-enabled) .text-success {
     color: var(--primary-dark) !important;

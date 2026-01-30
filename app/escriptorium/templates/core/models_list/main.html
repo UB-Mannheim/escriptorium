@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% block bodyclass %}models{% endblock %}
 
 {% block body %}
 {% if MODELS_VERSION_RETENTION %}
-<div class="jumbotron text-center bg-light">
+<div class="jumbotron text-center">
   <p class="lead">
     Please be aware that the epoch versions of the models will only be available for {{ MODELS_VERSION_RETENTION }} days.
   </p>

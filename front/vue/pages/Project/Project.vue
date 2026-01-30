@@ -50,6 +50,7 @@
                                 :disabled="loading"
                                 :tags="documentTags"
                                 :on-filter="onFilterDocuments"
+                                search-placeholder="Search documents..."
                             />
                             <EscrButton
                                 label="Create New"

@@ -1,0 +1,94 @@
+.escr-autocomplete-dropdown {
+    position: relative;
+    max-width: 100%;
+}
+
+/* when dropdown is open to push content down */
+.escr-autocomplete-dropdown:has(.escr-autocomplete-options) {
+    margin-bottom: 310px;
+}
+
+.escr-autocomplete-dropdown input {
+    padding: 6px 36px 6px 15px;
+    border: none;
+    border-radius: 4px;
+    min-height: 32px;
+    background-color: var(--background);
+    font-family: "Noto Sans";
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    cursor: text;
+    color: var(--text1);
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+}
+
+.escr-autocomplete-dropdown input:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.escr-autocomplete-dropdown input:disabled {
+    cursor: default;
+    color: var(--text2);
+}
+
+.escr-autocomplete-dropdown svg {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    fill: var(--text1);
+    pointer-events: none;
+}
+
+.escr-autocomplete-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: var(--background);
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.escr-autocomplete-group-label {
+    padding: 8px 15px;
+    font-family: "Noto Sans";
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text2);
+    background-color: var(--background);
+}
+
+.escr-autocomplete-option {
+    padding: 6px 15px 6px 30px;
+    font-family: "Noto Sans";
+    font-size: 14px;
+    color: var(--text1);
+    cursor: pointer;
+    background-color: var(--background);
+}
+
+.escr-autocomplete-option:hover {
+    background-color: var(--primary);
+    color: var(--background);
+}
+
+.escr-autocomplete-option--selected {
+    font-weight: 500;
+}
+
+.escr-autocomplete-no-results {
+    padding: 12px 15px;
+    text-align: center;
+    color: var(--text2);
+    font-family: "Noto Sans";
+    font-size: 14px;
+    font-style: italic;
+    background-color: var(--background);
+}

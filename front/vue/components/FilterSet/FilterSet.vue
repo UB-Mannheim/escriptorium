@@ -1,6 +1,14 @@
 <template>
     <div class="escr-filter-set">
         <span>Filter by:</span>
+        <SearchInput
+            :value="nameFilter"
+            :placeholder="searchPlaceholder"
+            :disabled="disabled"
+            :on-input="handleNameInput"
+            :on-clear="clearNameFilter"
+            :on-enter="onFilter"
+        />
         <VMenu
             :delay="{ show: 0, hide: 100 }"
             :triggers="[]"
@@ -38,13 +46,14 @@
 import { Menu as VMenu } from "floating-vue";
 import { mapActions, mapGetters, mapState } from "vuex";
 import FilterButton from "../FilterButton/FilterButton.vue";
+import SearchInput from "../SearchInput/SearchInput.vue";
 import TagFilter from "../TagFilter/TagFilter.vue";
 import TagIcon from "../Icons/TagIcon/TagIcon.vue";
 import "./FilterSet.css";
 
 export default {
     name: "EscrFilterSet",
-    components: { TagFilter, TagIcon, FilterButton, VMenu },
+    components: { SearchInput, TagFilter, TagIcon, FilterButton, VMenu },
     props: {
         /**
          * Boolean indicating if the filter buttons should be disabled, e.g. during loading.
@@ -67,10 +76,18 @@ export default {
             type: Function,
             default: () => {},
         },
+        /**
+         * Placeholder text for the search input.
+         */
+        searchPlaceholder: {
+            type: String,
+            default: "Search by name...",
+        },
     },
     data() {
         return {
             openFilter: undefined,
+            debounceTimer: null,
         };
     },
     computed: {
@@ -78,6 +95,7 @@ export default {
             filters: (state) => state.filter.filters,
         }),
         ...mapGetters("filter", [
+            "nameFilter",
             "tagFilterActive",
             "tagCount",
             "tagFilter",
@@ -93,6 +111,33 @@ export default {
         clearFilter(type) {
             this.openFilter = undefined;
             this.removeFilter(type);
+            this.onFilter();
+        },
+        /**
+         * Handle name input changes with debouncing
+         */
+        handleNameInput(value) {
+            this.addFilter({
+                type: "name",
+                value: value || "",
+            });
+
+            // Debounce the filter callback
+            if (this.debounceTimer) {
+                clearTimeout(this.debounceTimer);
+            }
+            this.debounceTimer = setTimeout(() => {
+                this.onFilter();
+            }, 500);
+        },
+        /**
+         * Clear the name filter
+         */
+        clearNameFilter() {
+            if (this.debounceTimer) {
+                clearTimeout(this.debounceTimer);
+            }
+            this.removeFilter("name");
             this.onFilter();
         },
         /**
@@ -124,6 +169,11 @@ export default {
             "addFilter",
             "removeFilter",
         ]),
+    },
+    beforeUnmount() {
+        if (this.debounceTimer) {
+            clearTimeout(this.debounceTimer);
+        }
     },
 };
 </script>

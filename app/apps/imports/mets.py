@@ -123,7 +123,7 @@ class METSProcessor:
         if not page_dmd_id:
             return metadata
 
-        mods_sec = self.mets_xml.find(f'mets:dmdSec[@ID="{page_dmd_id}"]/mets:mdWrap/mets:xmlData/mods:mods', namespaces=self.NAMESPACES)
+        mods_sec = self.mets_xml.find(f'mets:dmdSec[@ID="{page_dmd_id}"]/mets:mdWrap/mets:xmlData/mods:mods', namespaces=self.NAMESPACES)  # noqa: E231
         if mods_sec is None:
             return metadata
 
@@ -167,7 +167,7 @@ class METSProcessor:
         try:
             file = self.retrieve_in_archive(href)
         except KeyError as e:
-            self.report.append(f"File not found in the provided archive: {e}", logger_fct=logger.error)
+            self.report.append(f"File not found in the provided archive: {e}", logger_fct=logger.error)  # noqa: E713
             return mets_page_image, mets_page_sources, layers_count
 
         try:

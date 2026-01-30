@@ -137,6 +137,17 @@ class TagFilter(Filter):
 class TagFilterSet(FilterSet):
     tags = TagFilter()
 
+    def filter_queryset(self, queryset):
+        # Apply parent filters first (tags)
+        queryset = super().filter_queryset(queryset)
+
+        # Add case-insensitive name search if 'name' parameter exists
+        name = self.request.GET.get('name')
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+
+        return queryset
+
 
 class DocumentTagFilterSet(TagFilterSet):
     class Meta:
@@ -255,7 +266,7 @@ class ProjectViewSet(ModelViewSet):
                 project.shared_with_groups.add(target)
         elif 'user' in request.data:
             try:
-                target = User.objects.get(username=request.data['user'])
+                target = User.objects.get(username__iexact=request.data['user'])
             except User.DoesNotExist:
                 return Response({'error': 'invalid username.'},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -418,7 +429,7 @@ class DocumentViewSet(ModelViewSet):
                 continue
 
             try:
-                send_event('document', document.pk, f'{task_name}:error', {'reason': _('Canceled.')})
+                send_event('document', document.pk, f'{task_name}: error', {'reason': _('Canceled.')})
             except Exception as e:
                 # don't crash on websocket error
                 logger.exception(e)
@@ -680,7 +691,7 @@ class DocumentViewSet(ModelViewSet):
                 document.shared_with_groups.add(target)
         elif 'user' in request.data:
             try:
-                target = User.objects.get(username=request.data['user'])
+                target = User.objects.get(username__iexact=request.data['user'])
             except User.DoesNotExist:
                 return Response({'error': 'invalid username.'},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -1319,7 +1330,8 @@ class OcrModelViewSet(ModelViewSet):
         return (super().get_queryset()
                 .filter(Q(owner=self.request.user)
                         | Q(ocr_model_rights__user=self.request.user)
-                        | Q(ocr_model_rights__group__user=self.request.user))
+                        | Q(ocr_model_rights__group__user=self.request.user)
+                        | Q(public=True))
                 .distinct()
                 )
 

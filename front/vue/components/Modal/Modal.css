@@ -26,6 +26,16 @@
     filter: drop-shadow(2px 4px 4px var(--drop-shadow))
         drop-shadow(-1px -1px 2px var(--drop-shadow));
 }
+
+/* styles for transcribe, segment, and train modals */
+.escr-transcribe-modal .escr-modal,
+.escr-segment-modal .escr-modal,
+.escr-train-modal--Recognition .escr-modal,
+.escr-train-modal--Segmentation .escr-modal {
+    max-height: calc(100vh - 100px);
+    overflow: visible;
+}
+
 .escr-modal .escr-modal-content {
     overflow: auto;
     padding-right: 16px;

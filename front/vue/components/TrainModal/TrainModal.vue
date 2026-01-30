@@ -48,13 +48,13 @@
                 :errors="dirty ? errors.modelName : []"
                 required
             />
-            <DropdownField
+            <AutocompleteField
                 label="Base Model (optional)"
                 help-text="You may select an existing model to fine-tune. If left unselected,
                 the model will be trained from scratch."
                 :disabled="disabled"
                 :on-change="(e) => handleTextFieldInput('model', e.target.value)"
-                :options="modelOptions"
+                :option-groups="modelOptionGroups"
                 :errors="dirty ? errors.model : []"
             />
             <label class="escr-form-field model-override-label">
@@ -86,6 +86,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import AutocompleteField from "../AutocompleteDropdown/AutocompleteField.vue";
 import DropdownField from "../Dropdown/DropdownField.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
@@ -97,6 +98,7 @@ import "./TrainModal.css";
 export default {
     name: "EscrTrainModal",
     components: {
+        AutocompleteField,
         DropdownField,
         EscrButton,
         EscrModal,
@@ -161,12 +163,40 @@ export default {
                 return "Segmentation";
             }
         },
-        modelOptions() {
-            return this.models.map((model) => ({
-                label: model.name,
-                value: model.pk,
-                selected: this.model.toString() === model.pk.toString(),
-            }));
+        modelOptionGroups() {
+            const yourModels = [];
+            const sharedModels = [];
+            const publicModels = [];
+
+            this.models.forEach((model) => {
+                const option = {
+                    label: model.name,
+                    value: model.pk,
+                    selected: this.model.toString() === model.pk.toString(),
+                };
+
+                if (model.rights === "owner") {
+                    yourModels.push(option);
+                } else if (model.rights === "public") {
+                    publicModels.push(option);
+                } else {
+                    // model.rights === "user" (shared)
+                    sharedModels.push(option);
+                }
+            });
+
+            const groups = [];
+            if (yourModels.length > 0) {
+                groups.push({ label: "Your Models", options: yourModels });
+            }
+            if (sharedModels.length > 0) {
+                groups.push({ label: "Shared Models", options: sharedModels });
+            }
+            if (publicModels.length > 0) {
+                groups.push({ label: "Public Models", options: publicModels });
+            }
+
+            return groups;
         },
         transcriptionOptions() {
             return this.transcriptions.map((trans) => ({

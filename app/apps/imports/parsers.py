@@ -559,6 +559,7 @@ class XMLParser(ParserDocument):
         if self.schema_location in self.ACCEPTED_SCHEMAS:
             try:
                 response = requests.get(self.schema_location)
+                response.raise_for_status()
                 content = response.content
                 schema_root = etree.XML(content)
             except requests.exceptions.RequestException as e:
@@ -1110,7 +1111,10 @@ class IIIFManifestParser(ParserDocument):
             current_retry = current_retry + 1
             time.sleep(0.1 * current_retry)  # avoid being throttled; add a little backoff
             try:
-                response = requests.get(url, stream=True, verify=False, timeout=10)
+                headers = {
+                    'User-Agent': 'eScriptorium'
+                }
+                response = requests.get(url, headers=headers, stream=True, verify=False, timeout=10)
                 response.raise_for_status()
                 return response
 

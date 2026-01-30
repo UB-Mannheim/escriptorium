@@ -4,7 +4,7 @@ stages:
   - deploy
 
 lint:
-  image: python:3.8
+  image: python:3.12
   stage: test
 
   rules:
@@ -21,7 +21,7 @@ lint:
 
 tests:
   stage: test
-  image: registry.gitlab.com/scripta/escriptorium/base:dj-solo
+  image: registry.gitlab.com/scripta/escriptorium/base:kraken6
 
   # Skip tests for base tags since the tests are likely to fail if any api
   # of one of the modules changed
@@ -80,7 +80,7 @@ build:
 
 .docker-build:
   stage: build
-  image: docker:19.03.1
+  image: docker:24.0.7
   rules:
     # skip when building gitlab pages
     - if: '$LANDING == null'
@@ -88,10 +88,11 @@ build:
     - when: never
 
   services:
-    - docker:dind
+    - docker:24.0.7-dind
   variables:
     DOCKER_DRIVER: overlay2
-    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_HOST: tcp://docker:2376/
+    DOCKER_TLS_CERTDIR: "/certs"
 
 docker-build-app:
   extends: .docker-build
