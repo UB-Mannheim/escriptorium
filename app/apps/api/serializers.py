@@ -102,7 +102,7 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ('date_joined', 'last_login', 'is_staff', 'can_invite')
 
     def get_can_invite(self, user):
-        return user.has_perms(['user.can_invite'])
+        return user.has_perms(['users.can_invite'])
 
 
 class DetailedGroupSerializer(serializers.ModelSerializer):
