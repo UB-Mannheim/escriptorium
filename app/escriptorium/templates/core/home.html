@@ -85,7 +85,8 @@ html:not(.dark-mode) a img[src*="Light.png"] {
                     <p class="text-muted mb-3">{% trans "École Pratique des Hautes Études (EPHE)" %}</p>
                     <div class="d-flex justify-content-center">
                         <a href="https://www.ephe.psl.eu" class="pl-4" target="_blank">
-                            <img src="{% static "images/ephe.png" %}" alt="EPHE logo" height="100">
+                            <img src="{% static "images/ephe_Light.png" "%}" alt="EPHE logo" height="100" style="display: none;">
+                            <img src="{% static "images/ephe_Dark.png" "%}" alt="EPHE logo" height="100" style="display: none;">
                         </a>
                     </div>
                     <p class="text-muted mt-3">
@@ -119,6 +120,10 @@ html:not(.dark-mode) a img[src*="Light.png"] {
             </div>
 
             <div class="col-4">
+                {% if CUSTOM_CONTRIBUTORS %}
+                {% include "instance_contact.html" %}
+                {% endif %}
+
                 <h5>{% trans "Acknowledgements" %}</h5>
                     <ul class="list-unstyled">
                         <li><a href="{% url 'contributors' %}">{% trans "Contributors" %}</a></li>
