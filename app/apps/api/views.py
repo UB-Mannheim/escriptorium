@@ -137,6 +137,17 @@ class TagFilter(Filter):
 class TagFilterSet(FilterSet):
     tags = TagFilter()
 
+    def filter_queryset(self, queryset):
+        # Apply parent filters first (tags)
+        queryset = super().filter_queryset(queryset)
+
+        # Add case-insensitive name search if 'name' parameter exists
+        name = self.request.GET.get('name')
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+
+        return queryset
+
 
 class DocumentTagFilterSet(TagFilterSet):
     class Meta:

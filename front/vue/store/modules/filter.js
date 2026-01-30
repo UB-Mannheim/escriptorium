@@ -12,6 +12,13 @@ const state = () => ({
 
 const getters = {
     /**
+     * The current value of the name filter.
+     */
+    nameFilter: (state) => {
+        const nameFilterObj = state.filters.find((filter) => filter.type === "name");
+        return nameFilterObj?.value || "";
+    },
+    /**
      * Number of tags currently selected in the tag filter.
      */
     tagCount: (_, getters) => {

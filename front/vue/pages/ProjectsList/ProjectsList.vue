@@ -10,6 +10,7 @@
                             :disabled="loading"
                             :tags="tags"
                             :on-filter="async () => await fetchProjects()"
+                            search-placeholder="Search projects..."
                         />
                         <EscrButton
                             label="Create New"

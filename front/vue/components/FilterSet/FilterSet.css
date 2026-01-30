@@ -4,8 +4,9 @@
     flex-flow: row nowrap;
     align-items: center;
     position: relative;
+    gap: 16px;
 }
 /* spacing between filters */
 .escr-filter-set .escr-filter-button {
-    margin-left: 16px;
+    margin-left: 0;
 }
