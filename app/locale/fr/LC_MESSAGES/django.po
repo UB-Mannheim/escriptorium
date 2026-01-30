@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-08 16:55+0100\n"
+"POT-Creation-Date: 2026-01-29 17:33+0100\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -640,11 +640,11 @@ msgid "Failed to download the document pointed to by the given uri ({error})."
 msgstr ""
 
 #: apps/imports/forms.py
-msgid "The document cannot be downloaded, certificate verify failed."
+msgid "The document is unreachable, unreadable or the host timed out."
 msgstr ""
 
 #: apps/imports/forms.py
-msgid "The document is unreachable, unreadable or the host timed out."
+msgid "The document cannot be downloaded, certificate verify failed."
 msgstr ""
 
 #: apps/imports/forms.py
@@ -1131,19 +1131,19 @@ msgstr ""
 msgid "Inria Paris"
 msgstr ""
 
-#: escriptorium/settings.py
-msgid "English"
-msgstr "Anglais"
-
-#: escriptorium/settings.py
-msgid "French"
-msgstr ""
-
-#: escriptorium/settings.py
+#: escriptorium/local_settings.py escriptorium/settings.py
 msgid "German"
 msgstr "Allemand"
 
-#: escriptorium/settings.py
+#: escriptorium/local_settings.py escriptorium/settings.py
+msgid "English"
+msgstr "Anglais"
+
+#: escriptorium/local_settings.py escriptorium/settings.py
+msgid "French"
+msgstr ""
+
+#: escriptorium/local_settings.py escriptorium/settings.py
 msgid "Spanish"
 msgstr "Espagnol"
 
