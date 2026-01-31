@@ -3,6 +3,7 @@
 import os
 
 from django.utils.translation import gettext_lazy as _
+
 from escriptorium.settings import *
 
 DOMAIN = 'ocr-bw.bib.uni-mannheim.de'
