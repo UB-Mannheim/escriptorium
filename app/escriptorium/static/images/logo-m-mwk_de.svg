@@ -2,7 +2,7 @@
 <svg width="277px" height="42px" viewBox="0 0 277 42" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <title>logo-m-mwk</title>
     <g id="logo-m-mwk" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="BaWue_MWK_Logo_rgb_pos" transform="translate(1, 1)" fill="#2A2623" fill-rule="nonzero">
+        <g id="BaWue_MWK_Logo_rgb_pos" transform="translate(1, 1)" fill="currentColor" fill-rule="nonzero">
             <g id="MInisterien_in_Pfade" transform="translate(40.8616, 14.8326)">
                 <polygon id="Path" points="0 0.214500527 2.35837695 0.214500527 4.653675 7.04968387 6.93642341 0.214500527 9.29480036 0.214500527 9.29480036 9.04219435 7.71831396 9.04219435 7.71831396 2.39604385 5.52391884 9.04219435 3.78345061 9.04219435 1.57650585 2.39604385 1.57650585 9.04219435 1.94567899e-05 9.04219435 1.94567899e-05 0.214500527"></polygon>
                 <path d="M11.1487017,0 L12.826091,0 L12.826091,1.65203345 L11.1487017,1.65203345 L11.1487017,0 L11.1487017,0 Z M11.1739566,2.53476392 L12.8009917,2.53476392 L12.8009917,9.0422138 L11.1739566,9.0422138 L11.1739566,2.53476392 Z" id="Shape"></path>
