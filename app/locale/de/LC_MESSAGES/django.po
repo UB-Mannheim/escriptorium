@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-31 21:27+0100\n"
+"POT-Creation-Date: 2026-02-01 13:56+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -1143,6 +1143,120 @@ msgstr "Benutzer erfolgreich in das Team eingeladen."
 msgid "Message successfully sent."
 msgstr "Nachricht erfolgreich verschickt."
 
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Steering Committee"
+msgstr "Lenkungsausschuss"
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"The Steering Committee has met once a week since the project’s inception and "
+"serves primarily to coordinate the work of the different contributors and to "
+"make short-term and strategic decisions about the software, its design and "
+"implementation."
+msgstr ""
+"Der Lenkungsausschuss tagt seit Projektbeginn einmal pro Woche und dient in "
+"erster Linie dazu, die Arbeit der verschiedenen Mitwirkenden zu koordinieren "
+"und kurz- und langfristige strategische Entscheidungen über die Software, "
+"deren Design und Implementierung zu treffen."
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Founding Team"
+msgstr "Gründungsteam"
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"The ‘core’ team are the founding members of the eScriptorium project and "
+"have led its development and implementation since the beginning. The two "
+"developers have worked full-time on kraken and eScriptorium since the "
+"beginning, and the two co-directors have been primarily responsible for "
+"coordinating the development, contributions and funding applications."
+msgstr ""
+"Das Kernteam besteht aus den Gründungsmitgliedern des eScriptorium-Projekts "
+"und hat dessen Entwicklung und Implementierung seit Beginn geleitet. Die "
+"beiden Entwickler haben seit Beginn Vollzeit an kraken und eScriptorium "
+"gearbeitet, und die beiden Co-Direktoren waren hauptsächlich für die "
+"Koordination der Entwicklung, der Beiträge und der Förderanträge zuständig."
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Former Committee Members"
+msgstr "Ehemalige Ausschussmitglieder"
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Current & Former Intern Students"
+msgstr "Aktuelle und ehemalige Studierende"
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"The following have contributed as intern students (in alphabetical order):"
+msgstr ""
+"Die folgenden Personen haben als Studierende mitgewirkt (in alphabetischer "
+"Reihenfolge):"
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Contributors to Source Code"
+msgstr "Mitarbeitende am Quellcode"
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"Being Free and Open-Source software, the source code of eScriptorium has "
+"benefitted from many contributions, ranging from specific bug-fixes or the "
+"implementation of a given feature through to several years of full-time "
+"development. The following list is correct at the time of writing, in "
+"alphabetical order by last name, but more details and any updates can also "
+"be seen from the project GitLab repository."
+msgstr ""
+"Da eScriptorium eine freie Open-Source-Software ist, hat der Quellcode von "
+"vielen Beiträgen profitiert, die von der Behebung spezifischer Fehler bis "
+"hin zur Implementierung bestimmter Funktionen oder mehrjährigen "
+"Vollzeitentwicklungen reichen. Die folgende Liste ist zum Zeitpunkt der "
+"Erstellung aktuell und in alphabetischer Reihenfolge nach Nachnamen "
+"geordnet, weitere Details und aktuelle Informationen sind jedoch auch im "
+"Projekt-GitLab-Repository verfügbar."
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid "Other Contributors"
+msgstr "Weitere Mitwirkende"
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"We have done our best to note the contributors to the eScriptorium software, "
+"but if you or anyone you know is missing then do please let us know."
+msgstr ""
+"Wir haben unser Bestes getan, um die Personen aufzulisten, die zu der "
+"eScriptorium-Software beigetragen haben, aber wenn Sie oder jemand, den Sie "
+"kennen, fehlt, lassen Sie es uns bitte wissen."
+
+#: contributors/contributors_list.html
+#: contributors_example/contributors_list.html
+msgid ""
+"We are also very grateful for other types of contribution that is not "
+"specifically related to the software. We cannot list all of these here, but "
+"they include the publication of open datasets (such as those on HTR-United), "
+"open models (particularly those on the kraken open model repository), "
+"tickets reporting bugs and improvements, writing documentation, organising "
+"training sessions, producing plugins and other tools to use with kraken and "
+"eScriptorium, and so on."
+msgstr ""
+"Wir sind auch sehr dankbar für andere Arten von Beiträgen, die nicht direkt "
+"mit der Software zusammenhängen. Wir können diese hier nicht alle auflisten, "
+"aber sie umfassen die Veröffentlichung offener Datensätze (wie z. B. auf HTR-"
+"United), offene Modelle (insbesondere in dem kraken Open-Source-Modell-"
+"Repository), das Melden von Fehlern und Verbesserungsvorschlägen, das "
+"Verfassen von Dokumentationen, die Organisation von Schulungen, die "
+"Erstellung von Plugins und anderen Tools zur Verwendung mit kraken und "
+"eScriptorium usw."
+
 #: contributors/credits_list.html contributors_example/credits_list.html
 msgid "Institutions & Funding"
 msgstr "Institutionen & Förderung"
@@ -1156,13 +1270,9 @@ msgstr ""
 "Neben der Unterstützung durch AOROC und EPHE hat eScriptorium von einer "
 "Vielzahl von Institutionen und Förderern profitiert, darunter:"
 
-#: contributors/credits_list.html
-msgid "Funded salaries of two developers for XX years, as well as …"
-msgstr "Finanzierung der Gehälter von zwei Entwicklern für XX Jahre sowie …"
-
-#: contributors/credits_list.html
-msgid "Funded …???"
-msgstr "Finanzierung ...???"
+#: contributors/credits_list.html contributors_example/credits_list.html
+msgid "Funded salaries of two developers over multiple years…"
+msgstr "Finanzierung der Gehälter von zwei Entwicklern über mehrere Jahre..."
 
 #: contributors/credits_list.html contributors_example/credits_list.html
 msgid "Funded the acquisition of HPC hardware and servers…"
@@ -1173,12 +1283,12 @@ msgid "Funded the development of the virtual keyboard with Teklia."
 msgstr ""
 "Finanzierung der Entwicklung der virtuellen Tastatur zusammen mit Teklia."
 
-#: contributors/credits_list.html
+#: contributors/credits_list.html contributors_example/credits_list.html
 msgid ""
-"Funded salaries of two developers for XX years, as well as sustaining the "
-"HPC…"
+"Funded salaries of two developers over multiple years, as well as sustaining "
+"the HPC…"
 msgstr ""
-"Finanzierung der Gehälter von zwei Entwicklern für XX Jahre sowie die "
+"Finanzierung der Gehälter von zwei Entwicklern über mehrere Jahre sowie die "
 "Aufrechterhaltung der HPC..."
 
 #: contributors/credits_list.html contributors_example/credits_list.html
@@ -1193,10 +1303,6 @@ msgstr "Finanzierung der UI-Entwicklung..."
 #: contributors/credits_list.html contributors_example/credits_list.html
 msgid "Funded SLURM-based task execution…"
 msgstr "Finanzierung der SLURM-basierten Task-Ausführung..."
-
-#: contributors/credits_list.html
-msgid "Funded salaries of two developers for XX years…"
-msgstr "Finanzierung der Gehälter von zwei Entwicklern für XX Jahre..."
 
 #: contributors/credits_list.html contributors_example/credits_list.html
 msgid "Other Contributions"
@@ -1221,18 +1327,6 @@ msgstr "Dieses Angebot wird bereitgestellt und betrieben von"
 #: contributors/service_hosting.html
 msgid "Mannheim University Library"
 msgstr "Universitätsbibliothek Mannheim"
-
-#: contributors_example/credits_list.html
-msgid "Funded salaries of two developers over multiple years…"
-msgstr "Finanzierung der Gehälter von zwei Entwicklern über mehrere Jahre..."
-
-#: contributors_example/credits_list.html
-msgid ""
-"Funded salaries of two developers over multiple years, as well as sustaining "
-"the HPC…"
-msgstr ""
-"Finanzierung der Gehälter von zwei Entwicklern über mehrere Jahre sowie die "
-"Aufrechterhaltung der HPC..."
 
 #: contributors_example/service_hosting.html
 msgid "Inria Paris"
@@ -1894,7 +1988,9 @@ msgstr "Migriere"
 msgid ""
 "Please be aware that the epoch versions of the models will only be available "
 "for %(MODELS_VERSION_RETENTION)s days."
-msgstr "Bitte beachten Sie, dass die \"Epoch\"-Versionen der Modelle nur für %(MODELS_VERSION_RETENTION)s Tage verfügbar sind."
+msgstr ""
+"Bitte beachten Sie, dass die \"Epoch\"-Versionen der Modelle nur für "
+"%(MODELS_VERSION_RETENTION)s Tage verfügbar sind."
 
 #: escriptorium/templates/core/models_list/main.html
 #: escriptorium/templates/core/ocrmodel_form.html
