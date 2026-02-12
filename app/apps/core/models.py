@@ -617,7 +617,7 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
         res = super().save(*args, **kwargs)
         if created:
             Transcription.objects.get_or_create(
-                document=self, name=_(Transcription.DEFAULT_NAME)
+                document=self, name=Transcription.DEFAULT_NAME
             )
             self.valid_block_types.through.objects.bulk_create(
                 [Document.valid_block_types.through(document_id=self.id, blocktype_id=type_.id)
