@@ -1943,6 +1943,21 @@ def models_path(instance, filename):
     return "models/%s/%s%s" % (hash, slugify(fn), ext)
 
 
+class OcrModelQuerySet(models.QuerySet):
+    """Queryset subclass for reusable user-permission filtering logic
+    on OcrModel instances"""
+    def for_user_read(self, user):
+        if not user:
+            return self.filter(public=True)
+        return self.filter(
+            Q(public=True)
+            | Q(owner=user)
+            | Q(ocr_model_rights__user=user)
+            | Q(ocr_model_rights__group__user=user)
+        ).distinct()  # prevent duplicates when model is shared with groups
+                      # with multiple users
+
+
 class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     name = models.CharField(max_length=256)
     file = models.FileField(
@@ -1983,6 +1998,8 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     public = models.BooleanField(default=False)
 
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
+
+    objects = OcrModelQuerySet.as_manager()
 
     class Meta:
         ordering = ["-version_updated_at"]

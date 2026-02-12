@@ -945,14 +945,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
-        ).filter(
-            # Note: Only an owner should be able to train on top of an existing model
-            # if the model is public, the user can only clone it (override=False)
-            Q(public=True)
-            | Q(owner=self.user)
-            | Q(ocr_model_rights__user=self.user)
-            | Q(ocr_model_rights__group__user=self.user)
-        )
+        ).for_user_read(self.user)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate_parts(self, data):
@@ -967,6 +960,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             raise serializers.ValidationError(
                 _("Either use model_name to create a new model, add a model pk to retrain an existing one, or both to create a new model from an existing one."))
 
+        # Note: Only an owner should be able to train on top of an existing model
+        # if the model is public, the user can only clone it (override=False)
         model = data.get('model')
         if not data.get('model_name') and model.owner != self.user and data.get('override'):
             raise serializers.ValidationError(
@@ -1153,14 +1148,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
-        ).filter(
-            # Note: Only an owner should be able to train on top of an existing model
-            # if the model is public, the user can only clone it (override=False)
-            Q(public=True)
-            | Q(owner=self.user)
-            | Q(ocr_model_rights__user=self.user)
-            | Q(ocr_model_rights__group__user=self.user)
-        ).distinct()  # prevent duplicates when model is shared with groups with multiple users
+        ).for_user_read(self.user)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate(self, data):
@@ -1170,6 +1158,8 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             raise serializers.ValidationError(
                 _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
 
+        # Note: Only an owner should be able to train on top of an existing model
+        # if the model is public, the user can only clone it (override=False)
         model = data.get('model')
         if not data.get('model_name') and model.owner != self.user and data.get('override'):
             raise serializers.ValidationError(

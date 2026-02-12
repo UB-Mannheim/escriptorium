@@ -1327,13 +1327,7 @@ class OcrModelViewSet(ModelViewSet):
     serializer_class = OcrModelSerializer
 
     def get_queryset(self):
-        return (super().get_queryset()
-                .filter(Q(owner=self.request.user)
-                        | Q(ocr_model_rights__user=self.request.user)
-                        | Q(ocr_model_rights__group__user=self.request.user)
-                        | Q(public=True))
-                .distinct()
-                )
+        return super().get_queryset().for_user_read(self.request.user)
 
     @action(detail=True, methods=['post'])
     def cancel_training(self, request, pk=None):
