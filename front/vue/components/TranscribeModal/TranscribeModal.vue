@@ -179,7 +179,7 @@ export default {
                 selected: this.layerName === transcription.name,
             }));
 
-            return options.length > 0 
+            return options.length > 0
                 ? [{ label: "Existing Layers", options }]
                 : [];
         },

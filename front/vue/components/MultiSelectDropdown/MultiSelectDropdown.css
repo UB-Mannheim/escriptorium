@@ -1,0 +1,188 @@
+.escr-multiselect-dropdown {
+    position: relative;
+    max-width: 100%;
+}
+
+.escr-multiselect-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.escr-multiselect-action-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border: 1px solid var(--primary);
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--primary);
+    font-family: "Noto Sans";
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.escr-multiselect-action-btn:hover:not(:disabled) {
+    background-color: var(--primary);
+    color: var(--background);
+}
+
+.escr-multiselect-action-btn:active {
+    transform: scale(0.98);
+}
+
+.escr-multiselect-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.escr-multiselect-trigger {
+    padding: 6px 36px 6px 15px;
+    border: none;
+    border-radius: 4px;
+    min-height: 32px;
+    background-color: var(--background);
+    font-family: "Noto Sans";
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text1);
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+}
+
+.escr-multiselect-trigger:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.escr-multiselect-trigger--disabled {
+    cursor: default;
+    color: var(--text2);
+    opacity: 0.6;
+}
+
+.escr-multiselect-trigger--open {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.escr-multiselect-trigger svg {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    fill: var(--text1);
+    pointer-events: none;
+    transition: transform 0.2s ease;
+}
+
+.escr-multiselect-trigger--open svg {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.escr-multiselect-trigger-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.escr-multiselect-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: var(--background);
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.escr-multiselect-search {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-light, #e5e7eb);
+}
+
+.escr-multiselect-search-input {
+    width: 100%;
+    padding: 6px 12px;
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: 4px;
+    font-family: "Noto Sans";
+    font-size: 14px;
+    color: var(--text1);
+    background-color: var(--background);
+}
+
+.escr-multiselect-search-input:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+    border-color: transparent;
+}
+
+.escr-multiselect-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px 0;
+}
+
+.escr-multiselect-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    font-family: "Noto Sans";
+    font-size: 14px;
+    color: var(--text1);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.escr-multiselect-option:hover {
+    background-color: var(--hover-background, rgba(0, 0, 0, 0.05));
+}
+
+.escr-multiselect-option input[type="checkbox"] {
+    cursor: pointer;
+    margin: 0;
+}
+
+.escr-multiselect-option span {
+    flex: 1;
+}
+
+.escr-multiselect-no-results {
+    padding: 12px 15px;
+    text-align: center;
+    color: var(--text2);
+    font-family: "Noto Sans";
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Custom scrollbar styling */
+.escr-multiselect-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.escr-multiselect-list::-webkit-scrollbar-track {
+    background: var(--background);
+}
+
+.escr-multiselect-list::-webkit-scrollbar-thumb {
+    background: var(--border-light, #e5e7eb);
+    border-radius: 4px;
+}
+
+.escr-multiselect-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text2);
+}

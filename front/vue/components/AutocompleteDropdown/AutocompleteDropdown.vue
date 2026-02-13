@@ -1,5 +1,5 @@
 <template>
-    <div 
+    <div
         class="escr-autocomplete-dropdown"
         :style="{ marginBottom: dropdownSpacing }"
     >
@@ -181,7 +181,7 @@ export default {
             }
 
             let height = 0;
-            
+
             if (this.filteredOptions.length === 0) {
                 height = 48;
             } else {
