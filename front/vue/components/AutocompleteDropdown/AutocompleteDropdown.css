@@ -87,3 +87,29 @@
     font-style: italic;
     background-color: var(--background);
 }
+
+.escr-autocomplete-new-option {
+    padding: 10px 15px;
+    font-family: "Noto Sans";
+    font-size: 14px;
+    color: var(--primary);
+    background-color: rgba(var(--primary-rgb, 59, 130, 246), 0.05);
+    border-left: 3px solid var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.escr-autocomplete-new-option--clickable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.escr-autocomplete-new-option--clickable:hover {
+    background-color: rgba(var(--primary-rgb, 59, 130, 246), 0.1);
+}
+
+.escr-new-option-icon {
+    font-size: 16px;
+    line-height: 1;
+}

@@ -22,12 +22,27 @@
             class="escr-autocomplete-options"
         >
             <div
-                v-if="filteredOptions.length === 0"
+                v-if="filteredOptions.length === 0 && searchText && allowCustomValue"
+                class="escr-autocomplete-new-option"
+            >
+                <span class="escr-new-option-icon"></span>
+                <span>Create new layer: <strong>{{ searchText }}</strong></span>
+            </div>
+            <div
+                v-else-if="filteredOptions.length === 0"
                 class="escr-autocomplete-no-results"
             >
                 No results found
             </div>
             <template v-else>
+                <div
+                    v-if="allowCustomValue && searchText && !hasExactMatch"
+                    class="escr-autocomplete-new-option escr-autocomplete-new-option--clickable"
+                    @mousedown.prevent="selectCustomValue"
+                >
+                    <span class="escr-new-option-icon">✨</span>
+                    <span>Create new layer: <strong>{{ searchText }}</strong></span>
+                </div>
                 <div
                     v-for="(group, index) in filteredOptions"
                     :key="`group-${index}`"
@@ -149,6 +164,15 @@ export default {
             return null;
         },
         /**
+         * Check if search text exactly matches any option
+         */
+        hasExactMatch() {
+            const search = this.searchText.toLowerCase();
+            return this.optionGroups.some(group =>
+                group.options.some(option => option.label.toLowerCase() === search)
+            );
+        },
+        /**
          * calculate dynamic spacing for dropdown when open
          */
         dropdownSpacing() {
@@ -161,6 +185,9 @@ export default {
             if (this.filteredOptions.length === 0) {
                 height = 48;
             } else {
+                if (this.allowCustomValue && this.searchText && !this.hasExactMatch) {
+                    height += 38;
+                }
                 this.filteredOptions.forEach(group => {
                     if (group.label) {
                         height += 32;
@@ -221,6 +248,14 @@ export default {
             this.searchText = option.label;
             this.showDropdown = false;
             this.onChange({ target: { value: option.value } });
+        },
+        selectCustomValue() {
+            if (this.blurTimeout) {
+                clearTimeout(this.blurTimeout);
+                this.blurTimeout = null;
+            }
+            this.showDropdown = false;
+            this.onChange({ target: { value: this.searchText } });
         },
     },
 };
