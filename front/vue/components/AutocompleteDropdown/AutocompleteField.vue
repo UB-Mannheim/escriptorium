@@ -27,6 +27,7 @@
             :option-groups="optionGroups"
             :on-change="onChange"
             :placeholder="placeholder"
+            :allow-custom-value="allowCustomValue"
         />
         <span
             v-if="helpText"
@@ -92,6 +93,13 @@ export default {
         optionGroups: {
             type: Array,
             required: true,
+        },
+        /**
+         * Allow user to enter custom values not in the list.
+         */
+        allowCustomValue: {
+            type: Boolean,
+            default: false,
         },
         /**
          * Placeholder text

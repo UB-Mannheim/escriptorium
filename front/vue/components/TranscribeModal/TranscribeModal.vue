@@ -26,14 +26,14 @@
                 :on-change="handleModelChange"
                 required
             />
-            <TextField
-                :disabled="disabled"
-                help-text="Enter a name for the new transcription layer."
-                :max-length="512"
-                :on-input="handleLayerNameInput"
-                :value="layerName"
-                placeholder="Enter layer name"
+            <AutocompleteField
                 label="Layer Name"
+                :disabled="disabled"
+                help-text="Select an existing layer or enter a new name."
+                :option-groups="transcriptionOptionGroups"
+                :on-change="handleLayerNameInput"
+                :allow-custom-value="true"
+                placeholder="Select or enter layer name"
                 required
             />
         </template>
@@ -60,7 +60,6 @@ import DropdownField from "../Dropdown/DropdownField.vue";
 import EscrAlert from "../Alert/Alert.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
-import TextField from "../TextField/TextField.vue";
 import XIcon from "../Icons/XIcon/XIcon.vue";
 import "../Common/Form.css";
 
@@ -72,7 +71,6 @@ export default {
         EscrAlert,
         EscrButton,
         EscrModal,
-        TextField,
         XIcon,
     },
     props: {
@@ -88,6 +86,13 @@ export default {
          * with at least a name and pk for each model.
          */
         models: {
+            type: Array,
+            required: true,
+        },
+        /**
+         * The list of existing transcription layers on the document.
+         */
+        transcriptions: {
             type: Array,
             required: true,
         },
@@ -163,6 +168,20 @@ export default {
             }
 
             return groups;
+        },
+        /**
+         * Format existing transcription layers as options
+         */
+        transcriptionOptionGroups() {
+            const options = this.transcriptions.map((transcription) => ({
+                label: transcription.name,
+                value: transcription.name,
+                selected: this.layerName === transcription.name,
+            }));
+
+            return options.length > 0 
+                ? [{ label: "Existing Layers", options }]
+                : [];
         },
     },
     methods: {

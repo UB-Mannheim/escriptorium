@@ -1,5 +1,8 @@
 <template>
-    <div class="escr-autocomplete-dropdown">
+    <div 
+        class="escr-autocomplete-dropdown"
+        :style="{ marginBottom: dropdownSpacing }"
+    >
         <input
             ref="input"
             type="text"
@@ -101,6 +104,13 @@ export default {
             type: Function,
             required: true,
         },
+        /**
+         * Allow user to enter custom values not in the list.
+         */
+        allowCustomValue: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {
@@ -138,6 +148,29 @@ export default {
             }
             return null;
         },
+        /**
+         * calculate dynamic spacing for dropdown when open
+         */
+        dropdownSpacing() {
+            if (!this.showDropdown) {
+                return '0px';
+            }
+
+            let height = 0;
+            
+            if (this.filteredOptions.length === 0) {
+                height = 48;
+            } else {
+                this.filteredOptions.forEach(group => {
+                    if (group.label) {
+                        height += 32;
+                    }
+                    height += group.options.length * 30;
+                });
+            }
+            const finalHeight = Math.min(height, 300);
+            return `${finalHeight + 10}px`;
+        },
     },
     watch: {
         selectedOption: {
@@ -151,6 +184,10 @@ export default {
         handleInput(e) {
             this.searchText = e.target.value;
             this.showDropdown = true;
+            // If custom values are allowed, trigger onChange on input
+            if (this.allowCustomValue) {
+                this.onChange({ target: { value: e.target.value } });
+            }
         },
         handleFocus() {
             if (this.blurTimeout) {
@@ -163,6 +200,10 @@ export default {
             // Delay to allow click on option
             this.blurTimeout = setTimeout(() => {
                 this.showDropdown = false;
+                // If custom values are allowed, ensure final value is sent
+                if (this.allowCustomValue && this.searchText) {
+                    this.onChange({ target: { value: this.searchText } });
+                }
                 this.blurTimeout = null;
             }, 200);
         },

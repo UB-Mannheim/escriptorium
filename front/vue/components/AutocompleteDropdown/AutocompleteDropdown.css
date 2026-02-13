@@ -3,11 +3,6 @@
     max-width: 100%;
 }
 
-/* when dropdown is open to push content down */
-.escr-autocomplete-dropdown:has(.escr-autocomplete-options) {
-    margin-bottom: 310px;
-}
-
 .escr-autocomplete-dropdown input {
     padding: 6px 36px 6px 15px;
     border: none;
