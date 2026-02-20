@@ -38,6 +38,27 @@
     pointer-events: none;
 }
 
+.escr-autocomplete-clear {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.escr-autocomplete-clear:hover {
+    color: var(--text1);
+}
+
 .escr-autocomplete-options {
     position: absolute;
     top: calc(100% + 4px);
@@ -69,7 +90,8 @@
     background-color: var(--background);
 }
 
-.escr-autocomplete-option:hover {
+.escr-autocomplete-option:hover,
+.escr-autocomplete-option--highlighted {
     background-color: var(--primary);
     color: var(--background);
 }
@@ -105,7 +127,8 @@
     transition: background-color 0.2s ease;
 }
 
-.escr-autocomplete-new-option--clickable:hover {
+.escr-autocomplete-new-option--clickable:hover,
+.escr-autocomplete-new-option--highlighted {
     background-color: rgba(var(--primary-rgb, 59, 130, 246), 0.1);
 }
 

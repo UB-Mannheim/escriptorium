@@ -43,7 +43,6 @@
         <div
             v-if="showDropdown"
             class="escr-multiselect-options"
-            @mousedown.prevent
         >
             <div class="escr-multiselect-search">
                 <input
@@ -52,7 +51,6 @@
                     v-model="searchText"
                     placeholder="Search..."
                     class="escr-multiselect-search-input"
-                    @click.stop
                 >
             </div>
             <div class="escr-multiselect-list">
@@ -66,7 +64,6 @@
                     v-for="option in filteredOptions"
                     :key="option.value"
                     class="escr-multiselect-option"
-                    @click.stop
                 >
                     <input
                         type="checkbox"
