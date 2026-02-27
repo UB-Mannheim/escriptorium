@@ -282,3 +282,8 @@ tr#is-drag-image .elements-count {
 body:has(#is-drag-image) {
     cursor: grabbing !important;
 }
+
+.escr-table tbody tr.escr-clickable-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
