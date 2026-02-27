@@ -32,7 +32,8 @@
             :maxlength="maxLength"
             :invalid="invalid"
             @input="onInput"
-            @keydown="onKeydown"
+            @keydown="handleKeydown"
+            @blur="handleBlur"
         >
         <textarea
             v-else
@@ -44,7 +45,8 @@
             :maxlength="maxLength"
             :invalid="invalid"
             @input="onInput"
-            @keydown="onKeydown"
+            @keydown="handleKeydown"
+            @blur="handleBlur"
         />
         <span
             v-if="helpText"
@@ -63,6 +65,13 @@ export default {
         disabled: {
             type: Boolean,
             default: false,
+        },
+        /**
+         * Event handler for blurring the input
+         */
+        onBlur: {
+            type: Function,
+            default: () => {},
         },
         /**
          * Event handler for the text input
@@ -157,5 +166,22 @@ export default {
             default: () => [],
         },
     },
+    methods: {
+        /**
+         * Handle keydown by calling the callback and emitting the native event (to enable
+         * modifiers like @keydown.enter)
+         */
+        handleKeydown(event) {
+            this.onKeydown(event);
+            this.$emit("keydown", event);
+        },
+        /**
+         * Handle blur by calling the callback and emitting the native event
+         */
+        handleBlur(event) {
+            this.onBlur(event);
+            this.$emit("blur", event);
+        }
+    }
 }
 </script>
