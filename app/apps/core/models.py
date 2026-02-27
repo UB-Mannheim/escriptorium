@@ -2201,3 +2201,42 @@ class InstanceSettings(SingletonModel):
 
     def __str__(self):
         return "Instance settings"
+
+
+class VirtualCollection(models.Model):
+    """many-to-many through model for collecting a set of images
+    (DocumentParts), each associated with a transcription layer from their
+    parent document"""
+
+    name = models.CharField(max_length=512)
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="virtual_collections"
+    )
+    parts = models.ManyToManyField(
+        DocumentPart,
+        through="VirtualCollectionItem",
+        related_name="virtual_collections",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    # default transcription layer selected per document
+    default_transcriptions = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ("name",)
+
+
+class VirtualCollectionItem(models.Model):
+    collection = models.ForeignKey(VirtualCollection, on_delete=models.CASCADE)
+    document_part = models.ForeignKey("DocumentPart", on_delete=models.CASCADE)
+    transcription_layer = models.ForeignKey("Transcription", on_delete=models.CASCADE)
+
+    class Meta:
+        # ensure a part is not added twice to the same collection
+        unique_together = ("collection", "document_part")
+
+    def __str__(self):
+        return f"{self.collection.name} - {self.document_part.name}"
