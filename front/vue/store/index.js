@@ -3,6 +3,7 @@ import Vuex, { Store } from "vuex";
 import FloatingVue from "floating-vue";
 import alerts from "./modules/alerts";
 import characters from "./modules/characters";
+import collection from "./modules/collection";
 import document from "./modules/document";
 import filter from "./modules/filter";
 import forms from "./modules/forms";
@@ -47,6 +48,7 @@ const store = new Store({
     modules: {
         alerts,
         characters,
+        collection,
         document,
         filter,
         forms,
