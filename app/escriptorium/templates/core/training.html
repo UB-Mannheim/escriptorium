@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block head_title %}{% trans "Model Training" %}{% endblock %}
+
+{% block body %}
+    {% if not request.user.legacy_mode %}
+    <div id="model-training">
+        <model-training
+            :search-disabled="{% if DISABLE_ELASTICSEARCH %}true{% else %}false{% endif %}"
+        ></model-training>
+    </div>
+    {% else %}
+        {% translate "This page is not available in legacy mode. Visit your user settings to disable legacy mode." %}
+    {% endif %}
+{% endblock %}
+
+{% block extrascript %}
+    {% if not request.user.legacy_mode %}
+        <script src="{% static 'modelTraining.js' %}"></script>
+    {% endif %}
+{% endblock extrascript %}
+
+{% block extrastyle %}
+    {% if not request.user.legacy_mode %}
+        <link href="{% static 'modelTraining.css' %}" rel="stylesheet" type="text/css">
+    {% endif %}
+{% endblock extrastyle %}
+
+{% if not request.user.legacy_mode %}
+    {# hide legacy UI alerts #}
+    {% block legacy_alerts %}
+    {% endblock %}
+{% endif %}

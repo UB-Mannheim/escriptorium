@@ -1,0 +1,93 @@
+/* collection actions */
+.escr-model-training .escr-collection-management .escr-collection-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* collection name */
+.escr-model-training .escr-collection-name {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1 1 150px;
+    max-width: 400px;
+    min-width: 0;
+}
+.escr-model-training .escr-collection-name h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    cursor: pointer;
+    border-bottom: 1px dashed var(--text3);
+    max-width: 100%;
+}
+.escr-model-training .escr-collection-name h3:hover {
+    border-bottom-color: var(--text3);
+}
+.escr-model-training .escr-collection-name h3:hover svg {
+    opacity: 1;
+}
+.escr-model-training .escr-collection-name h3 span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.escr-model-training .escr-collection-name h3 svg {
+    opacity: 0.3;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+/* name editor/input */
+.escr-model-training .escr-collection-name-editor {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+.escr-model-training .escr-collection-name-editor button {
+    flex-shrink: 0;
+}
+.escr-model-training .escr-collection-name-input {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* collection select dropdown */
+.escr-model-training .escr-collection-dropdown {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    flex: 1 1 350px;
+    max-width: 350px;
+    min-width: 0;
+}
+.escr-model-training .escr-collection-dropdown button {
+    flex-shrink: 0;
+}
+.escr-model-training .escr-collection-dropdown .escr-dropdown-field {
+    margin-bottom: 0;
+    width: 100%;
+    min-width: 0;
+}
+.escr-model-training .escr-collection-dropdown select {
+    width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* save collection */
+.escr-model-training .escr-card.escr-card-padding.escr-save-collection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    background-color: var(--background2);
+    flex: 0 0 460px;
+    white-space: nowrap;
+}

@@ -1,0 +1,89 @@
+/* header */
+.escr-browser.escr-card:not(.escr-card-padding) .escr-card-header {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    border-bottom: 1px solid var(--background2);
+    padding: 0.5rem 1rem;
+    margin: 0.3rem 0 0;
+}
+
+/* breadcrumbs */
+.escr-browser.escr-card .escr-card-header h3.escr-browser-breadcrumbs {
+    margin: 0;
+}
+
+h3.escr-browser-breadcrumbs {
+    font-size: 14px;
+}
+
+h3.escr-browser-breadcrumbs .italic {
+    font-style: italic;
+}
+
+h3.escr-browser-breadcrumbs .separator {
+    font-size: 10px;
+    margin: 0 0.25rem;
+}
+
+/* table */
+.escr-browser .escr-table thead tr {
+    background-color: var(--background3);
+}
+.escr-browser-documents-list {
+    position: relative;
+}
+
+/* image grid */
+.escr-browser .escr-image-grid,
+.escr-browser .escr-image-grid-container {
+    position: relative;
+}
+
+.escr-browser .escr-image-grid ul {
+    justify-content: flex-start;
+    padding: 1rem;
+    row-gap: 1rem;
+}
+
+.escr-browser .escr-image-grid ul .escr-load-more-container {
+    flex-basis: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.escr-browser .escr-image-grid .escr-grid-toolbar {
+    margin: 1rem 1.5rem 0;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 2rem;
+    align-items: center;
+}
+
+.escr-browser .escr-image-grid .escr-grid-toolbar .escr-default-transcription {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+.escr-browser .escr-image-grid .escr-grid-toolbar label {
+    margin: 0;
+}
+
+.escr-browser .escr-image-grid .escr-grid-toolbar .escr-select-toggles {
+    display: flex;
+    gap: 1rem;
+}
+
+.escr-browser .images-loading-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
