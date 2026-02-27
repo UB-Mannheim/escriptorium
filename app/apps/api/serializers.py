@@ -41,6 +41,8 @@ from core.models import (
     TextAnnotationComponentValue,
     TextualWitness,
     Transcription,
+    VirtualCollection,
+    VirtualCollectionItem,
 )
 from core.tasks import _chunks, segment, segtrain, train, transcribe
 from imports.forms import FileImportError, clean_import_uri, clean_upload_file
@@ -1435,3 +1437,119 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
             beam_size=int(beam_size if (beam_size is not None and beam_size != '') else 20),
             gap=int(gap if gap else 600),
         )
+
+
+class VirtualCollectionItemSerializer(serializers.ModelSerializer):
+    part_name = serializers.ReadOnlyField(source="document_part.name")
+    thumbnail = ImageField(
+        source="document_part.image", thumbnails=["card"], read_only=True
+    )
+    document_id = serializers.ReadOnlyField(source="document_part.document.id")
+    document_name = serializers.ReadOnlyField(source="document_part.document.name")
+
+    class Meta:
+        model = VirtualCollectionItem
+        fields = [
+            "id",
+            "document_part",
+            "part_name",
+            "thumbnail",
+            "document_id",
+            "document_name",
+            "transcription_layer",
+        ]
+
+
+class VirtualCollectionSerializer(serializers.ModelSerializer):
+    items = VirtualCollectionItemSerializer(
+        source="virtualcollectionitem_set", many=True, read_only=True
+    )
+    owner = serializers.ReadOnlyField(source="owner.username")
+    items_to_save = serializers.ListField(
+        child=serializers.DictField(), write_only=True, required=False
+    )
+
+    class Meta:
+        model = VirtualCollection
+        fields = [
+            "id",
+            "name",
+            "items",
+            "items_to_save",
+            "default_transcriptions",
+            "owner",
+            "updated_at",
+        ]
+
+    def create(self, validated_data):
+        items_to_save = validated_data.pop("items_to_save", [])
+        collection = VirtualCollection.objects.create(**validated_data)
+
+        # bulk create the nested collection items
+        VirtualCollectionItem.objects.bulk_create(
+            [
+                VirtualCollectionItem(
+                    collection=collection,
+                    document_part_id=item["document_part"],
+                    transcription_layer_id=item["transcription_layer"],
+                )
+                for item in items_to_save
+            ]
+        )
+        return collection
+
+    def update(self, instance, validated_data):
+        items_to_save = validated_data.pop("items_to_save", None)
+        instance.name = validated_data.get("name", instance.name)
+        instance.default_transcriptions = validated_data.get(
+            "default_transcriptions", instance.default_transcriptions
+        )
+        instance.save()
+
+        # use diff strategy against database, with bulk operations, to efficiently update
+        if items_to_save is not None:
+            # map existing DB items as dict keyed on part PK
+            existing_items = instance.virtualcollectionitem_set.all()
+            existing_map = {item.document_part_id: item for item in existing_items}
+
+            # map incoming payload items, also keyed on part PK
+            incoming_map = {
+                item["document_part"]: item["transcription_layer"]
+                for item in items_to_save
+            }
+
+            # to delete: pks that are in the DB but missing from payload
+            to_delete_ids = set(existing_map.keys()) - set(incoming_map.keys())
+            if to_delete_ids:
+                instance.virtualcollectionitem_set.filter(
+                    document_part_id__in=to_delete_ids
+                ).delete()
+
+            # create or update the rest
+            to_create = []
+            to_update = []
+            for part_id, trans_id in incoming_map.items():
+                if part_id not in existing_map:
+                    to_create.append(
+                        VirtualCollectionItem(
+                            collection=instance,
+                            document_part_id=part_id,
+                            transcription_layer_id=trans_id,
+                        )
+                    )
+                else:
+                    # update if the associated transcription layer was changed
+                    existing_item = existing_map[part_id]
+                    if existing_item.transcription_layer_id != trans_id:
+                        existing_item.transcription_layer_id = trans_id
+                        to_update.append(existing_item)
+
+            # bulk operations
+            if to_create:
+                VirtualCollectionItem.objects.bulk_create(to_create)
+            if to_update:
+                VirtualCollectionItem.objects.bulk_update(
+                    to_update, ["transcription_layer"]
+                )
+
+        return instance

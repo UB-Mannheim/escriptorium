@@ -30,6 +30,7 @@ from api.views import (
     TextAnnotationViewSet,
     TextualWitnessViewSet,
     UserViewSet,
+    VirtualCollectionViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -46,6 +47,7 @@ router.register(r'types/block', BlockTypeViewSet)
 router.register(r'types/line', LineTypeViewSet)
 router.register(r'types/annotations', AnnotationTypeViewSet)
 router.register(r'types/part', DocumentPartTypeViewSet)
+router.register(r'collections', VirtualCollectionViewSet, basename='virtualcollection')
 
 projects_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 projects_router.register(r'tags', DocumentTagViewSet, basename='document-tag')

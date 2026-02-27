@@ -65,6 +65,7 @@ from api.serializers import (
     TranscribeSerializer,
     TranscriptionSerializer,
     UserSerializer,
+    VirtualCollectionSerializer,
 )
 from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
@@ -92,6 +93,8 @@ from core.models import (
     TextAnnotation,
     TextualWitness,
     Transcription,
+    VirtualCollection,
+    VirtualCollectionItem,
 )
 from core.tasks import recalculate_masks
 from imports.forms import ExportForm, ImportForm
@@ -758,6 +761,13 @@ class DocumentViewSet(ModelViewSet):
             'text_annotations': text_annotations
         })
 
+    @action(detail=True)
+    def part_ids(self, request, pk=None):
+        # efficiently retrieve parts list as pks
+        obj = self.get_object()
+        ids = list(obj.parts.values_list("pk", flat=True))
+        return Response(ids)
+
 
 class TaskGroupViewSet(ModelViewSet):
     queryset = TaskGroup.objects.all().select_related('created_by')
@@ -1352,3 +1362,13 @@ class RegenerableAuthToken(ObtainAuthToken):
             token, created = Token.objects.get_or_create(user=user)
 
         return Response({'token': token.key})
+
+
+class VirtualCollectionViewSet(ModelViewSet):
+    serializer_class = VirtualCollectionSerializer
+
+    def get_queryset(self):
+        return VirtualCollection.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
