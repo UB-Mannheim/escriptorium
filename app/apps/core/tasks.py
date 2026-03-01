@@ -18,11 +18,25 @@ from django.utils.html import strip_tags
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from easy_thumbnails.files import get_thumbnailer
+from kraken.configs import (
+    BLLASegmentationTrainingConfig,
+    BLLASegmentationTrainingDataConfig,
+    RecognitionInferenceConfig,
+    VGSLRecognitionTrainingConfig,
+    VGSLRecognitionTrainingDataConfig,
+)
 from kraken.containers import BaselineLine, Region, Segmentation
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib.arrow_dataset import build_binary_dataset
-from kraken.lib.default_specs import RECOGNITION_HYPER_PARAMS, SEGMENTATION_HYPER_PARAMS
-from kraken.lib.train import KrakenTrainer, RecognitionModel, SegmentationModel
+from kraken.models import convert_models
+from kraken.tasks import ForcedAlignmentTaskModel
+from kraken.train import (
+    BLLASegmentationDataModule,
+    BLLASegmentationModel,
+    KrakenTrainer,
+    VGSLRecognitionDataModule,
+    VGSLRecognitionModel,
+)
 from lightning.pytorch.callbacks import Callback
 
 from core.search import (
@@ -119,8 +133,8 @@ def make_recognition_segmentation(lines) -> List[Segmentation]:
     of Segmentation objects.
     """
     lines_by_img = defaultdict(list)
-    for lt in lines:
-        lines_by_img[lt['image']].append(BaselineLine(id='foo',
+    for i, lt in enumerate(lines):
+        lines_by_img[lt['image']].append(BaselineLine(id=str(i),
                                                       baseline=lt['baseline'],
                                                       boundary=lt['mask'],
                                                       text=lt['content'],
@@ -136,9 +150,10 @@ def make_recognition_segmentation(lines) -> List[Segmentation]:
     return segs
 
 
-def make_segmentation_training_data(parts) -> List[Segmentation]:
+def make_segmentation_training_data(parts) -> List[dict]:
     """
-    Converts eScriptorium data model to list of Segmentation objects.
+    Converts eScriptorium data model to list of {'doc': Segmentation} dicts
+    as expected by BLLASegmentationDataModule with format_type=None.
     """
     segs = []
     for part in parts:
@@ -146,7 +161,7 @@ def make_segmentation_training_data(parts) -> List[Segmentation]:
         for line in part.lines.only('baseline', 'typology'):
             if line.baseline:
                 tag_name = line.typology.name if line.typology else 'default'
-                blls.append(BaselineLine(id='foo',
+                blls.append(BaselineLine(id=str(line.pk),
                                          baseline=line.baseline,
                                          boundary=line.mask,
                                          tags={'type': [{'type': tag_name}]},
@@ -161,13 +176,13 @@ def make_segmentation_training_data(parts) -> List[Segmentation]:
                                     tags={'type': [{'type': typo}]},
                                     language=None) for reg in regs]
 
-        segs.append(Segmentation(text_direction='horizontal-lr',
-                                 imagename=part.image.path,
-                                 type='baselines',
-                                 lines=blls,
-                                 regions=regions,
-                                 script_detection=False,
-                                 language=None))
+        segs.append({'doc': Segmentation(text_direction='horizontal-lr',
+                                         imagename=part.image.path,
+                                         type='baselines',
+                                         lines=blls,
+                                         regions=regions,
+                                         script_detection=False,
+                                         language=None)})
     return segs
 
 
@@ -185,13 +200,18 @@ class FrontendFeedback(Callback):
     def on_train_epoch_end(self, trainer, pl_module) -> None:
         self.es_model.refresh_from_db()
         self.es_model.training_epoch = trainer.current_epoch
-        val_metric = float(trainer.logged_metrics['val_accuracy'])
+        # metric key varies by model type
+        val_metric = float(
+            trainer.logged_metrics.get('val_accuracy')
+            or trainer.logged_metrics.get('val_mean_iu')
+            or 0.0
+        )
         logger.info(f'Epoch {trainer.current_epoch} finished.')
         self.es_model.training_accuracy = val_metric
         # model.training_total = chars
         # model.training_errors = error
         relpath = os.path.relpath(self.model_directory, settings.MEDIA_ROOT)
-        self.es_model.new_version(file=f'{relpath}/version_{trainer.current_epoch}.mlmodel')
+        self.es_model.new_version(file=f'{relpath}/checkpoint_epoch={trainer.current_epoch}.ckpt')
         self.es_model.save()
 
         send_event('document', self.document_pk, "training:eval", {
@@ -247,7 +267,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         load = model.file.path
     except ValueError:  # model is empty
         load = SEGMENTATION_DEFAULT_MODEL
-        model.file = model.file.field.upload_to(model, slugify(model.name) + '.mlmodel')
+        model.file = model.file.field.upload_to(model, slugify(model.name) + '.safetensors')
 
     model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
 
@@ -285,26 +305,22 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
                     f'(precision: {AMP_MODE}, workers: {LOAD_THREADS}) with '
                     f'{len(training_data)} files')
 
-        kraken_model = SegmentationModel(SEGMENTATION_HYPER_PARAMS,
-                                         output=os.path.join(model_dir, 'version'),
-                                         # spec=spec,
-                                         model=load,
-                                         format_type=None,
-                                         training_data=training_data,
-                                         evaluation_data=evaluation_data,
-                                         partition=partition,
-                                         num_workers=LOAD_THREADS,
-                                         load_hyper_parameters=True,
-                                         # force_binarization=force_binarization,
-                                         # suppress_regions=suppress_regions,
-                                         # suppress_baselines=suppress_baselines,
-                                         # valid_regions=valid_regions,
-                                         # valid_baselines=valid_baselines,
-                                         # merge_regions=merge_regions,
-                                         # merge_baselines=merge_baselines,
-                                         # bounding_regions=bounding_regions,
-                                         resize='both',
-                                         topline=topline)
+        seg_data_config = BLLASegmentationTrainingDataConfig(
+            training_data=training_data,
+            evaluation_data=evaluation_data,
+            format_type=None,
+            num_workers=LOAD_THREADS,
+        )
+        seg_train_config = BLLASegmentationTrainingConfig(
+            resize='union',
+            topline=topline,
+            load_hyper_parameters=True,
+        )
+        seg_dm = BLLASegmentationDataModule(seg_data_config)
+        if load:
+            kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
+        else:
+            kraken_model = BLLASegmentationModel(seg_train_config)
 
         trainer = KrakenTrainer(accelerator=accelerator,
                                 devices=device,
@@ -316,22 +332,26 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
                                 val_check_interval=1.0,
                                 callbacks=[FrontendFeedback(model, model_dir, document_pk)])
 
-        trainer.fit(kraken_model)
+        trainer.fit(kraken_model, seg_dm)
 
-        if kraken_model.best_epoch == -1:
+        # best checkpoint path from lightning's ModelCheckpoint callback
+        best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
+        best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
+
+        if not best_path:
             logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
             raise DidNotConverge
 
-        best_version = os.path.join(model_dir, kraken_model.best_model)
-
         try:
-            logger.info(f'Moving best model {best_version} (accuracy: {kraken_model.best_metric}) to {model.file.path}.')
-            shutil.copy(best_version, model.file.path)  # os.path.join(model_dir, filename)
-            model.training_accuracy = kraken_model.best_metric
+            best_score_val = float(best_score) if best_score is not None else 0.0
+            logger.info(f'Converting best model {best_path} (accuracy: {best_score_val}) to {model.file.path}.')
+            convert_models([best_path], model.file.path)
+            model.training_accuracy = best_score_val
         except FileNotFoundError:
             logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
-            user.notify(_("Training didn't get better results than base model!"),
-                        id="seg-no-gain-error", level='warning')
+            if user:
+                user.notify(_("Training didn't get better results than base model!"),
+                            id="seg-no-gain-error", level='warning')
             shutil.copy(load, model.file.path)
 
     except DidNotConverge:
@@ -574,9 +594,7 @@ def train_(qs, document, transcription, model=None, user=None):
 
     AMP_MODE = getattr(settings, 'KRAKEN_TRAINING_PRECISION', '32')
 
-    RECOGNITION_HYPER_PARAMS['batch_size'] = getattr(settings,
-                                                     'KRAKEN_TRAINING_BATCH_SIZE',
-                                                     RECOGNITION_HYPER_PARAMS['batch_size'])
+    BATCH_SIZE = getattr(settings, 'KRAKEN_TRAINING_BATCH_SIZE', 12)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
 
@@ -600,7 +618,7 @@ def train_(qs, document, transcription, model=None, user=None):
         try:
             load = model.file.path
         except ValueError:  # model is empty
-            filename = slugify(model.name) + '.mlmodel'
+            filename = slugify(model.name) + '.safetensors'
             model.file = model.file.field.upload_to(model, filename)
             model.save()
 
@@ -619,20 +637,26 @@ def train_(qs, document, transcription, model=None, user=None):
             reorder = 'L'
 
         logger.info(f'Starting recognition training on {accelerator}/{device} '
-                    f'(precision: {AMP_MODE}, batch_size {RECOGNITION_HYPER_PARAMS["batch_size"]} '
+                    f'(precision: {AMP_MODE}, batch_size {BATCH_SIZE} '
                     f', workers: {LOAD_THREADS}) with {len(ground_truth[partition:])} lines')
 
-        kraken_model = RecognitionModel(hyper_params=RECOGNITION_HYPER_PARAMS,
-                                        output=os.path.join(model_dir, 'version'),
-                                        model=load,
-                                        reorder=reorder,
-                                        format_type='binary',
-                                        training_data=[str(train_dir / 'train.arrow')],
-                                        evaluation_data=[str(train_dir / 'val.arrow')],
-                                        partition=partition,
-                                        num_workers=LOAD_THREADS,
-                                        load_hyper_parameters=True,
-                                        resize='union')
+        rec_data_config = VGSLRecognitionTrainingDataConfig(
+            training_data=[str(train_dir / 'train.arrow')],
+            evaluation_data=[str(train_dir / 'val.arrow')],
+            format_type='binary',
+            num_workers=LOAD_THREADS,
+        )
+        rec_train_config = VGSLRecognitionTrainingConfig(
+            batch_size=BATCH_SIZE,
+            load_hyper_parameters=True,
+            resize='union',
+            reorder=reorder,
+        )
+        rec_dm = VGSLRecognitionDataModule(rec_data_config)
+        if load:
+            kraken_model = VGSLRecognitionModel.load_from_weights(load, rec_train_config)
+        else:
+            kraken_model = VGSLRecognitionModel(rec_train_config)
 
         trainer = KrakenTrainer(accelerator=accelerator,
                                 devices=device,
@@ -642,16 +666,20 @@ def train_(qs, document, transcription, model=None, user=None):
                                 val_check_interval=1.0,
                                 callbacks=[FrontendFeedback(model, model_dir, document.pk)])
 
-        trainer.fit(kraken_model)
+        trainer.fit(kraken_model, rec_dm)
 
-    if kraken_model.best_epoch == -1:
+    # best checkpoint path from lightning's ModelCheckpoint callback
+    best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
+    best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
+
+    if not best_path:
         logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
         raise DidNotConverge
     else:
-        best_version = os.path.join(model_dir, kraken_model.best_model)
-        logger.info(f'Moving best model {best_version} (accuracy: {kraken_model.best_metric}) to {model.file.path}.')
-        shutil.copy(best_version, model.file.path)
-        model.training_accuracy = kraken_model.best_metric
+        best_score_val = float(best_score) if best_score is not None else 0.0
+        logger.info(f'Converting best model {best_path} (accuracy: {best_score_val}) to {model.file.path}.')
+        convert_models([best_path], model.file.path)
+        model.training_accuracy = best_score_val
 
 
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
@@ -727,8 +755,7 @@ def train(transcription_pk=None, model_pk=None, task_group_pk=None,
 def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
                  part_pk=None, user_pk=None, **kwargs):
 
-    from kraken.align import forced_align as kraken_forced_align
-    from kraken.lib import models as kraken_models
+    from PIL import Image as PILImage
 
     OcrModel = apps.get_model('core', 'OcrModel')
     DocumentPart = apps.get_model('core', 'DocumentPart')
@@ -736,7 +763,7 @@ def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
     LineTranscription = apps.get_model('core', 'LineTranscription')
 
     ocrmodel = OcrModel.objects.get(pk=model_pk)
-    model = kraken_models.load_any(ocrmodel.file.path)
+    aligner = ForcedAlignmentTaskModel.load_model(ocrmodel.file.path)
     transcription = Transcription.objects.get(pk=transcription_pk)
 
     part = DocumentPart.objects.get(pk=instance_pk)
@@ -752,35 +779,41 @@ def forced_align(instance_pk=None, model_pk=None, transcription_pk=None,
         transcription=transcription
     ).select_related('line')
 
-    for lt in linetrans:
-        tag_name = lt.line.typology.name if lt.line.typology else 'default'
-        data = {
-            'image': part.image,
-            "lines": [{
-                "text": lt.content,
-                "baseline": lt.line.baseline,
-                "boundary": lt.line.mask,
-                "text_direction": text_direction,
-                "tags": {'type': [{'type': tag_name}]},
-            }],
-            "type": "baselines"
-        }
-
-        records = kraken_forced_align(data, model)  # base_dir = L,R
-        for pred in records:
-            # lt.content = pred.prediction
-            if text_direction == 'horizontal-rl' or text_direction == 'vertical-rl':
-                reorder = 'R'
-            else:
-                reorder = 'L'
-            pred = pred.logical_order(reorder)
-            lt.graphs = [{
-                'c': letter,
-                'poly': poly,
-                'confidence': float(confidence)
-            } for letter, poly, confidence in zip(
-                pred.prediction, pred.cuts, pred.confidences)]
-            lt.save()
+    with PILImage.open(part.image.path) as im:
+        align_config = RecognitionInferenceConfig(accelerator='cpu', num_line_workers=0)
+        for lt in linetrans:
+            tag_name = lt.line.typology.name if lt.line.typology else 'default'
+            bll = BaselineLine(
+                id=str(lt.line.pk),
+                baseline=lt.line.baseline,
+                boundary=lt.line.mask,
+                text=lt.content,
+                tags={'type': [{'type': tag_name}]},
+                language=None,
+            )
+            seg = Segmentation(
+                lines=[bll],
+                imagename='/dummy.png',
+                type='baselines',
+                text_direction=text_direction,
+                script_detection=False,
+                language=None,
+            )
+            aligned_segmentation = aligner.predict(im, seg, align_config)
+            for pred in aligned_segmentation.lines:
+                # lt.content = pred.prediction
+                if text_direction == 'horizontal-rl' or text_direction == 'vertical-rl':
+                    reorder = 'R'
+                else:
+                    reorder = 'L'
+                pred = pred.logical_order(reorder)
+                lt.graphs = [{
+                    'c': letter,
+                    'poly': poly,
+                    'confidence': float(confidence)
+                } for letter, poly, confidence in zip(
+                    pred.prediction, pred.cuts, pred.confidences)]
+                lt.save()
 
 
 @shared_task(bind=True, autoretry_for=(MemoryError,), default_retry_delay=10 * 60)

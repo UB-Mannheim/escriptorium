@@ -36,12 +36,10 @@ from easy_thumbnails.files import get_thumbnailer
 
 # isort: off
 import torch  # noqa: F401  # must be imported before kraken to avoid 'random_device could not be read'
-from kraken import blla, rpred
-# isort: on
+from kraken.configs import RecognitionInferenceConfig, SegmentationInferenceConfig
 from kraken.containers import BaselineLine, Segmentation
-from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
-from kraken.lib import models as kraken_models
-from kraken.lib import vgsl
+from kraken.tasks import RecognitionTaskModel, SegmentationTaskModel
+# isort: on
 from kraken.lib.segmentation import calculate_polygonal_environment
 from ordered_model.models import OrderedModel, OrderedModelManager
 from PIL import Image
@@ -1298,22 +1296,18 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         self.save()
 
         if model:
-            model_path = model.file.path
+            segmenter = SegmentationTaskModel.load_model(model.file.path)
         else:
-            model_path = SEGMENTATION_DEFAULT_MODEL
-        model_ = vgsl.TorchVGSLModel.load_model(model_path)
+            segmenter = SegmentationTaskModel.load_model()  # bundled default
 
         # TODO: check model_type [None, 'recognition', 'segmentation']
         #    &  seg_type [None, 'bbox', 'baselines']
 
         im = Image.open(self.image.file.name)
 
-        options = {
-            "device": "cpu",
-            "model": model_,
-        }
+        seg_config = SegmentationInferenceConfig(accelerator='cpu')
         if text_direction:
-            options["text_direction"] = text_direction
+            seg_config = SegmentationInferenceConfig(accelerator='cpu', text_direction=text_direction)
 
         with transaction.atomic():
             # cleanup pre-existing
@@ -1322,7 +1316,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
             if steps in ["regions", "both"] and override:
                 self.blocks.all().delete()
 
-            res = blla.segment(im, **options)
+            res = segmenter.predict(im=im, config=seg_config)
 
             if steps in ["regions", "both"]:
                 for region_type, regions in res.regions.items():
@@ -1379,7 +1373,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         self.recalculate_ordering(read_direction=read_direction)
 
     def transcribe(self, model, transcription, text_direction=None, user=None):
-        model_ = kraken_models.load_any(model.file.path)
+        recognizer = RecognitionTaskModel.load_model(model.file.path)
 
         lines = self.lines.all()
         text_direction = (
@@ -1397,12 +1391,13 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
 
         with Image.open(self.image.file.name) as im:
             line_confidences = []
+            rec_config = RecognitionInferenceConfig(accelerator='cpu', bidi_reordering=reorder, num_line_workers=0)
             for line in lines:
                 if not line.baseline:
                     # bypass lines without baseline
                     continue
                 else:
-                    bll = BaselineLine(id='foo',
+                    bll = BaselineLine(id=str(line.pk),
                                        baseline=line.baseline,
                                        boundary=line.mask,
                                        language=None)
@@ -1413,13 +1408,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                                        lines=[bll],
                                        language=None)
 
-                it = rpred.rpred(
-                    model_,
-                    im,
-                    bounds=seg,
-                    pad=16,
-                    bidi_reordering=reorder
-                )
+                it = recognizer.predict(im=im, segmentation=seg, config=rec_config)
                 lt, created = LineTranscription.objects.get_or_create(
                     line=line, transcription=transcription
                 )
@@ -1959,7 +1948,7 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     file = models.FileField(
         upload_to=models_path,
         null=True,
-        validators=[FileExtensionValidator(allowed_extensions=["mlmodel"])],
+        validators=[FileExtensionValidator(allowed_extensions=["mlmodel", "safetensors"])],
     )
     file_size = models.BigIntegerField()
 
@@ -2008,7 +1997,9 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
 
     def clone_for_training(self, owner, name=None):
         children_count = OcrModel.objects.filter(parent=self).count() + 2
-        name = name or self.name.split(".mlmodel")[0] + f"_v{children_count}"
+        # prefer safetensors, keep mlmodel for legacy files
+        ext = 'safetensors' if not self.file or not self.file.name.endswith('.mlmodel') else 'mlmodel'
+        name = name or self.name.rsplit('.', 1)[0] + f"_v{children_count}"
         model = OcrModel.objects.create(
             owner=owner or self.owner,
             name=name,
@@ -2019,7 +2010,7 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
             versions=[],
             file_size=self.file.size,
         )
-        model.file = File(self.file, name=f'{name}.mlmodel')
+        model.file = File(self.file, name=f'{name}.{ext}')
         # Note: this copy the actual file on the file system
         model.save()
 
