@@ -6,6 +6,14 @@
     border-bottom: 1px solid var(--background2);
     padding: 0.5rem 1rem;
     margin: 0.3rem 0 0;
+    min-height: 60px;
+}
+
+/* tag filter modal */
+.escr-tag-filter.escr-modal {
+    position: relative;
+    top: auto;
+    left: auto;
 }
 
 /* breadcrumbs */
@@ -32,6 +40,9 @@ h3.escr-browser-breadcrumbs .separator {
 }
 .escr-browser-documents-list {
     position: relative;
+}
+.escr-browser .escr-loader-container {
+    margin-top: 1rem;
 }
 
 /* image grid */

@@ -6,7 +6,7 @@
                 <template v-else>
                     <a
                         href="#"
-                        @click.prevent="resetAll"
+                        @click.prevent="fetchProjects"
                     > Projects </a>
                     <span class="separator italic">></span>
                     <span
@@ -28,6 +28,19 @@
                     </template>
                 </template>
             </h3>
+            <div
+                v-if="!currentDocument"
+                class="escr-browser-filters"
+            >
+                <FilterSet
+                    :disabled="loading || isFetchingContent"
+                    :on-filter="handleFilter"
+                    :search-placeholder="
+                        currentProject ? 'Search documents...' : 'Search projects...'
+                    "
+                    :tags="currentTags"
+                />
+            </div>
         </div>
         <div class="escr-card-content escr-browser">
             <!-- Projects list -->
@@ -115,6 +128,8 @@
 import { mapActions, mapState } from "vuex";
 import EscrTable from "../Table/Table.vue";
 import EscrLoader from "../Loader/Loader.vue";
+import EscrTags from "../Tags/Tags.vue";
+import FilterSet from "../FilterSet/FilterSet.vue";
 import BrowserImageGrid from "./BrowserImageGrid.vue";
 import "./EscriptoriumBrowser.css";
 import "../../pages/Images/Images.css";
@@ -125,6 +140,9 @@ export default {
         BrowserImageGrid,
         EscrLoader,
         EscrTable,
+        // eslint-disable-next-line vue/no-unused-components
+        EscrTags,
+        FilterSet,
     },
     data() {
         return {
@@ -136,8 +154,15 @@ export default {
         };
     },
     computed: {
-        ...mapState("projects", ["projects", "loading"]),
-        ...mapState("project", { storeDocuments: "documents" }),
+        ...mapState("projects", {
+            projects: "projects",
+            loading: "loading",
+            projectTags: "tags",
+        }),
+        ...mapState("project", {
+            storeDocuments: "documents",
+            documentTags: "documentTags",
+        }),
         ...mapState("document", { storePages: "parts" }),
         ...mapState("collection", {
             collectionItems: (state) => state.currentCollection.items,
@@ -148,6 +173,7 @@ export default {
         projectHeaders() {
             return [
                 { label: "Project Name", value: "name" },
+                { label: "Tags", value: "tags", component: EscrTags },
                 { label: "Owner", value: "owner" },
                 { label: "Documents", value: "documents_count" },
                 {
@@ -165,6 +191,7 @@ export default {
         documentHeaders() {
             return [
                 { label: "Document Name", value: "name" },
+                { label: "Tags", value: "tags", component: EscrTags },
                 { label: "Pages Count", value: "parts_count" },
                 {
                     label: "Updated At",
@@ -256,6 +283,12 @@ export default {
                 };
             });
         },
+        /**
+         * Tags on the currently visible items
+         */
+        currentTags() {
+            return this.currentProject ? this.documentTags : this.projectTags;
+        },
     },
     watch: {
         // automatically update the default transcription when the document changes
@@ -288,10 +321,14 @@ export default {
         this.fetchProjects();
     },
     methods: {
-        ...mapActions("projects", { fetchStoreProjects: "fetchProjects" }),
+        ...mapActions("projects", {
+            fetchStoreProjects: "fetchProjects",
+            fetchAllProjectTags: "fetchAllProjectTags",
+        }),
         ...mapActions("project", {
             setProjectId: "setId",
             fetchProjectDocuments: "fetchProjectDocuments",
+            fetchProjectDocumentTags: "fetchProjectDocumentTags",
         }),
         ...mapActions("document", {
             setDocumentId: "setId",
@@ -302,6 +339,7 @@ export default {
             "removeItem",
         ]),
         ...mapActions("images", ["fetchDocument", "fetchNextPage"]),
+        ...mapActions("filter", ["removeFilter"]),
 
         /**
          * Load more images
@@ -334,8 +372,13 @@ export default {
          * Reset navigation state and fetch the root project list
          */
         async fetchProjects() {
+            this.removeFilter("name");
+            this.removeFilter("tags");
             this.resetAll();
-            await this.fetchStoreProjects();
+            await Promise.all([
+                this.fetchStoreProjects(),
+                this.fetchAllProjectTags(),
+            ]);
         },
 
         /**
@@ -344,11 +387,16 @@ export default {
          * @param {Object} item Project object
          */
         async setCurrentProject(item) {
+            this.removeFilter("name");
+            this.removeFilter("tags");
             const project = this.projects.find((p) => p.id === item.id);
             this.currentProject = project;
             this.setProjectId(item.id);
             this.isFetchingContent = true;
-            await this.fetchProjectDocuments();
+            await Promise.all([
+                this.fetchProjectDocuments(),
+                this.fetchProjectDocumentTags(),
+            ]);
             this.isFetchingContent = false;
         },
 
@@ -375,14 +423,23 @@ export default {
         /**
          * Navigate from the Pages grid view back to the Documents view
          */
-        resetDocumentSelection() {
+        async resetDocumentSelection() {
+            this.removeFilter("name");
+            this.removeFilter("tags");
             this.currentDocument = null;
+            if (this.currentProject) {
+                this.isFetchingContent = true;
+                await this.fetchProjectDocuments();
+                this.isFetchingContent = false;
+            }
         },
 
         /**
          * Clear all active navigation layers to return to the root level (Projects view)
          */
         resetAll() {
+            this.removeFilter("name");
+            this.removeFilter("tags");
             this.currentProject = null;
             this.currentDocument = null;
         },
@@ -536,6 +593,17 @@ export default {
                     transcriptionId: defaultId,
                 });
             });
+        },
+
+        /**
+         * Re-fetch items when filters are changed
+         */
+        handleFilter() {
+            if (!this.currentProject) {
+                this.fetchStoreProjects();
+            } else if (!this.currentDocument) {
+                this.fetchProjectDocuments();
+            }
         },
     },
 };
