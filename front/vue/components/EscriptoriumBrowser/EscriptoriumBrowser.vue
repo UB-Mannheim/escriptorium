@@ -108,7 +108,7 @@
                 :is-loading-more="loading"
                 :has-next-page="!!nextPage"
                 :all-selected="isDocumentFullySelected(currentDocument)"
-                :has-selections="fullySelectedDocs.length > 0 || partiallySelectedDocs.length > 0"
+                :has-selections="currentDocHasSelections"
                 :transcription-options="transcriptionOptions"
                 :default-transcription-id="defaultTranscription"
                 :check-selected="isPageSelected"
@@ -119,6 +119,7 @@
                 @toggle-page="togglePageSelection"
                 @update-transcription="handleUpdateTranscription"
                 @load-more="onLoadMore"
+                @select-visible="handleSelectVisible"
             />
         </div>
     </div>
@@ -283,11 +284,22 @@ export default {
                 };
             });
         },
+
         /**
          * Tags on the currently visible items
          */
         currentTags() {
             return this.currentProject ? this.documentTags : this.projectTags;
+        },
+
+        /**
+         * True if the currently viewed document has any selected parts
+         */
+        currentDocHasSelections() {
+            if (!this.currentDocument) return false;
+            return this.collectionItems.some(
+                (item) => item.document_id === this.currentDocument.pk
+            );
         },
     },
     watch: {
@@ -607,6 +619,26 @@ export default {
                 this.isFetchingContent = true;
                 this.fetchParts().finally(() => {
                     this.isFetchingContent = false;
+                });
+            }
+        },
+
+        /**
+         * Select all DocumentParts currently visible in the grid
+         */
+        handleSelectVisible() {
+            if (!this.currentDocument || !this.storePages.length) {
+                return;
+            }
+            const unselectedParts = this.storePages.filter(
+                (page) => !this.isPageSelected(page.pk)
+            );
+            if (unselectedParts.length > 0) {
+                this.addSelectedParts({
+                    document: this.currentDocument,
+                    partPks: unselectedParts.map((p) => p.pk),
+                    partsOverride: unselectedParts,
+                    transcriptionId: this.defaultTranscription,
                 });
             }
         },

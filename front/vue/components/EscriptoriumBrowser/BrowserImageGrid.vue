@@ -3,12 +3,39 @@
         <div class="escr-image-grid">
             <div class="escr-grid-toolbar">
                 <div class="escr-select-toggles">
-                    <EscrButton
-                        label="Select All"
-                        size="small"
-                        :disabled="allSelected || isUpdating"
-                        :on-click="() => $emit('toggle-all')"
-                    />
+                    <VDropdown
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
+                    >
+                        <EscrButton
+                            label="Select All"
+                            size="small"
+                            :disabled="allSelected || isUpdating"
+                            :on-click="() => $emit('toggle-all')"
+                        />
+                        <template #popper>
+                            Select all images in the document
+                        </template>
+                    </VDropdown>
+                    <VDropdown
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
+                    >
+                        <EscrButton
+                            label="Select Visible"
+                            size="small"
+                            color="outline-primary"
+                            :disabled="allVisibleSelected || pages.length === 0 || isUpdating"
+                            :on-click="() => $emit('select-visible')"
+                        />
+                        <template #popper>
+                            Select only the images currently loaded on screen
+                        </template>
+                    </VDropdown>
                     <EscrButton
                         label="Select None"
                         color="outline-primary"
@@ -90,6 +117,7 @@
 </template>
 
 <script>
+import { Dropdown as VDropdown } from "floating-vue";
 import EscrButton from "../Button/Button.vue";
 import EscrDropdown from "../Dropdown/Dropdown.vue";
 import EscrLoader from "../Loader/Loader.vue";
@@ -102,6 +130,7 @@ export default {
         EscrDropdown,
         EscrLoader,
         ImageSelectCard,
+        VDropdown,
     },
     props: {
         /**
@@ -181,6 +210,18 @@ export default {
         checkSelected: {
             type: Function,
             required: true,
+        },
+    },
+    computed: {
+        /**
+         * Returns true if every single image currently rendered in the `pages`
+         * array has been selected by the user.
+         */
+        allVisibleSelected() {
+            if (!this.pages || this.pages.length === 0) {
+                return false;
+            }
+            return this.pages.every((page) => this.checkSelected(page.pk));
         },
     },
 };
