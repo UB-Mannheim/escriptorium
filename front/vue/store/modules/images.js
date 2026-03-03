@@ -231,6 +231,7 @@ const actions = {
             field: "order",
             direction: 1,
             pageSize: 50,
+            filters: rootState?.filter?.filters,
         });
         if (data?.results) {
             commit(
@@ -268,6 +269,7 @@ const actions = {
                     field: "order",
                     direction: 1,
                     pageSize: 50,
+                    filters: rootState?.filter?.filters,
                 });
                 data = res.data;
             } else if (nextPage) {

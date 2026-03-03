@@ -155,6 +155,7 @@ export const retrieveDocumentParts = async ({
     field,
     direction,
     pageSize,
+    filters,
 }) => {
     let params = {};
     if (field && direction) {
@@ -162,6 +163,9 @@ export const retrieveDocumentParts = async ({
     }
     if (pageSize) {
         params.paginate_by = pageSize;
+    }
+    if (filters) {
+        params = { ...params, ...getFilterParams({ filters }) };
     }
     return await axios.get(`/documents/${documentId}/parts/`, { params });
 };

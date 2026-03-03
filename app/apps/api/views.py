@@ -851,10 +851,29 @@ class ImportViewSet(DocumentPermissionMixin, GenericViewSet, CreateModelMixin):
         return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
 
 
+class PartFilterSet(FilterSet):
+    """FilterSet subclass to allow filtering on DocumentPart names/filenames"""
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+
+        name = self.request.GET.get("name")
+        if name:
+            queryset = queryset.filter(
+                Q(name__icontains=name) | Q(original_filename__icontains=name)
+            )
+
+        return queryset
+
+    class Meta:
+        model = DocumentPart
+        fields = []
+
+
 class PartViewSet(DocumentPermissionMixin, ModelViewSet):
-    filter_backends = (OrderingFilter,)
     queryset = DocumentPart.objects.all().select_related('document')
-    filter_backends = [filters.OrderingFilter]
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    filterset_class = PartFilterSet
 
     def get_queryset(self):
         qs = super().get_queryset()

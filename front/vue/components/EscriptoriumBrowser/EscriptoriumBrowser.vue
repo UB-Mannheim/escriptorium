@@ -28,17 +28,17 @@
                     </template>
                 </template>
             </h3>
-            <div
-                v-if="!currentDocument"
-                class="escr-browser-filters"
-            >
+            <div class="escr-browser-filters">
                 <FilterSet
-                    :disabled="loading || isFetchingContent"
+                    :disabled="loading"
                     :on-filter="handleFilter"
                     :search-placeholder="
-                        currentProject ? 'Search documents...' : 'Search projects...'
+                        currentDocument ? 'Search images...' :
+                        currentProject ? 'Search documents...' :
+                        'Search projects...'
                     "
                     :tags="currentTags"
+                    :hide-tags="!!currentDocument"
                 />
             </div>
         </div>
@@ -338,7 +338,7 @@ export default {
             "addAllParts",
             "removeItem",
         ]),
-        ...mapActions("images", ["fetchDocument", "fetchNextPage"]),
+        ...mapActions("images", ["fetchDocument", "fetchNextPage", "fetchParts"]),
         ...mapActions("filter", ["removeFilter"]),
 
         /**
@@ -603,6 +603,11 @@ export default {
                 this.fetchStoreProjects();
             } else if (!this.currentDocument) {
                 this.fetchProjectDocuments();
+            } else {
+                this.isFetchingContent = true;
+                this.fetchParts().finally(() => {
+                    this.isFetchingContent = false;
+                });
             }
         },
     },
