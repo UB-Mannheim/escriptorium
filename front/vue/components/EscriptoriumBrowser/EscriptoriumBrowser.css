@@ -1,3 +1,24 @@
+/* layout */
+.escr-browser.escr-card:not(.escr-card-padding) {
+    display: flex;
+    flex-direction: column;
+    min-height: 500px; 
+    max-height: 500px; 
+    overflow: hidden; 
+    padding-bottom: 0;
+}
+.escr-browser.escr-card:not(.escr-card-padding) .escr-card-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+/* prevent double-scrollbars */
+.escr-browser.escr-card:not(.escr-card-padding) .escr-card-content .escr-image-grid {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
 /* header */
 .escr-browser.escr-card:not(.escr-card-padding) .escr-card-header {
     display: flex;
@@ -7,6 +28,7 @@
     padding: 0.5rem 1rem;
     margin: 0.3rem 0 0;
     min-height: 60px;
+    flex-shrink: 0;
 }
 
 /* tag filter modal */

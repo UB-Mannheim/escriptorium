@@ -98,9 +98,9 @@ import EscrDropdownField from "../../components/Dropdown/DropdownField.vue";
 import EscrTextField from "../../components/TextField/TextField.vue";
 import EscriptoriumBrowser from "../../components/EscriptoriumBrowser/EscriptoriumBrowser.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
-import "./ModelTraining.css";
-import "../../components/Common/Card.css";
 import CheckIcon from "../../components/Icons/CheckIcon/CheckIcon.vue";
+import "../../components/Common/Card.css";
+import "./ModelTraining.css";
 
 export default {
     name: "EscrModelTrainingPage",

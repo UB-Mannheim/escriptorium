@@ -1,3 +1,14 @@
+/* page layout */
+.escr-page-container.escr-model-training {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+}
+
+.escr-page-container.escr-model-training .escr-page {
+    padding-bottom: 2rem !important;
+}
+
 /* collection actions */
 .escr-model-training .escr-collection-management .escr-collection-actions {
     display: flex;
