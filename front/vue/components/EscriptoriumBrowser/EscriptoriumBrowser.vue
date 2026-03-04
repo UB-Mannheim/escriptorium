@@ -42,22 +42,37 @@
                 />
             </div>
         </div>
-        <div class="escr-card-content escr-browser">
+        <div
+            class="escr-card-content escr-browser"
+            @scroll="handleScroll"
+        >
             <!-- Projects list -->
             <div v-if="!currentProject && !currentDocument">
                 <EscrLoader
-                    v-if="loading || !projects || projects.length === 0"
+                    v-if="!projects || projects.length === 0"
                     :loading="loading"
                     no-data-message="No projects to display."
                 />
-                <EscrTable
-                    v-else
-                    item-key="id"
-                    :headers="projectHeaders"
-                    :items="projects"
-                    :disabled="loading"
-                    :on-row-click="setCurrentProject"
-                />
+                <template v-else>
+                    <EscrTable
+                        item-key="id"
+                        :headers="projectHeaders"
+                        :items="projects"
+                        :disabled="loading"
+                        :on-row-click="setCurrentProject"
+                    />
+                    <div
+                        v-if="isFetchingMoreProjects"
+                        style="display: flex; justify-content: center; padding: 1rem;"
+                    >
+                        <div
+                            class="escr-spinner escr-spinner--secondary"
+                            role="status"
+                        >
+                            <span class="sr-only">Loading more...</span>
+                        </div>
+                    </div>
+                </template>
             </div>
             <!-- Documents list -->
             <div
@@ -65,27 +80,35 @@
                 class="escr-browser-documents-list"
             >
                 <EscrLoader
-                    v-if="
-                        isFetchingContent ||
-                            !storeDocuments ||
-                            storeDocuments.length === 0
-                    "
+                    v-if="!storeDocuments || storeDocuments.length === 0"
                     :loading="isFetchingContent"
                     no-data-message="No documents to display."
                 />
-                <EscrTable
-                    v-else
-                    item-key="pk"
-                    :headers="documentHeaders"
-                    :items="storeDocuments"
-                    :selectable="true"
-                    :disabled="isUpdatingSelection"
-                    :selected-items="fullySelectedDocs"
-                    :partially-selected-items="partiallySelectedDocs"
-                    :on-toggle-selected="handleToggleDocument"
-                    :on-select-all="handleSelectAllDocuments"
-                    :on-row-click="setCurrentDocument"
-                />
+                <template v-else>
+                    <EscrTable
+                        item-key="pk"
+                        :headers="documentHeaders"
+                        :items="storeDocuments"
+                        :selectable="true"
+                        :disabled="isUpdatingSelection"
+                        :selected-items="fullySelectedDocs"
+                        :partially-selected-items="partiallySelectedDocs"
+                        :on-toggle-selected="handleToggleDocument"
+                        :on-select-all="handleSelectAllDocuments"
+                        :on-row-click="setCurrentDocument"
+                    />
+                    <div
+                        v-if="isFetchingMoreDocuments"
+                        style="display: flex; justify-content: center; padding: 1rem;"
+                    >
+                        <div
+                            class="escr-spinner escr-spinner--secondary"
+                            role="status"
+                        >
+                            <span class="sr-only">Loading more...</span>
+                        </div>
+                    </div>
+                </template>
                 <div
                     v-if="isUpdatingSelection"
                     class="images-loading-overlay no-bg"
@@ -151,6 +174,8 @@ export default {
             currentDocument: null,
             isFetchingContent: false,
             isFetchingMore: false,
+            isFetchingMoreProjects: false,
+            isFetchingMoreDocuments: false,
             isUpdatingSelection: false,
         };
     },
@@ -159,10 +184,12 @@ export default {
             projects: "projects",
             loading: "loading",
             projectTags: "tags",
+            projectsNextPage: "nextPage",
         }),
         ...mapState("project", {
             storeDocuments: "documents",
             documentTags: "documentTags",
+            documentsNextPage: "nextPage",
         }),
         ...mapState("document", { storePages: "parts" }),
         ...mapState("collection", {
@@ -336,11 +363,13 @@ export default {
         ...mapActions("projects", {
             fetchStoreProjects: "fetchProjects",
             fetchAllProjectTags: "fetchAllProjectTags",
+            fetchNextProjectsPage: "fetchNextPage",
         }),
         ...mapActions("project", {
             setProjectId: "setId",
             fetchProjectDocuments: "fetchProjectDocuments",
             fetchProjectDocumentTags: "fetchProjectDocumentTags",
+            fetchNextDocumentsPage: "fetchNextPage",
         }),
         ...mapActions("document", {
             setDocumentId: "setId",
@@ -640,6 +669,49 @@ export default {
                     partsOverride: unselectedParts,
                     transcriptionId: this.defaultTranscription,
                 });
+            }
+        },
+
+        /**
+         * Load more projects
+         */
+        async onLoadMoreProjects() {
+            this.isFetchingMoreProjects = true;
+            await this.fetchNextProjectsPage();
+            this.isFetchingMoreProjects = false;
+        },
+
+        /**
+         * Load more documents
+         */
+        async onLoadMoreDocuments() {
+            this.isFetchingMoreDocuments = true;
+            await this.fetchNextDocumentsPage();
+            this.isFetchingMoreDocuments = false;
+        },
+
+        /**
+         * Load more on scroll down (to bottom 50px of tables)
+         */
+        handleScroll(event) {
+            const { scrollTop, clientHeight, scrollHeight } = event.target;
+            if (scrollTop + clientHeight >= scrollHeight - 50) {
+                // scroll projects
+                if (!this.currentProject && !this.currentDocument) {
+                    if (this.projectsNextPage && !this.isFetchingMoreProjects && !this.loading) {
+                        this.onLoadMoreProjects();
+                    }
+                }
+                // scroll documents
+                else if (this.currentProject && !this.currentDocument) {
+                    if (
+                        this.documentsNextPage &&
+                        !this.isFetchingMoreDocuments &&
+                        !this.isFetchingContent
+                    ) {
+                        this.onLoadMoreDocuments();
+                    }
+                }
             }
         },
     },
