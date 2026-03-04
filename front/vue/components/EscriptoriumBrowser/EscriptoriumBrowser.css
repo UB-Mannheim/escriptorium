@@ -57,8 +57,29 @@ h3.escr-browser-breadcrumbs .separator {
 }
 
 /* table */
+.escr-browser .escr-table {
+    table-layout: fixed;
+}
 .escr-browser .escr-table thead tr {
     background-color: var(--background3);
+}
+.escr-browser .escr-table .col-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}
+.escr-browser .escr-table .col-tags {
+    width: 25%;
+}
+.escr-browser .escr-table .col-small {
+    width: 10%;
+}
+.escr-browser .escr-table .col-date {
+    width: 15%;
+}
+.escr-browser .escr-table .escr-select-all,
+.escr-browser .escr-table .escr-select-column {
+    width: 56px;
 }
 .escr-browser-documents-list {
     position: relative;

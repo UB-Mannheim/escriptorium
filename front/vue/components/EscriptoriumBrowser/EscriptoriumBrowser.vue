@@ -200,36 +200,40 @@ export default {
         ...mapState("images", ["nextPage"]),
         projectHeaders() {
             return [
-                { label: "Project Name", value: "name" },
-                { label: "Tags", value: "tags", component: EscrTags },
-                { label: "Owner", value: "owner" },
-                { label: "Documents", value: "documents_count" },
+                { label: "Project Name", value: "name", class: "col-title" },
+                { label: "Tags", value: "tags", component: EscrTags, class: "col-tags" },
+                { label: "Owner", value: "owner", class: "col-small" },
+                { label: "Documents", value: "documents_count", class: "col-small" },
                 {
                     label: "Created At",
                     value: "created_at",
                     format: this.formatDate,
+                    class: "col-date",
                 },
                 {
                     label: "Updated At",
                     value: "updated_at",
                     format: this.formatDate,
+                    class: "col-date",
                 },
             ];
         },
         documentHeaders() {
             return [
-                { label: "Document Name", value: "name" },
-                { label: "Tags", value: "tags", component: EscrTags },
-                { label: "Pages Count", value: "parts_count" },
+                { label: "Document Name", value: "name", class: "col-title" },
+                { label: "Tags", value: "tags", component: EscrTags, class: "col-tags" },
+                { label: "Pages Count", value: "parts_count", class: "col-small" },
                 {
                     label: "Updated At",
                     value: "updated_at",
                     format: this.formatDate,
+                    class: "col-date",
                 },
                 {
                     label: "Created At",
                     value: "created_at",
                     format: this.formatDate,
+                    class: "col-date",
                 },
             ];
         },
