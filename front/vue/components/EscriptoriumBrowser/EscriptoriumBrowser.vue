@@ -60,6 +60,7 @@
                         :items="projects"
                         :disabled="loading"
                         :on-row-click="setCurrentProject"
+                        :on-sort="sortProjects"
                     />
                     <div
                         v-if="isFetchingMoreProjects"
@@ -96,6 +97,7 @@
                         :on-toggle-selected="handleToggleDocument"
                         :on-select-all="handleSelectAllDocuments"
                         :on-row-click="setCurrentDocument"
+                        :on-sort="sortDocuments"
                     />
                     <div
                         v-if="isFetchingMoreDocuments"
@@ -200,40 +202,49 @@ export default {
         ...mapState("images", ["nextPage"]),
         projectHeaders() {
             return [
-                { label: "Project Name", value: "name", class: "col-title" },
+                { label: "Project Name", value: "name", sortable: true, class: "col-title" },
                 { label: "Tags", value: "tags", component: EscrTags, class: "col-tags" },
-                { label: "Owner", value: "owner", class: "col-small" },
-                { label: "Documents", value: "documents_count", class: "col-small" },
+                { label: "Owner", value: "owner", sortable: true, class: "col-small" },
+                {
+                    label: "Documents",
+                    value: "documents_count",
+                    sortable: true,
+                    class: "col-small",
+                },
                 {
                     label: "Created At",
                     value: "created_at",
                     format: this.formatDate,
+                    sortable: true,
                     class: "col-date",
                 },
                 {
                     label: "Updated At",
                     value: "updated_at",
                     format: this.formatDate,
+                    sortable: true,
                     class: "col-date",
                 },
             ];
         },
         documentHeaders() {
             return [
-                { label: "Document Name", value: "name", class: "col-title" },
+                { label: "Document Name", value: "name", sortable: true, class: "col-title" },
                 { label: "Tags", value: "tags", component: EscrTags, class: "col-tags" },
-                { label: "Pages Count", value: "parts_count", class: "col-small" },
+                { label: "Pages Count", value: "parts_count", sortable: true, class: "col-small" },
                 {
                     label: "Updated At",
                     value: "updated_at",
                     format: this.formatDate,
                     class: "col-date",
+                    sortable: true,
                 },
                 {
                     label: "Created At",
                     value: "created_at",
                     format: this.formatDate,
                     class: "col-date",
+                    sortable: true,
                 },
             ];
         },
@@ -368,12 +379,14 @@ export default {
             fetchStoreProjects: "fetchProjects",
             fetchAllProjectTags: "fetchAllProjectTags",
             fetchNextProjectsPage: "fetchNextPage",
+            sortProjects: "sortProjects",
         }),
         ...mapActions("project", {
             setProjectId: "setId",
             fetchProjectDocuments: "fetchProjectDocuments",
             fetchProjectDocumentTags: "fetchProjectDocumentTags",
             fetchNextDocumentsPage: "fetchNextPage",
+            sortDocuments: "sortDocuments",
         }),
         ...mapActions("document", {
             setDocumentId: "setId",
