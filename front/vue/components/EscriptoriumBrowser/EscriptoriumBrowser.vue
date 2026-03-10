@@ -170,6 +170,22 @@ export default {
         EscrTags,
         FilterSet,
     },
+    props: {
+        /**
+         * A project object (id, name) if one was already pre-selected on mount
+         */
+        preselectedProject: {
+            type: Object,
+            default: null,
+        },
+        /**
+         * A documnet object if one was already pre-selected on mount
+         */
+        preselectedDocument: {
+            type: Object,
+            default: null,
+        },
+    },
     data() {
         return {
             currentProject: null,
@@ -374,8 +390,27 @@ export default {
             },
         },
     },
-    mounted() {
-        this.fetchProjects();
+    async mounted() {
+        if (this.preselectedProject && this.preselectedDocument) {
+            // fetch all projects and tags for breadcrumbs and search
+            this.fetchStoreProjects();
+            this.fetchAllProjectTags();
+
+            // set project on state, fetch its documents
+            this.currentProject = this.preselectedProject;
+            this.setProjectId(this.preselectedProject.id);
+            this.fetchProjectDocuments();
+
+            // set document on state, wait for pages to load
+            this.currentDocument = this.preselectedDocument;
+            this.setDocumentId(this.preselectedDocument.pk);
+            this.isFetchingContent = true;
+            await this.fetchDocument();
+            this.isFetchingContent = false;
+        } else {
+            // otherwise, just start at the project root list
+            this.fetchProjects();
+        }
     },
     methods: {
         ...mapActions("projects", {

@@ -101,7 +101,18 @@
             <!-- browser to populate training data -->
             <section>
                 <h2>Browse</h2>
-                <EscriptoriumBrowser />
+                <EscriptoriumBrowser
+                    v-if="escrBrowserLoaded"
+                    :preselected-project="preselectedProject"
+                    :preselected-document="preselectedDocument"
+                />
+                <div
+                    v-else
+                    class="escr-spinner escr-spinner--secondary"
+                    role="status"
+                >
+                    <span class="sr-only">Loading browser...</span>
+                </div>
             </section>
         </template>
     </EscrPage>
@@ -143,6 +154,9 @@ export default {
     data() {
         return {
             isEditingName: false,
+            preselectedProject: null,
+            preselectedDocument: null,
+            escrBrowserLoaded: false,
         };
     },
     computed: {
@@ -165,8 +179,28 @@ export default {
             }));
         },
     },
-    mounted() {
-        this.$store.dispatch("collection/fetchCollections");
+    async mounted() {
+        // fetch all collections
+        await this.$store.dispatch("collection/fetchCollections");
+
+        // grab preselected parts/project/doc data from session storage
+        const preselected = sessionStorage.getItem("escr-training-data");
+        if (preselected) {
+            // load parts and document from preselected
+            const data = JSON.parse(preselected);
+            this.preselectedProject = data.project;
+            this.preselectedDocument = data.document;
+            await this.loadCollection(null);
+            await this.$store.dispatch("collection/addSelectedParts", {
+                document: this.preselectedDocument,
+                partPks: data.selectedParts,
+                partsOverride: data.parts,
+            });
+            // remove the keys from session storage
+            sessionStorage.removeItem("escr-training-data");
+        }
+
+        this.escrBrowserLoaded = true;
     },
     methods: {
         ...mapActions("collection", ["saveCollection", "loadCollection"]),
