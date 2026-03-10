@@ -69,10 +69,10 @@ const actions = {
                 || document.transcriptions?.[0];
             transcriptionId = manual ? (manual.id || manual.pk) : null;
             if (document) {
-                commit("setDocumentDefault", { documentId, transcriptionId });
+                commit("setDefaultTranscription", { documentId, transcriptionId });
             }
         }
-        const sourceParts = partsOverride || document.parts;
+        const sourceParts = partsOverride || document.parts|| [];
         const selectedParts = sourceParts.filter((p) => partPks.includes(p.pk || p.id));
         commit("addItems", {
             document,

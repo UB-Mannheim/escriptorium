@@ -1402,7 +1402,7 @@ class VirtualCollectionViewSet(ModelViewSet):
         collection = self.get_object()
         # prefetch related objects to prevent n+1 quries
         items_qs = collection.virtualcollectionitem_set.select_related(
-            'document_part', 
+            'document_part',
             'document_part__document'
         ).all().order_by('id')
         page = self.paginate_queryset(items_qs)

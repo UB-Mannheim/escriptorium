@@ -42,7 +42,7 @@
     cursor: pointer;
     position: relative;
     z-index: 2;
-    margin-bottom: -1px; 
+    margin-bottom: -1px;
 }
 .folder-content {
     background-color: var(--background1);

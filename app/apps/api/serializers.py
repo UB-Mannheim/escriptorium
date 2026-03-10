@@ -1465,9 +1465,9 @@ class VirtualCollectionItemSerializer(serializers.ModelSerializer):
         # get the best name to show for the part when shown on the frontend
         part = obj.document_part
         return (
-            part.name or 
-            getattr(part, 'filename', None) or 
-            getattr(part, 'title', None) or 
+            part.name or
+            getattr(part, 'filename', None) or
+            getattr(part, 'title', None) or
             f"Page {part.order + 1}"
         )
 
