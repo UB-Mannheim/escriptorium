@@ -66,6 +66,7 @@ from api.serializers import (
     TranscriptionSerializer,
     UserSerializer,
     VirtualCollectionSerializer,
+    VirtualCollectionItemSerializer,
 )
 from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
@@ -94,7 +95,6 @@ from core.models import (
     TextualWitness,
     Transcription,
     VirtualCollection,
-    VirtualCollectionItem,
 )
 from core.tasks import recalculate_masks
 from imports.forms import ExportForm, ImportForm
@@ -874,6 +874,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = DocumentPart.objects.all().select_related('document')
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     filterset_class = PartFilterSet
+    pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1391,3 +1392,23 @@ class VirtualCollectionViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    @action(detail=True, methods=['get'], pagination_class=ExtraLargeResultsSetPagination)
+    def items(self, request, pk=None):
+        """
+        GET /collections/<id>/items/?page=1
+        Returns a paginated list of items for the VirtualCollection.
+        """
+        collection = self.get_object()
+        # prefetch related objects to prevent n+1 quries
+        items_qs = collection.virtualcollectionitem_set.select_related(
+            'document_part', 
+            'document_part__document'
+        ).all().order_by('id')
+        page = self.paginate_queryset(items_qs)
+        if page is not None:
+            serializer = VirtualCollectionItemSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = VirtualCollectionItemSerializer(items_qs, many=True)
+        return Response(serializer.data)

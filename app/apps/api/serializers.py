@@ -1440,12 +1440,13 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
 
 
 class VirtualCollectionItemSerializer(serializers.ModelSerializer):
-    part_name = serializers.ReadOnlyField(source="document_part.name")
+    part_name = serializers.SerializerMethodField()
     thumbnail = ImageField(
         source="document_part.image", thumbnails=["card"], read_only=True
     )
     document_id = serializers.ReadOnlyField(source="document_part.document.id")
     document_name = serializers.ReadOnlyField(source="document_part.document.name")
+    part_order = serializers.ReadOnlyField(source="document_part.order")
 
     class Meta:
         model = VirtualCollectionItem
@@ -1457,13 +1458,20 @@ class VirtualCollectionItemSerializer(serializers.ModelSerializer):
             "document_id",
             "document_name",
             "transcription_layer",
+            "part_order",
         ]
 
+    def get_part_name(self, obj):
+        # get the best name to show for the part when shown on the frontend
+        part = obj.document_part
+        return (
+            part.name or 
+            getattr(part, 'filename', None) or 
+            getattr(part, 'title', None) or 
+            f"Page {part.order + 1}"
+        )
 
 class VirtualCollectionSerializer(serializers.ModelSerializer):
-    items = VirtualCollectionItemSerializer(
-        source="virtualcollectionitem_set", many=True, read_only=True
-    )
     owner = serializers.ReadOnlyField(source="owner.username")
     items_to_save = serializers.ListField(
         child=serializers.DictField(), write_only=True, required=False
@@ -1474,11 +1482,10 @@ class VirtualCollectionSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
-            "items",
-            "items_to_save",
             "default_transcriptions",
             "owner",
             "updated_at",
+            "items_to_save",
         ]
 
     def create(self, validated_data):

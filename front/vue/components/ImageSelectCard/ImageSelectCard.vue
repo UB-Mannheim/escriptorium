@@ -33,14 +33,18 @@
 
             <span class="element-number">{{ page.order + 1 }}</span>
 
-            <div class="filename">
-                <span>{{
-                    page.name ||
-                        page.filename ||
-                        page.title ||
-                        `Page ${page.pk}`
-                }}</span>
-            </div>
+            <!-- filename with tooltip for overflow -->
+            <VDropdown
+                placement="bottom"
+                :triggers="['hover']"
+                theme="escr-tooltip-small"
+                class="filename"
+            >
+                <span>{{ page.name || page.filename || page.title || `Page ${page.pk}` }}</span>
+                <template #popper>
+                    {{ page.name || page.filename || page.title || `Page ${page.pk}` }}
+                </template>
+            </VDropdown>
 
             <div
                 v-if="availableTranscriptions && availableTranscriptions.length"
@@ -48,7 +52,9 @@
                 @click.stop
             >
                 <select
-                    :value="currentTranscriptionId || currentDefaultTranscriptionId"
+                    :value="
+                        currentTranscriptionId || currentDefaultTranscriptionId
+                    "
                     :disabled="!selected"
                     @change="
                         (e) =>
@@ -70,13 +76,17 @@
 
 <script>
 import { mapState } from "vuex";
+import { Dropdown as VDropdown } from "floating-vue";
 import CheckCircleFilledIcon from "../Icons/CheckCircleFilledIcon/CheckCircleFilledIcon.vue";
 import "../ImageCard/ImageCard.css";
 import "./ImageSelectCard.css";
 
 export default {
     name: "ImageSelectCard",
-    components: { CheckCircleFilledIcon },
+    components: {
+        CheckCircleFilledIcon,
+        VDropdown
+    },
     props: {
         page: { type: Object, required: true },
         selected: { type: Boolean, default: false },

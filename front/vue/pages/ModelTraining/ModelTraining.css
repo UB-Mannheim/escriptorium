@@ -51,6 +51,7 @@
     opacity: 0.3;
     transition: opacity 0.2s ease;
     flex-shrink: 0;
+    fill: var(--text1);
 }
 
 /* name editor/input */

@@ -66,14 +66,15 @@
                         class="escr-card escr-card-padding escr-save-collection"
                     >
                         <span>
-                            <strong>{{ collectionItems.length }}</strong> elements
+                            <strong>{{ collectionItems.length }}</strong> parts
                             staged for model training.
                         </span>
                         <EscrButton
                             label="Save Collection"
                             color="primary"
                             :disabled="
-                                isSavingCollection ||
+                                isLoadingCollection ||
+                                    isSavingCollection ||
                                     !collectionName ||
                                     collectionItems.length === 0
                             "
@@ -81,6 +82,21 @@
                         />
                     </div>
                 </div>
+            </section>
+            <!-- Selected documents expand/collapse section -->
+            <section>
+                <h2>Selected Documents and Parts</h2>
+                <div
+                    v-if="isLoadingCollection"
+                    class="escr-spinner escr-spinner--secondary"
+                    role="status"
+                >
+                    <span class="sr-only">Loading collection...</span>
+                </div>
+                <SelectedDocuments v-else-if="collectionItems.length" />
+                <span v-else>
+                    No parts currently selected.
+                </span>
             </section>
             <!-- browser to populate training data -->
             <section>
@@ -99,6 +115,7 @@ import EscrTextField from "../../components/TextField/TextField.vue";
 import EscriptoriumBrowser from "../../components/EscriptoriumBrowser/EscriptoriumBrowser.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import CheckIcon from "../../components/Icons/CheckIcon/CheckIcon.vue";
+import SelectedDocuments from "../../components/EscriptoriumBrowser/SelectedDocuments.vue";
 import "../../components/Common/Card.css";
 import "./ModelTraining.css";
 
@@ -112,6 +129,7 @@ export default {
         EscrTextField,
         EscriptoriumBrowser,
         PencilIcon,
+        SelectedDocuments,
     },
     props: {
         /**
@@ -133,7 +151,8 @@ export default {
             collectionId: (state) => state.currentCollection.id,
             collectionName: (state) => state.currentCollection.name,
             collectionItems: (state) => state.currentCollection.items,
-            isSavingCollection: (state) => state.loading,
+            isLoadingCollection: (state) => state.loading,
+            isSavingCollection: (state) => state.saving,
         }),
         /**
          * The user's collections, formatted for the dropdown

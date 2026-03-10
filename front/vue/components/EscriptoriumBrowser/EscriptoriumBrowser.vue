@@ -255,15 +255,18 @@ export default {
                 selected: c.id === this.collectionId,
             }));
         },
+        /**
+         * A cached Set of all selected part PKs
+         */
+        selectedPartIdsSet() {
+            return new Set(this.collectionItems.map((i) => i.document_part));
+        },
 
         /**
          * True if a specific part pk is currently staged in the collection store
          */
         isPageSelected() {
-            return (partPK) =>
-                this.collectionItems.some(
-                    (item) => item.document_part === partPK,
-                );
+            return (partPK) => this.selectedPartIdsSet.has(partPK);
         },
 
         /**
