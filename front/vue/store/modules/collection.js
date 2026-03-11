@@ -2,6 +2,7 @@ import axios from "axios";
 
 // initial state
 const state = () => ({
+    dirty: false,
     loading: false,
     saving: false,
     collections: [],
@@ -222,6 +223,7 @@ const mutations = {
                     transcription_layer: transcriptionId,
                     part_order: part.order,
                 });
+                state.dirty = true;
             }
         });
     },
@@ -232,6 +234,7 @@ const mutations = {
         state.currentCollection.items = state.currentCollection.items.filter(
             (i) => i.document_part !== partId
         );
+        state.dirty = true;
     },
     /**
      * set the collection on state
@@ -242,12 +245,14 @@ const mutations = {
             items: collection.items || state.currentCollection?.items || [],
             defaultTranscriptions: collection.default_transcriptions || {},
         };
+        state.dirty = false;
     },
     /**
      * set the collection name on state
      */
     setCollectionName(state, name) {
         state.currentCollection.name = name;
+        state.dirty = true;
     },
     /**
      * set the default transcription on state
@@ -257,6 +262,7 @@ const mutations = {
             ...state.currentCollection.defaultTranscriptions,
             [documentId]: transcriptionId
         };
+        state.dirty = true;
     },
     /**
      * set the loading state
@@ -277,6 +283,7 @@ const mutations = {
         const item = state.currentCollection.items.find((i) => i.document_part === partId);
         if (item) {
             item.transcription_layer = transcriptionId;
+            state.dirty = true;
         }
     },
     /**

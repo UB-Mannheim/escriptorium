@@ -14,7 +14,10 @@
                             v-if="!isEditingName"
                             @click="isEditingName = true"
                         >
-                            <span>{{ collectionName || "Untitled Collection" }}</span>
+                            <span>
+                                {{ collectionName || "Untitled Collection" }}
+                                {{ isDirty ? '*' : '' }}
+                            </span>
                             <PencilIcon />
                         </h3>
                         <div
@@ -76,7 +79,8 @@
                                 isLoadingCollection ||
                                     isSavingCollection ||
                                     !collectionName ||
-                                    collectionItems.length === 0
+                                    collectionItems.length === 0 ||
+                                    !isDirty
                             "
                             :on-click="handleSaveCollection"
                         />
@@ -167,6 +171,7 @@ export default {
             collectionItems: (state) => state.currentCollection.items,
             isLoadingCollection: (state) => state.loading,
             isSavingCollection: (state) => state.saving,
+            isDirty: (state) => state.dirty,
         }),
         /**
          * The user's collections, formatted for the dropdown
@@ -199,8 +204,14 @@ export default {
             // remove the keys from session storage
             sessionStorage.removeItem("escr-training-data");
         }
-
         this.escrBrowserLoaded = true;
+
+        // add beforeunload event handler to show "unsaved changes" prompt
+        window.addEventListener("beforeunload", this.handleBeforeUnload);
+    },
+    beforeDestroy() {
+        // clean up beforeunload listener
+        window.removeEventListener("beforeunload", this.handleBeforeUnload);
     },
     methods: {
         ...mapActions("collection", ["saveCollection", "loadCollection"]),
@@ -261,6 +272,16 @@ export default {
         handleNewCollection() {
             this.loadCollection(null);
             this.isEditingName = false;
+        },
+        /**
+         * Intercept browser navigation/close if there are unsaved changes
+         */
+        handleBeforeUnload(event) {
+            if (this.isDirty) {
+                event.preventDefault();
+                // Chrome requires returnValue to trigger the warning prompt
+                event.returnValue = "";
+            }
         },
     },
 };
