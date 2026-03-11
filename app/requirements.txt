@@ -18,6 +18,7 @@ djangorestframework~=3.15.1
 drf-nested-routers~=0.91
 easy-thumbnails~=2.8.1
 elasticsearch~=7.17.0
+git+https://github.com/mittagessen/dfine_kraken.git
 kraken>=7.0.0b6,~=7.0.0b6
 oitei~=1.1.1
 git+https://github.com/dasmiq/passim.git@v2.0.1#egg=passim
