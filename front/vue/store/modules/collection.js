@@ -85,8 +85,14 @@ const actions = {
      */
     async fetchCollections({ commit }) {
         try {
-            const { data } = await axios.get("/collections/");
-            commit("setCollections", data.results);
+            let url = "/collections/";
+            const collections = [];
+            while (url) {
+                const { data } = await axios.get(url);
+                collections.push(...(data.results || []));
+                url = data.next;
+            }
+            commit("setCollections", collections);
         } catch (error) {
             console.error("Failed to fetch collections:", error);
         }

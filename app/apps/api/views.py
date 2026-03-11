@@ -1386,6 +1386,7 @@ class RegenerableAuthToken(ObtainAuthToken):
 
 class VirtualCollectionViewSet(ModelViewSet):
     serializer_class = VirtualCollectionSerializer
+    pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
         return VirtualCollection.objects.filter(owner=self.request.user)
