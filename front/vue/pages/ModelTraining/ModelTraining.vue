@@ -87,6 +87,10 @@
                     </div>
                 </div>
             </section>
+            <!-- training form -->
+            <section>
+                <TrainForm />
+            </section>
             <!-- Selected documents expand/collapse section -->
             <section>
                 <h2>Selected Documents and Parts</h2>
@@ -131,6 +135,7 @@ import EscriptoriumBrowser from "../../components/EscriptoriumBrowser/Escriptori
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import CheckIcon from "../../components/Icons/CheckIcon/CheckIcon.vue";
 import SelectedDocuments from "../../components/EscriptoriumBrowser/SelectedDocuments.vue";
+import TrainForm from "../../components/TrainForm/TrainForm.vue";
 import "../../components/Common/Card.css";
 import "./ModelTraining.css";
 
@@ -145,6 +150,7 @@ export default {
         EscriptoriumBrowser,
         PencilIcon,
         SelectedDocuments,
+        TrainForm,
     },
     props: {
         /**

@@ -57,7 +57,9 @@ from core.tasks import (
     lossless_compression,
     segment,
     segtrain,
+    segtrain_from_collection,
     train,
+    train_from_collection,
     transcribe,
 )
 from core.utils import ColorField
@@ -2055,6 +2057,22 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
                     task_group_pk=task_group_pk,
                     part_pks=list(parts_qs.values_list('pk', flat=True)),
                     user_pk=user and user.pk or None)
+
+    def segtrain_from_collection(self, collection_pk, task_group_pk=None, user=None):
+        segtrain_from_collection.delay(
+            model_pk=self.pk,
+            collection_pk=collection_pk,
+            task_group_pk=task_group_pk,
+            user_pk=user.pk if user else None
+        )
+
+    def train_from_collection(self, collection_pk, task_group_pk=None, user=None):
+        train_from_collection.delay(
+            model_pk=self.pk,
+            collection_pk=collection_pk,
+            task_group_pk=task_group_pk,
+            user_pk=user.pk if user else None
+        )
 
     def cancel_training(self, revoke_task=True, username=None):
         if revoke_task:

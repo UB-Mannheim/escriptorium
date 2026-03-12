@@ -33,6 +33,8 @@ from api.serializers import (
     AnnotationTypeSerializer,
     BlockSerializer,
     BlockTypeSerializer,
+    CollectionRecognizeSerializer,
+    CollectionSegmentSerializer,
     DetailedGroupSerializer,
     DetailedLineSerializer,
     DocumentMetadataSerializer,
@@ -96,7 +98,7 @@ from core.models import (
     Transcription,
     VirtualCollection,
 )
-from core.tasks import recalculate_masks
+from core.tasks import recalculate_masks, train_from_collection, segtrain_from_collection
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
 from reporting.models import TaskGroup, TaskReport
@@ -1394,7 +1396,9 @@ class VirtualCollectionViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-    @action(detail=True, methods=['get'], pagination_class=ExtraLargeResultsSetPagination)
+    @action(
+        detail=True, methods=["get"], pagination_class=ExtraLargeResultsSetPagination
+    )
     def items(self, request, pk=None):
         """
         GET /collections/<id>/items/?page=1
@@ -1402,10 +1406,13 @@ class VirtualCollectionViewSet(ModelViewSet):
         """
         collection = self.get_object()
         # prefetch related objects to prevent n+1 quries
-        items_qs = collection.virtualcollectionitem_set.select_related(
-            'document_part',
-            'document_part__document'
-        ).all().order_by('id')
+        items_qs = (
+            collection.virtualcollectionitem_set.select_related(
+                "document_part", "document_part__document"
+            )
+            .all()
+            .order_by("id")
+        )
         page = self.paginate_queryset(items_qs)
         if page is not None:
             serializer = VirtualCollectionItemSerializer(page, many=True)
@@ -1413,3 +1420,35 @@ class VirtualCollectionViewSet(ModelViewSet):
 
         serializer = VirtualCollectionItemSerializer(items_qs, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def train_recognizer(self, request, pk=None):
+        # recognition: get the collection, validate with training serializer, enqueue training task
+        collection = self.get_object()
+        serializer = CollectionRecognizeSerializer(
+            data=request.data, context={"request": request, "collection": collection}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.process()
+        serializer.model.train_from_collection(
+            collection_pk=collection.pk,
+            task_group_pk=serializer.task_group.pk,
+            user=request.user,
+        )
+        return Response({"status": "training queued", "model_id": serializer.model.pk})
+
+    @action(detail=True, methods=["post"])
+    def train_segmenter(self, request, pk=None):
+        # segmentation: get the collection, validate with training serializer, enqueue segtraining task
+        collection = self.get_object()
+        serializer = CollectionSegmentSerializer(
+            data=request.data, context={"request": request, "collection": collection}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.process()
+        serializer.model.segtrain_from_collection(
+            collection_pk=collection.pk,
+            task_group_pk=serializer.task_group.pk,
+            user=request.user,
+        )
+        return Response({"status": "training queued", "model_id": serializer.model.pk})

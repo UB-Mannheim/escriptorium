@@ -25,6 +25,7 @@ const state = () => ({
     },
     // documentTranscriptions stores ALL transcriptions per doc pk
     documentTranscriptions: {},
+    tasks: [],
 });
 
 const actions = {
@@ -73,7 +74,7 @@ const actions = {
                 commit("setDefaultTranscription", { documentId, transcriptionId });
             }
         }
-        const sourceParts = partsOverride || document.parts|| [];
+        const sourceParts = partsOverride || document.parts || [];
         const selectedParts = sourceParts.filter((p) => partPks.includes(p.pk || p.id));
         commit("addItems", {
             document,
@@ -196,6 +197,31 @@ const actions = {
             dispatch("alerts/addError", error, { root: true });
             // cache empty array to prevent infinite retries on failure
             commit("setDocumentTranscriptions", { documentId, transcriptions: [] });
+        }
+    },
+    /**
+     * fetch task groups associated with a collection
+     */
+    async fetchCollectionTasks({ commit, state }) {
+        const { data } = await axios.get(`/taskgroup/?collection=${state.currentCollection.id}`);
+        commit("setTasks", data.results);
+    },
+    /**
+     * submit collection to the backend for model training
+     */
+    async trainModel({ dispatch, state }, { modelType, payload }) {
+        const collectionId = state.currentCollection.id;
+        if (!collectionId) {
+            dispatch(
+                "alerts/addError",
+                "The selection must be saved as a collection before training.",
+                { root: true }
+            );
+        }
+        if (modelType === "recognizer") {
+            return await axios.post(`/collections/${collectionId}/train_recognizer/`, payload);
+        } else if (modelType === "segmenter") {
+            return await axios.post(`/collections/${collectionId}/train_segmenter/`, payload);
         }
     },
 };
@@ -324,6 +350,12 @@ const mutations = {
                 existingIds.add(item.document_part);
             }
         });
+    },
+    /**
+     * set the tasks list on state
+     */
+    setTasks(state, tasks) {
+        state.tasks = tasks;
     },
 };
 

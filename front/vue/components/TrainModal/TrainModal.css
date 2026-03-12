@@ -1,6 +1,0 @@
-.escr-train-modal--Recognition .escr-modal {
-    top: 2rem;
-}
-.model-override-label:has(:disabled) {
-    color: var(--text3);
-}

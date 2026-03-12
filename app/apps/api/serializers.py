@@ -1560,3 +1560,116 @@ class VirtualCollectionSerializer(serializers.ModelSerializer):
                 )
 
         return instance
+
+
+class CollectionProcessSerializerMixin:
+    PROCESS_NAME = "Not Implemented"
+    CHECK_GPU_QUOTA = False
+    CHECK_DISK_QUOTA = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = self.context["request"].user
+        self.collection = self.context.get("collection")
+
+    def validate(self, data):
+        data = super().validate(data)
+        # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise serializers.ValidationError(
+                    _("You don't have any CPU minutes left.")
+                )
+            if self.CHECK_GPU_QUOTA and not self.user.has_free_gpu_minutes():
+                raise serializers.ValidationError(
+                    _("You don't have any GPU minutes left.")
+                )
+            if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
+                raise serializers.ValidationError(
+                    _("You don't have any disk storage left.")
+                )
+        return data
+
+    def process(self):
+        # create a TaskGroup linked to a collection (instead of a document)
+        self.task_group = TaskGroup.objects.create(
+            task=self.PROCESS_NAME, created_by=self.user, collection=self.collection
+        )
+
+
+class BaseCollectionTrainSerializer(
+    CollectionProcessSerializerMixin, serializers.Serializer
+):
+    """
+    Base serializer for handling model training from a VirtualCollection.
+    """
+
+    model = serializers.PrimaryKeyRelatedField(
+        required=False, queryset=OcrModel.objects.all()
+    )
+    model_name = serializers.CharField(required=False)
+    override = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, data):
+        data = super().validate(data)
+        if not data.get("model") and not data.get("model_name"):
+            raise serializers.ValidationError(
+                _(
+                    "Either use model_name to create a new model, or provide a base model pk to retrain."
+                )
+            )
+
+        # prevent users from overwriting public models they don't own
+        model = data.get("model")
+        user = self.context["request"].user
+        if (
+            model
+            and not data.get("model_name")
+            and model.owner != user
+            and data.get("override")
+        ):
+            raise serializers.ValidationError(
+                _("You can't overwrite the existing file of a model you don't own.")
+            )
+        return data
+
+    def process(self):
+        super().process()
+
+        user = self.context["request"].user
+        model = self.validated_data.get("model")
+        override = self.validated_data.get("override")
+        model_name = self.validated_data.get("model_name")
+
+        if not model:
+            model = OcrModel.objects.create(
+                owner=user, name=model_name, job=self.JOB_TYPE, file_size=0
+            )
+        elif not override:
+            model = model.clone_for_training(user, name=model_name)
+
+        self.model = model
+
+
+class CollectionRecognizeSerializer(BaseCollectionTrainSerializer):
+    PROCESS_NAME = "recognition training"
+    JOB_TYPE = OcrModel.MODEL_JOB_RECOGNIZE
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context["request"].user
+        self.fields["model"].queryset = OcrModel.objects.filter(
+            job=OcrModel.MODEL_JOB_RECOGNIZE
+        ).for_user_read(user)
+
+
+class CollectionSegmentSerializer(BaseCollectionTrainSerializer):
+    PROCESS_NAME = "segmentation training"
+    JOB_TYPE = OcrModel.MODEL_JOB_SEGMENT
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context["request"].user
+        self.fields["model"].queryset = OcrModel.objects.filter(
+            job=OcrModel.MODEL_JOB_SEGMENT
+        ).for_user_read(user)

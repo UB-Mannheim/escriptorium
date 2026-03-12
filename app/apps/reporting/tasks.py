@@ -47,6 +47,7 @@ def create_task_reporting(sender, body, **kwargs):
     Document = apps.get_model('core', 'Document')
     DocumentPart = apps.get_model('core', 'DocumentPart')
     OcrModel = apps.get_model('core', 'OcrModel')
+    VirtualCollection = apps.get_model('core', 'VirtualCollection')
     TaskReport = apps.get_model('reporting', 'TaskReport')
     TaskGroup = apps.get_model('reporting', 'TaskGroup')
 
@@ -65,6 +66,7 @@ def create_task_reporting(sender, body, **kwargs):
     document = None
     part = None
     model = None
+    collection = None
     if task_kwargs.get("model_pk"):
         try:
             model = OcrModel.objects.get(pk=task_kwargs["model_pk"])
@@ -75,6 +77,11 @@ def create_task_reporting(sender, body, **kwargs):
         try:
             document = Document.objects.get(pk=task_kwargs["document_pk"])
         except Document.DoesNotExist:
+            pass
+    elif task_kwargs.get("collection_pk"):
+        try:
+            collection = VirtualCollection.objects.get(pk=task_kwargs["collection_pk"])
+        except VirtualCollection.DoesNotExist:
             pass
     elif task_kwargs.get("instance_pk"):
         try:
@@ -134,6 +141,7 @@ def create_task_reporting(sender, body, **kwargs):
             label=task_kwargs.get("report_label", default_report_label),
             document=document,
             document_part=part,
+            collection=collection,
             ocr_model=model,
             task_id=task_id,
             method=sender
