@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-01 13:56+0100\n"
+"POT-Creation-Date: 2026-02-27 22:29+0100\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -1375,8 +1375,8 @@ msgstr "Füge Einladung hinzu"
 msgid "About"
 msgstr "Über"
 
-#: escriptorium/templates/base.html homepage/instance_contact.html
-#: homepage_example/instance_contact.html
+#: escriptorium/templates/base.html escriptorium/templates/users/contactus.html
+#: homepage/instance_contact.html homepage_example/instance_contact.html
 msgid "Contact"
 msgstr "Kontakt"
 
@@ -1479,7 +1479,7 @@ msgstr "Die Liste der Förderer wird bald hier verfügbar sein."
 msgid ""
 "This page is not available in legacy mode. Visit your user settings to "
 "disable legacy mode."
-msgstr ""
+msgstr "Diese Seite ist im Legacy-Modus nicht verfügbar. Besuchen Sie Ihre persönlichen Einstellungen, um den Legacy-Modus zu deaktivieren."
 
 #: escriptorium/templates/core/document_form.html
 #: escriptorium/templates/core/document_nav.html
@@ -1920,7 +1920,7 @@ msgstr "Der Dienst wurde ursprünglich entwickelt von"
 
 #: escriptorium/templates/core/home.html
 msgid "École Pratique des Hautes Études (EPHE)"
-msgstr ""
+msgstr "École Pratique des Hautes Études (EPHE)"
 
 #: escriptorium/templates/core/home.html
 msgid "See"
