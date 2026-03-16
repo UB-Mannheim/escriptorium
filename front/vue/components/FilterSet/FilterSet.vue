@@ -4,7 +4,6 @@
         <SearchInput
             :value="nameFilter"
             :placeholder="searchPlaceholder"
-            :disabled="disabled"
             :on-input="handleNameInput"
             :on-clear="clearNameFilter"
             :on-enter="onFilter"
