@@ -1492,7 +1492,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         if task_name == 'transcribe':
             if not self.segmented:
                 kw = kwargs.copy()
-                kw.pop('model_pk')  # we don't want to transcribe with a segmentation model
+                kw.pop('model_pk')  # we don't want to segment with a transcription model
                 tasks.append(segment.si(instance_pks=[self.pk], report_label=f'Segment in {self.document.name}', **kw))
             tasks.append(transcribe.si(instance_pks=[self.pk], report_label=f'Transcribe in {self.document.name}', **kwargs))
 
