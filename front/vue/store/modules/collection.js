@@ -1,4 +1,15 @@
 import axios from "axios";
+import {
+    createCollection,
+    retrieveCollection,
+    retrieveCollectionItems,
+    retrieveCollections,
+    retrieveCollectionTasks,
+    retrieveDocument,
+    trainCollectionRecognizer,
+    trainCollectionSegmenter,
+    updateCollection
+} from "../../../src/api";
 
 // initial state
 const state = () => ({
@@ -87,12 +98,13 @@ const actions = {
      */
     async fetchCollections({ commit }) {
         try {
-            let url = "/collections/";
-            const collections = [];
+            const { data } = await retrieveCollections();
+            const collections = [...(data.results || [])];
+            let url = data.next;
             while (url) {
-                const { data } = await axios.get(url);
-                collections.push(...(data.results || []));
-                url = data.next;
+                const { data: nextData } = await axios.get(url);
+                collections.push(...(nextData.results || []));
+                url = nextData.next;
             }
             commit("setCollections", collections);
         } catch (error) {
@@ -116,9 +128,11 @@ const actions = {
         commit("setLoading", true);
         try {
             // GET the detail endpoint to get basic metadata
-            const { data: collection } = await axios.get(`/collections/${collectionId}/`);
+            const { data: collection } = await retrieveCollection(collectionId);
             commit("setCurrentCollection", { ...collection, items: [] });
-            let url = `/collections/${collectionId}/items/?page_size=200`;
+            const { data: collectionItems } = await retrieveCollectionItems(collectionId);
+            commit("pushCollectionItems", collectionItems.results);
+            let url = collectionItems.next;
             while (url) {
                 // loop through paginated item lists
                 const { data } = await axios.get(url);
@@ -152,12 +166,9 @@ const actions = {
             default_transcriptions: state.currentCollection.defaultTranscriptions,
         };
 
-        const url = state.currentCollection.id
-            ? `/collections/${state.currentCollection.id}/`
-            : "/collections/";
-
-        const method = state.currentCollection.id ? "put" : "post";
-        const { data } = await axios[method](url, payload);
+        const { data } = state.currentCollection.id
+            ? await updateCollection(state.currentCollection.id, payload)
+            : await createCollection(payload);
 
         commit("setCurrentCollection", data);
         commit("setSaving", false);
@@ -188,7 +199,7 @@ const actions = {
         if (state.documentTranscriptions[documentId]) return;
 
         try {
-            const { data } = await axios.get(`/documents/${documentId}/`);
+            const { data } = await retrieveDocument(documentId);
             commit("setDocumentTranscriptions", {
                 documentId,
                 transcriptions: data.transcriptions || [],
@@ -203,7 +214,7 @@ const actions = {
      * fetch task groups associated with a collection
      */
     async fetchCollectionTasks({ commit, state }) {
-        const { data } = await axios.get(`/taskgroup/?collection=${state.currentCollection.id}`);
+        const { data } = await retrieveCollectionTasks(state.currentCollection.id);
         commit("setTasks", data.results);
     },
     /**
@@ -219,9 +230,9 @@ const actions = {
             );
         }
         if (modelType === "recognizer") {
-            return await axios.post(`/collections/${collectionId}/train_recognizer/`, payload);
+            return await trainCollectionRecognizer(collectionId, payload);
         } else if (modelType === "segmenter") {
-            return await axios.post(`/collections/${collectionId}/train_segmenter/`, payload);
+            return await trainCollectionSegmenter(collectionId, payload);
         }
     },
 };
