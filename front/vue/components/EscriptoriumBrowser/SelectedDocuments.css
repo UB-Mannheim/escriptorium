@@ -1,10 +1,19 @@
+/* layout */
+.escr-selected-docs-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
 /* document chips */
-.document-chips {
+.escr-document-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    flex-shrink: 0;
 }
-.doc-expand {
+.escr-doc-expand {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -17,22 +26,32 @@
     cursor: pointer;
     transition: all 0.2s ease;
 }
-.doc-expand.active {
+.escr-doc-expand.active {
     background-color: var(--secondary);
     border-color: var(--secondary-dark);
     color: var(--tag-text-ondark);
 }
 
 /* expand/collapse document "folders" */
-.folders-wrapper {
+.escr-folders-wrapper {
     display: flex;
     flex-direction: column;
     gap: 24px;
     margin-top: 1rem;
+    flex: 1;
+    min-height: 0;
 }
-.folder-tab {
+.escr-folder-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+.escr-folder-tab {
     display: inline-flex;
-    align-items: center;
+    align-items: center;;
+    align-self: flex-start;
+    flex-shrink: 0;
     gap: 1rem;
     padding: 10px 16px;
     background-color: var(--background1);
@@ -44,23 +63,25 @@
     z-index: 2;
     margin-bottom: -1px;
 }
-.folder-content {
+.escr-folder-content {
     background-color: var(--background1);
     border-radius: 0 8px 8px 8px;
     padding: 16px;
     position: relative;
     z-index: 1;
-    max-height: 250px;
-    overflow-y: scroll;
+    max-height: 100%;
+    overflow-y: auto;
+    flex: 1;
+    padding: 16px;
 }
 
 /* images grid/cards */
-.selected-parts-grid {
+.escr-selected-parts-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
 }
-.selected-part-card {
+.escr-selected-part-card {
     width: 120px;
     border-radius: 8px;
     padding: 0;
@@ -71,12 +92,12 @@
     gap: 8px;
     box-shadow: 0 2px 8px var(--modal-backdrop);
 }
-.remove-part-btn {
+.escr-remove-part-btn {
     position: absolute;
     top: -8px;
     right: -8px;
     background-color: var(--background1);
-    color: #e53e3e;
+    color: var(--danger);
     border: 1px solid var(--background2-dark);
     border-radius: 50%;
     width: 20px;
@@ -89,10 +110,10 @@
     justify-content: center;
     z-index: 5;
 }
-.remove-part-btn:hover {
+.escr-remove-part-btn:hover {
     background-color: var(--alert-hover);
 }
-.part-thumbnail {
+.escr-part-thumbnail {
     width: 100%;
     height: 110px;
     overflow: hidden;
@@ -102,15 +123,15 @@
     border-top-right-radius: 15px;
     border-top-left-radius: 15px;
 }
-.part-thumbnail img {
+.escr-part-thumbnail img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-.part-actions {
+.escr-part-actions {
     padding: 0 8px 8px;
 }
-.transcription-select {
+.escr-transcription-select {
     width: 100%;
     border: 1px solid var(--text3);
     border-radius: 4px;
@@ -125,7 +146,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.selected-part-card .filename {
+.escr-selected-part-card .filename {
     text-align: center;
     font-size: 11px;
     margin: 4px 8px;

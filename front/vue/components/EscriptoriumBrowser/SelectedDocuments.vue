@@ -1,10 +1,10 @@
 <template>
-    <div class="selected-documents-container">
-        <div class="document-chips">
+    <div class="escr-selected-docs-container">
+        <div class="escr-document-chips">
             <button
                 v-for="doc in groupedDocs"
                 :key="`doc-${doc.id}`"
-                class="doc-expand"
+                class="escr-doc-expand"
                 :class="{
                     active: expandedFolderId === doc.id,
                 }"
@@ -24,16 +24,16 @@
 
         <div
             v-if="expandedFolderId !== null"
-            class="folders-wrapper"
+            class="escr-folders-wrapper"
         >
             <div
                 v-for="doc in groupedDocs"
                 v-show="expandedFolderId === doc.id"
                 :key="`folder-${doc.id}`"
-                class="folder-group"
+                class="escr-folder-group"
             >
                 <div
-                    class="folder-tab"
+                    class="escr-folder-tab"
                     @click="toggleFolder(doc.id)"
                 >
                     <span><strong>{{ doc.name }}</strong> ({{
@@ -43,21 +43,21 @@
                     <XIcon />
                 </div>
 
-                <div class="folder-content">
-                    <div class="selected-parts-grid">
+                <div class="escr-folder-content">
+                    <div class="escr-selected-parts-grid">
                         <div
                             v-for="part in doc.items"
                             :key="part.document_part"
-                            class="selected-part-card"
+                            class="escr-selected-part-card"
                         >
                             <button
-                                class="remove-part-btn"
+                                class="escr-remove-part-btn"
                                 aria-label="Remove part"
                                 @click="removeSelectedPart(part.document_part)"
                             >
                                 &times;
                             </button>
-                            <div class="part-thumbnail">
+                            <div class="escr-part-thumbnail">
                                 <img
                                     :src="getThumbnailUrl(part)"
                                     alt="thumbnail"
@@ -80,9 +80,9 @@
                                     {{ part.part_name || `Page ${part.document_part}` }}
                                 </template>
                             </VDropdown>
-                            <div class="part-actions">
+                            <div class="escr-part-actions">
                                 <select
-                                    class="transcription-select"
+                                    class="escr-card-transcription-select"
                                     :value="getPartLayerId(part, doc)"
                                     @change="(e) => updateTranscription(part, e.target.value)"
                                 >

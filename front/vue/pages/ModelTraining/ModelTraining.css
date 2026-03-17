@@ -1,8 +1,10 @@
 /* page layout */
-.escr-page-container.escr-model-training {
-    height: auto;
-    max-height: none;
-    overflow-y: visible;
+.escr-page-container.escr-model-training .escr-training-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px);
+    min-height: 600px;
+    gap: 0;
 }
 
 .escr-page-container.escr-model-training .escr-page {
@@ -12,94 +14,159 @@
 /* collection actions */
 .escr-model-training .escr-collection-management .escr-collection-actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* collection name */
-.escr-model-training .escr-collection-name {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex: 1 1 150px;
-    max-width: 400px;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: stretch;
     min-width: 0;
-}
-.escr-model-training .escr-collection-name h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    margin: 0;
-    cursor: pointer;
-    border-bottom: 1px dashed var(--text3);
-    max-width: 100%;
-}
-.escr-model-training .escr-collection-name h3:hover {
-    border-bottom-color: var(--text3);
-}
-.escr-model-training .escr-collection-name h3:hover svg {
-    opacity: 1;
-}
-.escr-model-training .escr-collection-name h3 span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.escr-model-training .escr-collection-name h3 svg {
-    opacity: 0.3;
-    transition: opacity 0.2s ease;
-    flex-shrink: 0;
-    fill: var(--text1);
-}
-
-/* name editor/input */
-.escr-model-training .escr-collection-name-editor {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
     width: 100%;
 }
-.escr-model-training .escr-collection-name-editor button {
-    flex-shrink: 0;
-}
-.escr-model-training .escr-collection-name-input {
-    width: 100%;
-    max-width: 100%;
-}
 
-/* collection select dropdown */
 .escr-model-training .escr-collection-dropdown {
     display: flex;
     gap: 0.5rem;
     align-items: flex-end;
-    flex: 1 1 350px;
-    max-width: 350px;
-    min-width: 0;
-}
-.escr-model-training .escr-collection-dropdown button {
-    flex-shrink: 0;
+    width: 100%;
 }
 .escr-model-training .escr-collection-dropdown .escr-dropdown-field {
+    flex: 1;
     margin-bottom: 0;
-    width: 100%;
-    min-width: 0;
-}
-.escr-model-training .escr-collection-dropdown select {
-    width: 100%;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
 }
 
-/* save collection */
-.escr-model-training .escr-card.escr-card-padding.escr-save-collection {
+.escr-page-container.escr-model-training .escr-training-collections {
     display: flex;
-    justify-content: center;
+    flex-direction: row;
+    gap: 2rem;
+    flex: 1;
+    min-height: 0;
+}
+
+/* left side: tabbed browse/select */
+.escr-model-training .escr-training-data {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.escr-tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.escr-tab-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.escr-model-training .escr-tab-panel h2 {
+    flex-shrink: 0;
+    margin-bottom: 1rem;
+}
+
+.escr-model-training .escr-tab-panel .escr-browser.escr-card {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+    height: auto;
+}
+
+.empty-state-card {
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    gap: 1rem;
+    background-color: var(--background-secondary);
+}
+
+/* RIGHT SIDE: Control Panel Sidebar */
+.escr-model-training .escr-training-sidebar {
+    flex: 0 0 380px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-width: 380px;
+}
+
+.escr-model-training .escr-training-sidebar h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+/* collection actions */
+.escr-model-training .escr-collection-name {
+    min-width: 0;
+    width: 100%;
+}
+.escr-model-training .escr-collection-name h3 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0;
+    cursor: pointer;
+    font-size: 1.1rem;
+    border-bottom: 1px dashed var(--text3);
+    padding-bottom: 0.2rem;
+    max-width: 100%;
+    min-width: 0;
+}
+.escr-model-training .escr-collection-name h3:hover {
+    border-bottom-color: var(--text1);
+}
+.escr-model-training .escr-collection-name h3 span {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.escr-model-training .escr-collection-name h3 svg {
+    width: 16px;
+    opacity: 0.5;
+    fill: var(--text1);
+    flex-shrink: 0;
+}
+.escr-model-training .escr-collection-name-editor {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    min-width: 0;
+    width: 100%;
+}
+.escr-model-training .escr-collection-name-input {
+    flex: 1;
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+.escr-model-training .escr-save-collection {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
     background-color: var(--background2);
-    flex: 0 0 460px;
-    white-space: nowrap;
+    border-radius: 8px;
+    padding: 1rem;
+    align-items: center;
+    text-align: center;
+}
+
+.escr-model-training .collection-stats {
+    font-size: 0.95rem;
+}
+.escr-model-training .escr-save-collection button {
+    width: 100%;
+}
+
+.escr-model-training .escr-training-footer {
+    flex-shrink: 0;
+    margin-top: auto;
 }
