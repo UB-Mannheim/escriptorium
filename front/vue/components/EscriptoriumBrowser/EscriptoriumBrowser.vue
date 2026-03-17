@@ -220,19 +220,11 @@ export default {
             return [
                 { label: "Project Name", value: "name", sortable: true, class: "col-title" },
                 { label: "Tags", value: "tags", component: EscrTags, class: "col-tags" },
-                { label: "Owner", value: "owner", sortable: true, class: "col-small" },
                 {
                     label: "Documents",
                     value: "documents_count",
                     sortable: true,
                     class: "col-small",
-                },
-                {
-                    label: "Created At",
-                    value: "created_at",
-                    format: this.formatDate,
-                    sortable: true,
-                    class: "col-date",
                 },
                 {
                     label: "Updated At",
@@ -247,17 +239,10 @@ export default {
             return [
                 { label: "Document Name", value: "name", sortable: true, class: "col-title" },
                 { label: "Tags", value: "tags", component: EscrTags, class: "col-tags" },
-                { label: "Pages Count", value: "parts_count", sortable: true, class: "col-small" },
+                { label: "Pages", value: "parts_count", sortable: true, class: "col-small" },
                 {
                     label: "Updated At",
                     value: "updated_at",
-                    format: this.formatDate,
-                    class: "col-date",
-                    sortable: true,
-                },
-                {
-                    label: "Created At",
-                    value: "created_at",
                     format: this.formatDate,
                     class: "col-date",
                     sortable: true,
@@ -327,7 +312,20 @@ export default {
          */
         defaultTranscription() {
             if (!this.currentDocument) return null;
-            return this.defaultTranscriptions[this.currentDocument.pk];
+            // pull from stored default if exists
+            const existingDefault = this.defaultTranscriptions[this.currentDocument.pk];
+            if (existingDefault) return existingDefault;
+            // otherwise, use "manual" or first transcription
+            if (this.currentDocument.transcriptions?.length) {
+                const manual = this.currentDocument.transcriptions.find(
+                    (t) => t.name === "manual"
+                );
+                const firstTranscription = this.currentDocument.transcriptions[0];
+                return manual
+                    ? (manual.id || manual.pk)
+                    : (firstTranscription.id ||firstTranscription.pk);
+            }
+            return null;
         },
 
         /**
@@ -361,33 +359,6 @@ export default {
             return this.collectionItems.some(
                 (item) => item.document_id === this.currentDocument.pk
             );
-        },
-    },
-    watch: {
-        // automatically update the default transcription when the document changes
-        currentDocument: {
-            immediate: true,
-            handler(doc) {
-                if (doc?.transcriptions?.length) {
-                    const existingDefault = this.defaultTranscriptions[doc.pk];
-                    if (!existingDefault) {
-                        const manual = doc.transcriptions.find(
-                            (t) => t.name === "manual",
-                        );
-                        const defaultId = manual
-                            ? manual.id || manual.pk
-                            : doc.transcriptions[0].id ||
-                              doc.transcriptions[0].pk;
-                        this.$store.dispatch(
-                            "collection/setDefaultTranscription",
-                            {
-                                documentId: doc.pk,
-                                transcriptionId: defaultId,
-                            },
-                        );
-                    }
-                }
-            },
         },
     },
     async mounted() {
@@ -582,7 +553,7 @@ export default {
                     document: this.currentDocument,
                     partPks: [page.pk],
                     partsOverride: [page],
-                    transcriptionId: this.defaultTranscriptionId,
+                    transcriptionId: this.defaultTranscription,
                 });
             }
         },

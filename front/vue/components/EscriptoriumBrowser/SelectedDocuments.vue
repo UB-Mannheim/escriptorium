@@ -82,7 +82,7 @@
                             </VDropdown>
                             <div class="escr-part-actions">
                                 <select
-                                    class="escr-card-transcription-select"
+                                    class="escr-transcription-select"
                                     :value="getPartLayerId(part, doc)"
                                     @change="(e) => updateTranscription(part, e.target.value)"
                                 >
