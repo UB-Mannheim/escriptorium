@@ -26,7 +26,11 @@
             :value="form.model_name"
             :on-input="onInputName"
             :invalid="dirty && !isValid"
-            :errors="dirty && !isValid ? ['A name is required unless overwriting'] : []"
+            :errors="
+                dirty && !isValid
+                    ? ['A name is required unless overwriting']
+                    : []
+            "
             required
         />
         <EscrDropdownField
@@ -60,7 +64,13 @@
             class="escr-train-btn"
             color="primary"
             label="Start Training"
-            :disabled="!isValid || isSubmitting || !currentCollection.id || !currentCollection.items || currentCollection.items.length === 0"
+            :disabled="
+                !isValid ||
+                    isSubmitting ||
+                    !currentCollection.id ||
+                    !currentCollection.items ||
+                    currentCollection.items.length === 0
+            "
             :on-click="submitTraining"
         />
         <div
@@ -69,17 +79,24 @@
             aria-live="polite"
         >
             <span
-                v-if="!currentCollection.id &&
-                    currentCollection.items &&
-                    currentCollection.items.length > 0"
+                v-if="
+                    !currentCollection.id &&
+                        currentCollection.items &&
+                        currentCollection.items.length > 0
+                "
             >
-                You must save this selection as a collection before you can train a model.
+                You must save this selection as a collection before you can
+                train a model.
             </span>
             <span
-                v-else-if="dirty &&
-                    (!currentCollection.items || currentCollection.items.length === 0)"
+                v-else-if="
+                    dirty &&
+                        (!currentCollection.items ||
+                            currentCollection.items.length === 0)
+                "
             >
-                You must select a collection of document parts in order to train a model.
+                You must select a collection of document parts in order to train
+                a model.
             </span>
         </div>
     </div>
@@ -115,7 +132,10 @@ export default {
     },
     computed: {
         ...mapState("user", ["recognitionModels", "segmentationModels"]),
-        ...mapState("collection", ["currentCollection"]),
+        ...mapState("collection", {
+            currentCollection: (state) => state.currentCollection,
+            isCollectionDirty: (state) => state.dirty,
+        }),
         isValid() {
             // Require either a new name or an override of an existing model
             return (
@@ -158,13 +178,29 @@ export default {
          * Submit model training payload to the backend
          */
         async submitTraining() {
+            if (this.isCollectionDirty) {
+                const confirmProceed = window.confirm(
+                    "You have unsaved changes in your collection. " +
+                        "If you start training now, these changes will not be reflected " +
+                        "in the training data. Are you sure you want to proceed without saving?",
+                );
+                if (!confirmProceed) {
+                    return;
+                }
+            }
             this.isSubmitting = true;
             try {
                 // rm null/empty values from payload so API doesn't reject them
                 const payload = {};
-                if (this.form.model_name) payload.model_name = this.form.model_name;
-                if (this.form.model) payload.model = this.form.model;
-                if (this.form.override) payload.override = this.form.override;
+                if (this.form.model_name) {
+                    payload.model_name = this.form.model_name;
+                }
+                if (this.form.model) {
+                    payload.model = this.form.model;
+                }
+                if (this.form.override) {
+                    payload.override = this.form.override;
+                }
 
                 await this.$store.dispatch("collection/trainModel", {
                     modelType: this.modelType,
