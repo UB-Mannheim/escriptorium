@@ -2,9 +2,9 @@
 .escr-browser.escr-card:not(.escr-card-padding) {
     display: flex;
     flex-direction: column;
-    min-height: 500px; 
-    max-height: 500px; 
-    overflow: hidden; 
+    min-height: 500px;
+    max-height: 500px;
+    overflow: hidden;
     padding-bottom: 0;
 }
 .escr-browser.escr-card:not(.escr-card-padding) .escr-card-content {
@@ -13,7 +13,9 @@
     min-height: 0;
 }
 /* prevent double-scrollbars */
-.escr-browser.escr-card:not(.escr-card-padding) .escr-card-content .escr-image-grid {
+.escr-browser.escr-card:not(.escr-card-padding)
+    .escr-card-content
+    .escr-image-grid {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
@@ -66,7 +68,7 @@ h3.escr-browser-breadcrumbs .separator {
 .escr-browser .escr-table .col-title {
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; 
+    text-overflow: ellipsis;
 }
 .escr-browser .escr-table .col-tags {
     width: 25%;
