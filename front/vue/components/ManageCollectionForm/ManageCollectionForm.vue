@@ -83,6 +83,7 @@ import EscrDropdownField from "../../components/Dropdown/DropdownField.vue";
 import EscrTextField from "../../components/TextField/TextField.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import CheckIcon from "../../components/Icons/CheckIcon/CheckIcon.vue";
+import "./ManageCollectionForm.css";
 
 export default {
     name: "ManageCollectionForm",
