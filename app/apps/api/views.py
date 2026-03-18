@@ -18,7 +18,6 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated
-from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import BasePermission
@@ -67,8 +66,8 @@ from api.serializers import (
     TranscribeSerializer,
     TranscriptionSerializer,
     UserSerializer,
-    VirtualCollectionSerializer,
     VirtualCollectionItemSerializer,
+    VirtualCollectionSerializer,
 )
 from core.merger import MAX_MERGE_SIZE, merge_lines
 from core.models import (
@@ -98,7 +97,7 @@ from core.models import (
     Transcription,
     VirtualCollection,
 )
-from core.tasks import recalculate_masks, train_from_collection, segtrain_from_collection
+from core.tasks import recalculate_masks
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
 from reporting.models import TaskGroup, TaskReport

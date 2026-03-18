@@ -5,7 +5,7 @@ import os.path
 import bleach
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.db.models import Count, Max, Min, Q
+from django.db.models import Count, Max, Min
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -1465,11 +1465,12 @@ class VirtualCollectionItemSerializer(serializers.ModelSerializer):
         # get the best name to show for the part when shown on the frontend
         part = obj.document_part
         return (
-            part.name or
-            getattr(part, 'filename', None) or
-            getattr(part, 'title', None) or
-            f"Page {part.order + 1}"
+            part.name
+            or getattr(part, 'filename', None)
+            or getattr(part, 'title', None)
+            or f"Page {part.order + 1}"
         )
+
 
 class VirtualCollectionSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")

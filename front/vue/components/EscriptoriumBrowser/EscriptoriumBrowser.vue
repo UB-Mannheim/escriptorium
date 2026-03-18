@@ -179,7 +179,7 @@ export default {
             default: null,
         },
         /**
-         * A documnet object if one was already pre-selected on mount
+         * A document object if one was already pre-selected on mount
          */
         preselectedDocument: {
             type: Object,

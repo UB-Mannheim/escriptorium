@@ -189,7 +189,7 @@ export default {
             }
             this.loadCollection(event.target.value);
             this.isEditingName = false;
-            // send parent to "seleced" tab
+            // send parent to "selected" tab
             this.$emit("loaded");
         },
         /**
