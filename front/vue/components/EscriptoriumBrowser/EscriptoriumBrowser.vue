@@ -531,7 +531,7 @@ export default {
             this.isUpdatingSelection = true;
             try {
                 if (this.isDocumentFullySelected(doc)) {
-                    this.documentDeselectAll();
+                    this.documentDeselectAll(doc);
                 } else {
                     // select all: fetch and stage all pages
                     await this.addAllParts({ document: doc });
