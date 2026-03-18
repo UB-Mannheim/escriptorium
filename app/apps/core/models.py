@@ -1956,8 +1956,7 @@ class OcrModelQuerySet(models.QuerySet):
             | Q(owner=user)
             | Q(ocr_model_rights__user=user)
             | Q(ocr_model_rights__group__user=user)
-        ).distinct()  # prevent duplicates when model is shared with groups
-                      # with multiple users
+        ).distinct()  # prevent duplicates when model is shared with groups with multiple users
 
 
 class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):

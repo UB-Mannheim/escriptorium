@@ -61,7 +61,6 @@ from core.models import (
     OcrModelDocument,
     OcrModelRight,
     Project,
-    VirtualCollection,
 )
 from core.search import WORD_BY_WORD_SEARCH_MODE, build_highlighted_replacement_psql
 from core.tasks import replace_line_transcriptions_text
