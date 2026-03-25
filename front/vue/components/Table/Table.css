@@ -61,6 +61,12 @@
 .escr-table tr td.with-img img ~ * {
     vertical-align: middle;
 }
+/* editable cell inputs - dark mode*/
+.dark-mode .escr-table td input[type="text"] {
+    background-color: var(--background2);
+    color: var(--text1);
+    border: 1px solid var(--background3);
+}
 /* sorting */
 .escr-table th button.escr-sort-button {
     cursor: pointer;
