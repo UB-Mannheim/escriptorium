@@ -208,7 +208,7 @@ class TranscriptionSerializer(serializers.ModelSerializer):
         try:
             return super().create(data)
         except IntegrityError:
-            return Transcription.objects.get(name=data['name'])
+            return Transcription.objects.get(name=data['name'], document=document)
 
 
 class BlockTypeSerializer(serializers.ModelSerializer):
