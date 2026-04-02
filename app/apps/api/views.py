@@ -429,7 +429,7 @@ class DocumentViewSet(ModelViewSet):
                 continue
 
             try:
-                send_event('document', document.pk, f'{task_name}: error', {'reason': _('Canceled.')})
+                send_event('document', document.pk, f'{task_name}: error', {'reason': str(_('Canceled.'))})
             except Exception as e:
                 # don't crash on websocket error
                 logger.exception(e)
@@ -443,7 +443,7 @@ class DocumentViewSet(ModelViewSet):
                             'id': report.document_part.pk,
                             'process': task_name,
                             'status': 'error',
-                            'reason': _('Canceled.')
+                            'reason': str(_('Canceled.'))
                         } for report in reports]
                     })
             except Exception as e:

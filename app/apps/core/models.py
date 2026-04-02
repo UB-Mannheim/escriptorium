@@ -1198,7 +1198,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                                {'id': self.id,
                                 'process': report.method.split('.')[-1],
                                 'status': 'error',
-                                'reason': _('Canceled.')})
+                                'reason': str(_('Canceled.'))})
                 except Exception as e:
                     # don't crash on websocket error
                     logger.exception(e)
