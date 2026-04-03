@@ -2,14 +2,25 @@
     <button
         :type="type || 'button'"
         :class="classes"
-        :disabled="disabled"
+        :disabled="disabled || loading"
         @click="onClick"
     >
+        <!-- spinner shown when loading -->
+        <div
+            v-if="loading"
+            class="escr-spinner escr-button-spinner"
+        />
         <!-- slot for an icon -->
-        <slot name="button-icon" />
+        <slot
+            v-if="!loading"
+            name="button-icon"
+        />
         <span v-if="label">{{ label }}</span>
         <!-- slot for an icon on the right -->
-        <slot name="button-icon-right" />
+        <slot
+            v-if="!loading"
+            name="button-icon-right"
+        />
     </button>
 </template>
 
@@ -84,6 +95,13 @@ export default {
             default: false,
         },
         /**
+         * Whether or not this button is in a loading state (shows spinner)
+         */
+        loading: {
+            type: Boolean,
+            default: false,
+        },
+        /**
          * Type attribute, used in forms
          */
         type: {
@@ -99,6 +117,7 @@ export default {
                 [`escr-button--${this.color}`]: true,
                 [`escr-button--${this.size}`]: true,
                 "escr-button--round": this.round,
+                "escr-button--loading": this.loading,
                 "escr-button--icon-only": !this.label && (
                     this.$slots["button-icon"] || this.$slots["button-icon-right"]
                 ),

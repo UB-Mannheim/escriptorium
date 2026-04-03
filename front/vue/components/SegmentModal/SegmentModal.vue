@@ -51,16 +51,23 @@
             </div>
         </template>
         <template #modal-actions>
+            <span
+                v-if="segmentationInFlight"
+                class="escr-cooldown-message"
+            >
+                Segmentation is already in progress for the selected image(s).
+            </span>
             <EscrButton
                 color="outline-primary"
                 label="Cancel"
                 :on-click="onCancel"
-                :disabled="disabled"
+                :disabled="disabled || submitting"
             />
             <EscrButton
                 color="primary"
-                label="Segment"
-                :on-click="onSubmit"
+                :label="(submitting || segmentationInFlight) ? 'Segmenting\u2026' : 'Segment'"
+                :loading="submitting || segmentationInFlight"
+                :on-click="handleSubmit"
                 :disabled="disabled || invalid"
             />
         </template>
@@ -126,13 +133,31 @@ export default {
             required: true,
         },
     },
+    data() {
+        return {
+            submitting: false,
+        };
+    },
     computed: {
         ...mapState({
             include: (state) => state.forms.segment.include,
             model: (state) => state.forms.segment.model,
             overwrite: (state) => state.forms.segment.overwrite,
             textDirection: (state) => state.forms.segment.textDirection,
+            parts: (state) => state.document.parts,
+            selectedParts: (state) => state.images.selectedParts,
         }),
+        // True if any of the targeted parts already have a segmentation task in progress
+        segmentationInFlight() {
+            const targetParts = this.selectedParts.length > 0
+                ? this.parts.filter((p) => this.selectedParts.includes(p.pk))
+                : this.parts;
+            return targetParts.some(
+                (p) => p.workflow
+                    && (p.workflow.segment === "pending"
+                        || p.workflow.segment === "ongoing"),
+            );
+        },
         /**
          * this form is invalid and cannot be submitted if it is missing model,
          * text direction, or segmentation steps to include
@@ -236,6 +261,17 @@ export default {
             "handleCheckboxArrayInput",
             "handleGenericInput",
         ]),
+        async handleSubmit() {
+            if (this.submitting || this.segmentationInFlight) return;
+            this.submitting = true;
+            try {
+                await this.onSubmit();
+            } catch {
+                // Errors are handled by the store action
+            } finally {
+                this.submitting = false;
+            }
+        },
         handleIncludeChange(e) {
             this.handleCheckboxArrayInput({
                 form: "segment", field: "include", checked: e.target.checked, value: e.target.value,

@@ -126,6 +126,21 @@ const actions = {
                     { root: true },
                 );
             }
+            // when clearing the segment form, restore the default text direction
+            if (form === "segment" && rootState?.document?.readDirection) {
+                commit(
+                    "forms/setFieldValue",
+                    {
+                        form: "segment",
+                        field: "textDirection",
+                        value:
+                            rootState.document.readDirection === "rtl"
+                                ? "horizontal-rl"
+                                : "horizontal-lr",
+                    },
+                    { root: true },
+                );
+            }
         }
     },
     /**
