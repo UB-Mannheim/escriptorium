@@ -10,6 +10,12 @@ module.exports = {
         "plugin:vue/recommended",
         "plugin:storybook/recommended",
     ],
+    overrides: [
+        {
+            files: ["tests/**/*.spec.js"],
+            env: { jest: true },
+        },
+    ],
     rules: {
         "arrow-parens": ["error", "always"],
         indent: [
