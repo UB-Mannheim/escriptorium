@@ -40,6 +40,8 @@
     {% endblock %}
 {% endif %}
 
+{% block extrascript %}{% endblock %}
+
 {% block extrastyle %}
     {% if not request.user.legacy_mode %}
         <link href="{% static 'editor.css' %}" rel="stylesheet" type="text/css">
