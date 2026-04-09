@@ -23,6 +23,7 @@ export default Vue.extend({
         "line.order": function(n, o) {
             // make sure it's at the right place,
             // in case it was just created or the ordering got recalculated
+            if (!this.$el.parentNode) return;
             this.$el.parentNode.insertBefore(
                 this.$el,
                 this.$el.parentNode.children[this.line.order]);

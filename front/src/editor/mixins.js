@@ -57,9 +57,9 @@ export var BasePanel = {
     },
     methods: {
         setRatio() {
-            this.ratio =
-                this.$el.firstChild.clientWidth /
-                this.$store.state.parts.image.size[0];
+            const size = this.$store.state.parts.image.size;
+            if (!size) return;
+            this.ratio = this.$el.firstChild.clientWidth / size[0];
         },
         refresh() {
             this.setRatio();
