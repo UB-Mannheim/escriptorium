@@ -315,7 +315,7 @@ export const actions = {
     },
 
     async merge(
-        { state, dispatch, commit, rootState },
+        { state, dispatch, commit, getters, rootState },
         { pks, transcription },
     ) {
         const resp = await api.mergeLines(
@@ -360,7 +360,7 @@ export const actions = {
         }
 
         if (getters.hasMasks) {
-            await dispatch("recalculateMasks", createdLine.pk);
+            await dispatch("recalculateMasks", [createdLine.pk]);
         }
 
         return { createdLine, deletedPKs, deletedLines };
