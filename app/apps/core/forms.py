@@ -12,8 +12,7 @@ from django.forms.models import BaseInlineFormSet, inlineformset_factory
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
-from kraken.lib import vgsl
-from kraken.lib.exceptions import KrakenInvalidModelException
+from kraken.tasks import RecognitionTaskModel, SegmentationTaskModel
 
 from core.models import (
     AnnotationComponent,
@@ -507,7 +506,7 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
     name = forms.CharField()
     file = forms.FileField(
         validators=[FileExtensionValidator(
-            allowed_extensions=['mlmodel'])])
+            allowed_extensions=['mlmodel', 'safetensors'])])
 
     class Meta:
         model = OcrModel
@@ -518,22 +517,48 @@ class ModelUploadForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
     def clean_file(self):
-        # Early validation of the model loading
         file_field = self.cleaned_data['file']
+        fname = file_field.file.name
+
+        model_type = None
+        _seg_type = 'baselines'
+        _user_metadata = None
+
+        # try task loaders: segmentation first, then recognition
         try:
-            model = vgsl.TorchVGSLModel.load_model(file_field.file.name)
-        except KrakenInvalidModelException:
-            raise forms.ValidationError(_("The provided model could not be loaded."))
-        self._model_job = model.model_type
-        if self._model_job not in ('segmentation', 'recognition'):
+            seg_task = SegmentationTaskModel.load_model(fname)
+            inner = seg_task.seg_models[0]
+            model_type = 'segmentation'
+            _seg_type = getattr(inner, 'seg_type', None) or 'baselines'
+            _user_metadata = getattr(inner, 'user_metadata', None)
+        except Exception:
+            try:
+                rec_task = RecognitionTaskModel.load_model(fname)
+                inner = rec_task.net
+                model_type = 'recognition'
+                _seg_type = getattr(inner, 'seg_type', None) or 'baselines'
+                _user_metadata = getattr(inner, 'user_metadata', None)
+            except Exception:
+                pass
+
+        # legacy vgsl fallback
+        if model_type is None:
+            try:
+                from kraken.lib import vgsl
+                legacy = vgsl.TorchVGSLModel.load_model(fname)
+                model_type = legacy.model_type
+                _seg_type = getattr(legacy, 'seg_type', None) or 'baselines'
+                _user_metadata = getattr(legacy, 'user_metadata', None)
+            except Exception:
+                raise forms.ValidationError(_("The provided model could not be loaded."))
+
+        if model_type not in ('segmentation', 'recognition'):
             raise forms.ValidationError(_("Invalid model (Couldn't determine whether it's a segmentation or recognition model)."))
-        elif self._model_job == 'recognition' and model.seg_type == "bbox":
+        elif model_type == 'recognition' and _seg_type == "bbox":
             raise forms.ValidationError(_("eScriptorium is not compatible with bounding box models."))
 
-        try:
-            self.model_metadata = model.user_metadata
-        except ValueError:
-            self.model_metadata = None
+        self._model_job = model_type
+        self.model_metadata = _user_metadata
 
         return file_field
 

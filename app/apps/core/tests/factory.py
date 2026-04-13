@@ -6,8 +6,14 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TransactionTestCase
 from django.utils.text import slugify
-from kraken.lib import vgsl
 from PIL import Image, ImageDraw
+
+# vgsl is legacy, guard against removal
+try:
+    from kraken.lib import vgsl
+    TorchVGSLModel = vgsl.TorchVGSLModel
+except Exception:
+    TorchVGSLModel = None
 
 from core.models import (
     AnnotationTaxonomy,
@@ -134,8 +140,10 @@ class CoreFactory():
         return open(fp, 'rb')
 
     def make_model(self, document, job=OcrModel.MODEL_JOB_RECOGNIZE):
+        if TorchVGSLModel is None:
+            raise RuntimeError("TorchVGSLModel unavailable, use a safetensors fixture instead")
         spec = '[1,48,0,1 Lbx100 Do O1c10]'
-        nn = vgsl.TorchVGSLModel(spec)
+        nn = TorchVGSLModel(vgsl=spec)
         model_name = 'test.mlmodel'
         model = OcrModel.objects.create(name=model_name,
                                         owner=document.owner,

@@ -34,7 +34,7 @@ repos:
     rev: v2.2.2
     hooks:
       - id: codespell
-        args: ['--write-changes', '--ignore-words-list=falsy', '--uri-ignore-words-list=groupes,projet']
+        args: ['--write-changes', '--ignore-words-list=falsy,dfine', '--uri-ignore-words-list=groupes,projet']
         exclude: '^.*\.po|app\/escriptorium\/static\/alto-4-1-baselines\.xsd|app\/apps\/core\/migrations\/0019_load_scripts\.py|front\/src\/stories\/util\/scripts.js|package-lock\.json.*$'
   - repo: meta
     hooks:
