@@ -1163,7 +1163,7 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         load = model.file.path
     except ValueError:  # model is empty
         load = getattr(settings, "SEGMENTATION_DEFAULT_MODEL", "")
-        model.file = model.file.field.upload_to(model, slugify(model.name) + ".mlmodel")
+        model.file = model.file.field.upload_to(model, slugify(model.name) + ".safetensors")
 
     model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
     if not os.path.exists(model_dir):
@@ -1217,19 +1217,57 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         LOAD_THREADS = getattr(settings, "KRAKEN_TRAINING_LOAD_THREADS", 0)
         AMP_MODE = getattr(settings, "KRAKEN_TRAINING_PRECISION", "32")
 
-        kraken_model = SegmentationModel(
-            getattr(settings, "SEGMENTATION_HYPER_PARAMS", {}),
-            output=os.path.join(model_dir, "version"),
-            model=load,
-            format_type=None,
-            training_data=training_data,
-            evaluation_data=evaluation_data,
-            partition=partition,
-            num_workers=LOAD_THREADS,
-            load_hyper_parameters=True,
-            resize="both",
-            topline=topline,
-        )
+        if load:
+            from kraken.models import load_models
+            loaded_nets = load_models(load, tasks=['segmentation'])
+            loaded_net = loaded_nets[0] if loaded_nets else None
+        else:
+            loaded_net = None
+
+        net_class = type(loaded_net).__name__ if loaded_net is not None else None
+
+        if net_class == 'DFINEModel':
+            try:
+                from dfine.configs import (
+                    DFINESegmentationTrainingConfig,
+                    DFINESegmentationTrainingDataConfig,
+                )
+                from dfine.model import (
+                    DFINESegmentationDataModule,
+                    DFINESegmentationModel,
+                )
+            except ImportError:
+                raise RuntimeError('dfine_kraken package is required to train D-FINE models. '
+                                   'Install it with: pip install git+https://github.com/mittagessen/dfine_kraken.git')
+            seg_data_config = DFINESegmentationTrainingDataConfig(
+                training_data=[item['doc'] for item in training_data],
+                evaluation_data=[item['doc'] for item in evaluation_data],
+                format_type=None,
+                num_workers=LOAD_THREADS,
+            )
+            seg_train_config = DFINESegmentationTrainingConfig(
+                resize='union',
+                load_hyper_parameters=True,
+            )
+            seg_dm = DFINESegmentationDataModule(seg_data_config)
+            kraken_model = DFINESegmentationModel.load_from_weights(load, seg_train_config)
+        else:
+            seg_data_config = BLLASegmentationTrainingDataConfig(
+                training_data=training_data,
+                evaluation_data=evaluation_data,
+                format_type=None,
+                num_workers=LOAD_THREADS,
+            )
+            seg_train_config = BLLASegmentationTrainingConfig(
+                resize='union',
+                topline=topline,
+                load_hyper_parameters=True,
+            )
+            seg_dm = BLLASegmentationDataModule(seg_data_config)
+            if load:
+                kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
+            else:
+                kraken_model = BLLASegmentationModel(seg_train_config)
 
         trainer = KrakenTrainer(
             accelerator=accelerator,
@@ -1241,24 +1279,29 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
             callbacks=[FrontendFeedback(model, model_dir, collection_pk, "collection")],
         )
 
-        trainer.fit(kraken_model)
+        trainer.fit(kraken_model, seg_dm)
 
-        if kraken_model.best_epoch == -1:
+        # best checkpoint path from lightning's ModelCheckpoint callback
+        best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
+        best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
+
+        if not best_path:
             logger.info(f"Model {os.path.split(model.file.path)[0]} did not improve.")
             raise DidNotConverge
 
-        best_version = os.path.join(model_dir, kraken_model.best_model)
-
         try:
-            logger.info(f"Moving best model {best_version} (accuracy: {kraken_model.best_metric}) to {model.file.path}.")
-            shutil.copy(best_version, model.file.path)
-            model.training_accuracy = kraken_model.best_metric
+            best_score_val = float(best_score) if best_score is not None else 0.0
+            logger.info(f"Converting best model {best_path} (accuracy: {best_score_val}) to {model.file.path}.")
+            convert_models([best_path], model.file.path)
+            model.training_accuracy = best_score_val
         except FileNotFoundError:
-            user.notify(
-                _("Training didn't get better results than base model!"),
-                id="seg-no-gain-error",
-                level="warning",
-            )
+            logger.info(f"Model {os.path.split(model.file.path)[0]} did not improve.")
+            if user:
+                user.notify(
+                    _("Training didn't get better results than base model!"),
+                    id="seg-no-gain-error",
+                    level="warning",
+                )
             shutil.copy(load, model.file.path)
     except DidNotConverge:
         send_event(
