@@ -18,14 +18,9 @@ task_cpu_times = {}
 class TaskGroup(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    document = models.ForeignKey("core.Document", on_delete=models.CASCADE)
+    document = models.ForeignKey("core.Document", null=True, blank=True, on_delete=models.CASCADE)
+    collection = models.ForeignKey("core.VirtualCollection", null=True, blank=True, on_delete=models.CASCADE)
     task = models.CharField(max_length=256)
-
-    # those 2 fields are only to be used in case of a single child task
-    # with obvious steps, for example an import is a single celery task
-    # but we have a set amount of files in the archive.
-    # current = models.PositiveIntegerField(blank=True, null=True)
-    # total = models.PositiveIntegerField(blank=True, null=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -76,6 +71,9 @@ class TaskReport(models.Model):
     )
     ocr_model = models.ForeignKey(
         "core.OcrModel", blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
+    )
+    collection = models.ForeignKey(
+        "core.VirtualCollection", blank=True, null=True, on_delete=models.SET_NULL, related_name='reports'
     )
 
     def append(self, text, logger_fct=None):

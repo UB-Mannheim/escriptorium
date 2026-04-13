@@ -29,6 +29,7 @@ from core.views import (
     Search,
     ShareDocument,
     ShareProject,
+    TrainingView,
     UpdateDocument,
     UpdateProject,
     UserModels,
@@ -75,4 +76,5 @@ urlpatterns = [
     path('contributors/', TemplateView.as_view(template_name='core/contributors.html'), name='contributors'),
     path('credits/', TemplateView.as_view(template_name='core/credits.html'), name='credits'),
     path('test/', TemplateView.as_view(template_name='core/test.html')),
+    path('training/', TrainingView.as_view(), name='training')
 ]

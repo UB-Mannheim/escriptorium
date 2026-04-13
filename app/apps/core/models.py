@@ -57,7 +57,9 @@ from core.tasks import (
     lossless_compression,
     segment,
     segtrain,
+    segtrain_from_collection,
     train,
+    train_from_collection,
     transcribe,
 )
 from core.utils import ColorField
@@ -1943,6 +1945,20 @@ def models_path(instance, filename):
     return "models/%s/%s%s" % (hash, slugify(fn), ext)
 
 
+class OcrModelQuerySet(models.QuerySet):
+    """Queryset subclass for reusable user-permission filtering logic
+    on OcrModel instances"""
+    def for_user_read(self, user):
+        if not user:
+            return self.filter(public=True)
+        return self.filter(
+            Q(public=True)
+            | Q(owner=user)
+            | Q(ocr_model_rights__user=user)
+            | Q(ocr_model_rights__group__user=user)
+        ).distinct()  # prevent duplicates when model is shared with groups with multiple users
+
+
 class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     name = models.CharField(max_length=256)
     file = models.FileField(
@@ -1983,6 +1999,8 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     public = models.BooleanField(default=False)
 
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
+
+    objects = OcrModelQuerySet.as_manager()
 
     class Meta:
         ordering = ["-version_updated_at"]
@@ -2038,6 +2056,22 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
                     task_group_pk=task_group_pk,
                     part_pks=list(parts_qs.values_list('pk', flat=True)),
                     user_pk=user and user.pk or None)
+
+    def segtrain_from_collection(self, collection_pk, task_group_pk=None, user=None):
+        segtrain_from_collection.delay(
+            model_pk=self.pk,
+            collection_pk=collection_pk,
+            task_group_pk=task_group_pk,
+            user_pk=user.pk if user else None
+        )
+
+    def train_from_collection(self, collection_pk, task_group_pk=None, user=None):
+        train_from_collection.delay(
+            model_pk=self.pk,
+            collection_pk=collection_pk,
+            task_group_pk=task_group_pk,
+            user_pk=user.pk if user else None
+        )
 
     def cancel_training(self, revoke_task=True, username=None):
         if revoke_task:
@@ -2184,3 +2218,42 @@ class InstanceSettings(SingletonModel):
 
     def __str__(self):
         return "Instance settings"
+
+
+class VirtualCollection(models.Model):
+    """many-to-many through model for collecting a set of images
+    (DocumentParts), each associated with a transcription layer from their
+    parent document"""
+
+    name = models.CharField(max_length=512)
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="virtual_collections"
+    )
+    parts = models.ManyToManyField(
+        DocumentPart,
+        through="VirtualCollectionItem",
+        related_name="virtual_collections",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    # default transcription layer selected per document
+    default_transcriptions = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ("name",)
+
+
+class VirtualCollectionItem(models.Model):
+    collection = models.ForeignKey(VirtualCollection, on_delete=models.CASCADE)
+    document_part = models.ForeignKey("DocumentPart", on_delete=models.CASCADE)
+    transcription_layer = models.ForeignKey("Transcription", on_delete=models.CASCADE)
+
+    class Meta:
+        # ensure a part is not added twice to the same collection
+        unique_together = ("collection", "document_part")
+
+    def __str__(self):
+        return f"{self.collection.name} - {self.document_part.name}"

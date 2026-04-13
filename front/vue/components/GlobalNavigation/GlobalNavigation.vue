@@ -68,6 +68,18 @@
                 <ModelsIcon />
                 <span>Models</span>
             </a>
+            <a
+                v-if="isAuthenticated"
+                href="/training/"
+                aria-label="training page"
+                :class="{
+                    'escr-globalnav-icon': true,
+                    'escr-globalnav-icon-active': location.href.endsWith('/training/'),
+                }"
+            >
+                <TrainIcon />
+                <span>Training</span>
+            </a>
             <VMenu
                 v-if="isAuthenticated"
                 placement="right-start"
@@ -196,6 +208,7 @@ import ModelsIcon from "../Icons/ModelsIcon/ModelsIcon.vue";
 import ProfileIcon from "../Icons/ProfileIcon/ProfileIcon.vue";
 import SearchLargeIcon from "../Icons/SearchLargeIcon/SearchLargeIcon.vue";
 import TasksIcon from "../Icons/TasksIcon/TasksIcon.vue";
+import TrainIcon from "../Icons/TrainIcon/TrainIcon.vue";
 import "../VerticalMenu/VerticalMenu.css";
 import "./GlobalNavigation.css";
 import { mapActions, mapState } from "vuex";
@@ -211,6 +224,7 @@ export default {
         ProfileIcon,
         SearchLargeIcon,
         TasksIcon,
+        TrainIcon,
         VMenu,
     },
     props: {

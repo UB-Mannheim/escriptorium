@@ -5,6 +5,7 @@ axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 axios.defaults.withCredentials = true;
 
+export * from "./collection";
 export * from "./document";
 export * from "./documentPart";
 export * from "./project";

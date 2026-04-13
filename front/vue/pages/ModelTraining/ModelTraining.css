@@ -1,0 +1,86 @@
+/* page layout */
+.escr-page-container.escr-model-training .escr-page {
+    padding-bottom: 2rem !important;
+}
+
+.escr-page-container.escr-model-training .escr-training-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px);
+    min-height: 600px;
+    gap: 0;
+}
+
+.escr-page-container.escr-model-training .escr-training-collections {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    flex: 1;
+    min-height: 0;
+}
+
+/* left side: tabbed browse/select */
+.escr-model-training .escr-training-data {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.escr-tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.escr-tab-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.escr-model-training .escr-tab-panel h2 {
+    flex-shrink: 0;
+    margin-bottom: 1rem;
+}
+
+.escr-model-training .escr-tab-panel .escr-browser.escr-card {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+    height: auto;
+}
+
+.empty-state-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    gap: 1rem;
+    background-color: var(--background-secondary);
+}
+
+/* right sidebar (containing collection management) */
+.escr-model-training .escr-training-sidebar {
+    flex: 0 0 380px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-width: 380px;
+}
+
+.escr-model-training .escr-training-sidebar h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+/* model training form footer */
+.escr-model-training .escr-training-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+}

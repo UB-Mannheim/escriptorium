@@ -1,0 +1,59 @@
+.escr-model-training-form {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    flex-wrap: nowrap;
+    gap: 1.5rem;
+    width: 100%;
+    margin-bottom: 0;
+    position: relative;
+    overflow-x: auto;
+}
+.escr-model-training-form > * {
+    margin-bottom: 0 !important;
+}
+.escr-model-training-form .escr-model-type {
+    flex: 0 0 auto;
+}
+.escr-model-training-form .escr-model-name,
+.escr-model-training-form .escr-base-model {
+    flex: 1 1 200px;
+    min-width: 150px;
+}
+.escr-model-training-form .escr-model-name {
+    position: relative;
+}
+.escr-model-training-form .escr-model-name .escr-field-errors {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+}
+.escr-model-name.escr-text-field input {
+    padding: 6px 8px;
+}
+.escr-model-training-form .escr-overwrite {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 38px;
+    white-space: nowrap;
+}
+.escr-model-training-form .escr-train-btn {
+    flex: 0 0 auto;
+    height: 38px;
+}
+.escr-model-training-form .escr-segmented-button-group {
+    margin-top: 8px;
+}
+.escr-model-training-form input[type="checkbox"]:disabled + span {
+    color: var(--text3);
+}
+.escr-model-training-form .escr-global-errors {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+}

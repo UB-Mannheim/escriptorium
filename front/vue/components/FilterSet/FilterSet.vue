@@ -4,12 +4,12 @@
         <SearchInput
             :value="nameFilter"
             :placeholder="searchPlaceholder"
-            :disabled="disabled"
             :on-input="handleNameInput"
             :on-clear="clearNameFilter"
             :on-enter="onFilter"
         />
         <VMenu
+            v-if="!hideTags"
             :delay="{ show: 0, hide: 100 }"
             :triggers="[]"
             :shown="openFilter === 'tags'"
@@ -63,6 +63,13 @@ export default {
             default: false,
         },
         /**
+         * Boolean indicating if the tag filter should be hidden, e.g. for images.
+         */
+        hideTags: {
+            type: Boolean,
+            default: false,
+        },
+        /**
          * List of all tags on all [documents/projects/images] in view.
          */
         tags: {
@@ -103,6 +110,11 @@ export default {
             "tagFilterSelectedTags",
             "untaggedSelected",
         ]),
+    },
+    beforeUnmount() {
+        if (this.debounceTimer) {
+            clearTimeout(this.debounceTimer);
+        }
     },
     methods: {
         /**
@@ -169,11 +181,6 @@ export default {
             "addFilter",
             "removeFilter",
         ]),
-    },
-    beforeUnmount() {
-        if (this.debounceTimer) {
-            clearTimeout(this.debounceTimer);
-        }
     },
 };
 </script>

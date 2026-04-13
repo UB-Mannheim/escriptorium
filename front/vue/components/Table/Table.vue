@@ -7,28 +7,36 @@
                     v-if="selectable"
                     class="escr-select-all"
                 >
-                    <label
-                        class="escr-select-checkbox"
-                        :disabled="disabled"
-                        @click="onSelectAll"
-                    >
-                        <input
-                            id="select-all"
-                            class="sr-only"
-                            type="checkbox"
-                            name="select-all"
-                            :checked="selectedItems && selectedItems.length > 0"
+                    <div>
+                        <label
+                            class="escr-select-checkbox"
                             :disabled="disabled"
+                            @click.prevent.stop="onSelectAll"
                         >
-                        <CheckSquareIcon
-                            class="unchecked"
-                            aria-hidden="true"
-                        />
-                        <CheckSquareFilledIcon
-                            class="checked"
-                            aria-hidden="true"
-                        />
-                    </label>
+                            <input
+                                id="select-all"
+                                class="sr-only"
+                                type="checkbox"
+                                name="select-all"
+                                :checked="isAnySelected"
+                                :disabled="disabled"
+                            >
+                            <CheckSquareIndeterminateIcon
+                                v-if="isIndeterminate"
+                                class="checked"
+                                aria-hidden="true"
+                            />
+                            <CheckSquareFilledIcon
+                                v-else
+                                class="checked"
+                                aria-hidden="true"
+                            />
+                            <CheckSquareIcon
+                                class="unchecked"
+                                aria-hidden="true"
+                            />
+                        </label>
+                    </div>
                 </th>
                 <th
                     v-for="header in headers"
@@ -89,9 +97,11 @@
                 <tr
                     v-if="item"
                     :key="item[itemKey]"
+                    :class="{ 'escr-clickable-row': !!onRowClick }"
                     :draggable="draggedItem === itemIndex"
                     @dragstart="(e) => handleDragStart(e, item)"
                     @dragend="handleDragEnd"
+                    @click="(e) => handleRowClick(e, item)"
                 >
                     <!-- select checkbox -->
                     <td
@@ -114,7 +124,7 @@
                                 :for="`select-${item[itemKey]}`"
                                 class="escr-select-checkbox"
                                 :disabled="disabled"
-                                @click="(e) => onToggleSelected(
+                                @click.prevent.stop="(e) => onToggleSelected(
                                     e, parseInt(item[itemKey]), itemIndex + 1
                                 )"
                             >
@@ -124,14 +134,20 @@
                                     type="checkbox"
                                     :name="`select-${item[itemKey]}`"
                                     :disabled="disabled"
-                                    :checked="selectedItems.includes(parseInt(item[itemKey]))"
+                                    :checked="isItemChecked(item)"
                                 >
-                                <CheckSquareIcon
-                                    class="unchecked"
+                                <CheckSquareIndeterminateIcon
+                                    v-if="isItemPartiallySelected(item)"
+                                    class="checked"
                                     aria-hidden="true"
                                 />
                                 <CheckSquareFilledIcon
+                                    v-else
                                     class="checked"
+                                    aria-hidden="true"
+                                />
+                                <CheckSquareIcon
+                                    class="unchecked"
                                     aria-hidden="true"
                                 />
                             </label>
@@ -244,6 +260,8 @@
 </template>
 <script>
 import CheckSquareIcon from "../Icons/CheckSquareIcon/CheckSquareIcon.vue";
+// eslint-disable-next-line max-len
+import CheckSquareIndeterminateIcon from "../Icons/CheckSquareIndeterminateIcon/CheckSquareIndeterminateIcon.vue";
 import CheckSquareFilledIcon from "../Icons/CheckSquareFilledIcon/CheckSquareFilledIcon.vue";
 import DragVerticalIcon from "../Icons/DragVerticalIcon/DragVerticalIcon.vue";
 import SortIcon from "../Icons/SortIcon/SortIcon.vue";
@@ -253,6 +271,7 @@ export default {
     name: "EscrTable",
     components: {
         CheckSquareIcon,
+        CheckSquareIndeterminateIcon,
         CheckSquareFilledIcon,
         DragVerticalIcon,
         SortIcon,
@@ -364,6 +383,15 @@ export default {
             default: ({ field, value }) => {},
         },
         /**
+         * Optional callback for when a user clicks anywhere on a row.
+         * Passed the full item object for that row.
+         */
+        onRowClick: {
+            type: Function,
+            // eslint-disable-next-line no-unused-vars
+            default: (e, item) => {},
+        },
+        /**
          * A callback function for sorting, which may be used for frontend sorting or for API calls
          * to retrieve sorted data from a backend, and which should mutate the `items` prop.
          *
@@ -396,6 +424,14 @@ export default {
         orderable: {
             type: Boolean,
             default: false,
+        },
+        /**
+         * List of currently partially selected items, by key for tables with `selectable`
+         * set`true`. Will render a different icon than the normal checkbox.
+         */
+        partiallySelectedItems: {
+            type: Array,
+            default: () => [],
         },
         /**
          * Boolean indicating whether or not items should be selectable with checkbox inputs.
@@ -431,6 +467,30 @@ export default {
                 "escr-table--orderable": this.orderable,
             };
         },
+        /**
+         * true if ANY items in the table are fully or partially selected.
+         */
+        isAnySelected() {
+            const hasSelected =
+                this.selectedItems && this.selectedItems.length > 0;
+            const hasPartially =
+                this.partiallySelectedItems &&
+                this.partiallySelectedItems.length > 0;
+            return hasSelected || hasPartially;
+        },
+        /**
+         * true if the table is globally partially selected
+         */
+        isIndeterminate() {
+            const hasPartially =
+                this.partiallySelectedItems &&
+                this.partiallySelectedItems.length > 0;
+            const hasSomeButNotAll =
+                this.selectedItems &&
+                this.selectedItems.length > 0 &&
+                this.selectedItems.length < this.items.length;
+            return hasPartially || hasSomeButNotAll;
+        }
     },
     methods: {
         /**
@@ -553,7 +613,61 @@ export default {
             setTimeout(() => {
                 this.setIsDragging(false);
             }, 100);
-        }
+        },
+        /**
+         * Handle row clicks, ignoring clicks on interactive elements like checkboxes,
+         * inputs, links, or action buttons.
+         */
+        handleRowClick(e, item) {
+            if (!this.onRowClick) return;
+
+            // if the clicked element (or its parent) matches an ignored selector, do nothing
+            const ignoredSelectors = [
+                ".escr-select-checkbox",
+                ".escr-row-actions",
+                ".escr-drag-handle",
+                "a",
+                "button",
+                "input",
+            ];
+            const clickedIgnoredElement = ignoredSelectors.some((selector) =>
+                e.target.closest(selector)
+            );
+            if (clickedIgnoredElement) {
+                return;
+            }
+
+            // otherwise, callback
+            this.onRowClick(item);
+        },
+        /**
+         * True if the passed item is fully selected
+         */
+        isItemSelected(item) {
+            if (!this.selectedItems || !item) {
+                return false;
+            }
+            return this.selectedItems.includes(parseInt(item[this.itemKey]));
+        },
+        /**
+         * Trrue if the passed item is partially selected
+         */
+        isItemPartiallySelected(item) {
+            if (!this.partiallySelectedItems || !item) {
+                return false;
+            }
+            return this.partiallySelectedItems.includes(
+                parseInt(item[this.itemKey]),
+            );
+        },
+        /**
+         * True if the passed item is checked (either fully or partially)
+         */
+        isItemChecked(item) {
+            return (
+                this.isItemSelected(item) || this.isItemPartiallySelected(item)
+            );
+        },
     },
 }
 </script>

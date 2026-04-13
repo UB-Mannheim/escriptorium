@@ -155,6 +155,7 @@ export const retrieveDocumentParts = async ({
     field,
     direction,
     pageSize,
+    filters,
 }) => {
     let params = {};
     if (field && direction) {
@@ -162,6 +163,9 @@ export const retrieveDocumentParts = async ({
     }
     if (pageSize) {
         params.paginate_by = pageSize;
+    }
+    if (filters) {
+        params = { ...params, ...getFilterParams({ filters }) };
     }
     return await axios.get(`/documents/${documentId}/parts/`, { params });
 };
@@ -236,7 +240,7 @@ const jobTypeIds = {
 
 // retrieve all models (by job type)
 export const retrieveModels = async (jobType) =>
-await axios.get("/models/", { params: { job: jobTypeIds[jobType], paginate_by: 30 } });
+    await axios.get("/models/", { params: { job: jobTypeIds[jobType], paginate_by: 30 } });
 
 // share this document with a group or user
 export const shareDocument = async ({ documentId, group, user }) =>
@@ -418,3 +422,7 @@ export const trainSegmenterModel = async ({
     }
     return await axios.post(`/documents/${documentId}/segtrain/`, params);
 };
+
+// get a list of DocumentPart IDs belonging to a document
+export const retrieveDocumentPartIds = async (documentId) =>
+    await axios.get(`/documents/${documentId}/part_ids/`);

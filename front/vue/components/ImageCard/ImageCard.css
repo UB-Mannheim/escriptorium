@@ -87,6 +87,9 @@
     color: var(--secondary);
     width: 20px;
     height: 20px;
+    background-color: var(--toast-text);
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 .escr-image-card label.image-checkbox input[type="checkbox"] + svg {
     display: none;

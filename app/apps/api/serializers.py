@@ -5,7 +5,7 @@ import os.path
 import bleach
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.db.models import Count, Max, Min, Q
+from django.db.models import Count, Max, Min
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -41,6 +41,8 @@ from core.models import (
     TextAnnotationComponentValue,
     TextualWitness,
     Transcription,
+    VirtualCollection,
+    VirtualCollectionItem,
 )
 from core.tasks import _chunks, segment, segtrain, train, transcribe
 from imports.forms import FileImportError, clean_import_uri, clean_upload_file
@@ -945,14 +947,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
-        ).filter(
-            # Note: Only an owner should be able to train on top of an existing model
-            # if the model is public, the user can only clone it (override=False)
-            Q(public=True)
-            | Q(owner=self.user)
-            | Q(ocr_model_rights__user=self.user)
-            | Q(ocr_model_rights__group__user=self.user)
-        )
+        ).for_user_read(self.user)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate_parts(self, data):
@@ -967,6 +962,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             raise serializers.ValidationError(
                 _("Either use model_name to create a new model, add a model pk to retrain an existing one, or both to create a new model from an existing one."))
 
+        # Note: Only an owner should be able to train on top of an existing model
+        # if the model is public, the user can only clone it (override=False)
         model = data.get('model')
         if not data.get('model_name') and model.owner != self.user and data.get('override'):
             raise serializers.ValidationError(
@@ -1153,14 +1150,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
-        ).filter(
-            # Note: Only an owner should be able to train on top of an existing model
-            # if the model is public, the user can only clone it (override=False)
-            Q(public=True)
-            | Q(owner=self.user)
-            | Q(ocr_model_rights__user=self.user)
-            | Q(ocr_model_rights__group__user=self.user)
-        ).distinct()  # prevent duplicates when model is shared with groups with multiple users
+        ).for_user_read(self.user)
         self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
 
     def validate(self, data):
@@ -1170,6 +1160,8 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
             raise serializers.ValidationError(
                 _("Either use model_name to create a new model, or add a model pk to retrain an existing one."))
 
+        # Note: Only an owner should be able to train on top of an existing model
+        # if the model is public, the user can only clone it (override=False)
         model = data.get('model')
         if not data.get('model_name') and model.owner != self.user and data.get('override'):
             raise serializers.ValidationError(
@@ -1445,3 +1437,240 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
             beam_size=int(beam_size if (beam_size is not None and beam_size != '') else 20),
             gap=int(gap if gap else 600),
         )
+
+
+class VirtualCollectionItemSerializer(serializers.ModelSerializer):
+    part_name = serializers.SerializerMethodField()
+    thumbnail = ImageField(
+        source="document_part.image", thumbnails=["card"], read_only=True
+    )
+    document_id = serializers.ReadOnlyField(source="document_part.document.id")
+    document_name = serializers.ReadOnlyField(source="document_part.document.name")
+    part_order = serializers.ReadOnlyField(source="document_part.order")
+
+    class Meta:
+        model = VirtualCollectionItem
+        fields = [
+            "id",
+            "document_part",
+            "part_name",
+            "thumbnail",
+            "document_id",
+            "document_name",
+            "transcription_layer",
+            "part_order",
+        ]
+
+    def get_part_name(self, obj):
+        # get the best name to show for the part when shown on the frontend
+        part = obj.document_part
+        return (
+            part.name
+            or getattr(part, 'filename', None)
+            or getattr(part, 'title', None)
+            or f"Page {part.order + 1}"
+        )
+
+
+class VirtualCollectionSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source="owner.username")
+    items_to_save = serializers.ListField(
+        child=serializers.DictField(), write_only=True, required=False
+    )
+
+    class Meta:
+        model = VirtualCollection
+        fields = [
+            "id",
+            "name",
+            "default_transcriptions",
+            "owner",
+            "updated_at",
+            "items_to_save",
+        ]
+
+    def create(self, validated_data):
+        items_to_save = validated_data.pop("items_to_save", [])
+        collection = VirtualCollection.objects.create(**validated_data)
+
+        # bulk create the nested collection items
+        VirtualCollectionItem.objects.bulk_create(
+            [
+                VirtualCollectionItem(
+                    collection=collection,
+                    document_part_id=item["document_part"],
+                    transcription_layer_id=item["transcription_layer"],
+                )
+                for item in items_to_save
+            ]
+        )
+        return collection
+
+    def update(self, instance, validated_data):
+        items_to_save = validated_data.pop("items_to_save", None)
+        instance.name = validated_data.get("name", instance.name)
+        instance.default_transcriptions = validated_data.get(
+            "default_transcriptions", instance.default_transcriptions
+        )
+        instance.save()
+
+        # use diff strategy against database, with bulk operations, to efficiently update
+        if items_to_save is not None:
+            # map existing DB items as dict keyed on part PK
+            existing_items = instance.virtualcollectionitem_set.all()
+            existing_map = {item.document_part_id: item for item in existing_items}
+
+            # map incoming payload items, also keyed on part PK
+            incoming_map = {
+                item["document_part"]: item["transcription_layer"]
+                for item in items_to_save
+            }
+
+            # to delete: pks that are in the DB but missing from payload
+            to_delete_ids = set(existing_map.keys()) - set(incoming_map.keys())
+            if to_delete_ids:
+                instance.virtualcollectionitem_set.filter(
+                    document_part_id__in=to_delete_ids
+                ).delete()
+
+            # create or update the rest
+            to_create = []
+            to_update = []
+            for part_id, trans_id in incoming_map.items():
+                if part_id not in existing_map:
+                    to_create.append(
+                        VirtualCollectionItem(
+                            collection=instance,
+                            document_part_id=part_id,
+                            transcription_layer_id=trans_id,
+                        )
+                    )
+                else:
+                    # update if the associated transcription layer was changed
+                    existing_item = existing_map[part_id]
+                    if existing_item.transcription_layer_id != trans_id:
+                        existing_item.transcription_layer_id = trans_id
+                        to_update.append(existing_item)
+
+            # bulk operations
+            if to_create:
+                VirtualCollectionItem.objects.bulk_create(to_create)
+            if to_update:
+                VirtualCollectionItem.objects.bulk_update(
+                    to_update, ["transcription_layer"]
+                )
+
+        return instance
+
+
+class CollectionProcessSerializerMixin:
+    PROCESS_NAME = "Not Implemented"
+    CHECK_GPU_QUOTA = False
+    CHECK_DISK_QUOTA = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = self.context["request"].user
+        self.collection = self.context.get("collection")
+
+    def validate(self, data):
+        data = super().validate(data)
+        # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
+        if not settings.DISABLE_QUOTAS:
+            if not self.user.has_free_cpu_minutes():
+                raise serializers.ValidationError(
+                    _("You don't have any CPU minutes left.")
+                )
+            if self.CHECK_GPU_QUOTA and not self.user.has_free_gpu_minutes():
+                raise serializers.ValidationError(
+                    _("You don't have any GPU minutes left.")
+                )
+            if self.CHECK_DISK_QUOTA and not self.user.has_free_disk_storage():
+                raise serializers.ValidationError(
+                    _("You don't have any disk storage left.")
+                )
+        return data
+
+    def process(self):
+        # create a TaskGroup linked to a collection (instead of a document)
+        self.task_group = TaskGroup.objects.create(
+            task=self.PROCESS_NAME, created_by=self.user, collection=self.collection
+        )
+
+
+class BaseCollectionTrainSerializer(
+    CollectionProcessSerializerMixin, serializers.Serializer
+):
+    """
+    Base serializer for handling model training from a VirtualCollection.
+    """
+
+    model = serializers.PrimaryKeyRelatedField(
+        required=False, queryset=OcrModel.objects.all()
+    )
+    model_name = serializers.CharField(required=False)
+    override = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, data):
+        data = super().validate(data)
+        if not data.get("model") and not data.get("model_name"):
+            raise serializers.ValidationError(
+                _(
+                    "Either use model_name to create a new model, or provide a base model pk to retrain."
+                )
+            )
+
+        # prevent users from overwriting public models they don't own
+        model = data.get("model")
+        user = self.context["request"].user
+        if (
+            model
+            and not data.get("model_name")
+            and model.owner != user
+            and data.get("override")
+        ):
+            raise serializers.ValidationError(
+                _("You can't overwrite the existing file of a model you don't own.")
+            )
+        return data
+
+    def process(self):
+        super().process()
+
+        user = self.context["request"].user
+        model = self.validated_data.get("model")
+        override = self.validated_data.get("override")
+        model_name = self.validated_data.get("model_name")
+
+        if not model:
+            model = OcrModel.objects.create(
+                owner=user, name=model_name, job=self.JOB_TYPE, file_size=0
+            )
+        elif not override:
+            model = model.clone_for_training(user, name=model_name)
+
+        self.model = model
+
+
+class CollectionRecognizeSerializer(BaseCollectionTrainSerializer):
+    PROCESS_NAME = "recognition training"
+    JOB_TYPE = OcrModel.MODEL_JOB_RECOGNIZE
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context["request"].user
+        self.fields["model"].queryset = OcrModel.objects.filter(
+            job=OcrModel.MODEL_JOB_RECOGNIZE
+        ).for_user_read(user)
+
+
+class CollectionSegmentSerializer(BaseCollectionTrainSerializer):
+    PROCESS_NAME = "segmentation training"
+    JOB_TYPE = OcrModel.MODEL_JOB_SEGMENT
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context["request"].user
+        self.fields["model"].queryset = OcrModel.objects.filter(
+            job=OcrModel.MODEL_JOB_SEGMENT
+        ).for_user_read(user)

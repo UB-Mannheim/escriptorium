@@ -115,6 +115,7 @@
     --text2: #666768;
     --text3: #a7a8a9;
     --toast-text: #ffffff;
+    --alert-hover: #f8caca;
 }
 .dark-mode {
     /* dark mode backgrounds */
@@ -133,6 +134,7 @@
     --text2: #a7a8a9;
     --text3: #717373;
     --toast-text: #ffffff;
+    --alert-hover: #771010;
 }
 
 /* Site-wide styles */

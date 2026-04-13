@@ -693,12 +693,7 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
         if self.document.read_direction == self.document.READ_DIRECTION_RTL:
             self.initial['text_direction'] = 'horizontal-rl'
 
-        self.fields['model'].queryset = self.fields['model'].queryset.filter(
-            Q(public=True)
-            | Q(owner=self.user)
-            | Q(ocr_model_rights__user=self.user)
-            | Q(ocr_model_rights__group__user=self.user)
-        ).distinct()
+        self.fields['model'].queryset = self.fields['model'].queryset.for_user_read(self.user)
 
     def process(self):
         super().process()
@@ -737,12 +732,7 @@ class TranscribeForm(BootstrapFormMixin, DocumentProcessFormBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['model'].queryset = self.fields['model'].queryset.filter(
-            Q(public=True)
-            | Q(owner=self.user)
-            | Q(ocr_model_rights__user=self.user)
-            | Q(ocr_model_rights__group__user=self.user)
-        ).distinct()
+        self.fields['model'].queryset = self.fields['model'].queryset.for_user_read(self.user)
 
         self.fields['transcription'].queryset = self.fields['transcription'].queryset.filter(
             document=self.document
@@ -969,11 +959,7 @@ class TrainMixin():
 
         # Note: Only an owner should be able to train on top of an existing model
         # if the model is public, the user can only clone it (override=False)
-        self.fields['model'].queryset = (self.fields['model'].queryset
-                                         .filter(Q(public=True)
-                                                 | Q(owner=self.user)
-                                                 | Q(ocr_model_rights__user=self.user)
-                                                 | Q(ocr_model_rights__group__user=self.user)))
+        self.fields['model'].queryset = self.fields['model'].queryset.for_user_read(self.user)
 
     @property
     def model_job(self):

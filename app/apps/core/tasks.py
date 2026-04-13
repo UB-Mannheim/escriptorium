@@ -191,10 +191,11 @@ class FrontendFeedback(Callback):
     Lightning callback that sends websocket messages to the front for feedback
     display.
     """
-    def __init__(self, es_model, model_directory, document_pk, *args, **kwargs):
+    def __init__(self, es_model, model_directory, room_pk, room_name='document', *args, **kwargs):
         self.es_model = es_model
         self.model_directory = model_directory
-        self.document_pk = document_pk
+        self.room_pk = room_pk
+        self.room_name = room_name
         super().__init__(*args, **kwargs)
 
     def on_train_epoch_end(self, trainer, pl_module) -> None:
@@ -208,19 +209,15 @@ class FrontendFeedback(Callback):
         )
         logger.info(f'Epoch {trainer.current_epoch} finished.')
         self.es_model.training_accuracy = val_metric
-        # model.training_total = chars
-        # model.training_errors = error
         relpath = os.path.relpath(self.model_directory, settings.MEDIA_ROOT)
         self.es_model.new_version(file=f'{relpath}/checkpoint_epoch={trainer.current_epoch}.ckpt')
         self.es_model.save()
 
-        send_event('document', self.document_pk, "training:eval", {
+        send_event(self.room_name, self.room_pk, "training:eval", {
             "id": self.es_model.pk,
             'versions': self.es_model.versions,
             'epoch': trainer.current_epoch,
             'accuracy': val_metric
-            # 'chars': chars,
-            # 'error': error
         })
 
 
@@ -610,7 +607,7 @@ def recalculate_masks(instance_pk=None, user_pk=None, only=None, **kwargs):
     })
 
 
-def train_(qs, document, transcription, model=None, user=None):
+def train_(qs, document=None, transcription=None, model=None, user=None, collection_pk=None):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
     from multiprocessing import current_process
     current_process().daemon = False
@@ -664,9 +661,18 @@ def train_(qs, document, transcription, model=None, user=None):
 
         accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
 
-        if (document.main_script
-            and (document.main_script.text_direction == 'horizontal-rl'
-                 or document.main_script.text_direction == 'vertical-rl')):
+        main_script = None
+        if document:
+            main_script = document.main_script
+        else:
+            # if training from collection, get script from first document
+            first_line = qs.select_related('line__document_part__document__main_script').first()
+            if first_line:
+                main_script = getattr(first_line.line.document_part.document, 'main_script', None)
+
+        if (main_script
+            and (main_script.text_direction == 'horizontal-rl'
+                 or main_script.text_direction == 'vertical-rl')):
             reorder = 'R'
         else:
             reorder = 'L'
@@ -693,13 +699,16 @@ def train_(qs, document, transcription, model=None, user=None):
         else:
             kraken_model = VGSLRecognitionModel(rec_train_config)
 
+        # allow frontend feedback for per-collection training
+        room_name = 'collection' if collection_pk else 'document'
+        room_pk = collection_pk if collection_pk else document.pk
         trainer = KrakenTrainer(accelerator=accelerator,
                                 devices=device,
                                 precision=AMP_MODE,
                                 enable_summary=False,
                                 enable_progress_bar=False,
                                 val_check_interval=1.0,
-                                callbacks=[FrontendFeedback(model, model_dir, document.pk)])
+                                callbacks=[FrontendFeedback(model, model_dir, room_pk, room_name=room_name)])
 
         trainer.fit(kraken_model, rec_dm)
 
@@ -1001,3 +1010,338 @@ def replace_line_transcriptions_text(
         user.notify(_('Replacements applied with some errors'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-warning', level='warning')
     else:
         user.notify(_('Replacements applied!'), links=[{'text': 'Report', 'src': report.uri}], id='find-replace-success', level='success')
+
+
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
+def train_from_collection(collection_pk=None, model_pk=None, task_group_pk=None, user_pk=None, **kwargs):
+    # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
+    from multiprocessing import current_process
+    current_process().daemon = False
+
+    # get models for celery
+    VirtualCollectionItem = apps.get_model("core", "VirtualCollectionItem")
+    LineTranscription = apps.get_model("core", "LineTranscription")
+    OcrModel = apps.get_model("core", "OcrModel")
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
+            if not settings.DISABLE_QUOTAS:
+                if user.cpu_minutes_limit() is not None:
+                    assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+                if user.gpu_minutes_limit() is not None:
+                    assert user.has_free_gpu_minutes(), f"User {user.id} doesn't have any GPU minutes left"
+                if user.disk_storage_limit() is not None:
+                    assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
+        except User.DoesNotExist:
+            user = None
+    else:
+        user = None
+
+    try:
+        model = OcrModel.objects.get(pk=model_pk)
+        model.training = True
+        model.save()
+
+        # start training on collection
+        send_event(
+            "collection",
+            collection_pk,
+            "training:start",
+            {
+                "id": model.pk,
+            },
+        )
+        collection_items = VirtualCollectionItem.objects.filter(
+            collection_id=collection_pk
+        ).select_related("document_part", "transcription_layer")
+        if not collection_items.exists():
+            raise ValueError("Cannot train on an empty collection.")
+
+        # ground truth: only lines from each part + transcription_layer pair in
+        # the collection
+        q_objects = Q()
+        for item in collection_items:
+            if item.transcription_layer_id:
+                q_objects |= Q(
+                    transcription_id=item.transcription_layer_id,
+                    line__document_part_id=item.document_part_id,
+                )
+        qs = LineTranscription.objects.filter(q_objects).exclude(
+            Q(content="") | Q(content=None)
+        )
+
+        # pass the queryset to kraken for training
+        train_(
+            qs=qs,
+            document=None,
+            transcription=None,
+            model=model,
+            user=user,
+            collection_pk=collection_pk
+        )
+    except DidNotConverge:
+        send_event(
+            "collection", collection_pk, "training:error", {"id": model.pk}
+        )
+        if user:
+            user.notify(
+                _("The model did not converge, probably because of lack of data."),
+                id="training-warning",
+                level="warning",
+            )
+        model.delete()
+    except Exception as e:
+        send_event(
+            "collection",
+            collection_pk,
+            "training:error",
+            {
+                "id": model_pk,
+            },
+        )
+        if user:
+            user.notify(
+                _("Something went wrong during the training process!"),
+                id="training-error",
+                level="danger",
+            )
+        raise e
+    else:
+        model.file_size = model.file.size
+        if user:
+            user.notify(_("Training finished!"), id="training-success", level="success")
+    finally:
+        model.training = False
+        model.save()
+        send_event(
+            "collection",
+            collection_pk,
+            "training:done",
+            {
+                "id": model.pk,
+            },
+        )
+
+
+@shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
+def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=None, user_pk=None, **kwargs):
+    # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
+    from multiprocessing import current_process
+    current_process().daemon = False
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    if user_pk:
+        try:
+            user = User.objects.get(pk=user_pk)
+            # If quotas are enforced, assert that the user still has free CPU minutes, GPU minutes and disk storage
+            if not settings.DISABLE_QUOTAS:
+                if user.cpu_minutes_limit() is not None:
+                    assert user.has_free_cpu_minutes(), f"User {user.id} doesn't have any CPU minutes left"
+                if user.gpu_minutes_limit() is not None:
+                    assert user.has_free_gpu_minutes(), f"User {user.id} doesn't have any GPU minutes left"
+                if user.disk_storage_limit() is not None:
+                    assert user.has_free_disk_storage(), f"User {user.id} doesn't have any disk storage left"
+        except User.DoesNotExist:
+            user = None
+    else:
+        user = None
+
+    VirtualCollectionItem = apps.get_model("core", "VirtualCollectionItem")
+    Document = apps.get_model("core", "Document")
+    DocumentPart = apps.get_model("core", "DocumentPart")
+    OcrModel = apps.get_model("core", "OcrModel")
+
+    model = OcrModel.objects.get(pk=model_pk)
+
+    try:
+        load = model.file.path
+    except ValueError:  # model is empty
+        load = getattr(settings, "SEGMENTATION_DEFAULT_MODEL", "")
+        model.file = model.file.field.upload_to(model, slugify(model.name) + ".safetensors")
+
+    model_dir = os.path.join(settings.MEDIA_ROOT, os.path.split(model.file.path)[0])
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
+    try:
+        model.training = True
+        model.save()
+
+        send_event(
+            "collection",
+            collection_pk,
+            "training:start",
+            {
+                "id": model.pk,
+            },
+        )
+
+        # get ground truth parts for training
+        part_pks = VirtualCollectionItem.objects.filter(
+            collection_id=collection_pk
+        ).values_list("document_part_id", flat=True)
+        qs = DocumentPart.objects.filter(pk__in=part_pks).prefetch_related("lines")
+        ground_truth = list(qs)
+
+        if not ground_truth:
+            raise ValueError("No document parts found in the collection.")
+
+        # determine line_offset setting based on the first document in the collection
+        first_doc = ground_truth[0].document
+        offset = getattr(first_doc, "line_offset", Document.LINE_OFFSET_BASELINE)
+        if offset == Document.LINE_OFFSET_TOPLINE:
+            topline = True
+        elif offset == Document.LINE_OFFSET_CENTERLINE:
+            topline = None
+        else:
+            topline = False
+
+        # shuffle ground truth lines
+        np.random.default_rng(241960353267317949653744176059648850006).shuffle(
+            ground_truth
+        )
+        partition = max(1, int(len(ground_truth) / 10))
+
+        training_data = make_segmentation_training_data(qs[partition:])
+        evaluation_data = make_segmentation_training_data(qs[:partition])
+
+        accelerator, device = _to_ptl_device(
+            getattr(settings, "KRAKEN_TRAINING_DEVICE", "cpu")
+        )
+        LOAD_THREADS = getattr(settings, "KRAKEN_TRAINING_LOAD_THREADS", 0)
+        AMP_MODE = getattr(settings, "KRAKEN_TRAINING_PRECISION", "32")
+
+        if load:
+            from kraken.models import load_models
+            loaded_nets = load_models(load, tasks=['segmentation'])
+            loaded_net = loaded_nets[0] if loaded_nets else None
+        else:
+            loaded_net = None
+
+        net_class = type(loaded_net).__name__ if loaded_net is not None else None
+
+        if net_class == 'DFINEModel':
+            try:
+                from dfine.configs import (
+                    DFINESegmentationTrainingConfig,
+                    DFINESegmentationTrainingDataConfig,
+                )
+                from dfine.model import (
+                    DFINESegmentationDataModule,
+                    DFINESegmentationModel,
+                )
+            except ImportError:
+                raise RuntimeError('dfine_kraken package is required to train D-FINE models. '
+                                   'Install it with: pip install git+https://github.com/mittagessen/dfine_kraken.git')
+            seg_data_config = DFINESegmentationTrainingDataConfig(
+                training_data=[item['doc'] for item in training_data],
+                evaluation_data=[item['doc'] for item in evaluation_data],
+                format_type=None,
+                num_workers=LOAD_THREADS,
+            )
+            seg_train_config = DFINESegmentationTrainingConfig(
+                resize='union',
+                load_hyper_parameters=True,
+            )
+            seg_dm = DFINESegmentationDataModule(seg_data_config)
+            kraken_model = DFINESegmentationModel.load_from_weights(load, seg_train_config)
+        else:
+            seg_data_config = BLLASegmentationTrainingDataConfig(
+                training_data=training_data,
+                evaluation_data=evaluation_data,
+                format_type=None,
+                num_workers=LOAD_THREADS,
+            )
+            seg_train_config = BLLASegmentationTrainingConfig(
+                resize='union',
+                topline=topline,
+                load_hyper_parameters=True,
+            )
+            seg_dm = BLLASegmentationDataModule(seg_data_config)
+            if load:
+                kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
+            else:
+                kraken_model = BLLASegmentationModel(seg_train_config)
+
+        trainer = KrakenTrainer(
+            accelerator=accelerator,
+            devices=device,
+            precision=AMP_MODE,
+            enable_summary=False,
+            enable_progress_bar=False,
+            val_check_interval=1.0,
+            callbacks=[FrontendFeedback(model, model_dir, collection_pk, "collection")],
+        )
+
+        trainer.fit(kraken_model, seg_dm)
+
+        # best checkpoint path from lightning's ModelCheckpoint callback
+        best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
+        best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
+
+        if not best_path:
+            logger.info(f"Model {os.path.split(model.file.path)[0]} did not improve.")
+            raise DidNotConverge
+
+        try:
+            best_score_val = float(best_score) if best_score is not None else 0.0
+            logger.info(f"Converting best model {best_path} (accuracy: {best_score_val}) to {model.file.path}.")
+            convert_models([best_path], model.file.path)
+            model.training_accuracy = best_score_val
+        except FileNotFoundError:
+            logger.info(f"Model {os.path.split(model.file.path)[0]} did not improve.")
+            if user:
+                user.notify(
+                    _("Training didn't get better results than base model!"),
+                    id="seg-no-gain-error",
+                    level="warning",
+                )
+            shutil.copy(load, model.file.path)
+    except DidNotConverge:
+        send_event(
+            "collection", collection_pk, "training:error", {"id": model.pk}
+        )
+        if user:
+            user.notify(
+                _("The model did not converge, probably because of lack of data."),
+                id="training-warning",
+                level="warning",
+            )
+        model.delete()
+    except Exception as e:
+        send_event(
+            "collection",
+            collection_pk,
+            "training:error",
+            {
+                "id": model.pk,
+            },
+        )
+        if user:
+            user.notify(
+                _("Something went wrong during the segmenter training process!"),
+                id="training-error",
+                level="danger",
+            )
+        raise e
+    else:
+        model.file_size = model.file.size
+        if user:
+            user.notify(_("Training finished!"), id="training-success", level="success")
+    finally:
+        model.training = False
+        model.save()
+        send_event(
+            "collection",
+            collection_pk,
+            "training:done",
+            {
+                "id": model.pk,
+            },
+        )

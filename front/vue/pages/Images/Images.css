@@ -211,6 +211,15 @@ body:has(.escr-images-page) {
     top: 236px;
 }
 
+.images-loading-overlay.no-bg {
+    background-color: transparent;
+}
+
+.images-loading-overlay.no-bg .escr-spinner {
+    border-color: var(--text1);
+    border-right-color: transparent;
+}
+
 /* image list */
 .escr-image-list {
     overflow-y: auto;

@@ -175,7 +175,7 @@ export default {
                 const option = {
                     label: model.name,
                     value: model.pk,
-                    selected: this.model.toString() === model.pk.toString(),
+                    selected: this.model?.toString() === model.pk.toString(),
                 };
 
                 if (model.rights === "owner") {

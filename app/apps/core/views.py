@@ -901,12 +901,7 @@ class UserModels(LoginRequiredMixin, PerPageMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        models = OcrModel.objects.exclude(file="").filter(
-            Q(public=True)
-            | Q(owner=user)
-            | Q(ocr_model_rights__user=user)
-            | Q(ocr_model_rights__group__user=user)
-        ).distinct()
+        models = OcrModel.objects.exclude(file="").for_user_read(user)
 
         script_filter = self.request.GET.get('script_filter', '')
         if script_filter:
@@ -1062,3 +1057,7 @@ class DocumentsTasksList(LoginRequiredMixin, TemplateView):
 class MigrateDocument(ShareDocument):
     form_class = MigrateDocumentForm
     success_message = _("Document was successfully migrated to the selected project!")
+
+
+class TrainingView(LoginRequiredMixin, TemplateView):
+    template_name = "core/training.html"
