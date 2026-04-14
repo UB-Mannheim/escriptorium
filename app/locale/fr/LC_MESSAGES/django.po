@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-01 13:56+0100\n"
+"POT-Creation-Date: 2026-02-27 22:29+0100\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -1250,8 +1250,8 @@ msgstr ""
 msgid "About"
 msgstr ""
 
-#: escriptorium/templates/base.html homepage/instance_contact.html
-#: homepage_example/instance_contact.html
+#: escriptorium/templates/base.html escriptorium/templates/users/contactus.html
+#: homepage/instance_contact.html homepage_example/instance_contact.html
 msgid "Contact"
 msgstr "Contact"
 
