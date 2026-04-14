@@ -467,6 +467,9 @@ export default {
         this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
     },
 
+    beforeDestroy() {
+        window.removeEventListener("resize", this.recalculatePanelHeight);
+    },
     methods: {
         ...mapActions("textAnnotations", {
             createTextAnnotation: "create",
@@ -641,7 +644,9 @@ export default {
             }.bind(this));
 
             this.anno.on("updateAnnotation", function(annotation) {
-                let offsets = annotation.target.selector;
+                let offsets = annotation.target.selector.find(
+                    (e) => e.type == "TextPositionSelector"
+                );
                 let body = this.getAPITextAnnotationBody(annotation, offsets);
                 body.id = annotation.id;
                 this.updateTextAnnotation(body);

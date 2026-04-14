@@ -644,7 +644,7 @@ export default Vue.extend({
                     function (ev) {
                         let key = "baseline-editor-" + this.$store.state.document.id;
                         let settings = userProfile.get(key) || {};
-                        settings[event.detail.name] = event.detail.value;
+                        settings[ev.detail.name] = ev.detail.value;
                         userProfile.set(key, settings);
                     }.bind(this)
                 );

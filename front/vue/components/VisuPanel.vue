@@ -36,7 +36,7 @@
             <input
                 v-if="hasConfidence && confidenceVisible"
                 id="confidence-range"
-                v-model="confidenceScale"
+                :value="confidenceScale"
                 type="range"
                 class="custom-range ml-2"
                 min="1"
