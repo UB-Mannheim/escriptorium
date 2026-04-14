@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-01 13:56+0100\n"
+"POT-Creation-Date: 2026-02-27 22:29+0100\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -1307,8 +1307,8 @@ msgstr ""
 msgid "About"
 msgstr "About"
 
-#: escriptorium/templates/base.html homepage/instance_contact.html
-#: homepage_example/instance_contact.html
+#: escriptorium/templates/base.html escriptorium/templates/users/contactus.html
+#: homepage/instance_contact.html homepage_example/instance_contact.html
 msgid "Contact"
 msgstr "Contact"
 
