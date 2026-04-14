@@ -3,11 +3,19 @@
         <span
             v-if="labelVisible"
             class="escr-field-label"
+            :class="{ 'escr-has-help': helpText }"
+            :data-tooltip="helpText || null"
         >
             {{ label }}<span
                 v-if="required"
                 class="escr-required"
             >*</span>
+            <span
+                v-if="helpText"
+                class="escr-help-icon"
+            >
+                <InfoOutlineIcon />
+            </span>
         </span>
         <ul
             v-if="errors && errors.length > 0"
@@ -29,21 +37,16 @@
             :placeholder="placeholder"
             :allow-custom-value="allowCustomValue"
         />
-        <span
-            v-if="helpText"
-            class="escr-help-text"
-        >
-            {{ helpText }}
-        </span>
     </label>
 </template>
 <script>
 import EscrAutocompleteDropdown from "./AutocompleteDropdown.vue";
+import InfoOutlineIcon from "../Icons/InfoOutlineIcon/InfoOutlineIcon.vue";
 import "../Common/Form.css";
 
 export default {
     name: "EscrAutocompleteField",
-    components: { EscrAutocompleteDropdown },
+    components: { EscrAutocompleteDropdown, InfoOutlineIcon },
     props: {
         /**
          * Boolean indicating if the form field is disabled

@@ -1,3 +1,46 @@
+.escr-help-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.escr-help-icon svg {
+    fill: var(--text2);
+    width: 13px;
+    height: 13px;
+}
+
+.escr-field-label.escr-has-help {
+    position: relative;
+    cursor: default;
+}
+
+.escr-field-label.escr-has-help::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    max-width: 220px;
+    width: max-content;
+    background-color: var(--text1);
+    color: var(--background);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 1100;
+}
+
+.escr-field-label.escr-has-help:hover::after {
+    opacity: 1;
+}
+
 .escr-autocomplete-dropdown {
     position: relative;
     max-width: 100%;
