@@ -61,7 +61,7 @@ class SegmenterRegion {
         this.type = type;
         this.context = context;
         this.selected = false;
-        this.color = this.segmenter.regionColors[type || "None"];
+        this.color = this.segmenter.regionColors[type || "None"] || "#808080";
         this.polygonPath = new Path({
             closed: true,
             opacity: 0.5,
@@ -176,7 +176,7 @@ class SegmenterRegion {
     }
 
     refresh() {
-        this.color = this.segmenter.regionColors[this.type || "None"];
+        this.color = this.segmenter.regionColors[this.type || "None"] || "#808080";
         this.tooltipText = this.type;
         this.polygonPath.strokeColor = this.color;
         this.polygonPath.fillColor =
@@ -3144,6 +3144,7 @@ export class Segmenter {
     }
 
     shadeColor(color, percent) {
+        if (!color) return "#808080";
         let R = parseInt(color.substring(1, 3), 16);
         let G = parseInt(color.substring(3, 5), 16);
         let B = parseInt(color.substring(5, 7), 16);

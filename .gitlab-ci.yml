@@ -57,6 +57,27 @@ tests:
     - pip install -r app/requirements.txt
     - python app/manage.py test -v 2 users api versioning imports core
 
+js-tests:
+  stage: test
+  image: node:12-alpine
+
+  rules:
+    - if: '$CI_COMMIT_TAG !~ /^base-.*/ && $LANDING == null'
+      when: on_success
+    - when: never
+
+  cache:
+    key: "$CI_COMMIT_REF_SLUG-npm"
+    paths:
+      - front/node_modules/
+
+  before_script:
+    - cd front
+    - npm ci
+
+  script:
+    - npm test
+
 build:
   stage: build
   image: node:12-alpine
