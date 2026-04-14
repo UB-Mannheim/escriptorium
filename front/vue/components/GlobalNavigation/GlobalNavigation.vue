@@ -70,7 +70,7 @@
             </a>
             <a
                 v-if="isAuthenticated"
-                href="/training/"
+                :href="url('/training/')"
                 aria-label="training page"
                 :class="{
                     'escr-globalnav-icon': true,
