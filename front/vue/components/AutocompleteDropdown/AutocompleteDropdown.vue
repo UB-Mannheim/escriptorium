@@ -147,6 +147,7 @@ export default {
             blurTimeout: null,
             highlightedIndex: 0,
             isClearing: false,
+            isUserTyping: false,
         };
     },
     computed: {
@@ -234,6 +235,10 @@ export default {
                     this.isClearing = false;
                     return;
                 }
+                if (this.isUserTyping) {
+                    this.isUserTyping = false;
+                    return;
+                }
                 this.searchText = option ? option.label : "";
             },
         },
@@ -244,6 +249,7 @@ export default {
     },
     methods: {
         handleInput(e) {
+            this.isUserTyping = true;
             this.searchText = e.target.value;
             this.showDropdown = true;
             this.highlightedIndex = 0;
