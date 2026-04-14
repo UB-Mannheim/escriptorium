@@ -1314,7 +1314,7 @@ export default {
                     selectedParts: this.selectedParts,
                 };
                 sessionStorage.setItem("escr-training-data", JSON.stringify(trainingData));
-                window.location.href = "/training/";
+                window.location.href = SCRIPT_NAME + "/training/";
             } catch (error) {
                 this.addError(error);
                 this.setLoading({ key: "images", loading: false });
