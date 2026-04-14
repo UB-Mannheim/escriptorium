@@ -6,7 +6,7 @@
             />
             <h1
                 class="escr-element-title"
-                :title="elementHeading"
+                :title="elementHeadingFull"
             >
                 {{ elementHeading }}
             </h1>
@@ -201,16 +201,23 @@ export default {
                         }`,
                     },
                     {
-                        title: this.elementTitle ? this.elementTitle : "Loading...",
+                        title: this.elementTitle
+                            ? (this.elementTitle.length > 60 ? this.elementTitle.slice(0, 60) + "…" : this.elementTitle)
+                            : "Loading...",
                     },
                 ];
             }
             return breadcrumbs;
         },
-        elementHeading() {
+        elementHeadingFull() {
             return (this.elementTitle && this.elementFilename)
                 ? `${this.elementTitle} – ${this.elementFilename}`
                 : "Loading...";
+        },
+        elementHeading() {
+            if (!this.elementTitle || !this.elementFilename) return "Loading...";
+            const full = `${this.elementTitle} – ${this.elementFilename}`;
+            return full.length > 60 ? full.slice(0, 60) + "…" : full;
         },
     },
     methods: {

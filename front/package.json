@@ -16,7 +16,7 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
-    "@escriptorium/virtual-keyboard": "^0.2.2-b2506100631",
+    "@escriptorium/virtual-keyboard": "^0.3.0-b",
     "@fortawesome/fontawesome-free": "^5.7.0",
     "@recogito/annotorious": "^2.7.12",
     "@recogito/recogito-js": "^1.8.4",

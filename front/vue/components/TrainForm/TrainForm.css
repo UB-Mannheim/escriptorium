@@ -7,7 +7,6 @@
     width: 100%;
     margin-bottom: 0;
     position: relative;
-    overflow-x: auto;
 }
 .escr-model-training-form > * {
     margin-bottom: 0 !important;
@@ -43,6 +42,14 @@
 .escr-model-training-form .escr-train-btn {
     flex: 0 0 auto;
     height: 38px;
+}
+.escr-model-training-form .escr-base-model .escr-autocomplete-dropdown {
+    margin-bottom: 0 !important;
+}
+.escr-model-training-form .escr-base-model .escr-autocomplete-options {
+    top: auto;
+    bottom: calc(100% + 4px);
+    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
 }
 .escr-model-training-form .escr-segmented-button-group {
     margin-top: 8px;

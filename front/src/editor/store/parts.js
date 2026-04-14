@@ -93,7 +93,7 @@ export const actions = {
         let { data } = resp;
 
         // set order on state
-        if (order) {
+        if (order !== undefined && order !== null) {
             commit("setOrder", order);
         } else if (Object.hasOwn(data, "order")) {
             commit("setOrder", parseInt(data.order));
@@ -206,7 +206,7 @@ export const actions = {
 
             // set order on state and remove
             if (Object.hasOwn(data, "order")) {
-                commit("setOrder", parseInt(data.order) + 1);
+                commit("setOrder", parseInt(data.order));
             }
             delete data.order;
 

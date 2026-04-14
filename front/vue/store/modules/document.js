@@ -777,19 +777,6 @@ const actions = {
                     { root: true },
                 );
                 dispatch("tasks/closeModal", "segment", { root: true });
-                // set default text direction for the segment form
-                commit(
-                    "forms/setFieldValue",
-                    {
-                        form: "segment",
-                        field: "textDirection",
-                        value:
-                            state.readDirection === "rtl"
-                                ? "horizontal-rl"
-                                : "horizontal-lr",
-                    },
-                    { root: true },
-                );
                 dispatch({ type: "sidebar/closeSidebar" }, { root: true });
                 commit("setLoading", { key: "document", loading: false });
                 // show toast alert on success

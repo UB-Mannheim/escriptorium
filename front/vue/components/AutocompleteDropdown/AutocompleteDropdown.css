@@ -1,11 +1,49 @@
+.escr-help-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.escr-help-icon svg {
+    fill: var(--text2);
+    width: 13px;
+    height: 13px;
+}
+
+.escr-field-label.escr-has-help {
+    position: relative;
+    cursor: default;
+}
+
+.escr-field-label.escr-has-help::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    max-width: 220px;
+    width: max-content;
+    background-color: var(--text1);
+    color: var(--background);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 1100;
+}
+
+.escr-field-label.escr-has-help:hover::after {
+    opacity: 1;
+}
+
 .escr-autocomplete-dropdown {
     position: relative;
     max-width: 100%;
-}
-
-/* when dropdown is open to push content down */
-.escr-autocomplete-dropdown:has(.escr-autocomplete-options) {
-    margin-bottom: 310px;
 }
 
 .escr-autocomplete-dropdown input {
@@ -43,6 +81,27 @@
     pointer-events: none;
 }
 
+.escr-autocomplete-clear {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.escr-autocomplete-clear:hover {
+    color: var(--text1);
+}
+
 .escr-autocomplete-options {
     position: absolute;
     top: calc(100% + 4px);
@@ -74,7 +133,8 @@
     background-color: var(--background);
 }
 
-.escr-autocomplete-option:hover {
+.escr-autocomplete-option:hover,
+.escr-autocomplete-option--highlighted {
     background-color: var(--primary);
     color: var(--background);
 }
@@ -91,4 +151,31 @@
     font-size: 14px;
     font-style: italic;
     background-color: var(--background);
+}
+
+.escr-autocomplete-new-option {
+    padding: 10px 15px;
+    font-family: "Noto Sans";
+    font-size: 14px;
+    color: var(--primary);
+    background-color: rgba(var(--primary-rgb, 59, 130, 246), 0.05);
+    border-left: 3px solid var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.escr-autocomplete-new-option--clickable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.escr-autocomplete-new-option--clickable:hover,
+.escr-autocomplete-new-option--highlighted {
+    background-color: rgba(var(--primary-rgb, 59, 130, 246), 0.1);
+}
+
+.escr-new-option-icon {
+    font-size: 16px;
+    line-height: 1;
 }

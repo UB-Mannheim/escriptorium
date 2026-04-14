@@ -1,21 +1,13 @@
 <template>
-    <label class="escr-autocomplete-field escr-form-field">
+    <label class="escr-multiselect-field escr-form-field">
         <span
             v-if="labelVisible"
             class="escr-field-label"
-            :class="{ 'escr-has-help': helpText }"
-            :data-tooltip="helpText || null"
         >
             {{ label }}<span
                 v-if="required"
                 class="escr-required"
             >*</span>
-            <span
-                v-if="helpText"
-                class="escr-help-icon"
-            >
-                <InfoOutlineIcon />
-            </span>
         </span>
         <ul
             v-if="errors && errors.length > 0"
@@ -29,24 +21,28 @@
                 {{ error }}
             </li>
         </ul>
-        <EscrAutocompleteDropdown
+        <EscrMultiSelectDropdown
             :label="label"
             :disabled="disabled"
-            :option-groups="optionGroups"
+            :options="options"
             :on-change="onChange"
             :placeholder="placeholder"
-            :allow-custom-value="allowCustomValue"
         />
+        <span
+            v-if="helpText"
+            class="escr-help-text"
+        >
+            {{ helpText }}
+        </span>
     </label>
 </template>
 <script>
-import EscrAutocompleteDropdown from "./AutocompleteDropdown.vue";
-import InfoOutlineIcon from "../Icons/InfoOutlineIcon/InfoOutlineIcon.vue";
+import EscrMultiSelectDropdown from "./MultiSelectDropdown.vue";
 import "../Common/Form.css";
 
 export default {
-    name: "EscrAutocompleteField",
-    components: { EscrAutocompleteDropdown, InfoOutlineIcon },
+    name: "EscrMultiSelectField",
+    components: { EscrMultiSelectDropdown },
     props: {
         /**
          * Boolean indicating if the form field is disabled
@@ -84,32 +80,25 @@ export default {
             default: true,
         },
         /**
-         * Event handler for the select change
+         * Event handler for the change event
          */
         onChange: {
             type: Function,
             required: true,
         },
         /**
-         * List of option groups
+         * List of options
          */
-        optionGroups: {
+        options: {
             type: Array,
             required: true,
-        },
-        /**
-         * Allow user to enter custom values not in the list.
-         */
-        allowCustomValue: {
-            type: Boolean,
-            default: false,
         },
         /**
          * Placeholder text
          */
         placeholder: {
             type: String,
-            default: "Select or search...",
+            default: "Select items...",
         },
         /**
          * Whether or not this field is required in the form.

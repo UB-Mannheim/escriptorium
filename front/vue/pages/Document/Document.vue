@@ -267,6 +267,7 @@
                 <TranscribeModal
                     v-if="taskModalOpen && taskModalOpen.transcribe"
                     :models="recognitionModels"
+                    :transcriptions="transcriptions"
                     :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('transcribe')"
                     :on-submit="handleSubmitTranscribe"

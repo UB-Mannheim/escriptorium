@@ -266,6 +266,15 @@
 .escr-button--outline-text:active {
     color: var(--text1);
 }
+/* loading */
+.escr-button--loading {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+.escr-button-spinner {
+    border-color: currentColor;
+    border-right-color: transparent;
+}
 /* disabled */
 .escr-button:disabled {
     pointer-events: none;

@@ -439,6 +439,7 @@
                 <TranscribeModal
                     v-if="taskModalOpen && taskModalOpen.transcribe"
                     :models="recognitionModels"
+                    :transcriptions="transcriptions"
                     :disabled="loading && (loading.images || loading.document)"
                     :on-cancel="() => {
                         closeTaskModal('transcribe');

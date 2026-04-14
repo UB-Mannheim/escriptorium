@@ -33,12 +33,12 @@
             "
             required
         />
-        <EscrDropdownField
+        <EscrAutocompleteField
             class="escr-base-model"
             label="Base Model (optional)"
-            title="Select a model to fine-tune, or leave blank to train from scratch."
+            help-text="Select a model to fine-tune, or leave blank to train from scratch."
             :disabled="isSubmitting"
-            :options="availableModels"
+            :option-groups="modelOptionGroups"
             :on-change="onChangeBaseModel"
         />
         <label
@@ -104,8 +104,8 @@
 
 <script>
 import { mapActions, mapState } from "vuex";
+import EscrAutocompleteField from "../../components/AutocompleteDropdown/AutocompleteField.vue";
 import EscrButton from "../../components/Button/Button.vue";
-import EscrDropdownField from "../../components/Dropdown/DropdownField.vue";
 // eslint-disable-next-line max-len
 import EscrSegmentedButtonGroup from "../../components/SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import EscrTextField from "../../components/TextField/TextField.vue";
@@ -113,8 +113,8 @@ import "./TrainForm.css";
 
 export default {
     components: {
+        EscrAutocompleteField,
         EscrButton,
-        EscrDropdownField,
         EscrSegmentedButtonGroup,
         EscrTextField,
     },
@@ -142,16 +142,44 @@ export default {
                 this.form.model_name || (this.form.model && this.form.override)
             );
         },
-        availableModels() {
+        modelOptionGroups() {
             const models =
                 this.modelType === "recognizer"
                     ? this.recognitionModels
                     : this.segmentationModels;
 
-            return models.map((m) => ({
-                label: m.name,
-                value: m.pk,
-            }));
+            const yourModels = [];
+            const sharedModels = [];
+            const publicModels = [];
+
+            models.forEach((m) => {
+                const option = {
+                    label: m.name,
+                    value: m.pk,
+                    selected:
+                        this.form.model != null &&
+                        this.form.model.toString() === m.pk.toString(),
+                };
+                if (m.rights === "owner") {
+                    yourModels.push(option);
+                } else if (m.rights === "public") {
+                    publicModels.push(option);
+                } else {
+                    sharedModels.push(option);
+                }
+            });
+
+            const groups = [];
+            if (yourModels.length > 0) {
+                groups.push({ label: "Your Models", options: yourModels });
+            }
+            if (sharedModels.length > 0) {
+                groups.push({ label: "Shared Models", options: sharedModels });
+            }
+            if (publicModels.length > 0) {
+                groups.push({ label: "Public Models", options: publicModels });
+            }
+            return groups;
         },
         modelTypeOptions() {
             return [
