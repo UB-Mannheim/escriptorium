@@ -722,7 +722,7 @@ export default {
             this.debouncedSave();
         },
 
-        appendLine(pos) {
+        appendLine(pos, linePk) {
             if (this.isRegionsModeEnabled) {
                 // regions mode: just append an LI element to the final region
                 const li = document.createElement("li");
@@ -733,6 +733,9 @@ export default {
             } else {
                 // non-regions mode: append a DIV element to the end of the list (or position)
                 let div = document.createElement("div");
+                if (linePk !== undefined && linePk !== null) {
+                    div.setAttribute("data-line-pk", linePk);
+                }
                 div.appendChild(document.createElement("br"));
                 if (pos === undefined) {
                     this.$refs.diplomaticLines.appendChild(div);
