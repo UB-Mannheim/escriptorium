@@ -17,7 +17,7 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
-    "@escriptorium/virtual-keyboard": "^0.3.0-b",
+    "@escriptorium/virtual-keyboard": "^0.3.2",
     "@fortawesome/fontawesome-free": "^5.7.0",
     "@recogito/annotorious": "^2.7.12",
     "@recogito/recogito-js": "^1.8.4",
@@ -51,7 +51,7 @@
     "vuex": "^3.6.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.7",
+    "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.2",
     "@storybook/addon-a11y": "^6.5.16",
     "@storybook/addon-actions": "^6.5.16",
