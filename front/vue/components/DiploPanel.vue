@@ -465,10 +465,14 @@ export default {
         this.initAnnotations();
 
         this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
+        this.$refs.diplomaticLines.addEventListener("copy", this.handleCopy);
     },
 
     beforeDestroy() {
         window.removeEventListener("resize", this.recalculatePanelHeight);
+        if (this.$refs.diplomaticLines) {
+            this.$refs.diplomaticLines.removeEventListener("copy", this.handleCopy);
+        }
     },
     methods: {
         ...mapActions("textAnnotations", {
@@ -783,23 +787,25 @@ export default {
             } else {
                 // Add lines until we have enough of them
                 while (diploLines.childElementCount < this.allLines.length) {
-                    this.appendLine();
+                    const index = diploLines.childElementCount;
+                    const line = this.allLines[index];
+                    this.appendLine(null, line.pk);
                 }
                 // need to add/remove danger indicators
                 for (let i = 0; i < diploLines.childElementCount; i++) {
-                    let line = diploLines.querySelector(`div:nth-child(${parseInt(i+1)})`);
-                    if (line === null) {
-                        line.remove();
-                        continue;
-                    }
-
+                    let line = diploLines.children[i];
                     if (i < this.allLines.length) {
                         line.classList.remove("alert-danger");
                         line.setAttribute("title", "");
-                    } else if (i >= this.allLines.length) {
-                        if (line.textContent == "") { // just remove empty lines
+                        // ensure existing lines have the correct data-line-pk
+                        const expectedPk = this.allLines[i].pk;
+                        if (line.getAttribute("data-line-pk") !== String(expectedPk)) {
+                            line.setAttribute("data-line-pk", expectedPk);
+                        }
+                    } else {
+                        if (line.textContent === "") {
                             line.remove();
-                        } else  {
+                        } else {
                             line.classList.add("alert-danger");
                             line.setAttribute("title", "Line not present in segmentation");
                         }
@@ -1105,6 +1111,29 @@ export default {
             //  without it will paste the native copied text after "content"
             e.stopPropagation();
             e.preventDefault();
+            this.constrainLineNumber();
+        },
+
+        handleCopy(event) {
+            event.preventDefault();
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return;
+            const range = selection.getRangeAt(0);
+            const fragment = range.cloneContents();
+            let copiedText = "";
+            fragment.childNodes.forEach((node, index, array) => {
+                if (
+                    node.nodeType === Node.ELEMENT_NODE &&
+                    node.tagName === "DIV" &&
+                    node.hasAttribute("data-line-pk") &&
+                    node.innerText.trim() === ""
+                ) {
+                    copiedText += "\n";
+                } else {
+                    copiedText += node.textContent + (index === array.length - 1 ? "" : "\n");
+                }
+            });
+            event.clipboardData.setData("text/plain", copiedText);
         },
 
         showOverlay(ev) {
