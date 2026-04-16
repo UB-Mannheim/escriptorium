@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-27 22:29+0100\n"
+"POT-Creation-Date: 2026-04-14 20:34+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -224,6 +224,23 @@ msgstr ""
 msgid "Max offset and beam size cannot both be non-zero."
 msgstr ""
 
+#: apps/api/serializers.py
+#, fuzzy
+#| msgid ""
+#| "Either use model_name to create a new model, add a model pk to retrain an "
+#| "existing one, or both to create a new model from an existing one."
+msgid ""
+"Either use model_name to create a new model, or provide a base model pk to "
+"retrain."
+msgstr ""
+"Utilisez model_name pour créer un nouveau modèle, ajoutez un modèle pk pour "
+"réentraîner un modèle existant, ou les deux pour créer un nouveau modèle à "
+"partir d’un modèle existant."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You can't overwrite the existing file of a model you don't own."
+msgstr ""
+
 #: apps/api/views.py apps/core/models.py
 msgid "Canceled."
 msgstr "Supprimé."
@@ -321,10 +338,6 @@ msgstr ""
 #: apps/core/forms.py
 msgid ""
 "You need to choose a model to override if the override option is checked."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You can't overwrite the existing file of a model you don't own."
 msgstr ""
 
 #: apps/core/forms.py
@@ -1348,6 +1361,7 @@ msgstr ""
 
 #: escriptorium/templates/core/document_dashboard.html
 #: escriptorium/templates/core/project_dashboard.html
+#: escriptorium/templates/core/training.html
 msgid ""
 "This page is not available in legacy mode. Visit your user settings to "
 "disable legacy mode."
@@ -2166,6 +2180,10 @@ msgstr ""
 
 #: escriptorium/templates/core/share/share_base.html
 msgid "Share"
+msgstr ""
+
+#: escriptorium/templates/core/training.html
+msgid "Model Training"
 msgstr ""
 
 #: escriptorium/templates/core/wizards/_base.html
