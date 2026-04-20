@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.utils.translation import gettext as _
+from email.utils import parseaddr
 
 from escriptorium.utils import send_email
 from users.models import ContactUs, GroupOwner, Invitation, User
@@ -112,15 +113,23 @@ class BulkInvitationForm(BootstrapFormMixin, forms.Form):
 
         return count, invalid_emails
 
-    def _create_invitation(self, email, group, expiry_date):
+    def _create_invitation(self, name_addr, group, expiry_date):
         try:
+            name, email = parseaddr(name_addr)
             validate_email(email)
-            invitation = Invitation(
-                recipient_email=email,
-                sender=self.sender,
-                group=group,
-                expiry_date=expiry_date,
-            )
+            args = {}
+            if name:
+                parts = name.strip().split(' ', 1)
+                if len(parts) < 2:
+                    args['recipient_last_name'] = parts[0]
+                else:
+                    args['recipient_first_name'] = parts[0]
+                    args['recipient_last_name'] = parts[1]
+            args['recipient_email'] = email
+            args['sender'] = self.sender
+            args['group'] = group
+            args['expiry_date'] = expiry_date
+            invitation = Invitation(**args)
             invitation.save()
             invitation.send(self.request)
             return True
