@@ -15,6 +15,7 @@ from core.models import (
     Block,
     Document,
     DocumentMetadata,
+    DocumentPart,
     Line,
     LineTranscription,
     LineType,
@@ -918,6 +919,32 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
             }, content_type='application/json')
         self.assertEqual(resp.status_code, 200, resp.content)
 
+    def test_delete(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:block-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': self.block.pk})
+        resp = self.client.delete(uri)
+        self.assertEqual(resp.status_code, 204, resp.content)
+        self.assertFalse(Block.objects.filter(pk=self.block.pk).exists())
+
+    def test_delete_acquires_document_part_lock(self):
+        # Regression test: block delete must SELECT FOR UPDATE the parent
+        # DocumentPart before running ordered_model's reorder UPDATE, so that
+        # concurrent deletes on the same part are serialized rather than
+        # deadlocking on each other's row locks.
+        self.client.force_login(self.user)
+        uri = reverse('api:block-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': self.block.pk})
+        with patch('api.views.DocumentPart.objects.select_for_update',
+                   wraps=DocumentPart.objects.select_for_update) as mock_sfu:
+            resp = self.client.delete(uri)
+        self.assertEqual(resp.status_code, 204, resp.content)
+        mock_sfu.assert_called_once_with()
+
 
 class LineViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
@@ -1054,6 +1081,32 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(uri, {'lines': []}, content_type="application/json")
         self.assertEqual(resp.status_code, 400)
         self.assertIn("mandatory", resp.json()['error'])
+
+    def test_delete(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:line-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': self.line.pk})
+        resp = self.client.delete(uri)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertFalse(Line.objects.filter(pk=self.line.pk).exists())
+
+    def test_delete_acquires_document_part_lock(self):
+        # Regression test: line delete must SELECT FOR UPDATE the parent
+        # DocumentPart before running ordered_model's reorder UPDATE, so that
+        # concurrent deletes on the same part are serialized rather than
+        # deadlocking on each other's row locks.
+        self.client.force_login(self.user)
+        uri = reverse('api:line-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': self.line.pk})
+        with patch('api.views.DocumentPart.objects.select_for_update',
+                   wraps=DocumentPart.objects.select_for_update) as mock_sfu:
+            resp = self.client.delete(uri)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        mock_sfu.assert_called_once_with()
 
 
 class TranscriptionViewSetTestCase(CoreFactoryTestCase):
