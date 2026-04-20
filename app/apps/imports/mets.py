@@ -173,9 +173,17 @@ class METSProcessor:
         try:
             # Testing if the retrieved file is an image
             image = Image.open(file)
-            # We only want to save the first provided image
-            if not mets_page_image and Image.MIME[image.format] in SUPPORTED_IMAGE_MIMETYPES:
-                mets_page_image = href
+            mime = Image.MIME.get(image.format)
+            if mime in SUPPORTED_IMAGE_MIMETYPES:
+                # We only want to save the first provided image
+                if not mets_page_image:
+                    mets_page_image = href
+            else:
+                self.report.append(
+                    f"Image file '{href}' has unsupported format '{image.format}' ({mime}). "
+                    f"Supported formats are: {', '.join(SUPPORTED_IMAGE_MIMETYPES)}.",
+                    logger_fct=logger.warning,
+                )
         except IOError:
             # If it's not an image then we can add it as a data source to be loaded
             mets_page_sources[layer_name] = href
@@ -210,8 +218,17 @@ class METSProcessor:
             get_resp = requests.get(uri)
             is_image, content_type = self.check_is_image(get_resp)
 
-            # Pointing towards an image but we already found one for this METS page or its format isn't supported, we can skip it
-            if is_image and (mets_page_image or content_type not in SUPPORTED_IMAGE_MIMETYPES):
+            # Already have an image for this page — skip the duplicate
+            if is_image and mets_page_image:
+                return mets_page_image, mets_page_sources, layers_count
+
+            # Image format is recognised as an image but not in the supported list
+            if is_image and content_type not in SUPPORTED_IMAGE_MIMETYPES:
+                self.report.append(
+                    f"Image file '{href}' has unsupported MIME type '{content_type}'. "
+                    f"Supported types are: {', '.join(SUPPORTED_IMAGE_MIMETYPES)}.",
+                    logger_fct=logger.warning,
+                )
                 return mets_page_image, mets_page_sources, layers_count
 
             get_resp.raise_for_status()

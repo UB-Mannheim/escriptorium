@@ -1,10 +1,12 @@
 import io
 import os
+import tempfile
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
 from django.test import override_settings
 from lxml import etree, html
+from PIL import Image
 from requests.exceptions import RequestException
 
 from core.tests.factory import CoreFactoryTestCase
@@ -504,3 +506,106 @@ class METSProcessorTestCase(CoreFactoryTestCase):
             "mets-header/status": "Validated",
             "mets-header/agent-role-CREATOR-type-ORGANIZATION": "eScriptorium testing",
         })
+
+    def _make_single_file_mets_xml(self, file_id, filename):
+        """Minimal METS XML with one file group entry and one page."""
+        NS = METSProcessor.NAMESPACES["mets"]
+        XLINK = "http://www.w3.org/1999/xlink"
+        mets = etree.Element(f"{{{NS}}}mets", nsmap={"mets": NS, "xlink": XLINK})
+        file_sec = etree.SubElement(mets, f"{{{NS}}}fileSec")
+        file_grp = etree.SubElement(file_sec, f"{{{NS}}}fileGrp", USE="image")
+        file_elem = etree.SubElement(file_grp, f"{{{NS}}}file", ID=file_id)
+        flocat = etree.SubElement(file_elem, f"{{{NS}}}FLocat")
+        flocat.set(f"{{{XLINK}}}href", filename)
+        struct_map = etree.SubElement(mets, f"{{{NS}}}structMap", TYPE="PHYSICAL")
+        doc_div = etree.SubElement(struct_map, f"{{{NS}}}div", TYPE="document")
+        page_div = etree.SubElement(doc_div, f"{{{NS}}}div", TYPE="page")
+        etree.SubElement(page_div, f"{{{NS}}}fptr", FILEID=file_id)
+        return mets
+
+    def _make_zip_with_image(self, filename, img_format):
+        """Return path to a temp ZIP containing a small image in the given PIL format."""
+        buf = io.BytesIO()
+        Image.new("RGB", (4, 4)).save(buf, format=img_format)
+        tmp = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
+        with ZipFile(tmp.name, "w") as z:
+            z.writestr(filename, buf.getvalue())
+        return tmp.name
+
+    def test_process_single_page_warns_on_tiff_in_archive(self):
+        filename = "page.tif"
+        archive_path = self._make_zip_with_image(filename, "TIFF")
+        root = self._make_single_file_mets_xml("img1", filename)
+        processor = METSProcessor(root, self.report, archive=archive_path)
+        files = processor.get_files_from_file_sec()
+        pages = processor.get_pages_from_struct_map()
+
+        with self.assertLogs("imports.mets", level="WARNING") as log:
+            mets_page = processor.process_single_page(pages[0], files)
+
+        self.assertIsNone(mets_page.image)
+        self.assertIn(
+            "WARNING:imports.mets:Image file 'page.tif' has unsupported format 'TIFF' (image/tiff).",
+            log.output[0],
+        )
+        self.assertIn("image/gif, image/jpeg, image/png, image/jp2", log.output[0])
+        os.remove(archive_path)
+
+    def test_process_single_page_warns_on_webp_in_archive(self):
+        filename = "page.webp"
+        archive_path = self._make_zip_with_image(filename, "WEBP")
+        root = self._make_single_file_mets_xml("img1", filename)
+        processor = METSProcessor(root, self.report, archive=archive_path)
+        files = processor.get_files_from_file_sec()
+        pages = processor.get_pages_from_struct_map()
+
+        with self.assertLogs("imports.mets", level="WARNING") as log:
+            mets_page = processor.process_single_page(pages[0], files)
+
+        self.assertIsNone(mets_page.image)
+        self.assertIn(
+            "WARNING:imports.mets:Image file 'page.webp' has unsupported format 'WEBP' (image/webp).",
+            log.output[0],
+        )
+        self.assertIn("image/gif, image/jpeg, image/png, image/jp2", log.output[0])
+        os.remove(archive_path)
+
+    @patch("requests.get")
+    @patch("imports.mets.METSProcessor.check_is_image")
+    def test_process_single_page_warns_on_tiff_remote(self, mock_check_is_image, mock_get):
+        mock_get.return_value = Mock(content=b"tiff data", status_code=200)
+        mock_check_is_image.return_value = (True, "image/tiff")
+        root = self._make_single_file_mets_xml("img1", "page.tif")
+        processor = METSProcessor(root, self.report, mets_base_uri="https://whatever.com")
+        files = processor.get_files_from_file_sec()
+        pages = processor.get_pages_from_struct_map()
+
+        with self.assertLogs("imports.mets", level="WARNING") as log:
+            mets_page = processor.process_single_page(pages[0], files)
+
+        self.assertIsNone(mets_page.image)
+        self.assertIn(
+            "WARNING:imports.mets:Image file 'page.tif' has unsupported MIME type 'image/tiff'.",
+            log.output[0],
+        )
+        self.assertIn("image/gif, image/jpeg, image/png, image/jp2", log.output[0])
+
+    @patch("requests.get")
+    @patch("imports.mets.METSProcessor.check_is_image")
+    def test_process_single_page_warns_on_webp_remote(self, mock_check_is_image, mock_get):
+        mock_get.return_value = Mock(content=b"webp data", status_code=200)
+        mock_check_is_image.return_value = (True, "image/webp")
+        root = self._make_single_file_mets_xml("img1", "page.webp")
+        processor = METSProcessor(root, self.report, mets_base_uri="https://whatever.com")
+        files = processor.get_files_from_file_sec()
+        pages = processor.get_pages_from_struct_map()
+
+        with self.assertLogs("imports.mets", level="WARNING") as log:
+            mets_page = processor.process_single_page(pages[0], files)
+
+        self.assertIsNone(mets_page.image)
+        self.assertIn(
+            "WARNING:imports.mets:Image file 'page.webp' has unsupported MIME type 'image/webp'.",
+            log.output[0],
+        )
+        self.assertIn("image/gif, image/jpeg, image/png, image/jp2", log.output[0])
