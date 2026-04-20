@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from email.utils import parseaddr
 
 from escriptorium.utils import send_email
 from users.models import ContactUs, GroupOwner, Invitation, User
