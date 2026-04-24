@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 20:34+0200\n"
+"POT-Creation-Date: 2026-04-21 19:46+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -257,16 +257,10 @@ msgstr ""
 "Maximaler Offset und Strahlengröße dürfen nicht beide ungleich Null sein."
 
 #: apps/api/serializers.py
-#, fuzzy
-#| msgid ""
-#| "Either use model_name to create a new model, or add a model pk to retrain "
-#| "an existing one."
 msgid ""
 "Either use model_name to create a new model, or provide a base model pk to "
 "retrain."
 msgstr ""
-"Verwenden Sie entweder model_name, um ein neues Modell zu erstellen, oder "
-"fügen Sie ein Modell pk hinzu, um ein bestehendes Modell neu zu trainieren."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You can't overwrite the existing file of a model you don't own."
@@ -1979,6 +1973,10 @@ msgid "Blog"
 msgstr "Blog"
 
 #: escriptorium/templates/core/home.html
+msgid "eScripta Blog"
+msgstr "eScripta Blog"
+
+#: escriptorium/templates/core/home.html
 msgid "For Developers"
 msgstr "Für Entwickler"
 
@@ -2334,10 +2332,8 @@ msgid "Share"
 msgstr "Teilen"
 
 #: escriptorium/templates/core/training.html
-#, fuzzy
-#| msgid "Cancel training"
 msgid "Model Training"
-msgstr "Training abbrechen"
+msgstr "Modelltraining"
 
 #: escriptorium/templates/core/wizards/_base.html
 msgid "image(s) selected."
