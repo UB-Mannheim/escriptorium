@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 20:34+0200\n"
+"POT-Creation-Date: 2026-04-21 19:46+0200\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -255,16 +255,10 @@ msgid "Max offset and beam size cannot both be non-zero."
 msgstr "Max offset and beam tamaño cannot both be non-zero."
 
 #: apps/api/serializers.py
-#, fuzzy
-#| msgid ""
-#| "Either use model_name to create a new model, or add a model pk to retrain "
-#| "an existing one."
 msgid ""
 "Either use model_name to create a new model, or provide a base model pk to "
 "retrain."
 msgstr ""
-"Use model_name para crear un nuevo modelo, o agregue un pk de modelo para "
-"reentrenar uno existente."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You can't overwrite the existing file of a model you don't own."
@@ -1903,6 +1897,10 @@ msgid "Blog"
 msgstr ""
 
 #: escriptorium/templates/core/home.html
+msgid "eScripta Blog"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
 msgid "For Developers"
 msgstr ""
 
@@ -2255,10 +2253,8 @@ msgid "Share"
 msgstr "Share"
 
 #: escriptorium/templates/core/training.html
-#, fuzzy
-#| msgid "Cancel training"
 msgid "Model Training"
-msgstr "cancelar entrenamiento"
+msgstr ""
 
 #: escriptorium/templates/core/wizards/_base.html
 msgid "image(s) selected."
