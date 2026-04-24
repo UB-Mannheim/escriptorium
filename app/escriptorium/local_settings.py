@@ -39,7 +39,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2026-04-16'
+VERSION_DATE = 'UBMA-2026-04-24'
 
 LANGUAGES = [
     ('de', _('German')),
