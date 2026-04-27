@@ -312,47 +312,27 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         net_class = type(loaded_net).__name__ if loaded_net is not None else None
 
         if net_class == 'DFINEModel':
-            try:
-                from dfine.configs import (
-                    DFINESegmentationTrainingConfig,
-                    DFINESegmentationTrainingDataConfig,
-                )
-                from dfine.model import (
-                    DFINESegmentationDataModule,
-                    DFINESegmentationModel,
-                )
-            except ImportError:
-                raise RuntimeError('dfine_kraken package is required to train D-FINE models. '
-                                   'Install it with: pip install git+https://github.com/mittagessen/dfine_kraken.git')
-            seg_data_config = DFINESegmentationTrainingDataConfig(
-                training_data=[item['doc'] for item in training_data],
-                evaluation_data=[item['doc'] for item in evaluation_data],
-                format_type=None,
-                num_workers=LOAD_THREADS,
-            )
-            seg_train_config = DFINESegmentationTrainingConfig(
-                resize='union',
-                load_hyper_parameters=True,
-            )
-            seg_dm = DFINESegmentationDataModule(seg_data_config)
-            kraken_model = DFINESegmentationModel.load_from_weights(load, seg_train_config)
+            if user:
+                user.notify(_("D-FINE model fine-tuning is not supported."),
+                            id="training-dfine-unsupported", level='warning')
+            raise NotImplementedError(_("D-FINE model fine-tuning is not supported."))
+
+        seg_data_config = BLLASegmentationTrainingDataConfig(
+            training_data=training_data,
+            evaluation_data=evaluation_data,
+            format_type=None,
+            num_workers=LOAD_THREADS,
+        )
+        seg_train_config = BLLASegmentationTrainingConfig(
+            resize='union',
+            topline=topline,
+            load_hyper_parameters=True,
+        )
+        seg_dm = BLLASegmentationDataModule(seg_data_config)
+        if load:
+            kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
         else:
-            seg_data_config = BLLASegmentationTrainingDataConfig(
-                training_data=training_data,
-                evaluation_data=evaluation_data,
-                format_type=None,
-                num_workers=LOAD_THREADS,
-            )
-            seg_train_config = BLLASegmentationTrainingConfig(
-                resize='union',
-                topline=topline,
-                load_hyper_parameters=True,
-            )
-            seg_dm = BLLASegmentationDataModule(seg_data_config)
-            if load:
-                kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
-            else:
-                kraken_model = BLLASegmentationModel(seg_train_config)
+            kraken_model = BLLASegmentationModel(seg_train_config)
 
         trainer = KrakenTrainer(accelerator=accelerator,
                                 devices=device,
@@ -1227,47 +1207,27 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         net_class = type(loaded_net).__name__ if loaded_net is not None else None
 
         if net_class == 'DFINEModel':
-            try:
-                from dfine.configs import (
-                    DFINESegmentationTrainingConfig,
-                    DFINESegmentationTrainingDataConfig,
-                )
-                from dfine.model import (
-                    DFINESegmentationDataModule,
-                    DFINESegmentationModel,
-                )
-            except ImportError:
-                raise RuntimeError('dfine_kraken package is required to train D-FINE models. '
-                                   'Install it with: pip install git+https://github.com/mittagessen/dfine_kraken.git')
-            seg_data_config = DFINESegmentationTrainingDataConfig(
-                training_data=[item['doc'] for item in training_data],
-                evaluation_data=[item['doc'] for item in evaluation_data],
-                format_type=None,
-                num_workers=LOAD_THREADS,
-            )
-            seg_train_config = DFINESegmentationTrainingConfig(
-                resize='union',
-                load_hyper_parameters=True,
-            )
-            seg_dm = DFINESegmentationDataModule(seg_data_config)
-            kraken_model = DFINESegmentationModel.load_from_weights(load, seg_train_config)
+            if user:
+                user.notify(_("D-FINE model fine-tuning is not supported."),
+                            id="training-dfine-unsupported", level='warning')
+            raise NotImplementedError(_("D-FINE model fine-tuning is not supported."))
+
+        seg_data_config = BLLASegmentationTrainingDataConfig(
+            training_data=training_data,
+            evaluation_data=evaluation_data,
+            format_type=None,
+            num_workers=LOAD_THREADS,
+        )
+        seg_train_config = BLLASegmentationTrainingConfig(
+            resize='union',
+            topline=topline,
+            load_hyper_parameters=True,
+        )
+        seg_dm = BLLASegmentationDataModule(seg_data_config)
+        if load:
+            kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
         else:
-            seg_data_config = BLLASegmentationTrainingDataConfig(
-                training_data=training_data,
-                evaluation_data=evaluation_data,
-                format_type=None,
-                num_workers=LOAD_THREADS,
-            )
-            seg_train_config = BLLASegmentationTrainingConfig(
-                resize='union',
-                topline=topline,
-                load_hyper_parameters=True,
-            )
-            seg_dm = BLLASegmentationDataModule(seg_data_config)
-            if load:
-                kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
-            else:
-                kraken_model = BLLASegmentationModel(seg_train_config)
+            kraken_model = BLLASegmentationModel(seg_train_config)
 
         trainer = KrakenTrainer(
             accelerator=accelerator,
