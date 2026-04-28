@@ -189,7 +189,7 @@ export default {
             const defaultModel = {
                 label: "Default Segmentation Model",
                 value: null,
-                selected: !this.model,
+                selected: !this.model && this.models.length === 0,
             };
 
             const yourModels = [];
