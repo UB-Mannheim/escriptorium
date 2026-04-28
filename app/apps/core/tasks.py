@@ -305,13 +305,10 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         if load:
             from kraken.models import load_models
             loaded_nets = load_models(load, tasks=['segmentation'])
-            loaded_net = loaded_nets[0] if loaded_nets else None
         else:
-            loaded_net = None
+            loaded_nets = []
 
-        net_class = type(loaded_net).__name__ if loaded_net is not None else None
-
-        if net_class == 'DFINEModel':
+        if any(type(net).__name__ == 'DFINEModel' for net in loaded_nets):
             if user:
                 user.notify(_("D-FINE model fine-tuning is not supported."),
                             id="training-dfine-unsupported", level='warning')
@@ -1200,13 +1197,10 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         if load:
             from kraken.models import load_models
             loaded_nets = load_models(load, tasks=['segmentation'])
-            loaded_net = loaded_nets[0] if loaded_nets else None
         else:
-            loaded_net = None
+            loaded_nets = []
 
-        net_class = type(loaded_net).__name__ if loaded_net is not None else None
-
-        if net_class == 'DFINEModel':
+        if any(type(net).__name__ == 'DFINEModel' for net in loaded_nets):
             if user:
                 user.notify(_("D-FINE model fine-tuning is not supported."),
                             id="training-dfine-unsupported", level='warning')
