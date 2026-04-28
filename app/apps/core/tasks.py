@@ -271,6 +271,24 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
+    if load:
+        import json
+
+        from safetensors import safe_open
+        try:
+            with safe_open(load, framework="pt") as f:
+                raw_meta = f.metadata()
+            kraken_meta = json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
+        except (ValueError, TypeError, json.JSONDecodeError):
+            kraken_meta = {}
+        if any(v.get('_model') == 'DFINEModel' for v in kraken_meta.values() if isinstance(v, dict)):
+            send_event('document', document_pk, "training:error", {"id": model.pk})
+            if user:
+                user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
+                            id="training-dfine-unsupported", level='warning')
+            model.delete()
+            raise NotImplementedError(_("D-FINE model fine-tuning is not supported at the moment."))
+
     try:
         model.training = True
         model.save()
@@ -301,18 +319,6 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         logger.info(f'Starting segmentation training on {accelerator}/{device} '
                     f'(precision: {AMP_MODE}, workers: {LOAD_THREADS}) with '
                     f'{len(training_data)} files')
-
-        if load:
-            from kraken.models import load_models
-            loaded_nets = load_models(load, tasks=['segmentation'])
-        else:
-            loaded_nets = []
-
-        if any(type(net).__name__ == 'DFINEModel' for net in loaded_nets):
-            if user:
-                user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
-                            id="training-dfine-unsupported", level='warning')
-            raise NotImplementedError(_("D-FINE model fine-tuning is not supported at the moment."))
 
         seg_data_config = BLLASegmentationTrainingDataConfig(
             training_data=training_data,
@@ -1146,6 +1152,24 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
+    if load:
+        import json
+
+        from safetensors import safe_open
+        try:
+            with safe_open(load, framework="pt") as f:
+                raw_meta = f.metadata()
+            kraken_meta = json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
+        except (ValueError, TypeError, json.JSONDecodeError):
+            kraken_meta = {}
+        if any(v.get('_model') == 'DFINEModel' for v in kraken_meta.values() if isinstance(v, dict)):
+            send_event("collection", collection_pk, "training:error", {"id": model.pk})
+            if user:
+                user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
+                            id="training-dfine-unsupported", level='warning')
+            model.delete()
+            raise NotImplementedError(_("D-FINE model fine-tuning is not supported at the moment."))
+
     try:
         model.training = True
         model.save()
@@ -1193,18 +1217,6 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         )
         LOAD_THREADS = getattr(settings, "KRAKEN_TRAINING_LOAD_THREADS", 0)
         AMP_MODE = getattr(settings, "KRAKEN_TRAINING_PRECISION", "32")
-
-        if load:
-            from kraken.models import load_models
-            loaded_nets = load_models(load, tasks=['segmentation'])
-        else:
-            loaded_nets = []
-
-        if any(type(net).__name__ == 'DFINEModel' for net in loaded_nets):
-            if user:
-                user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
-                            id="training-dfine-unsupported", level='warning')
-            raise NotImplementedError(_("D-FINE model fine-tuning is not supported at the moment."))
 
         seg_data_config = BLLASegmentationTrainingDataConfig(
             training_data=training_data,
