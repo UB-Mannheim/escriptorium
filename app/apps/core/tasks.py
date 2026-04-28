@@ -310,9 +310,9 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
 
         if any(type(net).__name__ == 'DFINEModel' for net in loaded_nets):
             if user:
-                user.notify(_("D-FINE model fine-tuning is not supported."),
+                user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
                             id="training-dfine-unsupported", level='warning')
-            raise NotImplementedError(_("D-FINE model fine-tuning is not supported."))
+            raise NotImplementedError(_("D-FINE model fine-tuning is not supported at the moment."))
 
         seg_data_config = BLLASegmentationTrainingDataConfig(
             training_data=training_data,
@@ -1202,9 +1202,9 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
 
         if any(type(net).__name__ == 'DFINEModel' for net in loaded_nets):
             if user:
-                user.notify(_("D-FINE model fine-tuning is not supported."),
+                user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
                             id="training-dfine-unsupported", level='warning')
-            raise NotImplementedError(_("D-FINE model fine-tuning is not supported."))
+            raise NotImplementedError(_("D-FINE model fine-tuning is not supported at the moment."))
 
         seg_data_config = BLLASegmentationTrainingDataConfig(
             training_data=training_data,
