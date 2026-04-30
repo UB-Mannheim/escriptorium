@@ -1135,6 +1135,11 @@ class BlockViewSet(DocumentPermissionMixin, ModelViewSet):
                 .filter(document_part=self.kwargs['part_pk'])
                 .filter(document_part__document=self.kwargs['document_pk']))
 
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            DocumentPart.objects.select_for_update().get(pk=instance.document_part_id)
+            instance.delete()
+
 
 class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = (Line.objects.select_related('block')
@@ -1150,6 +1155,11 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
             return DetailedLineSerializer
         else:  # create, list
             return LineSerializer
+
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            DocumentPart.objects.select_for_update().get(pk=instance.document_part_id)
+            instance.delete()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
