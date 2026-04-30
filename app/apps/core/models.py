@@ -1320,6 +1320,15 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
 
             res = segmenter.predict(im=im, config=seg_config)
 
+            if res.type == 'bbox':
+                if self.document.line_offset == Document.LINE_OFFSET_TOPLINE:
+                    topline = True
+                elif self.document.line_offset == Document.LINE_OFFSET_CENTERLINE:
+                    topline = None
+                else:
+                    topline = False
+                res = res.to_baselines(topline=topline)
+
             if steps in ["regions", "both"]:
                 for region_type, regions in res.regions.items():
                     try:
