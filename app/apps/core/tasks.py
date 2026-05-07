@@ -274,12 +274,12 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
     if load:
         import json
 
-        from safetensors import safe_open
+        from safetensors import SafetensorError, safe_open
         try:
             with safe_open(load, framework="pt") as f:
                 raw_meta = f.metadata()
             kraken_meta = json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
-        except (ValueError, TypeError, json.JSONDecodeError):
+        except (ValueError, TypeError, json.JSONDecodeError, SafetensorError):
             kraken_meta = {}
         if any(v.get('_model') == 'DFINEModel' for v in kraken_meta.values() if isinstance(v, dict)):
             send_event('document', document_pk, "training:error", {"id": model.pk})
@@ -1155,12 +1155,12 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
     if load:
         import json
 
-        from safetensors import safe_open
+        from safetensors import SafetensorError, safe_open
         try:
             with safe_open(load, framework="pt") as f:
                 raw_meta = f.metadata()
             kraken_meta = json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
-        except (ValueError, TypeError, json.JSONDecodeError):
+        except (ValueError, TypeError, json.JSONDecodeError, SafetensorError):
             kraken_meta = {}
         if any(v.get('_model') == 'DFINEModel' for v in kraken_meta.values() if isinstance(v, dict)):
             send_event("collection", collection_pk, "training:error", {"id": model.pk})
