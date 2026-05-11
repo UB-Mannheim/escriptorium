@@ -701,7 +701,67 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
             "ref": 0,  # distinguishes OCR from witness
         }
 
-    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types, layer_name, beam_size, gap):
+    def apply_alignment_hyphenation(self, match_text, start_pos, witness_text):
+        """Helper function to add hyphens to aligned output if a word was broken
+        across lines."""
+        # ensure we have a match + start pos of the text
+        if not match_text or start_pos is None:
+            return match_text
+        end_pos = start_pos + len(match_text)
+        # ensure index in bounds
+        if end_pos >= len(witness_text):
+            return match_text
+        # add a hyphen if word is broken and there isn't already a hyphen
+        next_char_in_witness = witness_text[end_pos]
+        last_char_in_transcription = match_text[-1]
+        if (
+            next_char_in_witness.isalnum()
+            and last_char_in_transcription.isalnum()
+            and next_char_in_witness != "-"
+            and last_char_in_transcription != "-"
+        ):
+            return match_text + "-"
+        return match_text
+
+    def parse_alignment_output_json(self, out_json_files, witness_text, threshold, add_hyphens):
+        """Helper function to parse passim JSON output and filter matches by
+        threshold, in order to produce final aligned lines."""
+        aligned_lines = []
+        # handle multi-part output
+        for json_part in out_json_files:
+            with open(json_part, "r", encoding="utf-8") as json_file:
+                for json_line in json_file:
+                    # iterate through lines in output with "wits" entries
+                    out_dict = json.loads(json_line)
+                    for aligned_line in out_dict.get("lines", []):
+                        for match in aligned_line.get("wits", []):
+                            match_text = match.get("text", "")
+                            if not match_text:
+                                continue
+                            n_matches = float(match.get("matches", 0))
+                            # skip if the % of matches is below threshold
+                            if (
+                                n_matches / max(len(aligned_line.get("text", "")), len(match_text))
+                            ) < threshold:
+                                continue
+                            # if configured, add hyphens to output
+                            if add_hyphens:
+                                match_text = self.apply_alignment_hyphenation(
+                                    match_text, match.get("begin"), witness_text
+                                )
+                            # find the matching line id in lineIDs based on character position
+                            match_line_id = next((
+                                identified_line for identified_line in out_dict.get("lineIDs", [])
+                                if identified_line["start"] == aligned_line["begin"]
+                            ), {})
+                            aligned_lines.append({
+                                "id": match_line_id.get("id", -1),
+                                "text": match_text,
+                                "alg": match.get("alg", ""),
+                            })
+        return aligned_lines
+
+    def align(self, part_pks, transcription_pk, witness_pk, n_gram, max_offset, merge, full_doc, threshold, region_types, layer_name, beam_size, gap, add_hyphens):
         """Use subprocess call to Passim to align transcription with textual witness"""
         parts = DocumentPart.objects.filter(document=self, pk__in=part_pks)
 
@@ -744,10 +804,10 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
 
         witness = TextualWitness.objects.get(pk=witness_pk)
         with witness.file.open('r') as f:
-            txt = f.read()
+            witness_text = f.read()
             witness_dict = {
                 "id": "witness",
-                "text": txt,
+                "text": witness_text,
                 "ref": 1,  # distinguishes witness from OCR
             }
             input_list.append(witness_dict)
@@ -789,30 +849,7 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
         out_json = glob(f"{outdir}/out.json/*.json")
         aligned_lines = []
         if out_json:
-            # handle multi-part output
-            for json_part in out_json:
-                json_file = open(json_part, "r", encoding="utf-8")
-                for line in json_file.readlines():
-                    # iterate through lines in output with "wits" entries
-                    out_dict = json.loads(line)
-                    for line in out_dict.get("lines", []):
-                        for match in line.get("wits", []):
-                            match_text = match.get("text", "")
-                            n_matches = float(match.get("matches", 0))
-                            # if the % of matches is greater than or equal to threshold:
-                            if (
-                                n_matches / max(len(line.get("text", "")), len(match_text))
-                            ) >= threshold:
-                                # find the matching line id in line_ids based on character position
-                                match_line_id = next((
-                                    identified_line for identified_line in out_dict.get("lineIDs", [])
-                                    if identified_line["start"] == line["begin"]
-                                ), {})
-                                aligned_lines.append({
-                                    "id": match_line_id.get("id", -1),
-                                    "text": match_text,
-                                    "alg": match.get("alg", ""),
-                                })
+            aligned_lines = self.parse_alignment_output_json(out_json, witness_text, threshold, add_hyphens)
 
         # build the new transcription layer
         original_trans = Transcription.objects.get(pk=transcription_pk)

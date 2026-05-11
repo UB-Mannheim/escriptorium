@@ -287,6 +287,7 @@ export const retrieveTextualWitnesses = async () =>
 // queue the alignment task for this document
 export const alignDocument = async ({
     documentId,
+    addHyphens,
     beamSize,
     existingWitness,
     fullDoc,
@@ -303,6 +304,7 @@ export const alignDocument = async ({
 }) => {
     // need to use FormData to handle witness file upload
     const formData = new FormData();
+    formData.append("add_hyphens", addHyphens);
     if (beamSize) formData.append("beam_size", beamSize);
     if (existingWitness) formData.append("existing_witness", existingWitness);
     formData.append("full_doc", fullDoc);

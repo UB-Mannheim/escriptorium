@@ -827,6 +827,12 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         initial=False,
         help_text=_("If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank."),
     )
+    add_hyphens = forms.BooleanField(
+        label=_("Add hyphens"),
+        required=False,
+        initial=False,
+        help_text=_("If checked, the aligner will attempt to reconstruct hyphenated words across line breaks."),
+    )
     full_doc = forms.BooleanField(
         label=_("Use full transcribed document"),
         required=False,
@@ -914,6 +920,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
         n_gram = self.cleaned_data.get("n_gram", 25)
         gap = self.cleaned_data.get("gap", 600)
         merge = self.cleaned_data.get("merge")
+        add_hyphens = self.cleaned_data.get("add_hyphens")
         full_doc = self.cleaned_data.get("full_doc", True)
         threshold = self.cleaned_data.get("threshold", 0.8)
         region_types = self.cleaned_data.get("region_types", ["Orphan", "Undefined"])
@@ -941,6 +948,7 @@ class AlignForm(BootstrapFormMixin, DocumentProcessFormBase, RegionTypesFormMixi
             n_gram=int(n_gram if n_gram else 25),
             max_offset=int(max_offset if (max_offset is not None and max_offset != '') else 0),
             merge=bool(merge),
+            add_hyphens=bool(add_hyphens),
             full_doc=bool(full_doc if (full_doc is not None and full_doc != '') else True),
             threshold=float(threshold if (threshold is not None and threshold != '') else 0.8),
             region_types=region_types,

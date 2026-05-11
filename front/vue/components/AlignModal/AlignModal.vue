@@ -117,6 +117,21 @@
                     alignment could not be performed; if unchecked, those lines will be blank.
                 </span>
             </div>
+            <div class="escr-form-field escr-hyphens-field escr-checkbox-field">
+                <label>
+                    <input
+                        type="checkbox"
+                        value="add-hyphens"
+                        :checked="addHyphens === true"
+                        @change="handleAddHyphensChange"
+                    >
+                    Add hyphens to words broken across lines
+                </label>
+                <span class="escr-help-text">
+                    If checked, the aligner will automatically insert hyphens when it detects a
+                    word was split across two lines in the ground truth.
+                </span>
+            </div>
             <hr v-if="showAdvanced">
             <AlignAdvancedFieldset
                 v-if="showAdvanced"
@@ -231,6 +246,7 @@ export default {
             textualWitnessType: (state) => state.forms.align.textualWitnessType,
             fullDoc: (state) => state.forms.align.fullDoc,
             merge: (state) => state.forms.align.merge,
+            addHyphens: (state) => state.forms.align.addHyphens,
         }),
         /**
          * this form is invalid and cannot be submitted if it is missing model
@@ -313,6 +329,13 @@ export default {
             this.handleGenericInput({
                 form: "align",
                 field: "merge",
+                value: e.target.checked,
+            });
+        },
+        handleAddHyphensChange(e) {
+            this.handleGenericInput({
+                form: "align",
+                field: "addHyphens",
                 value: e.target.checked,
             });
         },

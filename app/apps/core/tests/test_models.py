@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import tempfile
 from shutil import copyfile
 from unittest.mock import patch
 
@@ -61,6 +62,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=0,
             gap=self.gap,
+            add_hyphens=False,
         )
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
@@ -93,6 +95,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 layer_name=None,
                 beam_size=0,
                 gap=self.gap,
+                add_hyphens=False,
             )
             infile = open(f"{self.outdir}-1.json")
             in_lines = infile.readlines()
@@ -155,6 +158,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=0,
             gap=self.gap,
+            add_hyphens=False,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -190,6 +194,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=0,
             gap=self.gap,
+            add_hyphens=False,
         )
 
         # line we know should have changed content based on witness.txt and out.json
@@ -229,6 +234,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=0,
             gap=self.gap,
+            add_hyphens=False,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -265,6 +271,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                     layer_name=None,
                     beam_size=0,
                     gap=self.gap,
+                    add_hyphens=False,
                 )
             # should remove the output directory
             mock_shutil.rmtree.assert_called_with(f"{self.outdir}-1", ignore_errors=True)
@@ -292,6 +299,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 layer_name=None,
                 beam_size=0,
                 gap=self.gap,
+                add_hyphens=False,
             )
             infile = open(f"{self.outdir}-1.json")
             in_lines = infile.readlines()
@@ -331,6 +339,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=0,
             gap=self.gap,
+            add_hyphens=False,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -359,6 +368,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=0,
             gap=self.gap,
+            add_hyphens=False,
         )
         new_trans = Transcription.objects.get(
             name="Aligned: fake_textual_witness + test trans",
@@ -394,6 +404,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 layer_name=None,
                 beam_size=0,
                 gap=self.gap,
+                add_hyphens=False,
             )
             infile = open(f"{self.outdir}-1.json")
             in_lines = infile.readlines()
@@ -419,6 +430,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 layer_name=None,
                 beam_size=0,
                 gap=self.gap,
+                add_hyphens=False,
             )
             infile = open(f"{self.outdir}-1.json")
             in_lines = infile.readlines()
@@ -443,6 +455,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 layer_name=None,
                 beam_size=0,
                 gap=self.gap,
+                add_hyphens=False,
             )
             infile = open(f"{self.outdir}-1.json")
             in_lines = infile.readlines()
@@ -471,6 +484,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             layer_name="test layer",
             beam_size=0,
             gap=self.gap,
+            add_hyphens=False,
         )
 
         # Should not use default naming scheme
@@ -509,6 +523,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=self.beam_size,
             gap=self.gap,
+            add_hyphens=False,
         )
         # mocking subprocess because we don't expect test runner to run java, but this test will
         # use real passim output later
@@ -524,3 +539,98 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             f"{self.outdir}-1.json",
             f"{self.outdir}-1",
         ])
+
+    def test_apply_alignment_hyphenation(self):
+        """Unit tests for the boundary logic of the alignment hyphenation helper"""
+        doc = self.factory.make_document()
+
+        # should hyphenate broken word
+        # match ends with 'n', next char in witness is 's' (both alnum)
+        self.assertEqual(
+            doc.apply_alignment_hyphenation("recon", 0, "reconstruct"), "recon-"
+        )
+
+        # should NOT hyphenate match ending on a word boundary/space
+        # Next char in witness is ' '
+        self.assertEqual(
+            doc.apply_alignment_hyphenation("recon", 0, "recon struct"), "recon"
+        )
+
+        # should NOT hyphenate when next character is punctuation
+        self.assertEqual(
+            doc.apply_alignment_hyphenation("recon", 0, "recon,struct"), "recon"
+        )
+
+        # should NOT hyphenate match already ending with a hyphen
+        self.assertEqual(
+            doc.apply_alignment_hyphenation("recon-", 0, "recon-struct"), "recon-"
+        )
+
+        # should NOT double-hyphenate witness that already hyphenates in the same place
+        self.assertEqual(
+            doc.apply_alignment_hyphenation("recon", 0, "recon-struct"), "recon"
+        )
+
+        # should NOT hyphenate the end of the witness string
+        self.assertEqual(
+            doc.apply_alignment_hyphenation("reconstruct", 0, "reconstruct"),
+            "reconstruct",
+        )
+
+        # should NOT hyphenate with bad/invalid inputs
+        self.assertEqual(doc.apply_alignment_hyphenation(None, 0, "reconstruct"), None)
+        self.assertEqual(
+            doc.apply_alignment_hyphenation("recon", None, "reconstruct"), "recon"
+        )
+
+    def test_parse_alignment_output_json_hyphens(self):
+        """Test that the JSON parse helper applies hyphens to lines when add_hyphens=True"""
+        doc = self.factory.make_document()
+        witness_text = "reconstruct"
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf-8") as f:
+            json.dump(
+                # expected passim output format
+                {
+                    "id": "test_doc",
+                    "text": "recon",
+                    "lineIDs": [{"id": 99, "start": 0}],
+                    "lines": [
+                        {
+                            "begin": 0,
+                            "text": "recon",
+                            "wits": [
+                                {
+                                    "text": "recon",
+                                    "begin": 0,
+                                    "matches": 5,
+                                    "alg": "exact",
+                                }
+                            ],
+                        }
+                    ],
+                },
+                f,
+            )
+            f.write("\n")
+            filepath = f.name
+
+        try:
+            # run helper with add_hyphens=True (threshold 0.0 to guarantee match)
+            lines_with_hyphens = doc.parse_alignment_output_json(
+                [filepath], witness_text, 0.0, add_hyphens=True
+            )
+            self.assertEqual(len(lines_with_hyphens), 1)
+            self.assertEqual(lines_with_hyphens[0]["id"], 99)
+            self.assertEqual(lines_with_hyphens[0]["text"], "recon-")
+
+            # run helper with add_hyphens=False
+            lines_no_hyphens = doc.parse_alignment_output_json(
+                [filepath], witness_text, 0.0, add_hyphens=False
+            )
+            self.assertEqual(len(lines_no_hyphens), 1)
+            self.assertEqual(lines_no_hyphens[0]["text"], "recon")
+
+        finally:
+            # clean up tempfile
+            os.remove(filepath)

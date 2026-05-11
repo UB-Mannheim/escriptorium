@@ -143,6 +143,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "layer_name": "example",
             "beam_size": 10,
             "gap": 1000000,
+            "add_hyphens": False,
         }
 
         align_form.process()
@@ -163,6 +164,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             layer_name="example",
             beam_size=10,
             gap=1000000,
+            add_hyphens=False,
         )
 
         # should create a new textual witness from a passed file
@@ -179,6 +181,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             "region_types": ["Orphan", "Undefined"],
             "layer_name": "example",
             "gap": 600,
+            "add_hyphens": False,
         }
         align_form.process()
         mock_textualwitness_class.assert_called_with(
@@ -211,6 +214,7 @@ class AlignFormTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=20,
             gap=600,
+            add_hyphens=False,
         )
 
         # should respect threshold of 0.0 and not revert to default 0.8
@@ -237,4 +241,5 @@ class AlignFormTestCase(CoreFactoryTestCase):
             layer_name=None,
             beam_size=20,
             gap=600,
+            add_hyphens=False,
         )

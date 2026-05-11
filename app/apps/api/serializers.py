@@ -1325,6 +1325,12 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         initial=False,
         help_text=_("If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank."),
     )
+    add_hyphens = serializers.BooleanField(
+        label=_("Add hyphens"),
+        required=False,
+        initial=False,
+        help_text=_("If checked, the aligner will attempt to reconstruct hyphenated words across line breaks."),
+    )
     full_doc = serializers.BooleanField(
         label=_("Use full transcribed document"),
         required=False,
@@ -1404,6 +1410,7 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
         n_gram = self.validated_data.get("n_gram", 25)
         gap = self.validated_data.get("gap", 600)
         merge = self.validated_data.get("merge")
+        add_hyphens = self.validated_data.get("add_hyphens")
         full_doc = self.validated_data.get("full_doc", True)
         threshold = self.validated_data.get("threshold", 0.8)
         region_types = self.validated_data.get("region_types", ["Orphan", "Undefined"])
@@ -1430,6 +1437,7 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
             n_gram=int(n_gram if n_gram else 25),
             max_offset=int(max_offset if (max_offset is not None and max_offset != '') else 0),
             merge=bool(merge),
+            add_hyphens=bool(add_hyphens),
             full_doc=bool(full_doc if (full_doc is not None and full_doc != '') else True),
             threshold=float(threshold if (threshold is not None and threshold != '') else 0.8),
             region_types=list(region_types),

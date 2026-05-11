@@ -293,6 +293,7 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             "layer_name": "example",
             # "beam_size": 10,
             "gap": 1000000,
+            "add_hyphens": False,
         })
 
         self.assertEqual(resp.status_code, 200, resp.content)
