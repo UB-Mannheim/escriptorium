@@ -57,7 +57,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                 # # the error is sent via websocket so no need to catch it here
                 self.assertEqual(response.status_code, 200)
 
-        # failed, didn't create anythng
+        # failed, didn't create anything
         self.assertEqual(self.part1.blocks.count(), 0)
         self.assertEqual(self.part1.lines.count(), 0)
 
@@ -285,7 +285,7 @@ class XmlImportTestCase(CoreFactoryTestCase):
                 # the error is sent via websocket so no need to catch it here
                 self.assertEqual(response.status_code, 200)
 
-        # failed, didn't create anythng
+        # failed, didn't create anything
         self.assertEqual(self.part3.blocks.count(), 0)
         self.assertEqual(self.part3.lines.count(), 0)
         # import was created since the form validated

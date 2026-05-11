@@ -172,14 +172,14 @@ export default {
     },
     props: {
         /**
-         * A project object (id, name) if one was already pre-selected on mount
+         * A project object (id, name) if one was already preselected on mount
          */
         preselectedProject: {
             type: Object,
             default: null,
         },
         /**
-         * A document object if one was already pre-selected on mount
+         * A document object if one was already preselected on mount
          */
         preselectedDocument: {
             type: Object,
