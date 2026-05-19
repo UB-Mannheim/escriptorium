@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-21 19:46+0200\n"
+"POT-Creation-Date: 2026-05-10 09:29+0200\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -550,6 +550,10 @@ msgstr "Recognize"
 #: apps/core/models.py
 msgid "Couldn't find the training task."
 msgstr "Couldn't find the entrenamiento task."
+
+#: apps/core/tasks.py
+msgid "D-FINE model fine-tuning is not supported at the moment."
+msgstr ""
 
 #: apps/core/tasks.py
 msgid "Training didn't get better results than base model!"
