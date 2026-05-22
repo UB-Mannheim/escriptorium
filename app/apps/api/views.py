@@ -1243,6 +1243,9 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
             return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
 
         lines = list(Line.objects.filter(pk__in=original_lines))
+        if not lines:
+            return Response(dict(status='error', error=_("None of the requested lines were found.")), status=status.HTTP_404_NOT_FOUND)
+
         for line in lines:
             if not line.baseline:
                 return Response(dict(status='error', error="Lines without a baseline cannot be merged"), status=status.HTTP_400_BAD_REQUEST)
