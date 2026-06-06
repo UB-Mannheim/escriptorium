@@ -34,7 +34,7 @@ export const mutations = {
 };
 
 export const actions = {
-    async fetch({ commit, dispatch, rootState }) {
+    async fetch({ commit, _dispatch, rootState }) {
         let next = true,
             page = 1;
         let data = [];
@@ -66,7 +66,7 @@ export const actions = {
         return newAnnotation;
     },
 
-    async update({ commit, rootState }, annotation) {
+    async update({ _commit, rootState }, annotation) {
         const resp = await api.updateTextAnnotation(
             rootState.document.id,
             rootState.parts.pk,

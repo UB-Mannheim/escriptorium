@@ -864,7 +864,7 @@ export class Segmenter {
     bindButtons() {
         this.deleteSelectionBtn.addEventListener(
             "click",
-            function (event) {
+            function (_event) {
                 this.deleteSelection();
             }.bind(this),
         );
@@ -879,7 +879,7 @@ export class Segmenter {
         if (this.toggleRegionModeBtn)
             this.toggleRegionModeBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.toggleRegionMode();
                 }.bind(this),
             );
@@ -887,7 +887,7 @@ export class Segmenter {
         if (this.toggleMasksBtn) {
             this.toggleMasksBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.toggleMasks();
                 }.bind(this),
             );
@@ -895,7 +895,7 @@ export class Segmenter {
         if (this.toggleLineModeBtn) {
             this.toggleLineModeBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.toggleLineMode();
                 }.bind(this),
             );
@@ -904,7 +904,7 @@ export class Segmenter {
         if (this.splitBtn)
             this.splitBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.splitting = !this.splitting;
                     this.splitBtn.classList.toggle("btn-warning");
                     this.splitBtn.classList.toggle("btn-success");
@@ -914,42 +914,42 @@ export class Segmenter {
         if (this.mergeBtn)
             this.mergeBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.mergeSelection();
                 }.bind(this),
             );
         if (this.linkRegionBtn)
             this.linkRegionBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.linkSelection();
                 }.bind(this),
             );
         if (this.unlinkRegionBtn)
             this.unlinkRegionBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.unlinkSelection();
                 }.bind(this),
             );
         if (this.reverseBtn)
             this.reverseBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.reverseSelection();
                 }.bind(this),
             );
         if (this.setTypeBtn)
             this.setTypeBtn.addEventListener(
                 "click",
-                function (event) {
+                function (_event) {
                     this.showTypeSelect();
                 }.bind(this),
             );
         if (this.toggleOrderingBtn)
             this.toggleOrderingBtn.addEventListener(
                 "click",
-                function (ev) {
+                function (_ev) {
                     this.toggleOrdering();
                 }.bind(this),
             );
@@ -1242,7 +1242,7 @@ export class Segmenter {
 
         // setup outbound events
         this.updateQueue = { lines: [], regions: [] };
-        paper.view.onFrame = function (ev) {
+        paper.view.onFrame = function (_ev) {
             this.consumeUpdateQueue();
         }.bind(this);
 
@@ -1553,7 +1553,7 @@ export class Segmenter {
                 }
             }.bind(this);
 
-            line.baselinePath.onMouseLeave = function (event) {
+            line.baselinePath.onMouseLeave = function (_event) {
                 this.setCursor();
             }.bind(this);
 
@@ -1625,7 +1625,7 @@ export class Segmenter {
                 if (line.selected) this.setCursor("grab");
                 else this.setCursor("pointer");
             }.bind(this);
-            line.maskPath.onMouseLeave = function (event) {
+            line.maskPath.onMouseLeave = function (_event) {
                 this.setCursor();
             }.bind(this);
             line.maskPath.onMouseDrag = function (event) {
@@ -1649,7 +1649,7 @@ export class Segmenter {
     }
 
     attachTooltip(obj, target) {
-        target.onMouseEnter = function (event) {
+        target.onMouseEnter = function (_event) {
             if (obj.tooltipText) {
                 this.tooltip.textContent = obj.tooltipText;
                 this.tooltip.style.display = "block";
@@ -1657,7 +1657,7 @@ export class Segmenter {
                 this.tooltip.style.display = "none";
             }
         }.bind(this);
-        target.onMouseLeave = function (event) {
+        target.onMouseLeave = function (_event) {
             this.tooltip.style.display = "none";
         }.bind(this);
     }
@@ -1729,7 +1729,7 @@ export class Segmenter {
     onMouseDrag(event) {
         if (event.event.ctrlKey) {
             this.multiMove(event);
-            this.tool.onMouseUp = function (event) {
+            this.tool.onMouseUp = function (_event) {
                 this.resetToolEvents();
                 // TODO: Should moving masks also move lines??
                 if (["lines", "masks"].includes(this.mode)) {
@@ -1851,7 +1851,7 @@ export class Segmenter {
             // adding points to current line
             this.tool.onMouseMove = null; // we don't want the first point to move around
             point = newLine.extend(event.point).point;
-            this.tool.onMouseUp = function (event) {
+            this.tool.onMouseUp = function (_event) {
                 newLine.baselinePath.simplify(10);
                 this.finishLine(newLine);
                 document.removeEventListener("keyup", onCancel);
@@ -1898,13 +1898,13 @@ export class Segmenter {
             newRegion.polygonPath.segments[3].point.x = pt.x;
         }.bind(this);
 
-        this.tool.onMouseDown = function (event) {
+        this.tool.onMouseDown = function (_event) {
             this.finishRegion(newRegion);
             document.removeEventListener("keyup", onCancel);
         }.bind(this);
         this.tool.onMouseMove = onRegionDraw;
         this.tool.onMouseDrag = function (event) {
-            this.tool.onMouseUp = function (event) {
+            this.tool.onMouseUp = function (_event) {
                 this.finishRegion(newRegion);
                 document.removeEventListener("keyup", onCancel);
             }.bind(this);
@@ -1927,7 +1927,7 @@ export class Segmenter {
             }
             return null;
         }.bind(this);
-        let finishCut = function (event) {
+        let finishCut = function (_event) {
             if (["lines", "masks"].includes(this.mode)) {
                 this.splitLinesByPath(clip);
             } else if (this.mode == "regions") {
@@ -1962,7 +1962,7 @@ export class Segmenter {
             }
             return null;
         }.bind(this);
-        let finishSelection = function (event) {
+        let finishSelection = function (_event) {
             clip.remove();
             this.resetToolEvents();
             document.removeEventListener("mouseup", finishSelection);
@@ -2417,7 +2417,7 @@ export class Segmenter {
         this.contextMenu.appendChild(this.regionTypesSelect);
         this.regionTypesSelect.addEventListener(
             "blur",
-            function (ev) {
+            function (_ev) {
                 this.regionTypesSelect.style.display = "none";
                 this.disableShortcuts = false;
             }.bind(this),
@@ -2447,7 +2447,7 @@ export class Segmenter {
         this.contextMenu.appendChild(this.lineTypesSelect);
         this.lineTypesSelect.addEventListener(
             "blur",
-            function (ev) {
+            function (_ev) {
                 this.lineTypesSelect.style.display = "none";
                 this.disableShortcuts = false;
             }.bind(this),
@@ -2639,7 +2639,6 @@ export class Segmenter {
     lassoSelectionRegions(clip, allRegions, tmpSelected) {
         // draws a rectangle lasso selection tool that selects every segment it crosses
         for (let i in allRegions) {
-            let allSegments;
             let region = allRegions[i];
             this.clipSelectPoly(clip, region.polygonPath.segments, tmpSelected);
             if (
@@ -2691,7 +2690,7 @@ export class Segmenter {
         }
     }
 
-    splitHelper(clip, event) {
+    splitHelper(clip, _event) {
         if (["lines", "masks"].includes(this.mode)) {
             this.lines.forEach(
                 function (line) {

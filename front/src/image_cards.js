@@ -91,13 +91,13 @@ class partCard {
         $("input", this.$element)
             .on(
                 "mouseover",
-                $.proxy(function (ev) {
+                $.proxy(function (_ev) {
                     this.$element.attr("draggable", false);
                 }, this),
             )
             .on(
                 "mouseout",
-                $.proxy(function (ev) {
+                $.proxy(function (_ev) {
                     this.$element.attr("draggable", true);
                 }, this),
             );
@@ -134,11 +134,11 @@ class partCard {
             );
         }
 
-        this.editButton.click(function (ev) {
+        this.editButton.click(function (_ev) {
             document.location.replace(url);
         });
         this.cancelTasksButton.click(
-            $.proxy(function (ev) {
+            $.proxy(function (_ev) {
                 if (
                     !["ongoing", "pending"].includes(this.workflow["align"]) ||
                     window.confirm(
@@ -152,14 +152,14 @@ class partCard {
 
         if (cpuMinutesLeft !== "False") {
             this.segmentedButton.click(
-                $.proxy(function (ev) {
+                $.proxy(function (_ev) {
                     this.select();
                     partCard.refreshSelectedCount();
                     openWizard("segment");
                 }, this),
             );
             this.transcribeButton.click(
-                $.proxy(function (ev) {
+                $.proxy(function (_ev) {
                     this.select();
                     partCard.refreshSelectedCount();
                     openWizard("transcribe");
@@ -167,7 +167,7 @@ class partCard {
             );
             if (this.alignButton) {
                 this.alignButton.click(
-                    $.proxy(function (ev) {
+                    $.proxy(function (_ev) {
                         this.select();
                         partCard.refreshSelectedCount();
                         openWizard("align");
@@ -208,7 +208,7 @@ class partCard {
 
         this.deleteButton.on(
             "click",
-            $.proxy(function (ev) {
+            $.proxy(function (_ev) {
                 if (!confirm("Do you really want to delete this image?")) {
                     return;
                 }
@@ -219,7 +219,7 @@ class partCard {
 
         this.$element.on(
             "dblclick",
-            $.proxy(function (ev) {
+            $.proxy(function (_ev) {
                 this.toggleSelect();
                 partCard.refreshSelectedCount();
             }, this),
@@ -240,7 +240,7 @@ class partCard {
         );
         this.$element.on(
             "dragend",
-            $.proxy(function (ev) {
+            $.proxy(function (_ev) {
                 $(".js-drop").removeClass("drop-target");
             }, this),
         );
@@ -389,7 +389,7 @@ class partCard {
                 index: index,
             })
                 .done(
-                    $.proxy(function (data) {
+                    $.proxy(function (_data) {
                         this.previousIndex = null;
                     }, this),
                 )
@@ -429,7 +429,7 @@ class partCard {
                 }, this),
             )
             .fail(
-                $.proxy(function (data) {
+                $.proxy(function (_data) {
                     console.log("Couldn't cancel the task.");
                 }),
             );
@@ -438,12 +438,12 @@ class partCard {
     delete() {
         var posting = $.ajax({ url: this.api, type: "DELETE" })
             .done(
-                $.proxy(function (data) {
+                $.proxy(function (_data) {
                     this.remove();
                 }, this),
             )
             .fail(
-                $.proxy(function (xhr) {
+                $.proxy(function (_xhr) {
                     console.log("Couldn't delete part " + this.pk);
                 }, this),
             );
@@ -600,7 +600,7 @@ export function bootImageCards(
 
     // Imports
     let $alertsContainer = $("#alerts-container");
-    $alertsContainer.on("import:start", function (ev, data) {
+    $alertsContainer.on("import:start", function (_ev, _data) {
         $("#import-counter").parent().addClass("ongoing");
         $("#import-selected").addClass("blink");
         $("#import-resume").hide();
@@ -628,28 +628,28 @@ export function bootImageCards(
             );
         }
     });
-    $alertsContainer.on("import:done", function (ev, data) {
+    $alertsContainer.on("import:done", function (_ev, _data) {
         $("#import-counter").text("Done.");
         $("#import-counter").parent().removeClass("ongoing");
         $("#import-selected").removeClass("blink");
         $("#cancel-import").hide();
     });
-    $("#cancel-import").click(function (ev, data) {
+    $("#cancel-import").click(function (_ev, _data) {
         let url = API.document + "/cancel_import/";
         $.post(url, {})
-            .done(function (data) {
+            .done(function (_data) {
                 $("#import-counter").text("canceled");
                 $("#import-counter").parent().removeClass("ongoing");
                 $("#import-selected").removeClass("blink");
             })
-            .fail(function (data) {
+            .fail(function (_data) {
                 console.log("Couldn't cancel import");
             });
     });
 
     // Exports
     var $exportBtn = $("#document-export");
-    $alertsContainer.on("export:start", function (ev, data) {
+    $alertsContainer.on("export:start", function (_ev, _data) {
         $exportBtn.addClass("blink");
     });
     $alertsContainer.on("export:error", function (ev, data) {
@@ -663,7 +663,7 @@ export function bootImageCards(
             );
         }
     });
-    $alertsContainer.on("export:done", function (ev, data) {
+    $alertsContainer.on("export:done", function (_ev, _data) {
         $exportBtn.removeClass("blink");
     });
 
@@ -689,19 +689,19 @@ export function bootImageCards(
 
     // training
     var max_accuracy = 0;
-    $alertsContainer.on("training:start", function (ev, data) {
+    $alertsContainer.on("training:start", function (_ev, _data) {
         $("#train-selected").addClass("blink");
         $("#cancel-training").show();
     });
-    $alertsContainer.on("training:gathering", function (ev, data) {
+    $alertsContainer.on("training:gathering", function (_ev, _data) {
         $("#train-selected").addClass("blink");
         $("#cancel-training").show();
     });
-    $alertsContainer.on("training:eval", function (ev, data) {
+    $alertsContainer.on("training:eval", function (_ev, _data) {
         $("#train-selected").addClass("blink");
         $("#cancel-training").show();
     });
-    $alertsContainer.on("training:done", function (ev, data) {
+    $alertsContainer.on("training:done", function (_ev, _data) {
         $("#train-selected").removeClass("blink");
         $("#cancel-training").hide();
     });
@@ -716,14 +716,14 @@ export function bootImageCards(
             );
         }
     });
-    $("#cancel-training").click(function (ev, data) {
+    $("#cancel-training").click(function (_ev, _data) {
         let url = API.document + "/cancel_training/";
         $.post(url, {})
-            .done(function (data) {
+            .done(function (_data) {
                 $("#train-selected").removeClass("blink");
                 $("#cancel-training").hide();
             })
-            .fail(function (data) {
+            .fail(function (_data) {
                 console.log("Couldn't cancel training");
             });
     });
@@ -751,7 +751,7 @@ export function bootImageCards(
     });
 
     //************* New card creation **************
-    imageDropzone.on("success", function (file, data) {
+    imageDropzone.on("success", function (_file, _data) {
         // cleanup the dropzone if previews are pilling up
         if (imageDropzone.files.length > 7) {
             // a bit arbitrary, depends on the screen but oh well
@@ -766,14 +766,14 @@ export function bootImageCards(
     if (diskStorageLeft === "False") imageDropzone.disable();
 
     // processor buttons
-    $("#select-all").click(function (ev) {
+    $("#select-all").click(function (_ev) {
         var cards = partCard.getRange(0, $("#cards-container .card").length);
         cards.each(function (i, el) {
             $(el).data("partCard").select(false);
         });
         partCard.refreshSelectedCount();
     });
-    $("#unselect-all").click(function (ev) {
+    $("#unselect-all").click(function (_ev) {
         var cards = partCard.getRange(0, $("#cards-container .card").length);
         cards.each(function (i, el) {
             $(el).data("partCard").unselect();
@@ -798,7 +798,7 @@ export function bootImageCards(
         }
     });
 
-    $("#process-part-form-export").submit(function (ev) {
+    $("#process-part-form-export").submit(function (_ev) {
         // store the export format choice for later use
         var export_format = $(
             "#process-part-form-export #id_file_format",

@@ -67,7 +67,7 @@ export function bootWebsocket() {
     );
     msgSocket.maxReconnectAttempts = 3;
 
-    msgSocket.addEventListener("open", function (e) {
+    msgSocket.addEventListener("open", function (_e) {
         if (DEBUG) {
             console.log("Connected to notification socket");
         }
@@ -88,7 +88,7 @@ export function bootWebsocket() {
         }
     });
 
-    msgSocket.addEventListener("close", function (e) {
+    msgSocket.addEventListener("close", function (_e) {
         if (DEBUG) {
             console.error("Notification socket closed unexpectedly");
         }
@@ -96,7 +96,7 @@ export function bootWebsocket() {
 }
 
 export function joinDocumentRoom(pk) {
-    msgSocket.addEventListener("open", function (e) {
+    msgSocket.addEventListener("open", function (_e) {
         msgSocket.send(
             '{"type": "join-room", "object_cls": "document", "object_pk": ' +
                 pk +
