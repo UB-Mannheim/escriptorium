@@ -243,13 +243,13 @@ export const actions = {
         } catch (err) {
             if (err.response && err.response.status === 400) {
                 console.error(
-                '[bulkUpdateLines] 400 Bad Request:',
-                {
-                    url:    err.config.url,
-                    method: err.config.method,
-                    payload: JSON.parse(err.config.data),
-                    response: err.response.data
-                }
+                    "[bulkUpdateLines] 400 Bad Request:",
+                    {
+                        url:    err.config.url,
+                        method: err.config.method,
+                        payload: JSON.parse(err.config.data),
+                        response: err.response.data
+                    }
                 )
             }
             throw err
