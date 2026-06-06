@@ -39,7 +39,7 @@ export function bootHelp() {
     );
 
     if (closed) {
-        closed.forEach(function (e, i) {
+        closed.forEach(function (e, _i) {
             let help = document.querySelector(".help-text#" + e);
             if (help) help.style.display = "none";
         });

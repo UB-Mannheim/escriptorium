@@ -4,7 +4,7 @@ export function bootLazyload() {
 
     if ("IntersectionObserver" in window) {
         lazyloadImages = document.querySelectorAll(".lazy");
-        imageObserver = new IntersectionObserver(function (entries, observer) {
+        imageObserver = new IntersectionObserver(function (entries, _observer) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
                     // isIntersecting doesn't work on chrome for empty svg image

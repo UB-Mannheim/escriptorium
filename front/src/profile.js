@@ -54,7 +54,7 @@ class Profile {
             );
             alert.htmlElement.querySelector(".additional a").addEventListener(
                 "click",
-                function (ev) {
+                function (_ev) {
                     this.set("cookie-consent", true);
                     return false;
                 }.bind(this),

@@ -1,4 +1,4 @@
-import { assign, kebabCase } from "lodash";
+import { assign } from "lodash";
 import * as api from "../api";
 
 export const initialState = () => ({
@@ -380,7 +380,7 @@ export const actions = {
         commit("setMasksToRecalc", _.uniq(state.masksToRecalc.concat(only)));
         if (!state.debouncedRecalculateMasks) {
             // avoid calling this too often
-            state.debouncedRecalculateMasks = _.debounce(async function (only) {
+            state.debouncedRecalculateMasks = _.debounce(async function (_only) {
                 const params = {};
                 if (state.masksToRecalc.length > 0)
                     params.only = state.masksToRecalc.toString();

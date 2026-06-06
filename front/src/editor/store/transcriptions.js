@@ -223,13 +223,13 @@ export const actions = {
     async archive({ commit, rootState }, transPk) {
         await api
             .archiveTranscription(rootState.document.id, transPk)
-            .then((resp) => {
+            .then((_resp) => {
                 commit("remove", transPk);
             });
     },
 
     getComparisonContent({ state, dispatch }) {
-        state.comparedTranscriptions.forEach(async function (tr, i) {
+        state.comparedTranscriptions.forEach(async function (tr, _i) {
             if (tr != state.selectedTranscription) {
                 await dispatch("fetchContent", tr);
             }

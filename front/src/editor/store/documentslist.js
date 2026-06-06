@@ -1,6 +1,4 @@
-import { assign } from "lodash";
 import * as api from "../api";
-import Vue from "vue";
 
 export const initialState = () => ({
     checkedTags: [],
@@ -92,7 +90,7 @@ export const actions = {
     async getAllTagsProject({ state, commit }) {
         commit("setUnlinkedTags", state.allProjectTags);
     },
-    async updateDocumentTags({ state, commit, dispatch }, data) {
+    async updateDocumentTags({ state, commit, _dispatch }, data) {
         var selectedId = data.selectedtags ? data.selectedtags.split(",") : [];
         const toNumbers = (arr) => arr.map(Number);
         var name = data.name;
@@ -140,7 +138,7 @@ export const actions = {
             }
         }
     },
-    async updateProjectTag({ state, commit, dispatch }, data) {
+    async updateProjectTag({ state, commit, _dispatch }, data) {
         await api.updatetag(state.projectID, data.pk, data);
         const index = state.allProjectTags.findIndex(
             (tag) => tag.pk == data.pk,
@@ -151,12 +149,12 @@ export const actions = {
             commit("setAllProjectTags", tpmTags);
         }
     },
-    async deleteProjectTag({ state, commit, dispatch }, data) {
+    async deleteProjectTag({ state, commit, _dispatch }, data) {
         await api.deletetag(state.projectID, data.pk);
         let tpmTags = state.allProjectTags.filter((item) => item.pk != data.pk);
         commit("setAllProjectTags", tpmTags);
     },
-    async assignSingleTagToDocuments({ state, commit, dispatch }, data) {
+    async assignSingleTagToDocuments({ state, commit, _dispatch }, data) {
         if (state.checkboxList.length > 0) {
             for (let i = 0; i < state.checkboxList.length; i++) {
                 const _document = await api.retrieveDocument(

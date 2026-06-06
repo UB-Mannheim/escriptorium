@@ -18,7 +18,7 @@ export function bootOntologyForm() {
 
     var submittedForm = false;
     let form = document.querySelector("#ontology-form");
-    form.addEventListener("submit", (ev) => (submittedForm = true));
+    form.addEventListener("submit", (_ev) => (submittedForm = true));
 
     function addTypeOption(parent, pk, name) {
         let checks = document.querySelectorAll(parent + " .form-check");
