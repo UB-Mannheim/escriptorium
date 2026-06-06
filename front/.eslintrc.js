@@ -1,8 +1,27 @@
 module.exports = {
     env: {
+        browser: true,
         node: true,
         commonjs: true,
         es6: true,
+    },
+    globals: {
+        "$": "readonly",
+        "Cookies": "readonly",
+        "Vue": "readonly",
+        "paper": "readonly",
+        "Path": "readonly",
+        "Point": "readonly",
+        "PointText": "readonly",
+        "Size": "readonly",
+        "Shape": "readonly",
+        "Group": "readonly",
+        "Rectangle": "readonly",
+        "Tool": "readonly",
+        "userProfile": "readonly",
+        "DEBUG": "readonly",
+        "Alert": "readonly",
+        "Dropzone": "readonly",
     },
     extends: [
         "eslint:recommended",
