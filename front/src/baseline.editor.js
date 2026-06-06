@@ -83,7 +83,7 @@ class SegmenterRegion {
         this.labelText = new PointText({
             content: this.type,
             fontSize: fontSize,
-            justification: 'center',
+            justification: "center",
             fillColor: contrastingBW(this.color),
             visible: false
         });
@@ -2215,7 +2215,7 @@ export class Segmenter {
             this.showRegionLabels = !this.showRegionLabels;
         }
         // refresh all existing regions so they show/hide
-        this.regions.forEach(r => r.refresh());
+        this.regions.forEach((r) => r.refresh());
     }
 
     applyRegionMode() {
