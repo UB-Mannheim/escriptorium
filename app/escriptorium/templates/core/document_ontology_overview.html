@@ -1,0 +1,22 @@
+{% extends 'core/document_nav.html' %}
+{% load i18n static %}
+{% block head_title %}{% trans "Ontology Overview" %}{% endblock %}
+
+{% block body %}
+<div id="ontology-overview-page">
+    <ontology-overview-page
+        :document-id="'{{document.id}}'"
+        :document-name="'{{ document.name|escapejs }}'"
+    ></ontology-overview-page>
+</div>
+{% endblock %}
+
+{% block legacy_alerts %}{% endblock %}
+
+{% block extrascript %}
+<script src="{% static 'ontologyOverviewPage.js' %}"></script>
+{% endblock extrascript %}
+
+{% block extrastyle %}
+<link href="{% static 'ontologyOverviewPage.css' %}" rel="stylesheet" type="text/css">
+{% endblock extrastyle %}

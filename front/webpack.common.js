@@ -15,6 +15,7 @@ module.exports = {
         projectDashboard: "./vue/exports/projectDashboard.js",
         projectsList: "./vue/exports/projectsList.js",
         imagesPage: "./vue/exports/imagesPage.js",
+        ontologyOverviewPage: "./vue/exports/ontologyOverviewPage.js",
         modelTraining: "./vue/exports/modelTraining.js",
     },
 

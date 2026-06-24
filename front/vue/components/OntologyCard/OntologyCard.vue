@@ -5,6 +5,13 @@
                 Ontology
             </h2>
             <div class="escr-card-actions">
+                <a
+                    v-if="compact"
+                    class="escr-ontology-overview-link"
+                    :href="`/document/${documentId}/ontology-overview/`"
+                >
+                    View overview
+                </a>
                 <SegmentedButtonGroup
                     v-if="compact"
                     color="secondary"
@@ -79,6 +86,7 @@ export default {
     computed: {
         ...mapState({
             validTypes: (state) => state.document.types,
+            documentId: (state) => state.document.id,
         }),
         /**
          * Mapping of ontology categories to label/value pairs, passing the `selected` prop to the
