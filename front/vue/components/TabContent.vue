@@ -161,6 +161,7 @@
 <script>
 import { mapActions, mapMutations, mapState } from "vuex";
 import EditorGlobalToolbar from "../components/EditorGlobalToolbar/EditorGlobalToolbar.vue";
+import ElementsPanel from "./ElementsPanel/ElementsPanel.vue";
 import SourcePanel from "./SourcePanel.vue";
 import SegPanel from "./SegPanel.vue";
 import VisuPanel from "./VisuPanel.vue";
@@ -171,6 +172,7 @@ export default {
     components: {
         DiploPanel,
         EditorGlobalToolbar,
+        ElementsPanel,
         PartMetadataPanel,
         SegPanel,
         SourcePanel,
@@ -349,6 +351,8 @@ export default {
                     return DiploPanel;
                 case "source":
                     return SourcePanel;
+                case "elements":
+                    return ElementsPanel;
             }
         }
     }

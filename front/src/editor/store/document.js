@@ -70,6 +70,13 @@ export const initialState = () => ({
     loading: false,
     segmentationOpened: false,
 
+    // current mode of the Segmentation panel ("regions", "lines", or "masks"),
+    // mirrored from the Segmenter instance so other panels can react to it
+    segmentationMode: "lines",
+    // map of region type name -> hex color, mirrored from the Segmenter instance
+    // so other panels can show the same colors (e.g. the Elements panel)
+    regionColors: {},
+
     // resolved font from document/project/user cascade, null means default
     transcriptionFont: null,
 });
@@ -102,6 +109,12 @@ export const mutations = {
     },
     setPartsCount(state, count) {
         state.partsCount = count;
+    },
+    setSegmentationMode(state, mode) {
+        state.segmentationMode = mode;
+    },
+    setRegionColors(state, regionColors) {
+        state.regionColors = regionColors;
     },
     setBlockShortcuts(state, block) {
         state.blockShortcuts = block;

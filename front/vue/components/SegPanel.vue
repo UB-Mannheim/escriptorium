@@ -557,6 +557,32 @@ export default Vue.extend({
             // make sure the segmenter does not trigger keyboard shortcuts either
             this.segmenter.disableShortcuts = n;
         },
+        // watch the token (not the pk) so re-selecting the same element (e.g. clicking the
+        // same row twice in the Elements panel) still re-triggers selection: a click outside
+        // the canvas/toolbar purges the canvas selection without updating the pk
+        "$store.state.regions.selectedToken": function () {
+            const pk = this.$store.state.regions.selectedPk;
+            // selecting a region (e.g. from the Elements panel) only makes sense in regions mode
+            if (this.segmenter && this.segmenter.mode !== "regions") {
+                this.segmenter.setMode("regions");
+            }
+            this.selectElement(this.segmenter?.regions, pk);
+        },
+        "$store.state.lines.selectedToken": function () {
+            const pk = this.$store.state.lines.selectedPk;
+            // lines aren't shown/selectable in regions mode; masks mode already shows them
+            if (this.segmenter && this.segmenter.mode === "regions") {
+                this.segmenter.setMode("lines");
+            }
+            this.selectElement(this.segmenter?.lines, pk);
+        },
+        "$store.state.regions.lockUpdate": function (update) {
+            if (!update || !this.segmenter) return;
+            const region = this.segmenter.regions.find(
+                (r) => r.context.pk === update.pk
+            );
+            if (region) region.locked = update.locked;
+        },
     },
     mounted() {
     // wait for the element to be rendered
@@ -594,10 +620,12 @@ export default Vue.extend({
                     setActiveTool: this.setActiveTool,
                 });
                 this.currentMode = this.segmenter.mode;
+                this.$store.commit("document/setSegmentationMode", this.currentMode);
                 const origSetMode = this.segmenter.setMode.bind(this.segmenter)
                 this.segmenter.setMode = (mode) => {
                     origSetMode(mode)
                     this.currentMode = mode
+                    this.$store.commit("document/setSegmentationMode", mode);
                     if (mode !== 'regions' && this.regionLabels) {
                     this.regionLabels = false
                     this.segmenter.toggleRegionLabels(false)
@@ -821,6 +849,7 @@ export default Vue.extend({
                         this.segmenter.refresh();
                     } else {
                         this.segmenter.init({ newUiEnabled: !this.legacyModeEnabled });
+                        this.$store.commit("document/setRegionColors", { ...this.segmenter.regionColors });
                     }
                 }.bind(this)
             );
@@ -1150,6 +1179,18 @@ export default Vue.extend({
          */
         onChangeMode(value) {
             this.segmenter.setMode(value);
+        },
+        /**
+         * Select a region or line on the canvas by pk (e.g. from the Elements panel).
+         *
+         * @param {Array} elements this.segmenter.regions or this.segmenter.lines
+         * @param {Number} pk the pk of the region/line to select
+         */
+        selectElement(elements, pk) {
+            if (!elements || pk == null) return;
+            this.segmenter.purgeSelection();
+            const element = elements.find((e) => e.context.pk === pk);
+            if (element) element.select();
         },
         /**
          * Turn line numbering on and off.

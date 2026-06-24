@@ -5,6 +5,11 @@ export const initialState = () => ({
     all: [],
     editedLine: null,
     autoOrder: true,
+    selectedPk: null,
+    // bumped on every setSelected call, so re-selecting the same pk (e.g. clicking the
+    // same row twice in the Elements panel) still re-triggers selection on the canvas,
+    // even though it gets purged in between by clicks outside the canvas/toolbar
+    selectedToken: 0,
     // internal
     masksToRecalc: [],
     debouncedRecalculateMasks: null,
@@ -20,6 +25,10 @@ export const getters = {
 };
 
 export const mutations = {
+    setSelected(state, pk) {
+        state.selectedPk = pk;
+        state.selectedToken++;
+    },
     set(state, lines) {
         assign(
             state.all,

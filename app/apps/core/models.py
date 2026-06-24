@@ -1800,6 +1800,9 @@ class Block(ExportModelOperationsMixin("Block"), OrderedModel, CascadeUpdate, mo
     order_with_respect_to = "document_part"
 
     external_id = models.CharField(max_length=128, blank=True, null=True)
+    # when locked, the region is ignored by the cut tool and can be freely
+    # drawn/written over (overlapping lines/regions are allowed)
+    locked = models.BooleanField(default=False)
 
     cascade_to = 'document_part'
 

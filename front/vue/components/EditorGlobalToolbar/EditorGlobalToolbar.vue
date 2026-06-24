@@ -217,6 +217,15 @@
                                 <span>Image Annotation</span>
                             </button>
                         </li>
+                        <li v-if="!editorPanels.includes('elements')">
+                            <button
+                                type="button"
+                                @mousedown="onAddEditorPanel('elements')"
+                            >
+                                <RegionsIcon />
+                                <span>Elements</span>
+                            </button>
+                        </li>
                     </ul>
                 </template>
             </VDropdown>
@@ -231,6 +240,7 @@ import CursorPanIcon from "../Icons/CursorPanIcon/CursorPanIcon.vue";
 import CursorSelectIcon from "../Icons/CursorSelectIcon/CursorSelectIcon.vue";
 import EscrButton from "../Button/Button.vue";
 import ImageAnnotationIcon from "../Icons/ImageAnnotationIcon/ImageAnnotationIcon.vue";
+import RegionsIcon from "../Icons/RegionsIcon/RegionsIcon.vue";
 import RotateCCWIcon from "../Icons/RotateCCWIcon/RotateCCWIcon.vue";
 import RotateCWIcon from "../Icons/RotateCWIcon/RotateCWIcon.vue";
 import SegmentIcon from "../Icons/SegmentIcon/SegmentIcon.vue";
@@ -251,6 +261,7 @@ export default {
         CursorSelectIcon,
         EscrButton,
         ImageAnnotationIcon,
+        RegionsIcon,
         RotateCCWIcon,
         RotateCWIcon,
         SegmentIcon,

@@ -71,6 +71,17 @@
                                 <span>Image Annotation</span>
                             </button>
                         </li>
+                        <li>
+                            <button
+                                type="button"
+                                @mousedown="() => onSwitchPanel({
+                                    index: panelIndex, panel: 'elements'
+                                })"
+                            >
+                                <RegionsIcon />
+                                <span>Elements</span>
+                            </button>
+                        </li>
                     </ul>
                 </template>
             </VMenu>
@@ -105,6 +116,7 @@
 import ChevronDownIcon from "../Icons/ChevronDownIcon/ChevronDownIcon.vue";
 import EscrButton from "../Button/Button.vue";
 import ImageAnnotationIcon from "../Icons/ImageAnnotationIcon/ImageAnnotationIcon.vue";
+import RegionsIcon from "../Icons/RegionsIcon/RegionsIcon.vue";
 import RemovePanelIcon from "../Icons/RemovePanelIcon/RemovePanelIcon.vue";
 import SegmentIcon from "../Icons/SegmentIcon/SegmentIcon.vue";
 import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
@@ -119,6 +131,7 @@ export default {
         ChevronDownIcon,
         EscrButton,
         ImageAnnotationIcon,
+        RegionsIcon,
         RemovePanelIcon,
         SegmentIcon,
         TranscribeIcon,
@@ -168,6 +181,8 @@ export default {
                     return TextPanelIcon;
                 case "source":
                     return ImageAnnotationIcon;
+                case "elements":
+                    return RegionsIcon;
                 default:
                     return null;
             }
@@ -182,6 +197,8 @@ export default {
                     return "text/line ordering";
                 case "source":
                     return "text annotation";
+                case "elements":
+                    return "elements";
                 default:
                     return null;
             }

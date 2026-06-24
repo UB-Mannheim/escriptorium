@@ -1037,6 +1037,29 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.status_code, 204, resp.content)
         self.assertFalse(Block.objects.filter(pk=self.block.pk).exists())
 
+    def test_update_locked(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:block-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': self.block.pk})
+
+        # patching only locked doesn't touch other fields
+        resp = self.client.patch(uri, {'locked': True}, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.block.refresh_from_db()
+        self.assertTrue(self.block.locked)
+
+        # a full update must pass locked through explicitly, or it gets reset
+        resp = self.client.put(uri, {
+            'document_part': self.part.pk,
+            'box': [[10, 10], [20, 20], [50, 50]],
+            'locked': True,
+        }, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.block.refresh_from_db()
+        self.assertTrue(self.block.locked)
+
     def test_delete_acquires_document_part_lock(self):
         # Regression test: block delete must SELECT FOR UPDATE the parent
         # DocumentPart before running ordered_model's reorder UPDATE, so that

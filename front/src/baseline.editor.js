@@ -61,6 +61,9 @@ class SegmenterRegion {
         this.type = type;
         this.context = context;
         this.selected = false;
+        // when locked, this region is ignored by the cut tool and can be freely
+        // drawn/written over (see bindRegionEvents and splitRegionsByPath)
+        this.locked = false;
         this.color = this.segmenter.regionColors[type || "None"] || "#808080";
         this.polygonPath = new Path({
             closed: true,
@@ -1049,7 +1052,8 @@ export class Segmenter {
                                     this.lines[i].select();
                             } else if (this.mode == "regions") {
                                 for (let i in this.regions)
-                                    this.regions[i].select();
+                                    if (!this.regions[i].locked)
+                                        this.regions[i].select();
                             }
                         } else if (this.newUiEnabled) {
                             console.log(this.activeTool);
@@ -1396,7 +1400,9 @@ export class Segmenter {
                 this.splitting ||
                 // this.selecting ||
                 isRightClick(event.event) ||
-                this.mode != "regions"
+                this.mode != "regions" ||
+                // locked regions don't capture clicks, so drawing/writing over them works
+                region.locked
             )
                 return;
 
@@ -1468,7 +1474,7 @@ export class Segmenter {
 
         region.polygonPath.onDoubleClick = function (event) {
             // Creates a new control point in the region
-            if (event.event.ctrlKey || this.mode != "regions") return;
+            if (event.event.ctrlKey || this.mode != "regions" || region.locked) return;
             let location = region.polygonPath.getNearestLocation(event.point);
             let newSegment = region.polygonPath.insert(
                 location.index + 1,
@@ -2074,6 +2080,7 @@ export class Segmenter {
         let context = {};
         if (this.idField) context[this.idField] = region[this.idField];
         let r = this.createRegion(null, region.box, region.type, context);
+        r.locked = !!region.locked;
         for (let j in region.lines) {
             this.loadLine(region.lines[j], r);
         }
@@ -2733,6 +2740,8 @@ export class Segmenter {
         } else if (this.mode == "regions") {
             this.regions.forEach(
                 function (region) {
+                    // locked regions are not considered by the cut tool
+                    if (region.locked) return;
                     let inter = region.polygonPath.intersect(clip);
                     inter.strokeColor = "red";
                     inter.strokeWidth = 2;
@@ -2766,6 +2775,8 @@ export class Segmenter {
     splitRegionsByPath(path) {
         this.regions.forEach(
             function (region) {
+                // locked regions are not considered by the cut tool
+                if (region.locked) return;
                 let intersections = region.polygonPath.getIntersections(path);
                 if (intersections.length == 2) {
                     // remove everything in the selection rectangle
