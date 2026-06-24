@@ -1068,6 +1068,10 @@ export default Vue.extend({
                             r.previous = {
                                 context: r.context,
                                 box: region && region.box.slice(), // copy the array
+                                // without this, undoing a region update (e.g. a cut)
+                                // would reset its type to None, since bulkUpdate
+                                // defaults typology to null when type is undefined
+                                type: region.type,
                             };
                         }
                     }.bind(this)
@@ -1090,6 +1094,9 @@ export default Vue.extend({
                         (r) => r.context.pk == line.region
                     )) ||
                   null,
+                                // without this, undoing a line update (e.g. a cut)
+                                // would reset its type to None
+                                type: line.type,
                             };
                         }
                     }.bind(this)
