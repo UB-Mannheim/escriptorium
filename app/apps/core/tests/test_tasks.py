@@ -1,10 +1,13 @@
+import json
+import os
 import unittest
 from unittest.mock import patch
 
+from django.conf import settings
 from django.urls import reverse
 
-from core.models import Document, Line
-from core.tasks import align
+from core.models import Document, Line, OcrModel
+from core.tasks import align, detect_model_architecture, qualify_model
 from core.tests.factory import CoreFactoryTestCase
 
 # DO NOT REMOVE THIS IMPORT, it will break a lot of tests
@@ -189,3 +192,63 @@ class TasksTestCase(CoreFactoryTestCase):
                     parts = apps_mock.get_model.return_value.objects.filter.return_value
                     apps_mock.get_model.return_value.objects.bulk_update.assert_called_with(parts, ["workflow_state"])
                     self.assertEqual(mock_log.output[0][:17], "ERROR:core.tasks:")
+
+
+def make_safetensors_file(path, kraken_meta):
+    """Writes a minimal safetensors file at `path` with the given kraken_meta dict as metadata."""
+    import torch
+    from safetensors.torch import save_file
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    save_file({'weight': torch.zeros(2, 2)}, path, metadata={'kraken_meta': json.dumps(kraken_meta)})
+
+
+class QualifyModelTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.document = self.factory.make_document()
+
+    def make_ocr_model(self, filename, kraken_meta=None):
+        model = OcrModel.objects.create(
+            name=filename, owner=self.document.owner,
+            job=OcrModel.MODEL_JOB_SEGMENT, file_size=0)
+        modeldir = os.path.join(settings.MEDIA_ROOT, os.path.split(
+            model.file.field.upload_to(model, filename))[0])
+        modelpath = os.path.join(modeldir, filename)
+        if kraken_meta is not None:
+            make_safetensors_file(modelpath, kraken_meta)
+        else:
+            os.makedirs(modeldir, exist_ok=True)
+            with open(modelpath, 'wb') as f:
+                f.write(b'not a safetensors file')
+        model.file = modelpath
+        model.save()
+        return model
+
+    def test_detect_model_architecture_dfine(self):
+        model = self.make_ocr_model('dfine.safetensors', {'model': {'_model': 'DFINEModel'}})
+        self.assertEqual(detect_model_architecture(model.file.path), 'DFINEModel')
+
+    def test_detect_model_architecture_no_kraken_meta(self):
+        model = self.make_ocr_model('nometa.safetensors', {})
+        self.assertIsNone(detect_model_architecture(model.file.path))
+
+    def test_detect_model_architecture_invalid_file(self):
+        model = self.make_ocr_model('legacy.mlmodel', kraken_meta=None)
+        self.assertIsNone(detect_model_architecture(model.file.path))
+
+    def test_qualify_model_sets_architecture(self):
+        model = self.make_ocr_model('dfine.safetensors', {'model': {'_model': 'DFINEModel'}})
+        self.assertIsNone(model.architecture)
+        qualify_model.delay(model.pk)
+        model.refresh_from_db()
+        self.assertEqual(model.architecture, 'DFINEModel')
+
+    def test_qualify_model_non_gpu_architecture(self):
+        model = self.make_ocr_model('legacy.mlmodel', kraken_meta=None)
+        qualify_model.delay(model.pk)
+        model.refresh_from_db()
+        self.assertIsNone(model.architecture)
+
+    def test_qualify_model_missing_model_does_not_raise(self):
+        # should silently no-op when the OcrModel no longer exists
+        qualify_model.delay(999999999)

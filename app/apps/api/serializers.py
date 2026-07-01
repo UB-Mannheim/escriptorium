@@ -822,6 +822,10 @@ class OcrModelSerializer(serializers.ModelSerializer):
         data['owner'] = self.context["view"].request.user
         data['file_size'] = data['file'].size
         obj = super().create(data)
+
+        from core.tasks import qualify_model
+        qualify_model.delay(obj.pk)
+
         return obj
 
     def get_rights(self, instance):
@@ -920,6 +924,11 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
             if not created:
                 ocr_model_document.executed_on = timezone.now()
                 ocr_model_document.save()
+        queue = (
+            'intensive-inference'
+            if model and model.architecture in settings.INTENSIVE_INFERENCE_MODEL_ARCHITECTURES
+            else None
+        )
         for chunk in _chunks([p.pk for p in parts], batch_size):
             sig = segment.si(
                 instance_pks=chunk,
@@ -931,7 +940,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
                 override=self.validated_data['override'],
             )
             # enqueue it directly
-            sig.apply_async()
+            sig.apply_async(queue=queue)
 
 
 class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
@@ -1238,6 +1247,11 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
         if not created:
             ocr_model_document.executed_on = timezone.now()
             ocr_model_document.save()
+        queue = (
+            'intensive-inference'
+            if model.architecture in settings.INTENSIVE_INFERENCE_MODEL_ARCHITECTURES
+            else None
+        )
         for chunk in _chunks([p.pk for p in parts], batch_size):
             sig = transcribe.si(
                 instance_pks=chunk,
@@ -1247,7 +1261,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
                 user_pk=self.user.pk
             )
             # enqueue it directly
-            sig.apply_async()
+            sig.apply_async(queue=queue)
 
 
 class EditableMultipleChoiceField(serializers.MultipleChoiceField):

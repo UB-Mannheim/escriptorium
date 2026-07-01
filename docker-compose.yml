@@ -67,6 +67,15 @@ services:
     command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q gpu -c 1 --max-tasks-per-child=1"
     shm_size: '3gb'
 
+  # For inference expensive enough to want a GPU (e.g. D-FINE models); doesn't strictly require
+  # one, so this runs on CPU by default. Point KRAKEN_INFERENCE_DEVICE at a real GPU in production.
+  celery-intensive-inference:
+    <<: *app
+    environment:
+      - KRAKEN_INFERENCE_DEVICE=cpu
+    command: "celery -A escriptorium worker -l INFO -E -Ofair --prefetch-multiplier 1 -Q intensive-inference -c 1 --max-tasks-per-child=1"
+    shm_size: '3gb'
+
   flower:
     image: docker.io/mher/flower
     command: ["celery", "--broker=redis://redis:6379/0", "flower", "--port=5555"]
