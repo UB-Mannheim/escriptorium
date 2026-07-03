@@ -28,6 +28,9 @@
     flex: 0 1 auto;
 }
 .escr-characters-card dl div dt {
+    font-family: var(--transcription-font-family, "Noto Sans", "Resized Arabic", sans-serif);
+}
+.escr-characters-card dl div dt {
     background-color: var(--background2);
     flex: 0 1 auto;
     height: 100%;

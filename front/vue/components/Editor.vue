@@ -123,6 +123,7 @@ export default {
             transcriptionToDelete: (state) => state.transcriptions.transcriptionToDelete,
             saveOntologyLoading: (state) => state.document.loading,
             saveTranscriptionsLoading: (state) => state.transcriptions.saveLoading,
+            transcriptionFont: (state) => state.document.transcriptionFont,
         }),
     },
     watch: {
@@ -153,6 +154,9 @@ export default {
                     await this.$store.dispatch("transcriptions/fetchContent", tr);
                 }
             }.bind(this));
+        },
+        transcriptionFont: function(font) {
+            this.applyTranscriptionFont(font);
         },
     },
 
@@ -242,6 +246,31 @@ export default {
         async onSaveTranscriptions() {
             await this.saveTranscriptionsChanges();
             this.closeTranscriptionsModal();
+        },
+        applyTranscriptionFont(font) {
+            const styleId = "escr-transcription-font-face";
+            let styleEl = document.getElementById(styleId);
+            if (font && font.url) {
+                if (!styleEl) {
+                    styleEl = document.createElement("style");
+                    styleEl.id = styleId;
+                    document.head.appendChild(styleEl);
+                }
+                const sizeAdjust = Math.round((font.size_adjust || 1) * 100);
+                styleEl.textContent = `@font-face {
+                    font-family: "escr-transcription-font";
+                    src: url("${font.url}");
+                    size-adjust: ${sizeAdjust}%;
+                }`;
+                this.$el.style.setProperty(
+                    "--transcription-font-family",
+                    `"escr-transcription-font", "Noto Sans", "Resized Arabic", sans-serif`,
+                );
+            } else {
+                // no font set: remove the override and fall back to default
+                if (styleEl) styleEl.textContent = "";
+                this.$el.style.removeProperty("--transcription-font-family");
+            }
         },
         websocketListener(e) {
             const data = JSON.parse(e.data);
