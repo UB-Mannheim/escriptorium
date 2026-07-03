@@ -37,12 +37,14 @@ export default {
         readDirection: "",
         tags: [],
         tagName: "",
+        transcriptionFont: "",
     },
     editProject: {
         guidelines: "",
         name: "",
         tags: [],
         tagName: "",
+        transcriptionFont: "",
     },
     elementDetails: {
         comments: "",

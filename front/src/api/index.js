@@ -8,6 +8,7 @@ axios.defaults.withCredentials = true;
 export * from "./collection";
 export * from "./document";
 export * from "./documentPart";
+export * from "./fonts";
 export * from "./project";
 export * from "./scripts";
 export * from "./user";

@@ -69,6 +69,9 @@ export const initialState = () => ({
     defaultTypes: {},
     loading: false,
     segmentationOpened: false,
+
+    // resolved font from document/project/user cascade, null means default
+    transcriptionFont: null,
 });
 
 export const mutations = {
@@ -173,6 +176,9 @@ export const mutations = {
     toggleConfidenceVizOn(state) {
         state.confidenceVizOn = !state.confidenceVizOn;
     },
+    setTranscriptionFont(state, font) {
+        state.transcriptionFont = font || null;
+    },
 };
 
 export const actions = {
@@ -181,6 +187,9 @@ export const actions = {
         let data = resp.data;
         var valid_part_types = data.valid_part_types;
         valid_part_types.unshift({ pk: null, name: "Element" });
+
+        // store the resolved font before processing the rest of the document data
+        commit("setTranscriptionFont", data.effective_transcription_font);
 
         // set transcriptions state
         commit("transcriptions/set", data.transcriptions, { root: true });

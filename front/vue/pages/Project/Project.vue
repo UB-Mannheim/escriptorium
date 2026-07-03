@@ -22,6 +22,7 @@
                             <EditProjectModal
                                 v-if="editModalOpen"
                                 :disabled="loading"
+                                :fonts="fonts"
                                 :on-cancel="closeEditModal"
                                 :on-create-tag="createNewProjectTag"
                                 :on-save="saveProject"
@@ -64,6 +65,7 @@
                             <EditDocumentModal
                                 v-if="createDocumentModalOpen"
                                 :disabled="loading"
+                                :fonts="fonts"
                                 :new-document="true"
                                 :on-cancel="closeCreateDocumentModal"
                                 :on-create-tag="createNewDocumentTag"
@@ -248,6 +250,7 @@ export default {
             projectId: (state) => state.project.id,
             projectMenuOpen: (state) => state.project.menuOpen,
             scripts: (state) => state.project.scripts,
+            fonts: (state) => state.project.fonts,
             shareModalOpen: (state) => state.project.shareModalOpen,
             sharedWithUsers: (state) => state.project.sharedWithUsers,
             sharedWithGroups: (state) => state.project.sharedWithGroups,

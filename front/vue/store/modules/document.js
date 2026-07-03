@@ -144,6 +144,7 @@ const state = () => ({
      */
     transcriptions: [],
     types: [],
+    effectiveTranscriptionFont: null,
 });
 
 const getters = {};
@@ -334,6 +335,7 @@ const actions = {
             commit("setReadDirection", data.read_direction);
             commit("setLinePosition", data.line_offset);
             commit("setName", data.name);
+            commit("setEffectiveTranscriptionFont", data.effective_transcription_font || null);
             commit("setPartsCount", data.parts_count);
             commit("setProjectSlug", data.project);
             commit("setProjectId", data.project_id);
@@ -386,6 +388,7 @@ const actions = {
                         readDirection: data.read_direction,
                         tags: state.tags.map((tag) => tag.pk),
                         tagName: "",
+                        transcriptionFont: data.transcription_font || "",
                     },
                 },
                 { root: true },
@@ -490,8 +493,9 @@ const actions = {
         }
         commit("setLoading", { key: "document", loading: false });
 
-        // fetch scripts, metadata, tasks, models, textual witnesses
+        // fetch supporting data needed by the editor
         await dispatch({ type: "project/fetchScripts" }, { root: true });
+        await dispatch({ type: "project/fetchFonts" }, { root: true });
         await dispatch("fetchDocumentMetadata");
         await dispatch("fetchDocumentTasks");
         await dispatch("fetchDocumentModels");
@@ -881,6 +885,7 @@ const actions = {
             name,
             readDirection,
             tags,
+            transcriptionFont,
         } = rootState.forms.editDocument;
         // split modified metadata by operation
         const { metadataToCreate, metadataToUpdate, metadataToDelete } =
@@ -898,6 +903,7 @@ const actions = {
                     readDirection,
                     project: state.projectSlug,
                     tags,
+                    transcriptionFont,
                 }),
                 // create, update, delete metadata as needed
                 ...metadataToCreate.map((metadatum) =>
@@ -1082,6 +1088,9 @@ const mutations = {
     },
     setEditModalOpen(state, open) {
         state.editModalOpen = open;
+    },
+    setEffectiveTranscriptionFont(state, font) {
+        state.effectiveTranscriptionFont = font || null;
     },
     setId(state, id) {
         state.id = id;

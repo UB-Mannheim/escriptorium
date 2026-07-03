@@ -25,6 +25,7 @@
                                 <EditDocumentModal
                                     v-if="editModalOpen"
                                     :disabled="loading && loading.document"
+                                    :fonts="fonts"
                                     :new-document="false"
                                     :on-cancel="closeEditModal"
                                     :on-create-tag="createNewDocumentTag"
@@ -439,6 +440,7 @@ export default {
     },
     computed: {
         ...mapState({
+            effectiveTranscriptionFont: (state) => state.document.effectiveTranscriptionFont,
             allDocumentTags: (state) => state.project.documentTags,
             charCount: (state) => state.transcription.characterCount,
             characters: (state) => state.characters.characters,
@@ -465,6 +467,7 @@ export default {
             segmentationModels: (state) => state.user.segmentationModels,
             selectedTranscription: (state) => state.transcription.selectedTranscription,
             scripts: (state) => state.project.scripts,
+            fonts: (state) => state.project.fonts,
             sharedWithUsers: (state) => state.document.sharedWithUsers,
             sharedWithGroups: (state) => state.document.sharedWithGroups,
             shareModalOpen: (state) => state.document.shareModalOpen,
@@ -599,6 +602,11 @@ export default {
             }));
         },
     },
+    watch: {
+        effectiveTranscriptionFont(font) {
+            this.applyTranscriptionFont(font);
+        },
+    },
     /**
      * On load, fetch basic details about the document.
      */
@@ -674,6 +682,30 @@ export default {
         },
         selectTranscription(e) {
             this.changeSelectedTranscription(parseInt(e.target.value, 10));
+        },
+        applyTranscriptionFont(font) {
+            const styleId = "escr-transcription-font-face";
+            let styleEl = document.getElementById(styleId);
+            if (font && font.url) {
+                if (!styleEl) {
+                    styleEl = document.createElement("style");
+                    styleEl.id = styleId;
+                    document.head.appendChild(styleEl);
+                }
+                const sizeAdjust = Math.round((font.size_adjust || 1) * 100);
+                styleEl.textContent = `@font-face {
+                    font-family: "escr-transcription-font";
+                    src: url("${font.url}");
+                    size-adjust: ${sizeAdjust}%;
+                }`;
+                this.$el.style.setProperty(
+                    "--transcription-font-family",
+                    `"escr-transcription-font", "Noto Sans", "Resized Arabic", sans-serif`,
+                );
+            } else {
+                if (styleEl) styleEl.textContent = "";
+                this.$el.style.removeProperty("--transcription-font-family");
+            }
         },
         async websocketTaskListener(e) {
             const data = JSON.parse(e.data);

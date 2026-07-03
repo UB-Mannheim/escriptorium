@@ -73,6 +73,7 @@ const actions = {
                 name: rootState.forms?.editProject?.name,
                 tags: rootState.forms?.editProject?.tags,
                 guidelines: rootState.forms?.editProject?.guidelines,
+                transcriptionFont: rootState.forms?.editProject?.transcriptionFont,
             });
             if (data) {
                 // show toast alert on success
