@@ -42,6 +42,7 @@ from api.serializers import (
     DocumentSerializer,
     DocumentTagSerializer,
     DocumentTasksSerializer,
+    FontSerializer,
     ImageAnnotationSerializer,
     ImportSerializer,
     LineOrderSerializer,
@@ -83,6 +84,7 @@ from core.models import (
     DocumentPartMetadata,
     DocumentPartType,
     DocumentTag,
+    Font,
     ImageAnnotation,
     Line,
     LineTranscription,
@@ -225,6 +227,12 @@ class ScriptViewSet(ReadOnlyModelViewSet):
     pagination_class = ExtraLargeResultsSetPagination
     queryset = Script.objects.all()
     serializer_class = ScriptSerializer
+
+
+class FontViewSet(ReadOnlyModelViewSet):
+    pagination_class = ExtraLargeResultsSetPagination
+    queryset = Font.objects.all()
+    serializer_class = FontSerializer
 
 
 class TextualWitnessViewSet(ModelViewSet):
