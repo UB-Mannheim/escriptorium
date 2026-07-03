@@ -692,7 +692,7 @@ export default {
                     styleEl.id = styleId;
                     document.head.appendChild(styleEl);
                 }
-                const sizeAdjust = Math.round((font.size_adjust || 1) * 100);
+                const sizeAdjust = Math.round((font.size_adjust ?? 1) * 100);
                 styleEl.textContent = `@font-face {
                     font-family: "escr-transcription-font";
                     src: url("${font.url}");
