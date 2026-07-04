@@ -682,10 +682,12 @@ export default Vue.extend({
         },
 
         toggleBaselineEdit(e) {
+            console.log("toggleBaselineEdit called", e.target.checked);
             this.isBaselineEditEnabled = e.target.checked;
             if (this.isBaselineEditEnabled) {
                 // Update overlay styles when enabling
                 this.$nextTick(() => {
+                    console.log("Calling updateBaselineOverlayStyles");
                     this.updateBaselineOverlayStyles();
                 });
             }
