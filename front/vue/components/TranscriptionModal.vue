@@ -812,6 +812,11 @@ export default Vue.extend({
                 circle.setAttribute("cx", Math.round(svgX * ratio));
                 circle.setAttribute("cy", Math.round(svgY * ratio));
             }
+            // Also update the polyline (baseline line)
+            const polyline = svg.querySelector("polyline");
+            const blPoints = this.line.baseline.map(
+                (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ");
+            polyline.setAttribute("points", blPoints);
         },
 
         async endBaselineDrag(event) {
