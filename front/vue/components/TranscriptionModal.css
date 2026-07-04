@@ -117,7 +117,7 @@
     pointer-events: all;
     z-index: 10;
     background-color: rgba(255, 255, 255, 0.1);
-    /* Visibility controlled by v-show, not CSS */
+    display: none;
 }
 .escr-line-modal .baseline-editor-overlay svg {
     cursor: crosshair;
