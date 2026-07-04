@@ -683,12 +683,19 @@ export default Vue.extend({
         toggleBaselineEdit(e) {
             console.log("toggleBaselineEdit called", e.target.checked);
             this.isBaselineEditEnabled = e.target.checked;
+            const modalImgContainer = this.$refs.modalImgContainer;
             if (this.isBaselineEditEnabled) {
                 // Update overlay styles when enabling
                 this.$nextTick(() => {
                     console.log("Calling updateBaselineOverlayStyles");
                     this.updateBaselineOverlayStyles();
                 });
+            } else {
+                // Hide baseline editor overlay when disabling
+                const blOverlay = modalImgContainer?.querySelector(".baseline-editor-overlay");
+                if (blOverlay) {
+                    blOverlay.style.display = "none";
+                }
             }
         },
 
@@ -816,6 +823,13 @@ export default Vue.extend({
             const blPoints = this.line.baseline.map(
                 (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ");
             polyline.setAttribute("points", blPoints);
+            // Also update the polygon (mask outline)
+            const polygon = svg.querySelector("polygon");
+            if (this.line.mask) {
+                const maskPts = this.line.mask.map(
+                    (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ");
+                polygon.setAttribute("points", maskPts);
+            }
         },
 
         async endBaselineDrag(event) {
