@@ -692,7 +692,7 @@ export default Vue.extend({
             for (let i = 0; i < this.line.baseline.length; i++) {
                 const pt = this.line.baseline[i];
                 const dist = Math.sqrt((pt[0] - svgX) ** 2 + (pt[1] - svgY) ** 2);
-                if (dist < minDist && dist < 20) {
+                if (dist < minDist && dist < 30 / Math.min(scaleX, scaleY)) {
                     minDist = dist;
                     closestIdx = i;
                 }
@@ -701,6 +701,7 @@ export default Vue.extend({
                 this.baselineEditorState.editing = true;
                 this.baselineEditorState.pointIndex = closestIdx;
                 this.baselineEditorState.originalBaseline = JSON.parse(JSON.stringify(this.line.baseline));
+                event.preventDefault();
             }
         },
 
@@ -716,7 +717,10 @@ export default Vue.extend({
             const scaleY = viewBox.height / rect.height;
             const svgX = Math.round(x * scaleX);
             const svgY = Math.round(y * scaleY);
-            this.line.baseline[this.baselineEditorState.pointIndex] = [svgX, svgY];
+            // Create new array to trigger Vue reactivity
+            const newBaseline = this.line.baseline.slice();
+            newBaseline[this.baselineEditorState.pointIndex] = [svgX, svgY];
+            this.$set(this.line, 'baseline', newBaseline);
         },
 
         async endBaselineDrag(event) {
@@ -730,16 +734,21 @@ export default Vue.extend({
             const changed = JSON.stringify(original) !== JSON.stringify(current);
             if (changed) {
                 try {
-                    await this.$store.dispatch("lines/update", {
+                    await this.$store.dispatch("lines/bulkUpdate", [{
                         pk: this.line.pk,
                         baseline: current,
                         mask: this.line.mask,
                         region: this.line.block && this.line.block.pk,
                         type: this.line.typology && this.line.typology.pk,
-                    });
+                    }]);
                 } catch (err) {
                     console.error("Failed to update baseline:", err);
-                    this.$store.commit("lines/setEditedLine", { ...this.line, baseline: original });
+                    // Revert in store
+                    this.$store.commit("lines/update", {
+                        pk: this.line.pk,
+                        baseline: original,
+                        mask: this.line.mask,
+                    });
                 }
             }
         },
