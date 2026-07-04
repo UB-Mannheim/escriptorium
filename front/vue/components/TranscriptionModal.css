@@ -97,3 +97,25 @@
 .escr-line-modal .escr-line-version button {
     color: var(--primary);
 }
+.escr-line-modal .baseline-editor-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: auto;
+    z-index: 10;
+}
+.escr-line-modal .baseline-editor-overlay svg {
+    cursor: crosshair;
+}
+.escr-line-modal .baseline-point {
+    cursor: grab;
+}
+.escr-line-modal .baseline-point.dragging {
+    cursor: grabbing;
+    fill: red;
+}
+.escr-line-modal-header .escr-baseline-toggle:not(:active):not([class*="active"]):not(:hover) {
+    background-color: transparent;
+}
