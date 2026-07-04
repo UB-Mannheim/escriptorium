@@ -692,6 +692,7 @@ export default Vue.extend({
         },
 
         updateBaselineOverlayStyles() {
+            if (!this.isBaselineEditEnabled) return;
             const modalImgContainer = this.$refs.modalImgContainer;
             if (!modalImgContainer) return;
             const img = modalImgContainer.querySelector("img#line-img");
