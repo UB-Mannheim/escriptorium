@@ -712,8 +712,7 @@ export default Vue.extend({
             blOverlay.style.height = this.image.size[1]*ratio + "px";
             blOverlay.style.transformOrigin = img.style.transformOrigin;
             blOverlay.style.transform = img.style.transform;
-            blOverlay.style.display = "block";
-            blOverlay.style.backgroundColor = "rgba(255, 0, 0, 0.1)"; // Debug red
+            // Don't set display - v-show handles visibility
 
             const svg = blOverlay.querySelector("svg");
             // Set viewBox to match the scaled coordinate system
