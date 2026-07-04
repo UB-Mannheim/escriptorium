@@ -693,33 +693,65 @@ export default Vue.extend({
         },
 
         updateBaselineOverlayStyles() {
-            // Apply same transforms to baseline overlay as to the image
+            console.log("updateBaselineOverlayStyles running");
             const modalImgContainer = this.$refs.modalImgContainer;
+            console.log("modalImgContainer:", modalImgContainer);
+            if (!modalImgContainer) {
+                console.log("No modalImgContainer found");
+                return;
+            }
             const img = modalImgContainer.querySelector("img#line-img");
+            console.log("img:", img, "img.style.width:", img ? img.style.width : "N/A");
             const blOverlay = modalImgContainer.querySelector(".baseline-editor-overlay");
-            if (!blOverlay || !img || !this.line || !this.line.baseline) return;
+            console.log("blOverlay:", blOverlay);
+            if (!blOverlay || !img || !this.line || !this.line.baseline) {
+                console.log("Missing elements:", {
+                    blOverlay: !!blOverlay,
+                    img: !!img,
+                    line: !!this.line,
+                    baseline: !!(this.line && this.line.baseline)
+                });
+                return;
+            }
+
+            // Get the ratio used for image scaling
+            const ratio = parseFloat(img.style.width) / this.image.size[0];
+            console.log("ratio:", ratio);
+
+            // Scale baseline/mask points
+            let blPoints = this.line.baseline.map(
+                (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ");
+            console.log("blPoints:", blPoints);
+
+            // Set overlay dimensions to match image
             blOverlay.style.width = img.style.width;
-            blOverlay.style.height = img.style.height;
+            blOverlay.style.height = this.image.size[1]*ratio + "px";
             blOverlay.style.transformOrigin = img.style.transformOrigin;
             blOverlay.style.transform = img.style.transform;
             blOverlay.style.display = "block";
-            // Update baseline points
-            const ratio = parseFloat(img.style.width) / this.image.size[0];
-            let blPoints = this.line.baseline.map(
-                (pt) => Math.round(pt[0]*ratio)+ ","+Math.round(pt[1]*ratio)).join(" ");
-            let maskPts = this.line.mask ? this.line.mask.map(
-                (pt) => Math.round(pt[0]*ratio)+ ","+Math.round(pt[1]*ratio)).join(" ") : "";
+            blOverlay.style.backgroundColor = "rgba(255, 0, 0, 0.3)"; // Debug red
+
             const svg = blOverlay.querySelector("svg");
+            console.log("svg:", svg);
+            // Set viewBox to match the scaled coordinate system
+            const viewBoxW = parseFloat(img.style.width);
+            const viewBoxH = this.image.size[1]*ratio;
+            svg.setAttribute("viewBox", `0 0 ${viewBoxW} ${viewBoxH}`);
+            console.log("viewBox set to:", `0 0 ${viewBoxW} ${viewBoxH}`);
+            svg.setAttribute("preserveAspectRatio", "none");
+
             const polyline = svg.querySelector("polyline");
             const polygon = svg.querySelector("polygon");
             const circles = svg.querySelectorAll("circle");
             polyline.setAttribute("points", blPoints);
-            polygon.setAttribute("points", maskPts);
+            polygon.setAttribute("points", this.line.mask ? this.line.mask.map(
+                (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ") : "");
             circles.forEach((c, idx) => {
                 let pt = this.line.baseline[idx];
                 c.setAttribute("cx", Math.round(pt[0]*ratio));
                 c.setAttribute("cy", Math.round(pt[1]*ratio));
             });
+            console.log("Done updating overlay styles");
         },
 
         startBaselineDrag(event) {
