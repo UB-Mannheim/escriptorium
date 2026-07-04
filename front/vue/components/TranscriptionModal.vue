@@ -833,6 +833,8 @@ export default Vue.extend({
                         region: this.line.block && this.line.block.pk,
                         type: this.line.typology && this.line.typology.pk,
                     }]);
+                    // Explicitly trigger mask recalculation for this line
+                    await this.$store.dispatch("lines/recalculateMasks", [this.line.pk]);
                 } catch (err) {
                     console.error("Failed to update baseline:", err);
                     // Revert in store
