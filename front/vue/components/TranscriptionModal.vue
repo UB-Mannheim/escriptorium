@@ -974,9 +974,9 @@ export default Vue.extend({
                 overlay.classList.remove("show");
             }
 
-            // Baseline editor overlay
+            // Baseline editor overlay - only update if editing is enabled
             let blOverlay = modalImgContainer.querySelector(".baseline-editor-overlay");
-            if (blOverlay && this.line.baseline) {
+            if (blOverlay && this.line.baseline && this.isBaselineEditEnabled) {
                 let blPoints = this.line.baseline.map(
                     (pt) => Math.round(pt[0]*ratio)+ ","+
                         Math.round(pt[1]*ratio)).join(" ");
