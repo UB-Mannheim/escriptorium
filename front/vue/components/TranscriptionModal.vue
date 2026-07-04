@@ -120,7 +120,7 @@
                             color="text"
                             size="small"
                             :checked="isBaselineEditEnabled"
-                            :on-change="() => isBaselineEditEnabled = !isBaselineEditEnabled"
+                            :on-change="toggleBaselineEdit"
                         >
                             <template #button-icon>
                                 <PencilIcon />
@@ -188,8 +188,10 @@
                         </div>
                         <!-- Baseline editing overlay -->
                         <div
-                            v-if="isBaselineEditEnabled && line.baseline"
+                            v-show="isBaselineEditEnabled && line.baseline"
+                            ref="baselineEditorOverlay"
                             class="baseline-editor-overlay"
+                            :class="{ enabled: isBaselineEditEnabled }"
                         >
                             <svg
                                 ref="baselineEditorSvg"
@@ -199,6 +201,7 @@
                                 @mousedown="startBaselineDrag"
                                 @mousemove="doBaselineDrag"
                                 @mouseup="endBaselineDrag"
+                                @mouseleave="endBaselineDrag"
                             >
                                 <!-- Mask outline -->
                                 <polygon
@@ -226,6 +229,7 @@
                                     stroke-width="2"
                                     class="baseline-point"
                                     :class="{ 'dragging': baselineEditorState.pointIndex === idx }"
+                                    style="pointer-events: all"
                                 />
                             </svg>
                         </div>
@@ -676,23 +680,67 @@ export default Vue.extend({
             $(this.$refs.transModal).modal("hide");
         },
 
+        toggleBaselineEdit(checked) {
+            this.isBaselineEditEnabled = checked;
+            if (checked) {
+                // Update overlay styles when enabling
+                this.$nextTick(() => {
+                    this.updateBaselineOverlayStyles();
+                });
+            }
+        },
+
+        updateBaselineOverlayStyles() {
+            // Apply same transforms to baseline overlay as to the image
+            const modalImgContainer = this.$refs.modalImgContainer;
+            const img = modalImgContainer.querySelector("img#line-img");
+            const blOverlay = modalImgContainer.querySelector(".baseline-editor-overlay");
+            if (!blOverlay || !img || !this.line || !this.line.baseline) return;
+            blOverlay.style.width = img.style.width;
+            blOverlay.style.height = img.style.height;
+            blOverlay.style.transformOrigin = img.style.transformOrigin;
+            blOverlay.style.transform = img.style.transform;
+            blOverlay.style.display = "block";
+            // Update baseline points
+            const ratio = parseFloat(img.style.width) / this.image.size[0];
+            let blPoints = this.line.baseline.map(
+                (pt) => Math.round(pt[0]*ratio)+ ","+Math.round(pt[1]*ratio)).join(" ");
+            let maskPts = this.line.mask ? this.line.mask.map(
+                (pt) => Math.round(pt[0]*ratio)+ ","+Math.round(pt[1]*ratio)).join(" ") : "";
+            const svg = blOverlay.querySelector("svg");
+            const polyline = svg.querySelector("polyline");
+            const polygon = svg.querySelector("polygon");
+            const circles = svg.querySelectorAll("circle");
+            polyline.setAttribute("points", blPoints);
+            polygon.setAttribute("points", maskPts);
+            circles.forEach((c, idx) => {
+                let pt = this.line.baseline[idx];
+                c.setAttribute("cx", Math.round(pt[0]*ratio));
+                c.setAttribute("cy", Math.round(pt[1]*ratio));
+            });
+        },
+
         startBaselineDrag(event) {
-            const svg = this.$refs.baselineEditorSvg;
-            if (!svg || !this.line || !this.line.baseline) return;
-            const rect = svg.getBoundingClientRect();
+            const overlay = this.$refs.baselineEditorOverlay;
+            if (!overlay || !this.line || !this.line.baseline) return;
+            const rect = overlay.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            const viewBox = svg.viewBox.baseVal;
-            const scaleX = viewBox.width / rect.width;
-            const scaleY = viewBox.height / rect.height;
-            const svgX = x * scaleX;
-            const svgY = y * scaleY;
+            // Get the computed transform to reverse it
+            const transform = overlay.style.transform;
+            const angleMatch = transform.match(/rotate\(([-\d.]+)deg\)/);
+            const angle = angleMatch ? parseFloat(angleMatch[1]) : 0;
+            // Approximate: find closest point considering the transformation
             let minDist = Infinity;
             let closestIdx = -1;
             for (let i = 0; i < this.line.baseline.length; i++) {
                 const pt = this.line.baseline[i];
-                const dist = Math.sqrt((pt[0] - svgX) ** 2 + (pt[1] - svgY) ** 2);
-                if (dist < minDist && dist < 30 / Math.min(scaleX, scaleY)) {
+                // Point is scaled by ratio in computeImgStyles
+                // We need to find the point that, when scaled, is closest to click
+                const scaledPtX = Math.round(pt[0]);
+                const scaledPtY = Math.round(pt[1]);
+                const dist = Math.sqrt((scaledPtX - x) ** 2 + (scaledPtY - y) ** 2);
+                if (dist < minDist && dist < 30) {
                     minDist = dist;
                     closestIdx = i;
                 }
@@ -701,26 +749,35 @@ export default Vue.extend({
                 this.baselineEditorState.editing = true;
                 this.baselineEditorState.pointIndex = closestIdx;
                 this.baselineEditorState.originalBaseline = JSON.parse(JSON.stringify(this.line.baseline));
+                this.baselineEditorState.rect = rect;
+                this.baselineEditorState.angle = angle;
                 event.preventDefault();
             }
         },
 
         doBaselineDrag(event) {
             if (!this.baselineEditorState.editing || this.baselineEditorState.pointIndex === null) return;
-            const svg = this.$refs.baselineEditorSvg;
-            if (!svg) return;
-            const rect = svg.getBoundingClientRect();
+            const overlay = this.$refs.baselineEditorOverlay;
+            if (!overlay) return;
+            const rect = this.baselineEditorState.rect;
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            const viewBox = svg.viewBox.baseVal;
-            const scaleX = viewBox.width / rect.width;
-            const scaleY = viewBox.height / rect.height;
-            const svgX = Math.round(x * scaleX);
-            const svgY = Math.round(y * scaleY);
+            // Get ratio from width - baseline points are scaled by same ratio as imgWidth / image.size[0]
+            const ratio = rect.width / this.image.size[0];
+            const svgX = Math.round(x / ratio);
+            const svgY = Math.round(y / ratio);
             // Create new array to trigger Vue reactivity
             const newBaseline = this.line.baseline.slice();
             newBaseline[this.baselineEditorState.pointIndex] = [svgX, svgY];
             this.$set(this.line, 'baseline', newBaseline);
+            // Update the circle position directly
+            const svg = overlay.querySelector("svg");
+            const circles = svg.querySelectorAll("circle");
+            const circle = circles[this.baselineEditorState.pointIndex];
+            if (circle) {
+                circle.setAttribute("cx", Math.round(svgX * ratio));
+                circle.setAttribute("cy", Math.round(svgY * ratio));
+            }
         },
 
         async endBaselineDrag(event) {
@@ -885,6 +942,33 @@ export default Vue.extend({
             } else {
                 // TODO: fake mask?!
                 overlay.classList.remove("show");
+            }
+
+            // Baseline editor overlay
+            let blOverlay = modalImgContainer.querySelector(".baseline-editor-overlay");
+            if (blOverlay && this.line.baseline) {
+                let blPoints = this.line.baseline.map(
+                    (pt) => Math.round(pt[0]*ratio)+ ","+
+                        Math.round(pt[1]*ratio)).join(" ");
+                let maskPts = this.line.mask ? this.line.mask.map(
+                    (pt) => Math.round(pt[0]*ratio)+ ","+
+                        Math.round(pt[1]*ratio)).join(" ") : "";
+                let svg = blOverlay.querySelector("svg");
+                let polyline = svg.querySelector("polyline");
+                let polygon = svg.querySelector("polygon");
+                let circles = svg.querySelectorAll("circle");
+                polyline.setAttribute("points", blPoints);
+                polygon.setAttribute("points", maskPts);
+                circles.forEach((c, idx) => {
+                    let pt = this.line.baseline[idx];
+                    c.setAttribute("cx", Math.round(pt[0]*ratio));
+                    c.setAttribute("cy", Math.round(pt[1]*ratio));
+                });
+                blOverlay.style.width = imgWidth;
+                blOverlay.style.height = this.image.size[1]*ratio+"px";
+                blOverlay.style.transformOrigin = transformOrigin;
+                blOverlay.style.transform = transform;
+                blOverlay.style.display = "block";
             }
         },
 
