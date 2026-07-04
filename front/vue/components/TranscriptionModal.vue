@@ -757,22 +757,21 @@ export default Vue.extend({
         startBaselineDrag(event) {
             const overlay = this.$refs.baselineEditorOverlay;
             if (!overlay || !this.line || !this.line.baseline) return;
+            const modalImgContainer = this.$refs.modalImgContainer;
+            const img = modalImgContainer.querySelector("img#line-img");
             const rect = overlay.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            // Get the computed transform to reverse it
-            const transform = overlay.style.transform;
-            const angleMatch = transform.match(/rotate\(([-\d.]+)deg\)/);
-            const angle = angleMatch ? parseFloat(angleMatch[1]) : 0;
-            // Approximate: find closest point considering the transformation
+            // Get the ratio used for scaling
+            const ratio = parseFloat(img.style.width) / this.image.size[0];
+            // Find closest point (SVG coordinates are already scaled by ratio)
             let minDist = Infinity;
             let closestIdx = -1;
             for (let i = 0; i < this.line.baseline.length; i++) {
                 const pt = this.line.baseline[i];
-                // Point is scaled by ratio in computeImgStyles
-                // We need to find the point that, when scaled, is closest to click
-                const scaledPtX = Math.round(pt[0]);
-                const scaledPtY = Math.round(pt[1]);
+                // Points are scaled by ratio in updateBaselineOverlayStyles
+                const scaledPtX = Math.round(pt[0] * ratio);
+                const scaledPtY = Math.round(pt[1] * ratio);
                 const dist = Math.sqrt((scaledPtX - x) ** 2 + (scaledPtY - y) ** 2);
                 if (dist < minDist && dist < 30) {
                     minDist = dist;
@@ -784,7 +783,7 @@ export default Vue.extend({
                 this.baselineEditorState.pointIndex = closestIdx;
                 this.baselineEditorState.originalBaseline = JSON.parse(JSON.stringify(this.line.baseline));
                 this.baselineEditorState.rect = rect;
-                this.baselineEditorState.angle = angle;
+                this.baselineEditorState.ratio = ratio;
                 event.preventDefault();
             }
         },
