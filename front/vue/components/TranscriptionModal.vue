@@ -924,6 +924,9 @@ export default Vue.extend({
         },
 
         computeImgStyles(bbox, ratio, lineHeight, hContext) {
+            // Guard against this.line being undefined during rapid line changes
+            if (!this.line) return;
+
             let modalImgContainer = this.$refs.modalImgContainer;
             let img = modalImgContainer.querySelector("img#line-img");
 
@@ -958,7 +961,7 @@ export default Vue.extend({
 
             // Overlay
             let overlay = modalImgContainer.querySelector(".overlay");
-            if (this.line.mask) {
+            if (this.line?.mask) {
                 let maskPoints = this.line.mask.map(
                     (pt) => Math.round(pt[0]*ratio)+ ","+
                         Math.round(pt[1]*ratio)).join(" ");
@@ -975,30 +978,9 @@ export default Vue.extend({
             }
 
             // Baseline editor overlay - only update if editing is enabled
-            let blOverlay = modalImgContainer.querySelector(".baseline-editor-overlay");
-            if (blOverlay && this.isBaselineEditEnabled && this.line?.baseline) {
-                let blPoints = this.line.baseline.map(
-                    (pt) => Math.round(pt[0]*ratio)+ ","+
-                        Math.round(pt[1]*ratio)).join(" ");
-                let maskPts = this.line.mask ? this.line.mask.map(
-                    (pt) => Math.round(pt[0]*ratio)+ ","+
-                        Math.round(pt[1]*ratio)).join(" ") : "";
-                let svg = blOverlay.querySelector("svg");
-                let polyline = svg.querySelector("polyline");
-                let polygon = svg.querySelector("polygon");
-                let circles = svg.querySelectorAll("circle");
-                polyline.setAttribute("points", blPoints);
-                polygon.setAttribute("points", maskPts);
-                circles.forEach((c, idx) => {
-                    let pt = this.line.baseline[idx];
-                    c.setAttribute("cx", Math.round(pt[0]*ratio));
-                    c.setAttribute("cy", Math.round(pt[1]*ratio));
-                });
-                blOverlay.style.width = imgWidth;
-                blOverlay.style.height = this.image.size[1]*ratio+"px";
-                blOverlay.style.transformOrigin = transformOrigin;
-                blOverlay.style.transform = transform;
-                blOverlay.style.display = "block";
+            // Use updateBaselineOverlayStyles for consistent handling
+            if (this.isBaselineEditEnabled && this.line?.baseline) {
+                this.updateBaselineOverlayStyles();
             }
         },
 
