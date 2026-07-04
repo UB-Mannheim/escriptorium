@@ -681,13 +681,11 @@ export default Vue.extend({
         },
 
         toggleBaselineEdit(e) {
-            console.log("toggleBaselineEdit called", e.target.checked);
             this.isBaselineEditEnabled = e.target.checked;
             const modalImgContainer = this.$refs.modalImgContainer;
             if (this.isBaselineEditEnabled) {
                 // Update overlay styles when enabling
                 this.$nextTick(() => {
-                    console.log("Calling updateBaselineOverlayStyles");
                     this.updateBaselineOverlayStyles();
                 });
             } else {
@@ -700,35 +698,20 @@ export default Vue.extend({
         },
 
         updateBaselineOverlayStyles() {
-            console.log("updateBaselineOverlayStyles running");
             const modalImgContainer = this.$refs.modalImgContainer;
-            console.log("modalImgContainer:", modalImgContainer);
-            if (!modalImgContainer) {
-                console.log("No modalImgContainer found");
-                return;
-            }
+            if (!modalImgContainer) return;
             const img = modalImgContainer.querySelector("img#line-img");
-            console.log("img:", img, "img.style.width:", img ? img.style.width : "N/A");
             const blOverlay = modalImgContainer.querySelector(".baseline-editor-overlay");
-            console.log("blOverlay:", blOverlay);
-            if (!blOverlay || !img || !this.line || !this.line.baseline) {
-                console.log("Missing elements:", {
-                    blOverlay: !!blOverlay,
-                    img: !!img,
-                    line: !!this.line,
-                    baseline: !!(this.line && this.line.baseline)
-                });
-                return;
-            }
+            if (!blOverlay || !img || !this.line || !this.line.baseline) return;
 
             // Get the ratio used for image scaling
             const ratio = parseFloat(img.style.width) / this.image.size[0];
-            console.log("ratio:", ratio);
 
             // Scale baseline/mask points
             let blPoints = this.line.baseline.map(
                 (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ");
-            console.log("blPoints:", blPoints);
+            let maskPts = this.line.mask ? this.line.mask.map(
+                (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ") : "";
 
             // Set overlay dimensions to match image
             blOverlay.style.width = img.style.width;
@@ -736,29 +719,25 @@ export default Vue.extend({
             blOverlay.style.transformOrigin = img.style.transformOrigin;
             blOverlay.style.transform = img.style.transform;
             blOverlay.style.display = "block";
-            blOverlay.style.backgroundColor = "rgba(255, 0, 0, 0.3)"; // Debug red
+            blOverlay.style.backgroundColor = "rgba(255, 0, 0, 0.1)"; // Debug red
 
             const svg = blOverlay.querySelector("svg");
-            console.log("svg:", svg);
             // Set viewBox to match the scaled coordinate system
-            const viewBoxW = parseFloat(img.style.width);
-            const viewBoxH = this.image.size[1]*ratio;
-            svg.setAttribute("viewBox", `0 0 ${viewBoxW} ${viewBoxH}`);
-            console.log("viewBox set to:", `0 0 ${viewBoxW} ${viewBoxH}`);
+            svg.setAttribute("viewBox", `0 0 ${parseFloat(img.style.width)} ${this.image.size[1]*ratio}`);
             svg.setAttribute("preserveAspectRatio", "none");
 
             const polyline = svg.querySelector("polyline");
             const polygon = svg.querySelector("polygon");
             const circles = svg.querySelectorAll("circle");
             polyline.setAttribute("points", blPoints);
-            polygon.setAttribute("points", this.line.mask ? this.line.mask.map(
-                (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ") : "");
+            polygon.setAttribute("points", maskPts);
+            polygon.setAttribute("stroke", "yellow");  // Changed from lightgrey for visibility
+            polygon.setAttribute("stroke-width", "2");
             circles.forEach((c, idx) => {
                 let pt = this.line.baseline[idx];
                 c.setAttribute("cx", Math.round(pt[0]*ratio));
                 c.setAttribute("cy", Math.round(pt[1]*ratio));
             });
-            console.log("Done updating overlay styles");
         },
 
         startBaselineDrag(event) {
@@ -829,6 +808,8 @@ export default Vue.extend({
                 const maskPts = this.line.mask.map(
                     (pt) => `${Math.round(pt[0]*ratio)},${Math.round(pt[1]*ratio)}`).join(" ");
                 polygon.setAttribute("points", maskPts);
+                polygon.setAttribute("stroke", "yellow");
+                polygon.setAttribute("stroke-width", "2");
             }
         },
 
