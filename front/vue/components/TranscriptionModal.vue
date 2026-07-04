@@ -197,32 +197,31 @@
                                 ref="baselineEditorSvg"
                                 width="100%"
                                 height="100%"
-                                :viewBox="baselineEditorViewBox"
                                 @mousedown="startBaselineDrag"
                                 @mousemove="doBaselineDrag"
                                 @mouseup="endBaselineDrag"
                                 @mouseleave="endBaselineDrag"
                             >
-                                <!-- Mask outline -->
+                                <!-- Mask outline - points set by updateBaselineOverlayStyles -->
                                 <polygon
-                                    :points="maskPointsScaled"
+                                    points=""
                                     fill="none"
-                                    stroke="lightgrey"
-                                    stroke-width="1"
+                                    stroke="yellow"
+                                    stroke-width="2"
                                 />
-                                <!-- Baseline line -->
+                                <!-- Baseline line - points set by updateBaselineOverlayStyles -->
                                 <polyline
-                                    :points="baselinePointsScaled"
+                                    points=""
                                     fill="none"
                                     stroke="blue"
                                     stroke-width="2"
                                 />
-                                <!-- Baseline points -->
+                                <!-- Baseline points - cx/cy set by updateBaselineOverlayStyles -->
                                 <circle
                                     v-for="(pt, idx) in line.baseline"
                                     :key="'bl-pt-' + idx"
-                                    :cx="pt[0]"
-                                    :cy="pt[1]"
+                                    cx="0"
+                                    cy="0"
                                     r="6"
                                     fill="blue"
                                     stroke="white"
@@ -682,19 +681,13 @@ export default Vue.extend({
 
         toggleBaselineEdit(e) {
             this.isBaselineEditEnabled = e.target.checked;
-            const modalImgContainer = this.$refs.modalImgContainer;
             if (this.isBaselineEditEnabled) {
                 // Update overlay styles when enabling
                 this.$nextTick(() => {
                     this.updateBaselineOverlayStyles();
                 });
-            } else {
-                // Hide baseline editor overlay when disabling
-                const blOverlay = modalImgContainer?.querySelector(".baseline-editor-overlay");
-                if (blOverlay) {
-                    blOverlay.style.display = "none";
-                }
             }
+            // v-show handles hiding/showing the overlay automatically
         },
 
         updateBaselineOverlayStyles() {
