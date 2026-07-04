@@ -681,9 +681,9 @@ export default Vue.extend({
             $(this.$refs.transModal).modal("hide");
         },
 
-        toggleBaselineEdit(checked) {
-            this.isBaselineEditEnabled = checked;
-            if (checked) {
+        toggleBaselineEdit(e) {
+            this.isBaselineEditEnabled = e.target.checked;
+            if (this.isBaselineEditEnabled) {
                 // Update overlay styles when enabling
                 this.$nextTick(() => {
                     this.updateBaselineOverlayStyles();
