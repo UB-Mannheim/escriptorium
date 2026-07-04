@@ -89,17 +89,24 @@
 .escr-line-modal .escr-line-version button {
     color: var(--primary);
 }
+.escr-line-modal .modal-img-container {
+    position: relative;
+    display: inline-block;
+}
 .escr-line-modal .baseline-editor-overlay {
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: auto;
     z-index: 10;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 .escr-line-modal .baseline-editor-overlay svg {
     cursor: crosshair;
+    width: 100%;
+    height: 100%;
 }
 .escr-line-modal .baseline-point {
     cursor: grab;
@@ -108,6 +115,10 @@
     cursor: grabbing;
     fill: red;
 }
-.escr-line-modal-header .escr-baseline-toggle:not(:active):not([class*="active"]):not(:hover) {
+.escr-line-modal-header .escr-baseline-toggle:not(:active):not([class*="active"]):not(:hover),
+.escr-line-modal-header .escr-vk-toggle:not(:active):not([class*="active"]):not(:hover) {
     background-color: transparent;
+}
+.escr-line-modal .modal-img-container {
+    position: relative;
 }
