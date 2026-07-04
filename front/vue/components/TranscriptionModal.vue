@@ -749,7 +749,7 @@ export default Vue.extend({
             const rect = overlay.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            // Get the ratio used for scaling
+            // Get the ratio - must use img.style.width like in doBaselineDrag
             const ratio = parseFloat(img.style.width) / this.image.size[0];
             // Find closest point (SVG coordinates are already scaled by ratio)
             let minDist = Infinity;
@@ -779,11 +779,13 @@ export default Vue.extend({
             if (!this.baselineEditorState.editing || this.baselineEditorState.pointIndex === null) return;
             const overlay = this.$refs.baselineEditorOverlay;
             if (!overlay) return;
+            const modalImgContainer = this.$refs.modalImgContainer;
+            const img = modalImgContainer.querySelector("img#line-img");
             const rect = this.baselineEditorState.rect;
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            // Get ratio from width - baseline points are scaled by same ratio as imgWidth / image.size[0]
-            const ratio = rect.width / this.image.size[0];
+            // Get ratio - must use img.style.width like in startBaselineDrag
+            const ratio = parseFloat(img.style.width) / this.image.size[0];
             const svgX = Math.round(x / ratio);
             const svgY = Math.round(y / ratio);
             // Create new array to trigger Vue reactivity
