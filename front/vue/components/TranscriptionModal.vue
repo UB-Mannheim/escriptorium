@@ -114,6 +114,16 @@
                                 <KeyboardIcon />
                             </template>
                         </ToggleButton>
+                        <ToggleButton
+                            class="escr-baseline-toggle"
+                            size="small"
+                            :checked="isBaselineEditEnabled"
+                            :on-change="toggleBaselineEdit"
+                        >
+                            <template #button-icon>
+                                <PencilIcon />
+                            </template>
+                        </ToggleButton>
                     </div>
                     <div class="escr-line-modal-right">
                         <EscrButton
@@ -171,6 +181,49 @@
                                     width="100%"
                                     height="100%"
                                     mask="url(#modal-overlay)"
+                                />
+                            </svg>
+                        </div>
+                        <!-- Baseline editing overlay -->
+                        <div
+                            v-if="isBaselineEditEnabled && line.baseline"
+                            class="baseline-editor-overlay"
+                        >
+                            <svg
+                                ref="baselineEditorSvg"
+                                width="100%"
+                                height="100%"
+                                :viewBox="baselineEditorViewBox"
+                                @mousedown="startBaselineDrag"
+                                @mousemove="doBaselineDrag"
+                                @mouseup="endBaselineDrag"
+                            >
+                                <!-- Mask outline -->
+                                <polygon
+                                    :points="maskPointsScaled"
+                                    fill="none"
+                                    stroke="lightgrey"
+                                    stroke-width="1"
+                                />
+                                <!-- Baseline line -->
+                                <polyline
+                                    :points="baselinePointsScaled"
+                                    fill="none"
+                                    stroke="blue"
+                                    stroke-width="2"
+                                />
+                                <!-- Baseline points -->
+                                <circle
+                                    v-for="(pt, idx) in line.baseline"
+                                    :key="'bl-pt-' + idx"
+                                    :cx="pt[0] * imageScale"
+                                    :cy="pt[1] * imageScale"
+                                    r="6"
+                                    fill="blue"
+                                    stroke="white"
+                                    stroke-width="2"
+                                    class="baseline-point"
+                                    :class="{ 'dragging': baselineEditorState.pointIndex === idx }"
                                 />
                             </svg>
                         </div>
@@ -433,6 +486,7 @@ import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
 import LineVersion from "./LineVersion.vue";
 import HelpVersions from "./HelpVersions.vue";
 import HelpCompareTranscriptions from "./HelpCompareTranscriptions.vue";
+import PencilIcon from "./Icons/PencilIcon/PencilIcon.vue";
 import ToggleButton from "./ToggleButton/ToggleButton.vue";
 import TranscriptionSelector from "./TranscriptionSelector/TranscriptionSelector.vue";
 import XIcon from "./Icons/XIcon/XIcon.vue";
@@ -447,6 +501,7 @@ export default Vue.extend({
         LineVersion,
         HelpVersions,
         HelpCompareTranscriptions,
+        PencilIcon,
         ToggleButton,
         TranscriptionSelector,
         XIcon,
@@ -462,7 +517,13 @@ export default Vue.extend({
     },
     data() {
         return {
-            isVKEnabled: false
+            isVKEnabled: false,
+            isBaselineEditEnabled: false,
+            baselineEditorState: {
+                editing: false,
+                pointIndex: null,
+                originalBaseline: null,
+            }
         }
     },
     computed: {
@@ -519,6 +580,22 @@ export default Vue.extend({
                     await this.$store.dispatch("transcriptions/updateLineTranscriptionVersion", { line: this.line, content: newValue });
                 }
             }
+        },
+        imageScale() {
+            if (!this.image || !this.image.size) return 1;
+            return 1;
+        },
+        baselineEditorViewBox() {
+            if (!this.image || !this.image.size) return "0 0 100 100";
+            return `0 0 ${this.image.size[0]} ${this.image.size[1]}`;
+        },
+        maskPointsScaled() {
+            if (!this.line || !this.line.mask) return "";
+            return this.line.mask.map((pt) => `${Math.round(pt[0])},${Math.round(pt[1])}`).join(" ");
+        },
+        baselinePointsScaled() {
+            if (!this.line || !this.line.baseline) return "";
+            return this.line.baseline.map((pt) => `${Math.round(pt[0])},${Math.round(pt[1])}`).join(" ");
         },
     },
     watch: {
@@ -596,6 +673,78 @@ export default Vue.extend({
     methods: {
         close() {
             $(this.$refs.transModal).modal("hide");
+        },
+
+        toggleBaselineEdit(checked) {
+            this.isBaselineEditEnabled = checked;
+        },
+
+        startBaselineDrag(event) {
+            const svg = this.$refs.baselineEditorSvg;
+            if (!svg || !this.line || !this.line.baseline) return;
+            const rect = svg.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const viewBox = svg.viewBox.baseVal;
+            const scaleX = viewBox.width / rect.width;
+            const scaleY = viewBox.height / rect.height;
+            const svgX = x * scaleX;
+            const svgY = y * scaleY;
+            let minDist = Infinity;
+            let closestIdx = -1;
+            for (let i = 0; i < this.line.baseline.length; i++) {
+                const pt = this.line.baseline[i];
+                const dist = Math.sqrt((pt[0] - svgX) ** 2 + (pt[1] - svgY) ** 2);
+                if (dist < minDist && dist < 20) {
+                    minDist = dist;
+                    closestIdx = i;
+                }
+            }
+            if (closestIdx >= 0) {
+                this.baselineEditorState.editing = true;
+                this.baselineEditorState.pointIndex = closestIdx;
+                this.baselineEditorState.originalBaseline = JSON.parse(JSON.stringify(this.line.baseline));
+            }
+        },
+
+        doBaselineDrag(event) {
+            if (!this.baselineEditorState.editing || this.baselineEditorState.pointIndex === null) return;
+            const svg = this.$refs.baselineEditorSvg;
+            if (!svg) return;
+            const rect = svg.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const viewBox = svg.viewBox.baseVal;
+            const scaleX = viewBox.width / rect.width;
+            const scaleY = viewBox.height / rect.height;
+            const svgX = Math.round(x * scaleX);
+            const svgY = Math.round(y * scaleY);
+            this.line.baseline[this.baselineEditorState.pointIndex] = [svgX, svgY];
+        },
+
+        async endBaselineDrag(event) {
+            if (!this.baselineEditorState.editing) return;
+            const original = this.baselineEditorState.originalBaseline;
+            const current = this.line.baseline;
+            this.baselineEditorState.editing = false;
+            this.baselineEditorState.pointIndex = null;
+            this.baselineEditorState.originalBaseline = null;
+            if (!original || !current) return;
+            const changed = JSON.stringify(original) !== JSON.stringify(current);
+            if (changed) {
+                try {
+                    await this.$store.dispatch("lines/update", {
+                        pk: this.line.pk,
+                        baseline: current,
+                        mask: this.line.mask,
+                        region: this.line.block && this.line.block.pk,
+                        type: this.line.typology && this.line.typology.pk,
+                    });
+                } catch (err) {
+                    console.error("Failed to update baseline:", err);
+                    this.$store.commit("lines/setEditedLine", { ...this.line, baseline: original });
+                }
+            }
         },
 
         editLine(direction) {
