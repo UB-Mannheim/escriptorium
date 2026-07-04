@@ -874,14 +874,17 @@ export default Vue.extend({
         },
 
         getLineAngle() {
+            if (!this.line) return 0;
             let p1, p2;
-            if (this.line.baseline) {
+            if (this.line.baseline && this.line.baseline.length >= 2) {
                 p1 = this.line.baseline[0];
                 p2 = this.line.baseline[this.line.baseline.length-1];
-            } else {
+            } else if (this.line.mask && this.line.mask.length > 0) {
                 // fake baseline from left most to right most points in mask
                 p1 = this.line.mask.reduce((minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt);
                 p2 = this.line.mask.reduce((maxPt, curPt) => (curPt[0] > maxPt[0]) ? curPt : maxPt);
+            } else {
+                return 0;
             }
 
             return Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180 / Math.PI;
