@@ -889,13 +889,22 @@ export default Vue.extend({
         },
 
         getRotatedLineBBox() {
+            // Guard against this.line or this.image being undefined during rapid line changes
+            if (!this.line || !this.image) {
+                return {width: 100, height: 50, top: 0, left: 0, angle: 0};
+            }
+
             // create temporary polygon to calculate the line bounding box
-            if (this.line.mask) {
-                var maskPoints = this.line.mask.map(
-                    (pt) => Math.round(pt[0])+ ","+
-                        Math.round(pt[1])).join(" ");
+            let maskPoints = "";
+            if (this.line.mask && this.line.mask.length > 0) {
+                maskPoints = this.line.mask.map(
+                    (pt) => {
+                        if (!pt) return "0,0";
+                        return Math.round(pt[0])+ ","+ Math.round(pt[1]);
+                    }).join(" ");
             } else {
-                // TODO
+                // No mask available - return a default bbox
+                return {width: 100, height: 50, top: 0, left: 0, angle: 0};
             }
             let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             let tmppoly = document.createElementNS("http://www.w3.org/2000/svg",
