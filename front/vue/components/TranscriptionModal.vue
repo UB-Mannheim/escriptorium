@@ -106,9 +106,10 @@
                     <div class="new-section with-separator">
                         <ToggleButton
                             class="escr-vk-toggle"
+                            color="text"
                             size="small"
                             :checked="isVKEnabled"
-                            :on-change="toggleVK"
+                            :on-change="() => isVKEnabled = !isVKEnabled"
                         >
                             <template #button-icon>
                                 <KeyboardIcon />
@@ -116,9 +117,10 @@
                         </ToggleButton>
                         <ToggleButton
                             class="escr-baseline-toggle"
+                            color="text"
                             size="small"
                             :checked="isBaselineEditEnabled"
-                            :on-change="toggleBaselineEdit"
+                            :on-change="() => isBaselineEditEnabled = !isBaselineEditEnabled"
                         >
                             <template #button-icon>
                                 <PencilIcon />
@@ -216,8 +218,8 @@
                                 <circle
                                     v-for="(pt, idx) in line.baseline"
                                     :key="'bl-pt-' + idx"
-                                    :cx="pt[0] * imageScale"
-                                    :cy="pt[1] * imageScale"
+                                    :cx="pt[0]"
+                                    :cy="pt[1]"
                                     r="6"
                                     fill="blue"
                                     stroke="white"
@@ -673,10 +675,6 @@ export default Vue.extend({
     methods: {
         close() {
             $(this.$refs.transModal).modal("hide");
-        },
-
-        toggleBaselineEdit(checked) {
-            this.isBaselineEditEnabled = checked;
         },
 
         startBaselineDrag(event) {
