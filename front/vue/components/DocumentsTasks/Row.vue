@@ -2,6 +2,7 @@
     <tr>
         <td>
             <input
+                v-if="hasActiveTasks"
                 v-model="selected"
                 class="ml-0"
                 type="checkbox"
@@ -13,6 +14,7 @@
         <td>{{ documentTasks.last_started_task | formatDate(timezone) }}</td>
         <td>
             <button
+                v-if="hasActiveTasks"
                 data-toggle="modal"
                 :data-target="'#' + modalId"
                 title="Cancel pending/running tasks for this document"
@@ -61,13 +63,17 @@ export default {
     computed: {
         modalId () {
             return `cancelTasksModal${this.documentTasks.pk}`
-        }
+        },
+        hasActiveTasks () {
+            const stats = this.documentTasks.tasks_stats || {}
+            return (stats.Queued || 0) > 0 || (stats.Running || 0) > 0
+        },
     },
     watch: {
         selectAll: {
             immediate: true,
             handler: function(n, o) {
-                this.selected = n
+                this.selected = n && this.hasActiveTasks
             },
         },
         selected: function(n, o) {
