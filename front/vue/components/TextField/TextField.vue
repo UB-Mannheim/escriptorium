@@ -33,6 +33,7 @@
             :invalid="invalid"
             @input="onInput"
             @keydown="handleKeydown"
+            @focus="handleFocus"
             @blur="handleBlur"
         >
         <textarea
@@ -46,6 +47,7 @@
             :invalid="invalid"
             @input="onInput"
             @keydown="handleKeydown"
+            @focus="handleFocus"
             @blur="handleBlur"
         />
         <span
@@ -70,6 +72,13 @@ export default {
          * Event handler for blurring the input
          */
         onBlur: {
+            type: Function,
+            default: () => {},
+        },
+        /**
+         * Event handler for focusing the input
+         */
+        onFocus: {
             type: Function,
             default: () => {},
         },
@@ -181,6 +190,13 @@ export default {
         handleBlur(event) {
             this.onBlur(event);
             this.$emit("blur", event);
+        },
+        /**
+         * Handle focus by calling the callback and emitting the native event
+         */
+        handleFocus(event) {
+            this.onFocus(event);
+            this.$emit("focus", event);
         }
     }
 }

@@ -32,6 +32,8 @@
                             placeholder="Filter by type, ID, or transcription"
                             :value="filterText"
                             :on-input="onFilterInput"
+                            :on-focus="onFilterFocus"
+                            :on-blur="onFilterBlur"
                         />
                     </div>
                 </div>
@@ -235,6 +237,12 @@ export default {
         },
         onFilterInput(e) {
             this.filterText = e.target.value;
+        },
+        onFilterFocus() {
+            this.$store.commit("document/setBlockShortcuts", true);
+        },
+        onFilterBlur() {
+            this.$store.commit("document/setBlockShortcuts", false);
         },
         onSelectIdentifyingColumnMode(mode) {
             this.identifyingColumnMode = mode;
