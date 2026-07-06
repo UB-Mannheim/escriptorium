@@ -28,8 +28,8 @@
                     <div class="escr-elements-filter">
                         <TextField
                             :label-visible="false"
-                            label="Filter elements by type or ID"
-                            placeholder="Filter by type or ID"
+                            label="Filter elements by type, ID, or transcription"
+                            placeholder="Filter by type, ID, or transcription"
                             :value="filterText"
                             :on-input="onFilterInput"
                         />
@@ -183,7 +183,8 @@ export default {
             const needle = this.filterText.toLowerCase();
             return this.unfilteredItems.filter((item) => (
                 item.typeDisplay.name.toLowerCase().includes(needle) ||
-                String(item.displayId).toLowerCase().includes(needle)
+                String(item.displayId).toLowerCase().includes(needle) ||
+                (item.currentTrans?.content || "").toLowerCase().includes(needle)
             ));
         },
         unfilteredItems() {
@@ -253,7 +254,6 @@ export default {
 <style scoped>
 .escr-elements-filter {
     flex: 1 0 auto;
-    margin-left: 0.75rem;
 }
 
 .content-container {
@@ -283,9 +283,20 @@ export default {
     height: 32px;
 }
 
+/* space out the tab switcher, identifying-column toggle, and filter in the toolbar */
+#elements-panel .escr-editortools-paneltools {
+    gap: 0.75rem;
+}
+
 /* the lock/edit action should always be visible here, not just on row hover/focus */
 #elements-panel .escr-table td.escr-row-actions * {
     opacity: 1;
+}
+
+/* breathing room between columns, which otherwise sit flush against each other */
+#elements-panel .escr-table th,
+#elements-panel .escr-table td {
+    padding-right: 0.75rem;
 }
 
 /* truncate long transcription/ID content instead of wrapping or overflowing the row */
