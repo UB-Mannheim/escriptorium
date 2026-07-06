@@ -4,6 +4,7 @@ import {
     createProjectTag,
     deleteProject,
     retrieveAllProjectTags,
+    retrieveFonts,
     retrieveProjects,
 } from "../../../src/api";
 import { tagColorToVariant } from "../util/color";
@@ -45,6 +46,7 @@ const state = () => ({
      * }]
      */
     tags: [],
+    fonts: [],
 });
 
 const getters = {};
@@ -175,6 +177,14 @@ const actions = {
         }
         commit("setLoading", false);
     },
+    async fetchFonts({ commit }) {
+        const { data } = await retrieveFonts();
+        if (data?.results) {
+            commit("setFonts", data.results);
+        } else {
+            throw new Error("Unable to retrieve fonts");
+        }
+    },
     /**
      * Fetch the full list of projects, using currently applied sort and filters
      * from state.
@@ -284,6 +294,9 @@ const mutations = {
     },
     setProjectToDelete(state, project) {
         state.projectToDelete = project;
+    },
+    setFonts(state, fonts) {
+        state.fonts = fonts;
     },
     setTags(state, tags) {
         state.tags = tags;
