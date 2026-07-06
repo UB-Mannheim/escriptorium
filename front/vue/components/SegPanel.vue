@@ -204,13 +204,11 @@
             :on-toggle-line-numbering="onToggleLineNumbering"
             :on-redo="redo"
             :on-reverse="onReverse"
-            :on-toggle-lock="onToggleLock"
             :on-undo="undo"
             :panel-index="panelIndex"
             :process-lines="processLines"
             :selected-type="selectedType"
             :selection-is-linked="selectionIsLinked"
-            :selection-is-locked="selectionIsLocked"
             :selection-is-unlinked="selectionIsUnlinked"
             :toggle-tool="onToggleTool"
             :toggle-toolbar-detached="toggleToolbarDetached"
@@ -237,10 +235,8 @@
             :on-link="onLink"
             :on-unlink="onUnlink"
             :on-reverse="onReverse"
-            :on-toggle-lock="onToggleLock"
             :selected-type="selectedType"
             :selection-is-linked="selectionIsLinked"
-            :selection-is-locked="selectionIsLocked"
             :selection-is-unlinked="selectionIsUnlinked"
             :start-drag="startDragToolbar"
             :style="{
@@ -507,15 +503,6 @@ export default Vue.extend({
             } else {
                 return "None";
             }
-        },
-        /**
-         * True if all currently selected regions are locked.
-         */
-        selectionIsLocked() {
-            return (
-                this.segmenter?.selection?.regions?.length > 0 &&
-                this.segmenter.selection.regions.every((r) => r.locked)
-            ) || false;
         },
     },
     watch: {
@@ -1271,18 +1258,6 @@ export default Vue.extend({
          */
         onReverse() {
             this.segmenter.reverseSelection();
-        },
-        /**
-         * Toggle the locked state of the currently selected regions; if the selection is a
-         * mix of locked/unlocked regions, lock all of them, otherwise flip them all together.
-         */
-        onToggleLock() {
-            const target = !this.selectionIsLocked;
-            (this.segmenter?.selection?.regions || []).forEach((region) => {
-                if (!!region.locked !== target) {
-                    this.$store.dispatch("regions/toggleLocked", region.context.pk);
-                }
-            });
         },
         /**
          * Detach or reattach the toolbar, and update the segmenter's ref to it

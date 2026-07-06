@@ -109,29 +109,6 @@
             v-if="hasSelection && !isDrawing"
             class="new-section with-separator"
         >
-            <!-- lock/unlock regions -->
-            <VDropdown
-                v-if="displayMode === 'regions'"
-                theme="escr-tooltip-small"
-                placement="bottom"
-                :distance="8"
-                :triggers="['hover']"
-            >
-                <EscrButton
-                    color="text"
-                    :aria-label="lockButtonLabel"
-                    :on-click="onToggleLock"
-                    :disabled="disabled"
-                >
-                    <template #button-icon>
-                        <LockIcon v-if="selectionIsLocked" />
-                        <LockOpenIcon v-else />
-                    </template>
-                </EscrButton>
-                <template #popper>
-                    {{ lockButtonLabel }}
-                </template>
-            </VDropdown>
             <!-- link/unlink -->
             <VDropdown
                 v-if="['lines', 'masks'].includes(displayMode) && !selectionIsLinked"
@@ -408,8 +385,6 @@ import EscrButton from "../Button/Button.vue";
 import JoinIcon from "../Icons/JoinIcon/JoinIcon.vue";
 import LineToolIcon from "../Icons/LineToolIcon/LineToolIcon.vue";
 import LinkIcon from "../Icons/LinkIcon/LinkIcon.vue";
-import LockIcon from "../Icons/LockIcon/LockIcon.vue";
-import LockOpenIcon from "../Icons/LockOpenIcon/LockOpenIcon.vue";
 import RegionToolIcon from "../Icons/RegionToolIcon/RegionToolIcon.vue";
 import ReverseIcon from "../Icons/ReverseIcon/ReverseIcon.vue";
 import ScissorsIcon from "../Icons/ScissorsIcon/ScissorsIcon.vue";
@@ -429,8 +404,6 @@ export default {
         JoinIcon,
         LineToolIcon,
         LinkIcon,
-        LockIcon,
-        LockOpenIcon,
         RegionToolIcon,
         ReverseIcon,
         ScissorsIcon,
@@ -484,12 +457,6 @@ export default {
             lineTypes: (state) => state.document.types.lines,
             regionTypes: (state) => state.document.types.regions,
         }),
-        /**
-         * Label for the lock/unlock button, based on the current selection's locked state
-         */
-        lockButtonLabel() {
-            return this.selectionIsLocked ? "Unlock selected regions" : "Lock selected regions";
-        },
         /**
          * Current available types with "None" appended at the beginning
          */
