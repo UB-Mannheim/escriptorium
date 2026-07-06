@@ -33,6 +33,9 @@
                     class="escr-ontology-overview-body"
                 >
                     <div class="escr-ontology-overview-types">
+                        <h2>
+                            {{ typesHeading }}
+                        </h2>
                         <EscrTable
                             v-if="types.length"
                             item-key="key"
@@ -162,6 +165,16 @@ export default {
                 }));
             }
             return items.slice().sort((a, b) => b.frequency - a.frequency);
+        },
+        typesHeading() {
+            const headings = {
+                regions: "Region Types",
+                lines: "Line Types",
+                text: "Text Types",
+                image: "Image Types",
+                characters: "Characters",
+            };
+            return headings[this.category] || "Types";
         },
         typeHeaders() {
             return [
