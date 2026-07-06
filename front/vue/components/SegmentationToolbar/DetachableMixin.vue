@@ -73,6 +73,13 @@ export default {
             required: true,
         },
         /**
+         * Callback function for toggling the locked state of the selected region(s)
+         */
+        onToggleLock: {
+            type: Function,
+            required: true,
+        },
+        /**
          * Callback function for unlinking selected lines from regions
          */
         onUnlink: {
@@ -90,6 +97,13 @@ export default {
          * True if a region is linked to the currently selected line(s)
          */
         selectionIsLinked: {
+            type: Boolean,
+            required: true
+        },
+        /**
+         * True if all currently selected region(s) are locked
+         */
+        selectionIsLocked: {
             type: Boolean,
             required: true
         },
