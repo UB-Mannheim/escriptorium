@@ -86,9 +86,13 @@ import { BasePanel } from "../../../src/editor/mixins.js";
 import EditorToolbar from "../EditorToolbar/EditorToolbar.vue";
 import EscrLoader from "../Loader/Loader.vue";
 import EscrTable from "../Table/Table.vue";
+import LinesIcon from "../Icons/LinesIcon/LinesIcon.vue";
 import PencilIcon from "../Icons/PencilIcon/PencilIcon.vue";
+import RegionsIcon from "../Icons/RegionsIcon/RegionsIcon.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
+import TagIcon from "../Icons/TagIcon/TagIcon.vue";
 import TextField from "../TextField/TextField.vue";
+import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
 import LockToggle from "./LockToggle.vue";
 import TypeSwatch from "./TypeSwatch.vue";
 
@@ -127,19 +131,35 @@ export default {
         }),
         tabs() {
             return [
-                { label: "Regions", value: "regions", selected: this.activeTab === "regions" },
-                { label: "Lines", value: "lines", selected: this.activeTab === "lines" },
+                {
+                    label: RegionsIcon,
+                    value: "regions",
+                    selected: this.activeTab === "regions",
+                    tooltip: "Regions",
+                },
+                {
+                    label: LinesIcon,
+                    value: "lines",
+                    selected: this.activeTab === "lines",
+                    tooltip: "Lines",
+                },
             ];
         },
         identifyingColumnModes() {
             const mode = this.identifyingColumnMode;
             return [
                 {
-                    label: "Transcription",
+                    label: TranscribeIcon,
                     value: "transcription",
                     selected: mode === "transcription",
+                    tooltip: "Transcription",
                 },
-                { label: "ID", value: "id", selected: mode === "id" },
+                {
+                    label: TagIcon,
+                    value: "id",
+                    selected: mode === "id",
+                    tooltip: "ID",
+                },
             ];
         },
         headers() {
@@ -183,10 +203,13 @@ export default {
                 .sort((a, b) => a.order - b.order)
                 .map((line) => {
                     const region = this.allRegions.find((r) => r.pk === line.region);
+                    const transcription = line.currentTrans?.content || "";
                     return {
                         ...line,
                         displayId: line.external_id || line.pk,
-                        displayTranscription: line.currentTrans?.content || "",
+                        displayTranscription: transcription.length > 20
+                            ? `${transcription.slice(0, 20)}…`
+                            : transcription,
                         typeDisplay: {
                             name: line.type || "None",
                             color: region
@@ -258,6 +281,11 @@ export default {
 /* tighter rows than the default compact table, to fit more elements per panel */
 #elements-panel .escr-table--compact tbody tr {
     height: 32px;
+}
+
+/* the lock/edit action should always be visible here, not just on row hover/focus */
+#elements-panel .escr-table td.escr-row-actions * {
+    opacity: 1;
 }
 
 /* truncate long transcription/ID content instead of wrapping or overflowing the row */
