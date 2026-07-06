@@ -423,6 +423,8 @@ class ProjectManager(models.Manager):
     def for_user_write(self, user):
         # return the list of EDITABLE projects
         # allows to add documents to it
+        if not user.is_authenticated:
+            return self.none()
         return (
             self.filter(Q(owner=user)
                         | Q(shared_with_users=user)
@@ -433,6 +435,8 @@ class ProjectManager(models.Manager):
     def for_user_read(self, user):
         # return the list of VIEWABLE projects
         # Note: Monitor this query
+        if not user.is_authenticated:
+            return self.none()
         return self.filter(
             Q(owner=user)
             | Q(shared_with_users=user)
