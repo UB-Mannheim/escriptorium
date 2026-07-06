@@ -17,18 +17,18 @@
                         :options="tabs"
                         :on-change-selection="onSelectTab"
                     />
+                    <div class="escr-elements-filter">
+                        <TextField
+                            :label-visible="false"
+                            label="Filter elements by type or ID"
+                            placeholder="Filter by type or ID"
+                            :value="filterText"
+                            :on-input="onFilterInput"
+                        />
+                    </div>
                 </div>
             </template>
         </EditorToolbar>
-        <div class="escr-elements-filter">
-            <TextField
-                :label-visible="false"
-                label="Filter elements by type or ID"
-                placeholder="Filter by type or ID"
-                :value="filterText"
-                :on-input="onFilterInput"
-            />
-        </div>
         <div class="content-container">
             <EscrTable
                 v-if="items.length"
@@ -192,7 +192,8 @@ export default {
 
 <style scoped>
 .escr-elements-filter {
-    padding: 0.5rem 0.75rem;
+    flex: 1 0 auto;
+    margin-left: 0.75rem;
 }
 
 .content-container {
