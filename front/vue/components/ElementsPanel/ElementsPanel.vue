@@ -207,6 +207,7 @@ export default {
     methods: {
         onSelectTab(tab) {
             this.activeTab = tab;
+            this.$store.commit("document/setSegmentationMode", tab);
         },
         onFilterInput(e) {
             this.filterText = e.target.value;

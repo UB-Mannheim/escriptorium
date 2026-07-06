@@ -596,6 +596,13 @@ export default Vue.extend({
             );
             if (region) region.locked = update.locked;
         },
+        // let the Elements panel's Regions/Lines tab drive the segmenter's mode; guarded
+        // against feedback loops, since segmenter.setMode re-commits the same mode below
+        "$store.state.document.segmentationMode": function (mode) {
+            if (this.segmenter && this.segmenter.mode !== mode) {
+                this.segmenter.setMode(mode);
+            }
+        },
     },
     mounted() {
     // wait for the element to be rendered
