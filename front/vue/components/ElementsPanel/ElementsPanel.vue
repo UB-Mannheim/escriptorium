@@ -17,6 +17,14 @@
                         :options="tabs"
                         :on-change-selection="onSelectTab"
                     />
+                    <SegmentedButtonGroup
+                        v-if="activeTab === 'lines'"
+                        color="secondary"
+                        name="elements-panel-identifying-column"
+                        :disabled="disabled"
+                        :options="identifyingColumnModes"
+                        :on-change-selection="onSelectIdentifyingColumnMode"
+                    />
                     <div class="escr-elements-filter">
                         <TextField
                             :label-visible="false"
@@ -105,6 +113,8 @@ export default {
                     ? "regions"
                     : "lines",
             filterText: "",
+            // identifying column shown for lines; defaults to transcription content
+            identifyingColumnMode: "transcription",
         };
     },
     computed: {
@@ -113,6 +123,7 @@ export default {
             regionColors: (state) => state.document.regionColors,
             allRegions: (state) => state.regions.all,
             allLines: (state) => state.lines.all,
+            defaultTextDirection: (state) => state.document.defaultTextDirection,
         }),
         tabs() {
             return [
@@ -120,10 +131,31 @@ export default {
                 { label: "Lines", value: "lines", selected: this.activeTab === "lines" },
             ];
         },
+        identifyingColumnModes() {
+            const mode = this.identifyingColumnMode;
+            return [
+                {
+                    label: "Transcription",
+                    value: "transcription",
+                    selected: mode === "transcription",
+                },
+                { label: "ID", value: "id", selected: mode === "id" },
+            ];
+        },
         headers() {
+            const showTranscription =
+                this.activeTab === "lines" && this.identifyingColumnMode === "transcription";
+            const identifyingHeader = showTranscription
+                ? {
+                    label: "Transcription",
+                    value: "displayTranscription",
+                    class: "escr-elements-identifying-column",
+                    dir: this.defaultTextDirection,
+                }
+                : { label: "ID", value: "displayId", class: "escr-elements-identifying-column" };
             return [
                 { label: "Type", value: "typeDisplay", component: TypeSwatch },
-                { label: "ID", value: "displayId" },
+                identifyingHeader,
             ];
         },
         items() {
@@ -154,6 +186,7 @@ export default {
                     return {
                         ...line,
                         displayId: line.external_id || line.pk,
+                        displayTranscription: line.currentTrans?.content || "",
                         typeDisplay: {
                             name: line.type || "None",
                             color: region
@@ -177,6 +210,9 @@ export default {
         },
         onFilterInput(e) {
             this.filterText = e.target.value;
+        },
+        onSelectIdentifyingColumnMode(mode) {
+            this.identifyingColumnMode = mode;
         },
         onSelectElement(item) {
             const mutation = this.activeTab === "regions" ? "regions/setSelected" : "lines/setSelected";
@@ -221,5 +257,17 @@ export default {
 /* tighter rows than the default compact table, to fit more elements per panel */
 #elements-panel .escr-table--compact tbody tr {
     height: 32px;
+}
+
+/* truncate long transcription/ID content instead of wrapping or overflowing the row */
+#elements-panel .escr-table td.escr-elements-identifying-column {
+    max-width: 0;
+    width: 100%;
+}
+#elements-panel .escr-table td.escr-elements-identifying-column span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 </style>

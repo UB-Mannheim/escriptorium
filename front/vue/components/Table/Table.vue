@@ -214,6 +214,7 @@
                         >
                         <span
                             v-else
+                            :dir="header.dir"
                         >
                             {{
                                 header.format
@@ -317,6 +318,9 @@ export default {
          * It is also possible to use a Vue component for table cells. To do this, add a `component`
          * key to the header for that column and pass the component along. In the data, the item's
          * value for that header name must be an object containing the props for that component.
+         *
+         * For plain text columns, you can set a `dir` ("ltr"/"rtl") to control the text direction
+         * of the cell content, e.g. for text whose direction is independent of the page's.
          */
         headers: {
             type: Array,
