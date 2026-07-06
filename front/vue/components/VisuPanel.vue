@@ -149,7 +149,7 @@
         </div>
 
         <TranscriptionModal
-            v-if="editedLine"
+            v-if="legacyModeEnabled && editedLine"
             :legacy-mode-enabled="legacyModeEnabled"
         />
     </div>

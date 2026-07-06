@@ -38,7 +38,25 @@
                 :items="items"
                 :disabled="disabled"
                 :on-row-click="onSelectElement"
-            />
+            >
+                <template #actions="{ item }">
+                    <LockToggle
+                        v-if="activeTab === 'regions'"
+                        :pk="item.pk"
+                        :locked="!!item.locked"
+                    />
+                    <button
+                        v-else
+                        type="button"
+                        class="escr-elements-edit-button"
+                        title="Edit transcription"
+                        aria-label="Edit transcription"
+                        @click.stop="onEditLine(item)"
+                    >
+                        <PencilIcon />
+                    </button>
+                </template>
+            </EscrTable>
             <EscrLoader
                 v-else
                 :loading="false"
@@ -60,6 +78,7 @@ import { BasePanel } from "../../../src/editor/mixins.js";
 import EditorToolbar from "../EditorToolbar/EditorToolbar.vue";
 import EscrLoader from "../Loader/Loader.vue";
 import EscrTable from "../Table/Table.vue";
+import PencilIcon from "../Icons/PencilIcon/PencilIcon.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import TextField from "../TextField/TextField.vue";
 import LockToggle from "./LockToggle.vue";
@@ -67,7 +86,15 @@ import TypeSwatch from "./TypeSwatch.vue";
 
 export default {
     name: "ElementsPanel",
-    components: { EditorToolbar, EscrLoader, EscrTable, SegmentedButtonGroup, TextField },
+    components: {
+        EditorToolbar,
+        EscrLoader,
+        EscrTable,
+        LockToggle,
+        PencilIcon,
+        SegmentedButtonGroup,
+        TextField,
+    },
     mixins: [BasePanel],
     data() {
         return {
@@ -94,14 +121,10 @@ export default {
             ];
         },
         headers() {
-            const headers = [
+            return [
                 { label: "Type", value: "typeDisplay", component: TypeSwatch },
                 { label: "ID", value: "displayId" },
             ];
-            if (this.activeTab === "regions") {
-                headers.push({ label: "Lock", value: "lockToggle", component: LockToggle });
-            }
-            return headers;
         },
         items() {
             if (!this.filterText) return this.unfilteredItems;
@@ -119,10 +142,6 @@ export default {
                     typeDisplay: {
                         name: region.type || "None",
                         color: this.regionColors[region.type || "None"] || "#808080",
-                    },
-                    lockToggle: {
-                        pk: region.pk,
-                        locked: !!region.locked,
                     },
                 }));
             }
@@ -163,6 +182,9 @@ export default {
             const mutation = this.activeTab === "regions" ? "regions/setSelected" : "lines/setSelected";
             this.$store.commit(mutation, item.pk);
         },
+        onEditLine(item) {
+            this.$store.dispatch("lines/toggleLineEdition", item);
+        },
         updateView() {},
     },
 };
@@ -176,6 +198,21 @@ export default {
 .content-container {
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+.escr-elements-edit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0.2rem;
+    cursor: pointer;
+    color: inherit;
+}
+
+.escr-elements-edit-button:hover {
+    color: var(--secondary);
 }
 </style>
 
