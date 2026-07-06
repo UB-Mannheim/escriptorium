@@ -54,6 +54,7 @@ const state = () => ({
     menuOpen: false,
     name: "",
     nextPage: "",
+    transcriptionFont: null,
     /** fonts: [{ pk, name, url, size_adjust }] */
     fonts: [],
     /**
@@ -123,6 +124,7 @@ const actions = {
                     guidelines: state.guidelines,
                     tags: state.tags.map((tag) => tag.pk),
                     tagName: "",
+                    transcriptionFont: state.transcriptionFont || "",
                 },
             },
             { root: true },
@@ -326,6 +328,7 @@ const actions = {
             commit("setName", data.name);
             commit("setSlug", data.slug);
             commit("setGuidelines", data.guidelines);
+            commit("setTranscriptionFont", data.transcription_font || null);
             const tagPks = data.tags.map((tag) => tag.pk);
             commit(
                 "setTags",
@@ -473,6 +476,7 @@ const actions = {
             if (data) {
                 commit("setName", name);
                 commit("setGuidelines", guidelines);
+                commit("setTranscriptionFont", transcriptionFont || null);
                 const tagPks = data.tags.map((tag) => tag.pk);
                 commit(
                     "setTags",
@@ -598,6 +602,9 @@ const mutations = {
     },
     setFonts(state, fonts) {
         state.fonts = fonts;
+    },
+    setTranscriptionFont(state, font) {
+        state.transcriptionFont = font || null;
     },
     setSharedWithGroups(state, groups) {
         state.sharedWithGroups = groups;

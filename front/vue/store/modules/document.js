@@ -145,6 +145,7 @@ const state = () => ({
     transcriptions: [],
     types: [],
     effectiveTranscriptionFont: null,
+    transcriptionFont: null,
 });
 
 const getters = {};
@@ -222,6 +223,7 @@ const actions = {
                     readDirection: state.readDirection,
                     tags: state.tags.map((tag) => tag.pk),
                     tagName: "",
+                    transcriptionFont: state.transcriptionFont || "",
                 },
             },
             { root: true },
@@ -335,6 +337,7 @@ const actions = {
             commit("setReadDirection", data.read_direction);
             commit("setLinePosition", data.line_offset);
             commit("setName", data.name);
+            commit("setTranscriptionFont", data.transcription_font || null);
             commit("setEffectiveTranscriptionFont", data.effective_transcription_font || null);
             commit("setPartsCount", data.parts_count);
             commit("setProjectSlug", data.project);
@@ -953,6 +956,8 @@ const actions = {
                 commit("setLinePosition", linePosition);
                 commit("setMainScript", mainScript);
                 commit("setReadDirection", readDirection);
+                commit("setTranscriptionFont", transcriptionFont || null);
+                commit("setEffectiveTranscriptionFont", documentResponse.data.effective_transcription_font || null);
                 commit(
                     "setTags",
                     documentResponse.data.tags.map((tag) => ({
@@ -1091,6 +1096,9 @@ const mutations = {
     },
     setEffectiveTranscriptionFont(state, font) {
         state.effectiveTranscriptionFont = font || null;
+    },
+    setTranscriptionFont(state, font) {
+        state.transcriptionFont = font || null;
     },
     setId(state, id) {
         state.id = id;
