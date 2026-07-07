@@ -24,5 +24,21 @@ docker compose restart nginx
 echo "==> Re-collecting static files with --clear to drop stale assets from the static/ volume"
 docker compose exec web python manage.py collectstatic --no-input --clear
 
+echo "==> Checking that all expected services are running"
+services="web channelserver db redis nginx celery-main celery-live celery-low-priority celery-gpu flower mail"
+down=""
+for svc in $services; do
+  state=$(docker compose ps --format '{{.State}}' "$svc" 2>/dev/null)
+  if [ "$state" != "running" ]; then
+    down="$down $svc"
+  fi
+done
+if [ -n "$down" ]; then
+  echo "==> WARNING: these services are not running:$down"
+  docker compose ps
+else
+  echo "==> All services running."
+fi
+
 echo "==> Done. Hard-refresh your browser (or open in a private window) -- filenames are not"
 echo "    content-hashed, so the browser cache will otherwise keep serving the old JS/CSS."
