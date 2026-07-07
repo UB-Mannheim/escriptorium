@@ -12,13 +12,27 @@
                     </h3>
                     <h1>Ontology Overview</h1>
                 </div>
-                <SegmentedButtonGroup
-                    color="secondary"
-                    name="ontology-overview-category"
-                    :disabled="loading"
-                    :options="categories"
-                    :on-change-selection="onSelectCategory"
-                />
+                <div class="escr-ontology-overview-controls">
+                    <SegmentedButtonGroup
+                        color="secondary"
+                        name="ontology-overview-category"
+                        :disabled="loading"
+                        :options="categories"
+                        :on-change-selection="onSelectCategory"
+                    />
+                    <div
+                        v-if="category === 'characters'"
+                        class="escr-ontology-overview-transcription"
+                    >
+                        <h3>Transcription:</h3>
+                        <EscrDropdown
+                            label="Change the transcription used for character stats"
+                            :disabled="loading"
+                            :options="transcriptionLevels"
+                            :on-change="onSelectTranscription"
+                        />
+                    </div>
+                </div>
                 <div
                     v-if="loading"
                     class="escr-ontology-overview-loading"
@@ -81,6 +95,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import EscrDropdown from "../../components/Dropdown/Dropdown.vue";
 import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTable from "../../components/Table/Table.vue";
@@ -89,7 +104,7 @@ import "./OntologyOverview.css";
 
 export default {
     name: "EscrOntologyOverview",
-    components: { EscrLoader, EscrPage, EscrTable, SegmentedButtonGroup },
+    components: { EscrDropdown, EscrLoader, EscrPage, EscrTable, SegmentedButtonGroup },
     props: {
         /**
          * The primary key/id of the current document.
@@ -113,6 +128,7 @@ export default {
             projectName: (state) => state.document.projectName,
             projectSlug: (state) => state.document.projectSlug,
             validTypes: (state) => state.document.types,
+            transcriptions: (state) => state.document.transcriptions,
             characters: (state) => state.characters.characters,
             selectedTranscription: (state) => state.transcription.selectedTranscription,
             partsByType: (state) => state.ontology.partsByType,
@@ -140,12 +156,19 @@ export default {
             return [
                 { label: "Regions", value: "regions" },
                 { label: "Lines", value: "lines" },
-                { label: "Text", value: "text" },
-                { label: "Images", value: "image" },
+                { label: "Text Annotations", value: "text" },
+                { label: "Image Annotations", value: "image" },
                 { label: "Characters", value: "characters" },
             ].map((category) => ({
                 ...category,
                 selected: this.category === category.value,
+            }));
+        },
+        transcriptionLevels() {
+            return (this.transcriptions || []).map((transcription) => ({
+                value: transcription.pk,
+                selected: parseInt(this.selectedTranscription) === parseInt(transcription.pk),
+                label: transcription.name,
             }));
         },
         types() {
@@ -170,8 +193,8 @@ export default {
             const headings = {
                 regions: "Region Types",
                 lines: "Line Types",
-                text: "Text Types",
-                image: "Image Types",
+                text: "Text Annotation Types",
+                image: "Image Annotation Types",
                 characters: "Characters",
             };
             return headings[this.category] || "Types";
@@ -232,6 +255,7 @@ export default {
         ...mapActions("alerts", ["addError"]),
         ...mapActions("document", [
             "setId",
+            "changeSelectedTranscription",
             "fetchDocument",
             "fetchDocumentStats",
             "fetchTranscriptionStats",
@@ -240,6 +264,10 @@ export default {
         onSelectCategory(category) {
             this.category = category;
             this.selectedType = null;
+        },
+        async onSelectTranscription(e) {
+            this.selectedType = null;
+            await this.changeSelectedTranscription(parseInt(e.target.value, 10));
         },
         async onSelectType(type) {
             this.selectedType = type;

@@ -8,6 +8,30 @@
     margin: 0;
 }
 
+.escr-ontology-overview-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.escr-ontology-overview-transcription {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.escr-ontology-overview-transcription h3 {
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* match the white select used by the transcription-layer dropdown in the editor
+   (see EditorTranscriptionDropdown.css), rather than the default grey dropdown */
+.escr-ontology-overview-transcription .escr-dropdown select {
+    background-color: var(--background1);
+}
+
 .escr-ontology-overview-loading {
     display: flex;
     justify-content: center;

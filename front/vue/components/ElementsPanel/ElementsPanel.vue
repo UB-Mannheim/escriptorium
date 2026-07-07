@@ -26,6 +26,7 @@
                         :on-change-selection="onSelectIdentifyingColumnMode"
                     />
                     <div class="escr-elements-filter">
+                        <SearchIcon />
                         <TextField
                             :label-visible="false"
                             label="Filter elements by type, ID, or transcription"
@@ -91,6 +92,7 @@ import EscrTable from "../Table/Table.vue";
 import LinesIcon from "../Icons/LinesIcon/LinesIcon.vue";
 import PencilIcon from "../Icons/PencilIcon/PencilIcon.vue";
 import RegionsIcon from "../Icons/RegionsIcon/RegionsIcon.vue";
+import SearchIcon from "../Icons/SearchIcon/SearchIcon.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
 import TagIcon from "../Icons/TagIcon/TagIcon.vue";
 import TextField from "../TextField/TextField.vue";
@@ -106,6 +108,7 @@ export default {
         EscrTable,
         LockToggle,
         PencilIcon,
+        SearchIcon,
         SegmentedButtonGroup,
         TextField,
     },
@@ -261,7 +264,27 @@ export default {
 
 <style scoped>
 .escr-elements-filter {
+    position: relative;
+    display: flex;
+    align-items: center;
     flex: 1 0 auto;
+}
+
+.escr-elements-filter svg {
+    position: absolute;
+    left: 0.6rem;
+    fill: var(--text2);
+    pointer-events: none;
+}
+
+.escr-elements-filter ::v-deep .escr-text-field {
+    width: 100%;
+    margin: 0;
+}
+
+.escr-elements-filter ::v-deep input {
+    margin: 0;
+    padding-left: 2.25rem;
 }
 
 .content-container {
@@ -294,6 +317,21 @@ export default {
 /* space out the tab switcher, identifying-column toggle, and filter in the toolbar */
 #elements-panel .escr-editortools-paneltools {
     gap: 0.75rem;
+}
+
+/* inactive segmented buttons should be white, matching the Segmentation panel's
+   toolbar button groups (see SegmentationToolbar.css), not the default grey */
+#elements-panel .escr-segmented-button-group input:not(:checked) + label,
+#elements-panel .escr-segmented-button-group input:not(:checked) + div > label {
+    background-color: var(--background1);
+}
+#elements-panel .escr-segmented-button-group input:not(:checked) + label:hover,
+#elements-panel .escr-segmented-button-group input:not(:checked) + div > label:hover {
+    background-color: var(--background2-dark);
+}
+#elements-panel .escr-segmented-button-group input:not(:checked) + label:active,
+#elements-panel .escr-segmented-button-group input:not(:checked) + div > label:active {
+    background-color: var(--background2-darker);
 }
 
 /* the lock/edit action should always be visible here, not just on row hover/focus */
