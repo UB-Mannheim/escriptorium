@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n bootstrap static %}
+{% load render_bundle from webpack_loader %}
 {% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
 {% block body %}
@@ -62,13 +63,13 @@
 
 {% block extrascript %}
     {% if not request.user.legacy_mode %}
-        <script src="{% static 'imagesPage.js' %}"></script>
+        {% render_bundle 'imagesPage' 'js' %}
     {% endif %}
 {% endblock extrascript %}
 
 {% block extrastyle %}
     {% if not request.user.legacy_mode %}
-        <link href="{% static 'imagesPage.css' %}" rel="stylesheet" type="text/css">
+        {% render_bundle 'imagesPage' 'css' %}
     {% endif %}
 {% endblock extrastyle %}
 
