@@ -1,6 +1,6 @@
 <template>
     <div
-        id="elements-panel"
+        id="overview-panel"
         class="col panel"
     >
         <EditorToolbar
@@ -12,7 +12,7 @@
                 <div class="escr-editortools-paneltools">
                     <SegmentedButtonGroup
                         color="secondary"
-                        name="elements-panel-tab"
+                        name="overview-panel-tab"
                         :disabled="disabled"
                         :options="tabs"
                         :on-change-selection="onSelectTab"
@@ -20,7 +20,7 @@
                     <SegmentedButtonGroup
                         v-if="activeTab === 'lines'"
                         color="secondary"
-                        name="elements-panel-identifying-column"
+                        name="overview-panel-identifying-column"
                         :disabled="disabled"
                         :options="identifyingColumnModes"
                         :on-change-selection="onSelectIdentifyingColumnMode"
@@ -101,7 +101,7 @@ import LockToggle from "./LockToggle.vue";
 import TypeSwatch from "./TypeSwatch.vue";
 
 export default {
-    name: "ElementsPanel",
+    name: "OverviewPanel",
     components: {
         EditorToolbar,
         EscrLoader,
@@ -310,47 +310,47 @@ export default {
 
 <style>
 /* tighter rows than the default compact table, to fit more elements per panel */
-#elements-panel .escr-table--compact tbody tr {
+#overview-panel .escr-table--compact tbody tr {
     height: 32px;
 }
 
 /* space out the tab switcher, identifying-column toggle, and filter in the toolbar */
-#elements-panel .escr-editortools-paneltools {
+#overview-panel .escr-editortools-paneltools {
     gap: 0.75rem;
 }
 
 /* inactive segmented buttons should be white, matching the Segmentation panel's
    toolbar button groups (see SegmentationToolbar.css), not the default grey */
-#elements-panel .escr-segmented-button-group input:not(:checked) + label,
-#elements-panel .escr-segmented-button-group input:not(:checked) + div > label {
+#overview-panel .escr-segmented-button-group input:not(:checked) + label,
+#overview-panel .escr-segmented-button-group input:not(:checked) + div > label {
     background-color: var(--background1);
 }
-#elements-panel .escr-segmented-button-group input:not(:checked) + label:hover,
-#elements-panel .escr-segmented-button-group input:not(:checked) + div > label:hover {
+#overview-panel .escr-segmented-button-group input:not(:checked) + label:hover,
+#overview-panel .escr-segmented-button-group input:not(:checked) + div > label:hover {
     background-color: var(--background2-dark);
 }
-#elements-panel .escr-segmented-button-group input:not(:checked) + label:active,
-#elements-panel .escr-segmented-button-group input:not(:checked) + div > label:active {
+#overview-panel .escr-segmented-button-group input:not(:checked) + label:active,
+#overview-panel .escr-segmented-button-group input:not(:checked) + div > label:active {
     background-color: var(--background2-darker);
 }
 
 /* the lock/edit action should always be visible here, not just on row hover/focus */
-#elements-panel .escr-table td.escr-row-actions * {
+#overview-panel .escr-table td.escr-row-actions * {
     opacity: 1;
 }
 
 /* breathing room between columns, which otherwise sit flush against each other */
-#elements-panel .escr-table th,
-#elements-panel .escr-table td {
+#overview-panel .escr-table th,
+#overview-panel .escr-table td {
     padding-right: 0.75rem;
 }
 
 /* truncate long transcription/ID content instead of wrapping or overflowing the row */
-#elements-panel .escr-table td.escr-elements-identifying-column {
+#overview-panel .escr-table td.escr-elements-identifying-column {
     max-width: 0;
     width: 100%;
 }
-#elements-panel .escr-table td.escr-elements-identifying-column span {
+#overview-panel .escr-table td.escr-elements-identifying-column span {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;

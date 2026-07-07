@@ -222,8 +222,8 @@
                                 type="button"
                                 @mousedown="onAddEditorPanel('elements')"
                             >
-                                <RegionsIcon />
-                                <span>Elements</span>
+                                <TableIcon />
+                                <span>Overview</span>
                             </button>
                         </li>
                     </ul>
@@ -240,10 +240,10 @@ import CursorPanIcon from "../Icons/CursorPanIcon/CursorPanIcon.vue";
 import CursorSelectIcon from "../Icons/CursorSelectIcon/CursorSelectIcon.vue";
 import EscrButton from "../Button/Button.vue";
 import ImageAnnotationIcon from "../Icons/ImageAnnotationIcon/ImageAnnotationIcon.vue";
-import RegionsIcon from "../Icons/RegionsIcon/RegionsIcon.vue";
 import RotateCCWIcon from "../Icons/RotateCCWIcon/RotateCCWIcon.vue";
 import RotateCWIcon from "../Icons/RotateCWIcon/RotateCWIcon.vue";
 import SegmentIcon from "../Icons/SegmentIcon/SegmentIcon.vue";
+import TableIcon from "../Icons/TableIcon/TableIcon.vue";
 import TextPanelIcon from "../Icons/TextPanelIcon/TextPanelIcon.vue";
 import ToggleButton from "../ToggleButton/ToggleButton.vue";
 import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
@@ -261,10 +261,10 @@ export default {
         CursorSelectIcon,
         EscrButton,
         ImageAnnotationIcon,
-        RegionsIcon,
         RotateCCWIcon,
         RotateCWIcon,
         SegmentIcon,
+        TableIcon,
         TextPanelIcon,
         ToggleButton,
         TranscribeIcon,

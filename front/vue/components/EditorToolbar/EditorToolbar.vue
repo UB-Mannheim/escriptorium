@@ -78,8 +78,8 @@
                                     index: panelIndex, panel: 'elements'
                                 })"
                             >
-                                <RegionsIcon />
-                                <span>Elements</span>
+                                <TableIcon />
+                                <span>Overview</span>
                             </button>
                         </li>
                     </ul>
@@ -116,9 +116,9 @@
 import ChevronDownIcon from "../Icons/ChevronDownIcon/ChevronDownIcon.vue";
 import EscrButton from "../Button/Button.vue";
 import ImageAnnotationIcon from "../Icons/ImageAnnotationIcon/ImageAnnotationIcon.vue";
-import RegionsIcon from "../Icons/RegionsIcon/RegionsIcon.vue";
 import RemovePanelIcon from "../Icons/RemovePanelIcon/RemovePanelIcon.vue";
 import SegmentIcon from "../Icons/SegmentIcon/SegmentIcon.vue";
+import TableIcon from "../Icons/TableIcon/TableIcon.vue";
 import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
 import TextPanelIcon from "../Icons/TextPanelIcon/TextPanelIcon.vue";
 import { Dropdown as VDropdown, Menu as VMenu } from "floating-vue";
@@ -131,9 +131,9 @@ export default {
         ChevronDownIcon,
         EscrButton,
         ImageAnnotationIcon,
-        RegionsIcon,
         RemovePanelIcon,
         SegmentIcon,
+        TableIcon,
         TranscribeIcon,
         TextPanelIcon,
         VDropdown,
@@ -182,7 +182,7 @@ export default {
                 case "source":
                     return ImageAnnotationIcon;
                 case "elements":
-                    return RegionsIcon;
+                    return TableIcon;
                 default:
                     return null;
             }
@@ -198,7 +198,7 @@ export default {
                 case "source":
                     return "text annotation";
                 case "elements":
-                    return "elements";
+                    return "overview";
                 default:
                     return null;
             }
