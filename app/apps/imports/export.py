@@ -1,5 +1,9 @@
+import hashlib
+import io
+import json
 import os.path
 import re
+import tarfile
 import time
 import zipfile
 from datetime import datetime
@@ -11,13 +15,14 @@ from django.db.models import Avg, Prefetch
 from django.template import loader
 from django.utils.text import slugify
 
-from core.models import Block
+from core.models import Block, Transcription
 
 TEXT_FORMAT = "text"
 PAGEXML_FORMAT = "pagexml"
 ALTO_FORMAT = "alto"
 OPENITI_MARKDOWN_FORMAT = "openitimarkdown"
 TEI_XML_FORMAT = "teixml"
+JSON_FORMAT = "json"
 
 
 class EsZipFile(zipfile.ZipFile):
@@ -38,10 +43,18 @@ class BaseExporter:
         region_types,
         include_images,
         include_characters,
-        user,
-        document,
-        report,
-        transcription,
+        user=None,
+        document=None,
+        report=None,
+        transcription=None,
+        include_metadata=False,
+        include_models=False,
+        include_graph=False,
+        include_annotations=False,
+        include_comments=False,
+        all_transcriptions=False,
+        anonymize=False,
+        archive_format="zip",
     ):
         self.part_pks = part_pks
         self.region_types = region_types
@@ -51,6 +64,18 @@ class BaseExporter:
         self.document = document
         self.report = report
         self.transcription = transcription
+        self.include_metadata = include_metadata
+        self.include_models = include_models
+        self.include_graph = include_graph
+        self.include_annotations = include_annotations
+        self.include_comments = include_comments
+        self.all_transcriptions = all_transcriptions
+        # When True, JsonExporter (and any future format-specific exporter)
+        # replaces user identifiers with opaque tokens instead of usernames.
+        self.anonymize = anonymize
+        # Container format for the packaged archive (JSON exporter only).
+        # Accepted values: "zip" (default), "tar.gz".
+        self.archive_format = archive_format if archive_format in ("zip", "tar.gz") else "zip"
 
         self.prepare_for_rendering()
 
@@ -199,6 +224,367 @@ class AltoExporter(XMLTemplateExporter):
     template_path = "export/alto.xml"
 
 
+class JsonExporter(BaseExporter):
+    file_format = JSON_FORMAT
+    file_extension = "json"
+
+    def _anonymize_user(self, username):
+        """When self.anonymize is True, replace a username with a stable
+        opaque token; otherwise return the username unchanged. The token is
+        deterministic per (document, username) pair so re-imports keep the
+        cross-record identity but a name never leaves the export.
+        """
+        if not username or not self.anonymize:
+            return username
+        key = ("%s:%s" % (self.document.pk, username)).encode("utf-8")
+        return "user_" + hashlib.sha256(key).hexdigest()[:12]
+
+    def _serialize_document_metadata(self):
+        return [
+            {
+                "key": md.key.name,
+                "value": md.value,
+            }
+            for md in self.document.documentmetadata_set.select_related("key").all()
+        ]
+
+    def _serialize_part_metadata(self, part):
+        return [
+            {
+                "key": md.key.name,
+                "value": md.value,
+            }
+            for md in part.metadata.select_related("key").all()
+        ]
+
+    def _serialize_transcription(self, line):
+        """
+        Return the selected transcription for a line if available.
+        Works with the prefetch_transcription() helper, which stores the result
+        on line.transcription as a list.
+        """
+        lt = None
+
+        prefetched = getattr(line, "transcription", None)
+        if prefetched:
+            lt = prefetched[0]
+        else:
+            lt = line.transcriptions.filter(
+                transcription=self.transcription
+            ).first()
+
+        if not lt:
+            return None
+
+        data = {
+            "pk": lt.pk,
+            "transcription_pk": lt.transcription_id,
+            "content": lt.content,
+            "avg_confidence": lt.avg_confidence,
+            "modified_by": self._anonymize_user(lt.version_author) or None,
+            "modified_at": lt.version_updated_at.isoformat() if lt.version_updated_at else None,
+            "history": [
+                {
+                    "content": v.get("data", {}).get("content"),
+                    "author": self._anonymize_user(v.get("author")),
+                    "source": v.get("source"),
+                    "created_at": v.get("created_at"),
+                    "updated_at": v.get("updated_at"),
+                }
+                for v in (lt.versions or [])
+            ],
+        }
+
+        if self.include_characters:
+            data["characters"] = lt.graphs
+
+        if self.include_graph:
+            data["graphs"] = lt.graphs
+
+        return data
+
+    def _serialize_line(self, line):
+        return {
+            "pk": line.pk,
+            "external_id": line.external_id,
+            "order": line.order,
+            "typology": {
+                "pk": line.typology_id,
+                "name": line.typology.name if line.typology else None,
+            },
+            "baseline": line.baseline,
+            "mask": line.mask,
+            "box": line.get_box(),
+            "block_pk": line.block_id,
+            "transcription": self._serialize_transcription(line),
+        }
+
+    def _serialize_block(self, block):
+        lines = []
+        for line in getattr(block, "prefetched_lines", []):
+            lines.append(self._serialize_line(line))
+
+        return {
+            "pk": block.pk,
+            "external_id": block.external_id,
+            "order": block.order,
+            "typology": {
+                "pk": block.typology_id,
+                "name": block.typology.name if block.typology else None,
+            },
+            "box": block.box,
+            "bbox": block.coordinates_box,
+            "width": block.width,
+            "height": block.height,
+            "lines": lines,
+        }
+
+    def _serialize_part(self, part, include_orphans, region_filters):
+        Line = apps.get_model("core", "Line")
+
+        blocks_qs = (
+            part.blocks.filter(region_filters)
+            .annotate(avglo=Avg("lines__order"))
+            .order_by("avglo", "order", "pk")
+            .prefetch_related(
+                Prefetch(
+                    "lines",
+                    queryset=Line.objects.prefetch_transcription(self.transcription)
+                    .select_related("typology", "block")
+                    .order_by("order", "pk"),
+                    to_attr="prefetched_lines",
+                )
+            )
+            .select_related("typology")
+        )
+
+        regions = [self._serialize_block(block) for block in blocks_qs]
+
+        orphan_lines = []
+        if include_orphans:
+            orphan_qs = (
+                part.lines.prefetch_transcription(self.transcription)
+                .filter(block=None)
+                .select_related("typology", "block")
+                .order_by("order", "pk")
+            )
+            orphan_lines = [self._serialize_line(line) for line in orphan_qs]
+
+        image_data = {
+            "filename": part.filename,
+            "original_filename": part.original_filename,
+            "uri": part.image.url if getattr(part, "image", None) and self.include_images else None,
+            "width": getattr(part.image, "width", None) if getattr(part, "image", None) else None,
+            "height": getattr(part.image, "height", None) if getattr(part, "image", None) else None,
+            "size": [
+                getattr(part.image, "width", None),
+                getattr(part.image, "height", None),
+            ] if getattr(part, "image", None) else None,
+        }
+
+        return {
+            "pk": part.pk,
+            "title": part.title,
+            "name": part.name,
+            "filename": part.filename,
+            "order": part.order,
+            "workflow_state": part.workflow_state,
+            "transcription_progress": part.transcription_progress,
+            "typology": {
+                "pk": part.typology_id,
+                "name": part.typology.name if part.typology else None,
+            },
+            "image": image_data,
+            "metadata": self._serialize_part_metadata(part),
+            "regions": regions,
+            "orphan_lines": orphan_lines,
+        }
+
+    def render(self):
+        DocumentPart = apps.get_model("core", "DocumentPart")
+
+        region_types = list(self.region_types) if self.region_types else []
+        include_orphans = "Orphan" in region_types
+        region_filters = Block.get_filters(
+            block_types=list(region_types),
+            filtering_lines=False,
+        )
+
+        parts = (
+            DocumentPart.objects.filter(document=self.document, pk__in=self.part_pks)
+            .select_related("typology")
+            .prefetch_related("metadata__key")
+            .order_by("order", "pk")
+        )
+
+        if self.all_transcriptions:
+            transcriptions = Transcription.objects.filter(document=self.document)
+        else:
+            transcriptions = [self.transcription]
+
+        payload = {
+            "document": {
+                "pk": self.document.pk,
+                "name": self.document.name,
+                "read_direction": self.document.read_direction,
+                "line_offset": self.document.line_offset,
+                "main_script": self.document.main_script.name if self.document.main_script else None,
+                "valid_block_types": [
+                    {"pk": bt.pk, "name": bt.name}
+                    for bt in self.document.valid_block_types.all().order_by("name")
+                ],
+                "valid_line_types": [
+                    {"pk": lt.pk, "name": lt.name}
+                    for lt in self.document.valid_line_types.all().order_by("name")
+                ],
+            },
+            "export": {
+                "file_format": self.file_format,
+                "transcriptions": [
+                    {"pk": t.pk, "name": t.name}
+                    for t in transcriptions
+                ],
+                "part_pks": list(self.part_pks),
+                "region_types": region_types,
+                "include_images": self.include_images,
+                "include_characters": self.include_characters,
+            },
+            "parts": [
+                self._serialize_part(part, include_orphans, region_filters)
+                for part in parts
+            ],
+        }
+
+        if self.include_metadata:
+            payload["document"]["metadata"] = self._serialize_document_metadata()
+
+        if self.include_models:
+            payload["models"] = [
+                {
+                    "pk": m.pk,
+                    "name": m.name,
+                    "job": m.job,
+                }
+                for m in self.document.ocr_models.all()
+            ]
+
+        if self.include_annotations:
+            payload["annotations"] = self._serialize_annotations(parts)
+
+        if self.include_comments:
+            payload["comments"] = self._serialize_comments(parts)
+
+        json_content = json.dumps(payload, ensure_ascii=False, indent=2)
+
+        # Collect (arcname, absolute-path-or-None-for-json) entries.
+        # The JSON payload is always the first entry; images (when requested)
+        # follow with a dedup pass for duplicate basenames.
+        json_arcname = os.path.basename(self.filepath)
+        entries = [(json_arcname, None)]  # None => write json_content in-memory
+        if self.include_images:
+            seen = set()
+            for part in parts:
+                if not part.image:
+                    continue
+                try:
+                    image_path = part.image.path
+                except (ValueError, NotImplementedError):
+                    continue
+                if not os.path.exists(image_path):
+                    continue
+                arcname = os.path.basename(part.image.name)
+                if arcname in seen:
+                    base, ext = os.path.splitext(arcname)
+                    arcname = f"{base}_{part.pk}{ext}"
+                seen.add(arcname)
+                entries.append((arcname, image_path))
+
+        archive_path = self._build_archive(entries, json_content)
+
+        # Clean up the standalone json placeholder if it lingered.
+        if os.path.exists(self.filepath) and self.filepath != archive_path:
+            try:
+                os.remove(self.filepath)
+            except OSError:
+                pass
+        self.filepath = archive_path
+
+    def _build_archive(self, entries, json_content):
+        """Pack entries into the container format the user picked.
+
+        `entries` is a list of (arcname, path). When `path` is None the
+        entry's content is `json_content` (written in-memory).
+        Returns the on-disk archive path (self.filepath with a rewritten
+        extension: .zip or .tar.gz).
+        """
+        base_path = self.filepath.rsplit(".", 1)[0]
+        if self.archive_format == "tar.gz":
+            archive_path = base_path + ".tar.gz"
+            with tarfile.open(archive_path, "w:gz") as tf:
+                for arcname, path in entries:
+                    if path is None:
+                        data = json_content.encode("utf-8")
+                        info = tarfile.TarInfo(name=arcname)
+                        info.size = len(data)
+                        info.mode = 0o644
+                        tf.addfile(info, io.BytesIO(data))
+                    else:
+                        tf.add(path, arcname=arcname)
+        else:
+            archive_path = base_path + ".zip"
+            with EsZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                for arcname, path in entries:
+                    if path is None:
+                        zf.writestr(arcname, json_content)
+                    else:
+                        zf.write(path, arcname)
+        return archive_path
+
+    def _serialize_annotations(self, parts):
+        ImageAnnotation = apps.get_model("core", "ImageAnnotation")
+        TextAnnotation = apps.get_model("core", "TextAnnotation")
+
+        annotations = []
+        for part in parts:
+            for ann in ImageAnnotation.objects.filter(part=part).select_related("taxonomy").prefetch_related("components__component"):
+                annotations.append({
+                    "type": "image",
+                    "part_pk": part.pk,
+                    "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
+                    "w3c": ann.as_w3c(),
+                })
+            for ann in TextAnnotation.objects.filter(part=part).select_related("taxonomy", "start_line", "end_line").prefetch_related("components__component"):
+                annotations.append({
+                    "type": "text",
+                    "part_pk": part.pk,
+                    "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
+                    "w3c": ann.as_w3c(),
+                })
+        return annotations
+
+    def _serialize_comments(self, parts):
+        ImageAnnotation = apps.get_model("core", "ImageAnnotation")
+        TextAnnotation = apps.get_model("core", "TextAnnotation")
+
+        comments = []
+        for part in parts:
+            for ann in ImageAnnotation.objects.filter(part=part, comments__isnull=False).exclude(comments=[]).select_related("taxonomy"):
+                comments.append({
+                    "type": "image",
+                    "part_pk": part.pk,
+                    "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
+                    "comments": ann.comments,
+                })
+            for ann in TextAnnotation.objects.filter(part=part, comments__isnull=False).exclude(comments=[]).select_related("taxonomy"):
+                comments.append({
+                    "type": "text",
+                    "part_pk": part.pk,
+                    "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
+                    "comments": ann.comments,
+                })
+        return comments
+
+
 class OpenITIMARkdownExporter(BaseExporter):
     file_format = OPENITI_MARKDOWN_FORMAT
     file_extension = "zip"
@@ -269,6 +655,8 @@ ENABLED_EXPORTERS = {
     TEXT_FORMAT: {"class": TextExporter, "label": "Text"},
     PAGEXML_FORMAT: {"class": PageXMLExporter, "label": "PAGE"},
     ALTO_FORMAT: {"class": AltoExporter, "label": "ALTO"},
+    TEI_XML_FORMAT: {"class": TEIXMLExporter, "label": "TEI XML"},
+    JSON_FORMAT: {"class": JsonExporter, "label": "JSON"},
 }
 
 if settings.EXPORT_OPENITI_MARKDOWN_ENABLED:
