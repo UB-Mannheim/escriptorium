@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block head_title %}{% trans "Downloads" %}{% endblock %}
+
+{% block body %}
+<h1>{% trans "Downloads" %}</h1>
+<div id="vue-downloads"></div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'downloads.js' %}"></script>
+{% endblock %}

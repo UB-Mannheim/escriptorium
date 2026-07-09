@@ -1,21 +1,23 @@
 import json
 import logging
+import os
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
 from django.db.models import Count, F, Prefetch, Q
-from django.http import HttpResponseRedirect
+from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views.decorators.cache import cache_page
 from django_filters import Filter, FilterSet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status
+from rest_framework import filters, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
@@ -44,6 +46,7 @@ from api.serializers import (
     DocumentSerializer,
     DocumentTagSerializer,
     DocumentTasksSerializer,
+    DownloadSerializer,
     FontSerializer,
     ImageAnnotationSerializer,
     ImportSerializer,
@@ -104,7 +107,7 @@ from core.models import (
 from core.tasks import recalculate_masks
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
-from reporting.models import TaskGroup, TaskReport
+from reporting.models import Download, TaskGroup, TaskReport
 from users.consumers import send_event
 from users.models import Group, User
 from versioning.models import NoChangeException
@@ -1645,3 +1648,51 @@ class VirtualCollectionViewSet(ModelViewSet):
             user=request.user,
         )
         return Response({"status": "training queued", "model_id": serializer.model.pk})
+
+
+class DownloadViewSet(viewsets.ReadOnlyModelViewSet):
+    """List / retrieve / delete / stream the current user's Downloads.
+
+    Lookup is by opaque fingerprint (not by DB pk) so URLs stay
+    non-enumerable. Only the owning user can see their downloads.
+    """
+    queryset = Download.objects.all()
+    serializer_class = DownloadSerializer
+    lookup_field = 'fingerprint'
+    # Allow DELETE without registering it as a ModelViewSet action
+    http_method_names = ['get', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        """User-initiated deletion: remove the row and try to unlink the file."""
+        obj = self.get_object()
+        path = obj.file_path
+        obj.delete()
+        if path and os.path.exists(path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='file')
+    def file(self, request, fingerprint=None):
+        """Stream the archive file. Bumps accessed_at + accessed_count."""
+        obj = self.get_object()
+        if obj.is_expired():
+            raise Http404("download expired")
+        if not os.path.exists(obj.file_path):
+            raise Http404("file missing on disk")
+        obj.accessed_at = timezone.now()
+        obj.accessed_count = (obj.accessed_count or 0) + 1
+        obj.save(update_fields=['accessed_at', 'accessed_count'])
+        response = FileResponse(
+            open(obj.file_path, 'rb'),
+            content_type=obj.mime_type or 'application/octet-stream',
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename="%s"' % os.path.basename(obj.file_path)
+        )
+        return response

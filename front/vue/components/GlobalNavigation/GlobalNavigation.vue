@@ -90,7 +90,7 @@
                     aria-label="expand task monitoring and usage menu"
                     :class="{
                         'escr-globalnav-icon': true,
-                        'escr-globalnav-icon-active': ['/tasks/', '/quotas/'].some(
+                        'escr-globalnav-icon-active': ['/tasks/', '/quotas/', '/downloads/'].some(
                             (page) => location.href.endsWith(page)
                         ),
                     }"
@@ -109,6 +109,11 @@
                         <li>
                             <a href="/quotas/">
                                 <span>Task Usage</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/downloads/">
+                                <span>Downloads</span>
                             </a>
                         </li>
                     </ul>
