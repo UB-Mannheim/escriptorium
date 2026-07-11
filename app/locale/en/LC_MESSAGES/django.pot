@@ -11,10 +11,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: eScriptorium 0.9.0\n"
+"Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-23 07:04+0000\n"
-"PO-Revision-Date: 2022-04-02 06:09+0000\n"
+"POT-Creation-Date: 2026-07-11 16:59+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English <https://hosted.weblate.org/projects/escriptorium/>\n"
 "Language: en\n"
@@ -22,7 +22,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Weblate 4.14-dev\n"
 
 #: apps/api/serializers.py
 msgid "PDF is not a valid image, please use the dedicated Import function."
@@ -217,6 +216,16 @@ msgstr ""
 msgid "Max offset and beam size cannot both be non-zero."
 msgstr ""
 
+#: apps/api/serializers.py
+msgid ""
+"Either use model_name to create a new model, or provide a base model pk to "
+"retrain."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "You can't overwrite the existing file of a model you don't own."
+msgstr ""
+
 #: apps/api/views.py apps/core/models.py
 msgid "Canceled."
 msgstr ""
@@ -308,10 +317,6 @@ msgstr ""
 #: apps/core/forms.py
 msgid ""
 "You need to choose a model to override if the override option is checked."
-msgstr ""
-
-#: apps/core/forms.py
-msgid "You can't overwrite the existing file of a model you don't own."
 msgstr ""
 
 #: apps/core/forms.py
@@ -491,6 +496,10 @@ msgid "Couldn't find the training task."
 msgstr ""
 
 #: apps/core/tasks.py
+msgid "D-FINE model fine-tuning is not supported at the moment."
+msgstr ""
+
+#: apps/core/tasks.py
 msgid "Training didn't get better results than base model!"
 msgstr ""
 
@@ -515,15 +524,15 @@ msgid "Segmentation done!"
 msgstr ""
 
 #: apps/core/tasks.py
-msgid "Something went wrong during the training process!"
-msgstr ""
-
-#: apps/core/tasks.py
 msgid "Something went wrong during the transcription!"
 msgstr ""
 
 #: apps/core/tasks.py
 msgid "Transcription done!"
+msgstr ""
+
+#: apps/core/tasks.py
+msgid "Something went wrong during the training process!"
 msgstr ""
 
 #: apps/core/tasks.py
@@ -616,6 +625,11 @@ msgstr ""
 
 #: apps/core/views.py
 msgid "Document was successfully migrated to the selected project!"
+msgstr ""
+
+#: apps/imports/forms.py
+#, python-brace-format
+msgid "Failed to download the document pointed to by the given uri ({error})."
 msgstr ""
 
 #: apps/imports/forms.py
@@ -740,6 +754,7 @@ msgid "METS Import"
 msgstr ""
 
 #: apps/imports/parsers.py
+#, python-brace-format
 msgid "No match found for file {} with filename \"{}\"."
 msgstr ""
 
@@ -865,6 +880,54 @@ msgid_plural "%d invitations were resent."
 msgstr[0] ""
 msgstr[1] ""
 
+#: apps/users/admin.py
+msgid "You do not have permission to send invitations."
+msgstr ""
+
+#: apps/users/admin.py
+#, python-brace-format
+msgid "Successfully sent {count} invitations."
+msgstr ""
+
+#: apps/users/admin.py
+#, python-brace-format
+msgid " The following emails were invalid and were skipped: {emails}"
+msgstr ""
+
+#: apps/users/admin.py
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Bulk Invite"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "CSV file with emails"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Upload a CSV file with one email per line."
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Emails"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Enter one email per line."
+msgstr ""
+
+#: apps/users/forms.py apps/users/models.py
+#: escriptorium/templates/users/invitation_form.html
+msgid "Team"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Optional: set an expiry date for these accounts"
+msgstr ""
+
+#: apps/users/forms.py
+msgid "Please provide either a CSV file or enter emails directly."
+msgstr ""
+
 #: apps/users/forms.py
 msgid "Email or username."
 msgstr ""
@@ -914,10 +977,6 @@ msgid "Accepted"
 msgstr ""
 
 #: apps/users/models.py
-msgid "Team"
-msgstr ""
-
-#: apps/users/models.py
 #, python-brace-format
 msgid "{username} accepted your invitation!"
 msgstr ""
@@ -927,7 +986,26 @@ msgid "Invitation sent successfully!"
 msgstr ""
 
 #: apps/users/views.py
+msgid "You do not have permission to invite users."
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Successfully sent %(count)d invitations."
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Skipped invalid: %(emails)s"
+msgstr ""
+
+#: apps/users/views.py
 msgid "Successfully registered, you can now log in!"
+msgstr ""
+
+#: apps/users/views.py
+#, python-format
+msgid "Invitation sent to %(email)s."
 msgstr ""
 
 #: apps/users/views.py
@@ -966,6 +1044,153 @@ msgstr ""
 msgid "Message successfully sent."
 msgstr ""
 
+#: contributors_example/contributors_list.html
+msgid "Steering Committee"
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid ""
+"The Steering Committee has met once a week since the project’s inception and "
+"serves primarily to coordinate the work of the different contributors and to "
+"make short-term and strategic decisions about the software, its design and "
+"implementation."
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid "Founding Team"
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid ""
+"The ‘core’ team are the founding members of the eScriptorium project and "
+"have led its development and implementation since the beginning. The two "
+"developers have worked full-time on kraken and eScriptorium since the "
+"beginning, and the two co-directors have been primarily responsible for "
+"coordinating the development, contributions and funding applications."
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid "Former Committee Members"
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid "Current & Former Intern Students"
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid ""
+"The following have contributed as intern students (in alphabetical order):"
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid "Contributors to Source Code"
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid ""
+"Being Free and Open-Source software, the source code of eScriptorium has "
+"benefitted from many contributions, ranging from specific bug-fixes or the "
+"implementation of a given feature through to several years of full-time "
+"development. The following list is correct at the time of writing, in "
+"alphabetical order by last name, but more details and any updates can also "
+"be seen from the project GitLab repository."
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid "Other Contributors"
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid ""
+"We have done our best to note the contributors to the eScriptorium software, "
+"but if you or anyone you know is missing then do please let us know."
+msgstr ""
+
+#: contributors_example/contributors_list.html
+msgid ""
+"We are also very grateful for other types of contribution that is not "
+"specifically related to the software. We cannot list all of these here, but "
+"they include the publication of open datasets (such as those on HTR-United), "
+"open models (particularly those on the kraken open model repository), "
+"tickets reporting bugs and improvements, writing documentation, organising "
+"training sessions, producing plugins and other tools to use with kraken and "
+"eScriptorium, and so on."
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid "Institutions & Funding"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid ""
+"In addition to the support of AOROC and the EPHE, eScriptorium has "
+"benefitted from a significant number of institutions and funding sources, "
+"including the following:"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid "Funded salaries of two developers over multiple years…"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid "Funded the acquisition of HPC hardware and servers…"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid "Funded the development of the virtual keyboard with Teklia."
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid ""
+"Funded salaries of two developers over multiple years, as well as sustaining "
+"the HPC…"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid "Funded advanced line-joining interface…"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid "Funded UI development…"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid "Funded SLURM-based task execution…"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid "Other Contributions"
+msgstr ""
+
+#: contributors_example/credits_list.html
+msgid ""
+"We are also very grateful for other types of contribution, such as open "
+"datasets (particularly those on HTR-United), open models, tickets reporting "
+"bugs and improvements, documentation, organising training sessions, "
+"producing plugins and other tools…"
+msgstr ""
+
+#: contributors_example/instance_contact.html escriptorium/templates/base.html
+#: escriptorium/templates/users/contactus.html
+msgid "Contact"
+msgstr ""
+
+#: contributors_example/instance_contact.html
+msgid "Request an account"
+msgstr ""
+
+#: contributors_example/instance_contact.html
+msgid "Report an issue"
+msgstr ""
+
+#: contributors_example/service_hosting.html
+msgid "Service hosted and maintained by"
+msgstr ""
+
+#: contributors_example/service_hosting.html
+msgid "Inria Paris"
+msgstr ""
+
 #: escriptorium/settings.py
 msgid "English"
 msgstr ""
@@ -986,12 +1211,22 @@ msgstr ""
 msgid "Page not found."
 msgstr ""
 
-#: escriptorium/templates/base.html
-msgid "About"
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "OR"
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/bulk_invite.html
+#: escriptorium/templates/users/invitation_form.html
+msgid "Send Invitations"
+msgstr ""
+
+#: escriptorium/templates/admin/users/invitation/change_list.html
+msgid "Add invitation"
 msgstr ""
 
 #: escriptorium/templates/base.html
-msgid "Contact"
+msgid "About"
 msgstr ""
 
 #: escriptorium/templates/base.html
@@ -1060,8 +1295,34 @@ msgstr ""
 msgid "Login"
 msgstr ""
 
+#: escriptorium/templates/core/contributors.html
+#: escriptorium/templates/core/home.html
+msgid "Contributors"
+msgstr ""
+
+#: escriptorium/templates/core/contributors.html
+msgid "The contributors list will be available here soon."
+msgstr ""
+
+#: escriptorium/templates/core/credits.html
+#: escriptorium/templates/core/home.html
+msgid "Credits"
+msgstr ""
+
+#: escriptorium/templates/core/credits.html
+msgid ""
+"eScriptorium and kraken are Free and Open-Source Software developed by a "
+"team in the laboratoire AOROC (CNRS PSL, UMR 8546) at the École Pratique des "
+"Hautes Études – Université PSL."
+msgstr ""
+
+#: escriptorium/templates/core/credits.html
+msgid "The credits list will be available here soon."
+msgstr ""
+
 #: escriptorium/templates/core/document_dashboard.html
 #: escriptorium/templates/core/project_dashboard.html
+#: escriptorium/templates/core/training.html
 msgid ""
 "This page is not available in legacy mode. Visit your user settings to "
 "disable legacy mode."
@@ -1480,6 +1741,31 @@ msgid ""
 msgstr ""
 
 #: escriptorium/templates/core/home.html
+msgid "Service originally developed by"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "École Pratique des Hautes Études (EPHE)"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "See"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "contributors history"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "or"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "credits"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
 msgid "Resources"
 msgstr ""
 
@@ -1488,11 +1774,35 @@ msgid "Tutorial"
 msgstr ""
 
 #: escriptorium/templates/core/home.html
-msgid "eScriptorium open source code"
+msgid "User mailing list"
 msgstr ""
 
 #: escriptorium/templates/core/home.html
-msgid "eScriptorium Blog"
+msgid "Community Chat"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "General Website"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "Blog"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "eScripta Blog"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "For Developers"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "eScriptorium Application"
+msgstr ""
+
+#: escriptorium/templates/core/home.html
+msgid "Acknowledgements"
 msgstr ""
 
 #: escriptorium/templates/core/home.html
@@ -1501,6 +1811,13 @@ msgstr ""
 
 #: escriptorium/templates/core/migrate/migrate_document.html
 msgid "Migrate"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/main.html
+#, python-format
+msgid ""
+"Please be aware that the epoch versions of the models will only be available "
+"for %(MODELS_VERSION_RETENTION)s days."
 msgstr ""
 
 #: escriptorium/templates/core/models_list/main.html
@@ -1547,7 +1864,7 @@ msgid "Stop sharing"
 msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
-msgid "or"
+msgid "No shares on this model."
 msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/main.html
@@ -1820,6 +2137,10 @@ msgstr ""
 
 #: escriptorium/templates/core/share/share_base.html
 msgid "Share"
+msgstr ""
+
+#: escriptorium/templates/core/training.html
+msgid "Model Training"
 msgstr ""
 
 #: escriptorium/templates/core/wizards/_base.html
@@ -2226,6 +2547,10 @@ msgid "Document report"
 msgstr ""
 
 #: escriptorium/templates/reporting/document_report.html
+msgid "Transcription"
+msgstr ""
+
+#: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Data metrics"
 msgstr ""
@@ -2504,6 +2829,16 @@ msgstr ""
 msgid "You don't have any task report yet."
 msgstr ""
 
+#: escriptorium/templates/users/account_expired.html
+msgid "Account Expired"
+msgstr ""
+
+#: escriptorium/templates/users/account_expired.html
+msgid ""
+"Your account has expired. Please reach out to the person who invited you for "
+"assistance."
+msgstr ""
+
 #: escriptorium/templates/users/contactus.html
 #: escriptorium/templates/users/invitation_form.html
 msgid "Send"
@@ -2593,7 +2928,35 @@ msgid "Signup"
 msgstr ""
 
 #: escriptorium/templates/users/invitation_form.html
+msgid "Invite Users"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Invite mode"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Single"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Bulk"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
 msgid "Recipient's information"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Upload CSV file"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Paste emails (one per line)"
+msgstr ""
+
+#: escriptorium/templates/users/invitation_form.html
+msgid "Expiry date (optional)"
 msgstr ""
 
 #: escriptorium/templates/users/profile.html
@@ -2706,5 +3069,9 @@ msgid "Privacy Policy"
 msgstr ""
 
 #: homepage/additional_heading.html
-msgid "eScriptorium for OCR-BW"
+msgid "eScriptorium (University of Mannheim)"
+msgstr ""
+
+#: homepage/additional_heading.html
+msgid "This instance is only for testing (not public)"
 msgstr ""
