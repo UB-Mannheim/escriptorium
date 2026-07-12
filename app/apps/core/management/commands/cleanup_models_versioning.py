@@ -3,6 +3,7 @@ import logging
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from core.models import OcrModel
 
@@ -28,7 +29,7 @@ class Command(BaseCommand):
             logger.info("MODELS_VERSION_RETENTION set to 0. Nothing will be cleaned up.")
             return
 
-        today = datetime.datetime.now()
+        today = timezone.now()
         older_than = today - datetime.timedelta(days=settings.MODELS_VERSION_RETENTION)
         to_be_cleaned = OcrModel.objects.filter(version_updated_at__lt=older_than).exclude(versions__exact=[])
         dry_run = kwargs.get("dry_run", False)
