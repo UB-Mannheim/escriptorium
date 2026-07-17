@@ -59,6 +59,36 @@ class DidNotConverge(Exception):
     pass
 
 
+def detect_model_architecture(file_path):
+    """Returns the kraken '_model' architecture name from safetensors metadata, or None."""
+    import json
+
+    from safetensors import SafetensorError, safe_open
+    try:
+        with safe_open(file_path, framework="pt") as f:
+            raw_meta = f.metadata()
+        kraken_meta = json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
+    except (ValueError, TypeError, json.JSONDecodeError, SafetensorError, OSError):
+        return None
+    for v in kraken_meta.values():
+        if isinstance(v, dict) and v.get('_model'):
+            return v['_model']
+    return None
+
+
+@shared_task
+def qualify_model(model_pk):
+    """Detects and persists an OcrModel's architecture from its file, off the request/training path."""
+    OcrModel = apps.get_model('core', 'OcrModel')
+    try:
+        model = OcrModel.objects.get(pk=model_pk)
+    except OcrModel.DoesNotExist:
+        return
+    if model.file:
+        model.architecture = detect_model_architecture(model.file.path)
+        model.save()
+
+
 def _chunks(lst, n):
     """Yield successive n-sized chunks from lst. If n<0 yields one chunk of whole list."""
     if n < 0:
@@ -275,16 +305,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         os.makedirs(model_dir)
 
     if load:
-        import json
-
-        from safetensors import SafetensorError, safe_open
-        try:
-            with safe_open(load, framework="pt") as f:
-                raw_meta = f.metadata()
-            kraken_meta = json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
-        except (ValueError, TypeError, json.JSONDecodeError, SafetensorError):
-            kraken_meta = {}
-        if any(v.get('_model') == 'DFINEModel' for v in kraken_meta.values() if isinstance(v, dict)):
+        if detect_model_architecture(load) == 'DFINEModel':
             send_event('document', document_pk, "training:error", {"id": model.pk})
             if user:
                 user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
@@ -392,6 +413,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         raise e
     else:
         model.file_size = model.file.size
+        qualify_model.delay(model.pk)
 
         if user:
             user.notify(_("Training finished!"),
@@ -769,6 +791,7 @@ def train(transcription_pk=None, model_pk=None, task_group_pk=None,
         logger.exception(e)
     else:
         model.file_size = model.file.size
+        qualify_model.delay(model.pk)
 
         if user:
             user.notify(_("Training finished!"),
@@ -1100,6 +1123,7 @@ def train_from_collection(collection_pk=None, model_pk=None, task_group_pk=None,
         raise e
     else:
         model.file_size = model.file.size
+        qualify_model.delay(model.pk)
         if user:
             user.notify(_("Training finished!"), id="training-success", level="success")
     finally:
@@ -1158,16 +1182,7 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         os.makedirs(model_dir)
 
     if load:
-        import json
-
-        from safetensors import SafetensorError, safe_open
-        try:
-            with safe_open(load, framework="pt") as f:
-                raw_meta = f.metadata()
-            kraken_meta = json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
-        except (ValueError, TypeError, json.JSONDecodeError, SafetensorError):
-            kraken_meta = {}
-        if any(v.get('_model') == 'DFINEModel' for v in kraken_meta.values() if isinstance(v, dict)):
+        if detect_model_architecture(load) == 'DFINEModel':
             send_event("collection", collection_pk, "training:error", {"id": model.pk})
             if user:
                 user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
@@ -1304,6 +1319,7 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         raise e
     else:
         model.file_size = model.file.size
+        qualify_model.delay(model.pk)
         if user:
             user.notify(_("Training finished!"), id="training-success", level="success")
     finally:

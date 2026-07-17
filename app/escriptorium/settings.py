@@ -238,13 +238,19 @@ CELERY_TASK_QUEUES = (
     Queue('low-priority', routing_key='low-priority'),
     Queue('gpu', routing_key='gpu'),  # for everything that could use a GPU
     Queue('jvm', routing_key='jvm'),  # for everything that needs a java virtual machine (excepts elasticsearch)
+    # for inference expensive enough to want a GPU; doesn't strictly require one (see
+    # KRAKEN_INFERENCE_DEVICE), it just shouldn't compete with the 'default' queue's throughput.
+    # Routed to dynamically per-call (see INTENSIVE_INFERENCE_MODEL_ARCHITECTURES), not statically here.
+    Queue('intensive-inference', routing_key='intensive-inference'),
 )
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 # When updating 'gpu' queue don't forget to add or remove the GPU quota check in the affected tasks
+# (see reporting/tasks.py's end_task_reporting, which also handles the 'intensive-inference' queue)
 CELERY_TASK_ROUTES = {
     # 'core.tasks.*': {'queue': 'default'},
     'core.tasks.recalculate_masks': {'queue': 'live'},
     'core.tasks.generate_part_thumbnails': {'queue': 'low-priority'},
+    'core.tasks.qualify_model': {'queue': 'low-priority'},
     'core.tasks.train': {'queue': 'gpu'},
     'core.tasks.train_from_collection': {'queue': 'gpu'},
     'core.tasks.segtrain': {'queue': 'gpu'},
@@ -255,13 +261,20 @@ CELERY_TASK_ROUTES = {
     'users.tasks.async_email': {'queue': 'low-priority'},
 }
 
+# OcrModel.architecture values that should be routed to the 'intensive-inference' queue for
+# segmentation/transcription (see api/serializers.py's SegmentSerializer/TranscribeSerializer).
+INTENSIVE_INFERENCE_MODEL_ARCHITECTURES = os.getenv(
+    'INTENSIVE_INFERENCE_MODEL_ARCHITECTURES', 'DFINEModel'
+).split(',')
+
 REPORTING_TASKS_BLACKLIST = [
     'users.tasks.async_email',
     # if the user still has disk space but no cpu quota it will just slow everything down
     # to forbid thumbnails creation or image compression.
     'core.tasks.convert',
     'core.tasks.lossless_compression',
-    'core.tasks.generate_part_thumbnails'
+    'core.tasks.generate_part_thumbnails',
+    'core.tasks.qualify_model',
 ]
 
 CHANNEL_LAYERS = {
@@ -424,6 +437,7 @@ IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = os.getenv('KRAKEN_TRAINING_DEVICE', 'cpu')
 KRAKEN_TRAINING_LOAD_THREADS = int(os.getenv('KRAKEN_TRAINING_LOAD_THREADS', 0))
+KRAKEN_INFERENCE_DEVICE = os.getenv('KRAKEN_INFERENCE_DEVICE', 'cpu')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

@@ -215,8 +215,16 @@ def end_task_reporting(task_id, task, *args, **kwargs):
     # Update the frontend display consequently
     update_client_state(kwargs.get("kwargs", {}), task.name, client_status, task_id=task_id, data=kwargs.get('result'))
 
+    is_static_gpu_route = task.name in [
+        route for route, queue in settings.CELERY_TASK_ROUTES.items() if queue == {'queue': 'gpu'}
+    ]
     for report in reports:
         report.calc_cpu_cost()
-        # Listing tasks parametrized to run on gpu
-        if task.name in [route for route, queue in settings.CELERY_TASK_ROUTES.items() if queue == {'queue': 'gpu'}]:
+        # Static 'gpu' routes (training) or a report on a model whose architecture is dynamically
+        # routed to the 'intensive-inference' queue (see api/serializers.py) both count as GPU usage.
+        is_intensive_inference_model = (
+            report.ocr_model_id
+            and report.ocr_model.architecture in settings.INTENSIVE_INFERENCE_MODEL_ARCHITECTURES
+        )
+        if is_static_gpu_route or is_intensive_inference_model:
             report.calc_gpu_cost()

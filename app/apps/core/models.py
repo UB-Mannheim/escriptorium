@@ -1311,9 +1311,12 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
 
         im = Image.open(self.image.file.name)
 
-        seg_config = SegmentationInferenceConfig(accelerator='cpu')
+        from core.tasks import _to_ptl_device
+        accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_INFERENCE_DEVICE', 'cpu'))
+
+        seg_config = SegmentationInferenceConfig(accelerator=accelerator, device=device)
         if text_direction:
-            seg_config = SegmentationInferenceConfig(accelerator='cpu', text_direction=text_direction)
+            seg_config = SegmentationInferenceConfig(accelerator=accelerator, device=device, text_direction=text_direction)
 
         with transaction.atomic():
             # cleanup pre-existing
@@ -1404,9 +1407,12 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         else:
             reorder = 'L'
 
+        from core.tasks import _to_ptl_device
+        accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_INFERENCE_DEVICE', 'cpu'))
+
         with Image.open(self.image.file.name) as im:
             line_confidences = []
-            rec_config = RecognitionInferenceConfig(accelerator='cpu', bidi_reordering=reorder, num_line_workers=0)
+            rec_config = RecognitionInferenceConfig(accelerator=accelerator, device=device, bidi_reordering=reorder, num_line_workers=0)
             for line in lines:
                 if not line.baseline:
                     # bypass lines without baseline
@@ -1980,6 +1986,9 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
         validators=[FileExtensionValidator(allowed_extensions=["mlmodel", "safetensors"])],
     )
     file_size = models.BigIntegerField()
+    # Detected kraken model architecture (e.g. 'DFINEModel', 'VGSLModel'), populated asynchronously
+    # by core.tasks.qualify_model whenever the file changes. None until qualified.
+    architecture = models.CharField(max_length=64, null=True, blank=True)
 
     MODEL_JOB_SEGMENT = 1
     MODEL_JOB_RECOGNIZE = 2
@@ -2044,6 +2053,9 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
         model.file = File(self.file, name=f'{name}.{ext}')
         # Note: this copy the actual file on the file system
         model.save()
+
+        from core.tasks import qualify_model
+        qualify_model.delay(model.pk)
 
         # if not model.public:
         #     # Cloning rights to the new model

@@ -273,6 +273,64 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         # won't work with dummy model and image
         # self.assertEqual(LineTranscription.objects.filter(transcription=trans).count(), 2)
 
+    @patch('api.serializers.segment')
+    def test_segment_routes_to_default_queue_for_regular_model(self, mock_segment):
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_SEGMENT)
+        uri = reverse('api:document-segment', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'seg_steps': 'both',
+            'model': model.pk,
+        })
+        self.assertEqual(resp.status_code, 200, resp.content)
+        mock_segment.si.return_value.apply_async.assert_called_with(queue=None)
+
+    @patch('api.serializers.segment')
+    def test_segment_routes_to_intensive_inference_queue_for_dfine_model(self, mock_segment):
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_SEGMENT)
+        model.architecture = 'DFINEModel'
+        model.save()
+        uri = reverse('api:document-segment', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'seg_steps': 'both',
+            'model': model.pk,
+        })
+        self.assertEqual(resp.status_code, 200, resp.content)
+        mock_segment.si.return_value.apply_async.assert_called_with(queue='intensive-inference')
+
+    @patch('api.serializers.transcribe')
+    def test_transcribe_routes_to_default_queue_for_regular_model(self, mock_transcribe):
+        trans = Transcription.objects.create(document=self.part.document)
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_RECOGNIZE)
+        uri = reverse('api:document-transcribe', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'model': model.pk,
+            'transcription': trans.pk
+        })
+        self.assertEqual(resp.status_code, 200, resp.content)
+        mock_transcribe.si.return_value.apply_async.assert_called_with(queue=None)
+
+    @patch('api.serializers.transcribe')
+    def test_transcribe_routes_to_intensive_inference_queue_for_dfine_model(self, mock_transcribe):
+        trans = Transcription.objects.create(document=self.part.document)
+        self.client.force_login(self.doc.owner)
+        model = self.factory.make_model(self.doc, job=OcrModel.MODEL_JOB_RECOGNIZE)
+        model.architecture = 'DFINEModel'
+        model.save()
+        uri = reverse('api:document-transcribe', kwargs={'pk': self.doc.pk})
+        resp = self.client.post(uri, data={
+            'parts': [self.part.pk, self.part2.pk],
+            'model': model.pk,
+            'transcription': trans.pk
+        })
+        self.assertEqual(resp.status_code, 200, resp.content)
+        mock_transcribe.si.return_value.apply_async.assert_called_with(queue='intensive-inference')
+
     def test_align(self):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-align', kwargs={'pk': self.doc.pk})
