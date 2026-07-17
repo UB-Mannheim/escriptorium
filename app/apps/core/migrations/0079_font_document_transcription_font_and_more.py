@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0076_alter_ocrmodel_file'),
+        ('core', '0078_qualify_existing_ocrmodels'),
     ]
 
     operations = [

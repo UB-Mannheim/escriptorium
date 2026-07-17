@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0077_font_document_transcription_font_and_more'),
+        ('core', '0079_font_document_transcription_font_and_more'),
         ('users', '0023_alter_user_legacy_mode_default'),
     ]
 
