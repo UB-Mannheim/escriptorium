@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from django.conf import settings
 from django.db import models
+from django.utils.timezone import make_aware
 
 
 def _dummy_db(*args, **kwargs):
@@ -134,10 +135,8 @@ class Versioned(models.Model):
                     setattr(self, field_name, value)
                 self.version_source = version['source']
                 self.version_author = version['author']
-                # 3.7 only
-                # self.version_created_at = datetime.fromisoformat(version['created_at'])
-                self.version_created_at = datetime.strptime(
-                    version['created_at'][:26], "%Y-%m-%dT%H:%M:%S.%f")
+                self.version_created_at = make_aware(datetime.strptime(
+                    version['created_at'][:26], "%Y-%m-%dT%H:%M:%S.%f"), timezone.utc)
                 self.version_updated_at = datetime.now(timezone.utc)
                 break
         else:
