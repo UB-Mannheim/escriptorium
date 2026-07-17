@@ -27,3 +27,4 @@ wsl-dev*
 wsl_dev*
 test_media/
 .vscode
+*.mo
