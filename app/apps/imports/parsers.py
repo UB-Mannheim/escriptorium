@@ -21,13 +21,16 @@ from lxml import etree
 
 from core.models import (
     Block,
+    BlockType,
     DocumentMetadata,
     DocumentPart,
     DocumentPartMetadata,
     Line,
     LineTranscription,
+    LineType,
     Metadata,
     Transcription,
+    get_or_create_doc_type,
 )
 from imports import fetch
 from imports.mets import METSProcessor
@@ -849,7 +852,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             type_ = None
 
         if type_:
-            typo, created = self.document.valid_block_types.get_or_create(name=type_)
+            typo, created = get_or_create_doc_type(self.document, BlockType, type_)
             block.typology = typo
             if created:
                 self.report.append(
@@ -913,7 +916,7 @@ The ALTO file should contain a Description/sourceImageInformation/fileName tag f
             type_ = None
 
         if type_:
-            typo, created = self.document.valid_line_types.get_or_create(name=type_)
+            typo, created = get_or_create_doc_type(self.document, LineType, type_)
             line.typology = typo
             if created:
                 self.report.append(
@@ -994,7 +997,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
                     type_ = match.groups()[0]
 
         if type_:
-            typo, created = self.document.valid_block_types.get_or_create(name=type_)
+            typo, created = get_or_create_doc_type(self.document, BlockType, type_)
             block.typology = typo
             if created:
                 self.report.append(
@@ -1032,7 +1035,7 @@ The PAGE file should contain an attribute imageFilename in Page tag for matching
                     type_ = match.groups()[0]
 
         if type_:
-            typo, created = self.document.valid_line_types.get_or_create(name=type_)
+            typo, created = get_or_create_doc_type(self.document, LineType, type_)
             line.typology = typo
             if created:
                 self.report.append(

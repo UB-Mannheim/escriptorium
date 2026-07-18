@@ -7,6 +7,7 @@ from bootstrap.forms import BootstrapFormMixin
 from django import forms
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.forms.models import BaseInlineFormSet, inlineformset_factory
 from django.utils import timezone
@@ -420,7 +421,11 @@ class AnnotationTaxonomyBaseForm(BootstrapFormMixin, forms.ModelForm):
         typo = self.cleaned_data.get('typo')
         instance = super().save(commit=False)
         if typo:
-            typology, created = AnnotationType.objects.get_or_create(name=typo)
+            try:
+                with transaction.atomic():
+                    typology, created = AnnotationType.objects.get_or_create(name=typo)
+            except IntegrityError:
+                typology = AnnotationType.objects.get(name=typo)
             instance.typology = typology
         instance.save()
         return instance

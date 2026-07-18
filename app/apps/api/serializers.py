@@ -5,6 +5,7 @@ import os.path
 import bleach
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.db.models import Count, Max, Min
 from django.db.utils import IntegrityError
 from django.utils import timezone
@@ -309,7 +310,11 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         except KeyError:
             typo_data = None
         if typo_data:
-            typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            try:
+                with transaction.atomic():
+                    typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            except IntegrityError:
+                typo = AnnotationType.objects.get(name=typo_data['name'])
         else:
             typo = None
         data['document_id'] = self.context['view'].kwargs['document_pk']
@@ -335,7 +340,11 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         except KeyError:
             typo_data = None
         if typo_data:
-            typo, _ = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            try:
+                with transaction.atomic():
+                    typo, _ = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            except IntegrityError:
+                typo = AnnotationType.objects.get(name=typo_data['name'])
         else:
             typo = None
         data['typology'] = typo
