@@ -1,12 +1,10 @@
-import json
-
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.views.generic import View
 
 from core.models import Document
-from imports.serializers import OntologyExportSerializer
+from core.ontology import dump_yaml, export_ontology_config
 
 
 class DocumentOntologyExport(LoginRequiredMixin, View):
@@ -17,7 +15,7 @@ class DocumentOntologyExport(LoginRequiredMixin, View):
         except Document.DoesNotExist:
             raise PermissionDenied
 
-        serialized_ontology_str = json.dumps(OntologyExportSerializer(document).data, indent=4)
-        response = HttpResponse(serialized_ontology_str, content_type="application/json")
-        response["Content-Disposition"] = "attachment; filename=ontology_export.json"
+        serialized_ontology_str = dump_yaml(export_ontology_config(document))
+        response = HttpResponse(serialized_ontology_str, content_type="application/yaml")
+        response["Content-Disposition"] = "attachment; filename=ontology_export.yml"
         return response

@@ -145,8 +145,8 @@ class XMLTemplateExporter(BaseExporter):
                     page = tplt.render(
                         {
                             "include_characters": self.include_characters,
-                            "valid_block_types": self.document.valid_block_types.all(),
-                            "valid_line_types": self.document.valid_line_types.all(),
+                            "valid_block_types": self.document.block_types.all(),
+                            "valid_line_types": self.document.line_types.all(),
                             "part": part,
                             "blocks": (
                                 part.blocks.filter(region_filters)

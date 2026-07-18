@@ -20,12 +20,12 @@ export function bootOntologyForm() {
     let form = document.querySelector("#ontology-form");
     form.addEventListener("submit", (ev) => (submittedForm = true));
 
-    function addTypeOption(parent, pk, name) {
+    function addTypeOption(parent, name) {
         let checks = document.querySelectorAll(parent + " .form-check");
         let last_check = checks[checks.length - 1];
         let new_check = last_check.cloneNode(true);
         let new_input = new_check.querySelector("input");
-        new_input.value = pk;
+        new_input.value = name;
         new_input.checked = true;
         new_check.querySelector("label").textContent = name;
         last_check.after(new_check);
@@ -51,7 +51,7 @@ export function bootOntologyForm() {
                 pushType("block", input.value)
                     .then((response) => response.json())
                     .then(function (data) {
-                        addTypeOption("#region-types", data.pk, data.name);
+                        addTypeOption("#region-types", data.name);
                         input.value = ""; // empty the input for future use
                     });
             }
@@ -66,7 +66,7 @@ export function bootOntologyForm() {
                 pushType("line", input.value)
                     .then((response) => response.json())
                     .then(function (data) {
-                        addTypeOption("#line-types", data.pk, data.name);
+                        addTypeOption("#line-types", data.name);
                         input.value = ""; // empty the input for future use
                     });
             }
@@ -81,7 +81,7 @@ export function bootOntologyForm() {
                 pushType("part", input.value)
                     .then((response) => response.json())
                     .then(function (data) {
-                        addTypeOption("#part-types", data.pk, data.name);
+                        addTypeOption("#part-types", data.name);
                         input.value = ""; // empty the input for future use
                     });
             }

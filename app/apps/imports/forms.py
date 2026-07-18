@@ -264,7 +264,7 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
 class DocumentOntologyImportForm(BootstrapFormMixin, forms.Form):
     file = forms.FileField(
         required=True,
-        help_text=_("A file containing a document ontology in JSON format"),
-        widget=forms.FileInput(attrs={"accept": "application/json"}),
-        validators=[FileExtensionValidator(allowed_extensions=["json"])]
+        help_text=_("A file containing a document ontology in JSON or YAML format"),
+        widget=forms.FileInput(attrs={"accept": ".json,.yaml,.yml"}),
+        validators=[FileExtensionValidator(allowed_extensions=["json", "yaml", "yml"])]
     )
