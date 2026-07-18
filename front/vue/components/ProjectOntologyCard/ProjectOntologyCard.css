@@ -1,0 +1,7 @@
+.escr-project-ontology-card {
+    overflow: auto;
+}
+.escr-project-ontology-empty,
+.escr-project-ontology-summary {
+    color: var(--text2);
+}

@@ -91,6 +91,48 @@ export const deleteAnnotationType = async ({ documentId, typePk }) =>
 export const updateDocumentOntology = async (documentId, data) =>
     await axios.patch(`/documents/${documentId}/modify_ontology/`, data);
 
+// download this document's ontology as a YAML file
+export const exportDocumentOntology = async (documentId) =>
+    await axios.get(`/documents/${documentId}/ontology/export/`, {
+        responseType: "blob",
+    });
+
+// import an ontology config file (YAML or legacy JSON) onto this document
+export const importDocumentOntology = async (documentId, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return await axios.post(
+        `/documents/${documentId}/ontology/import/`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+    );
+};
+
+// retrieve a project's default ontology config, if any
+export const retrieveProjectOntology = async (projectId) =>
+    await axios.get(`/projects/${projectId}/ontology/`);
+
+// download a project's default ontology config as a YAML file
+export const exportProjectOntology = async (projectId) =>
+    await axios.get(`/projects/${projectId}/ontology/export/`, {
+        responseType: "blob",
+    });
+
+// import an ontology config file (YAML or legacy JSON) as a project's default
+export const importProjectOntology = async (projectId, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return await axios.post(
+        `/projects/${projectId}/ontology/import/`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+    );
+};
+
+// clear a project's default ontology config
+export const clearProjectOntology = async (projectId) =>
+    await axios.delete(`/projects/${projectId}/ontology/`);
+
 // retrieve the taxonomies for annotation components
 export const retrieveComponentTaxonomies = async (documentId) =>
     await axios.get(
