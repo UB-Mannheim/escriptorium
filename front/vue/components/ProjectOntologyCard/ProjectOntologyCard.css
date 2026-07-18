@@ -5,3 +5,9 @@
 .escr-project-ontology-summary {
     color: var(--text2);
 }
+/* UploadIcon defaults to a large 100x100 dropzone graphic; shrink it to
+   match the other small button icons (e.g. DownloadIcon is 16x16). */
+.escr-ontology-action-icon {
+    width: 16px;
+    height: 16px;
+}

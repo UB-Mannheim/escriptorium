@@ -18,7 +18,7 @@
                     :on-click="onClickImport"
                 >
                     <template #button-icon>
-                        <UploadIcon />
+                        <UploadIcon class="escr-ontology-action-icon" />
                     </template>
                 </EscrButton>
                 <EscrButton
