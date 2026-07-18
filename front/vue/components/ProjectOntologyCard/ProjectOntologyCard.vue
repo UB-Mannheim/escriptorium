@@ -1,5 +1,5 @@
 <template>
-    <div class="escr-card escr-card-padding escr-project-ontology-card">
+    <div class="escr-card escr-card-padding escr-project-ontology escr-project-ontology-card">
         <div class="escr-card-header">
             <h2>Default Ontology</h2>
             <div class="escr-card-actions">
