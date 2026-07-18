@@ -31,6 +31,7 @@ from core.models import (
     Project,
     TextualWitness,
     Transcription,
+    get_or_create_doc_type,
 )
 from core.search import (
     REGEX_SEARCH_MODE,
@@ -321,43 +322,29 @@ MetadataFormSet = inlineformset_factory(Document, DocumentMetadata,
 
 
 class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
+    valid_block_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, required=False)
+    valid_line_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, required=False)
+    valid_part_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, required=False)
+
     class Meta:
         model = Document
-        fields = ['valid_block_types', 'valid_line_types', 'valid_part_types']
-        widgets = {
-            'valid_block_types': forms.CheckboxSelectMultiple,
-            'valid_line_types': forms.CheckboxSelectMultiple,
-            'valid_part_types': forms.CheckboxSelectMultiple
-        }
+        fields = []
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
 
-        if self.request.method == "POST" and 'import_form' not in self.request.POST:
-            # we need to accept all types when posting for added ones
-            # TODO: if the form has errors it show everything.. need to find a better solution
-            block_qs = BlockType.objects.all()
-            line_qs = LineType.objects.all()
-            part_qs = DocumentPartType.objects.all()
-        elif self.instance.pk:
-            block_qs = BlockType.objects.filter(
-                Q(public=True) | Q(valid_in=self.instance)).distinct()
-            line_qs = LineType.objects.filter(
-                Q(public=True) | Q(valid_in=self.instance)).distinct()
-            part_qs = DocumentPartType.objects.filter(
-                Q(public=True) | Q(valid_in=self.instance)).distinct()
-        else:
-            block_qs = BlockType.objects.filter(public=True)
-            line_qs = LineType.objects.filter(public=True)
-            part_qs = DocumentPartType.objects.filter(public=True)
-            self.initial['valid_block_types'] = block_qs
-            self.initial['valid_line_types'] = line_qs
-            self.initial['valid_part_types'] = part_qs
-
-        self.fields['valid_block_types'].queryset = block_qs.order_by('name')
-        self.fields['valid_line_types'].queryset = line_qs.order_by('name')
-        self.fields['valid_part_types'].queryset = part_qs.order_by('name')
+        for field_name, model in (('valid_block_types', BlockType),
+                                   ('valid_line_types', LineType),
+                                   ('valid_part_types', DocumentPartType)):
+            template_names = model.objects.filter(document__isnull=True, public=True).values_list('name', flat=True)
+            if self.instance.pk:
+                owned_names = model.objects.filter(document=self.instance).values_list('name', flat=True)
+            else:
+                owned_names = template_names
+            names = sorted(set(template_names) | set(owned_names))
+            self.fields[field_name].choices = [(name, name) for name in names]
+            self.initial[field_name] = list(owned_names)
 
         self.compo_form = ComponentFormSet(
             self.request.POST if self.request.method == 'POST' and 'import_form' not in self.request.POST else None,
@@ -388,6 +375,19 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
+
+        for field_name, model in (('valid_block_types', BlockType),
+                                   ('valid_line_types', LineType),
+                                   ('valid_part_types', DocumentPartType)):
+            checked_names = set(self.cleaned_data.get(field_name, []))
+            templates_by_name = {
+                t.name: t for t in model.objects.filter(document__isnull=True, public=True)
+            }
+            for name in checked_names:
+                get_or_create_doc_type(instance, model, name,
+                                        color=getattr(templates_by_name.get(name), 'color', None))
+            model.objects.filter(document=instance).exclude(name__in=checked_names).delete()
+
         self.compo_form.save()
         self.img_anno_form.save()
         self.text_anno_form.save()
@@ -610,10 +610,10 @@ class RegionTypesFormMixin(forms.Form):
 
         super().__init__(*args, **kwargs)
 
-        # get (value, label) tuples from self.document.valid_block_types
+        # get (value, label) tuples from self.document.block_types
         choices = [
             (rt.id, rt.name)
-            for rt in self.document.valid_block_types.all()
+            for rt in self.document.block_types.all()
             # include undefined and orphaned line region types
         ] + [('Undefined', '(Undefined region type)'), ('Orphan', '(Orphan lines)')]
         self.fields['region_types'].choices = choices
