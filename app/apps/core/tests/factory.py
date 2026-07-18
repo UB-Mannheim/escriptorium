@@ -162,7 +162,7 @@ class CoreFactory():
         model.save()
         return model
 
-    def make_content(self, part, amount=30, transcription=None):
+    def make_content(self, part, amount=30, transcription=None, block_type_name="blocktype"):
         line_height = 30
         line_width = 50
         line_margin = 10
@@ -173,8 +173,7 @@ class CoreFactory():
 
         if transcription is None:
             transcription = self.make_transcription(document=part.document)
-        block_type = BlockType.objects.create(name="blocktype", public=True, default=True)
-        part.document.valid_block_types.add(block_type)
+        block_type, _created = BlockType.objects.get_or_create(name=block_type_name, document=part.document)
 
         block = Block.objects.create(
             document_part=part,
@@ -187,8 +186,7 @@ class CoreFactory():
 
         line_types = []
         for i in range(5):
-            line_type = LineType.objects.create(name="linetype" + str(i), public=True, default=True)
-            part.document.valid_line_types.add(line_type)
+            line_type, _created = LineType.objects.get_or_create(name="linetype" + str(i), document=part.document)
             line_types.append(line_type)
 
         for i in range(amount):

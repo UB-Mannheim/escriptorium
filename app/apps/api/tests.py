@@ -14,6 +14,7 @@ from django.urls import reverse
 
 from core.models import (
     Block,
+    BlockType,
     Document,
     DocumentMetadata,
     DocumentPart,
@@ -168,6 +169,62 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.get(uri)
         # Note: raises a 404 instead of 403 but its fine
         self.assertEqual(resp.status_code, 404)
+
+    def test_create_block_type_dedups_by_name(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:blocktype-list')
+
+        resp1 = self.client.post(uri, {'name': 'MainZone'})
+        self.assertEqual(resp1.status_code, 201)
+        resp2 = self.client.post(uri, {'name': 'MainZone'})
+        self.assertEqual(resp2.status_code, 201)
+
+        self.assertEqual(resp1.json()['pk'], resp2.json()['pk'])
+        self.assertEqual(BlockType.objects.filter(name='MainZone').count(), 1)
+
+    def test_modify_ontology_template_pk_creates_owned_copy(self):
+        template = BlockType.objects.create(name='MainZone', public=True, color='#123456')
+
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-modify-ontology', kwargs={'pk': self.doc.pk})
+        resp = self.client.patch(
+            uri,
+            data={'valid_block_types': [template.pk]},
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        owned = BlockType.objects.get(document=self.doc, name='MainZone')
+        self.assertEqual(owned.color, '#123456')
+        self.assertNotEqual(owned.pk, template.pk)
+
+    def test_modify_ontology_omitted_owned_pk_is_deleted(self):
+        kept = BlockType.objects.create(name='Kept', document=self.doc)
+        removed = BlockType.objects.create(name='Removed', document=self.doc)
+
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-modify-ontology', kwargs={'pk': self.doc.pk})
+        resp = self.client.patch(
+            uri,
+            data={'valid_block_types': [kept.pk]},
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertTrue(BlockType.objects.filter(pk=kept.pk).exists())
+        self.assertFalse(BlockType.objects.filter(pk=removed.pk).exists())
+
+    def test_modify_ontology_pk_owned_by_other_document_rejected(self):
+        other_doc_type = BlockType.objects.create(name='Other', document=self.doc2)
+
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-modify-ontology', kwargs={'pk': self.doc.pk})
+        resp = self.client.patch(
+            uri,
+            data={'valid_block_types': [other_doc_type.pk]},
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
 
     def test_segtrain_less_two_parts(self):
         self.client.force_login(self.doc.owner)

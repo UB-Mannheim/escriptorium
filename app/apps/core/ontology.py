@@ -75,13 +75,13 @@ class AnnotationComponentEntrySerializer(serializers.Serializer):
 
 class TaxonomyEntrySerializer(serializers.Serializer):
     name = serializers.CharField(max_length=64)
-    typology = serializers.CharField(required=False, allow_null=True)
+    typology = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     has_comments = serializers.BooleanField(required=False, default=False)
-    abbreviation = serializers.CharField(max_length=3, required=False, allow_null=True)
+    abbreviation = serializers.CharField(max_length=3, required=False, allow_null=True, allow_blank=True)
     marker_type = serializers.ChoiceField(
         choices=[c[0] for c in AnnotationTaxonomy.MARKER_TYPE_CHOICES]
     )
-    marker_color = serializers.CharField(required=False, allow_null=True)
+    marker_color = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     components = serializers.ListField(
         child=serializers.CharField(), required=False, default=list
     )

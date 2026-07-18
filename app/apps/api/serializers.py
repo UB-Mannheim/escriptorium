@@ -266,24 +266,31 @@ class BlockTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = BlockType
         fields = ('pk', 'name', 'color')
+        # name uniqueness is handled by create()'s race-safe get_or_create, not
+        # by rejecting the second POST outright (DRF would otherwise derive a
+        # UniqueValidator from the model's conditional UniqueConstraint).
+        extra_kwargs = {'name': {'validators': []}}
 
 
 class LineTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = LineType
         fields = ('pk', 'name', 'color')
+        extra_kwargs = {'name': {'validators': []}}
 
 
 class DocumentPartTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = DocumentPartType
         fields = ('pk', 'name')
+        extra_kwargs = {'name': {'validators': []}}
 
 
 class AnnotationTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = AnnotationType
         fields = ('pk', 'name')
+        extra_kwargs = {'name': {'validators': []}}
 
 
 class AnnotationComponentSerializer(serializers.ModelSerializer):
