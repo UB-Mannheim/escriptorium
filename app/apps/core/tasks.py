@@ -37,7 +37,7 @@ from kraken.train import (
     VGSLRecognitionDataModule,
     VGSLRecognitionModel,
 )
-from lightning.pytorch.callbacks import Callback
+from lightning.pytorch.callbacks import Callback, ModelCheckpoint
 
 from core.search import (
     REGEX_SEARCH_MODE,
@@ -254,6 +254,18 @@ class FrontendFeedback(Callback):
         })
 
 
+def make_checkpoint_callback(model_dir):
+    return ModelCheckpoint(dirpath=model_dir,
+                           filename='checkpoint_epoch={epoch}',
+                           auto_insert_metric_name=False,
+                           monitor='val_metric',
+                           mode='max',
+                           save_top_k=-1,
+                           save_weights_only=True,
+                           save_on_train_epoch_end=False,
+                           enable_version_counter=False)
+
+
 def _to_ptl_device(device: str):
     if device in ['cpu', 'mps']:
         return device, 'auto'
@@ -369,7 +381,8 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
                                 enable_summary=False,
                                 enable_progress_bar=False,
                                 val_check_interval=1.0,
-                                callbacks=[FrontendFeedback(model, model_dir, document_pk)])
+                                callbacks=[FrontendFeedback(model, model_dir, document_pk),
+                                           make_checkpoint_callback(model_dir)])
 
         trainer.fit(kraken_model, seg_dm)
 
@@ -717,7 +730,8 @@ def train_(qs, document=None, transcription=None, model=None, user=None, collect
                                 enable_summary=False,
                                 enable_progress_bar=False,
                                 val_check_interval=1.0,
-                                callbacks=[FrontendFeedback(model, model_dir, room_pk, room_name=room_name)])
+                                callbacks=[FrontendFeedback(model, model_dir, room_pk, room_name=room_name),
+                                           make_checkpoint_callback(model_dir)])
 
         trainer.fit(kraken_model, rec_dm)
 
@@ -1264,7 +1278,8 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
             enable_summary=False,
             enable_progress_bar=False,
             val_check_interval=1.0,
-            callbacks=[FrontendFeedback(model, model_dir, collection_pk, "collection")],
+            callbacks=[FrontendFeedback(model, model_dir, collection_pk, "collection"),
+                       make_checkpoint_callback(model_dir)],
         )
 
         trainer.fit(kraken_model, seg_dm)
