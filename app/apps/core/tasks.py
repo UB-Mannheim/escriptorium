@@ -889,6 +889,7 @@ def align(
     layer_name=None,
     beam_size=20,
     gap=600,
+    add_hyphens=False,
     **kwargs
 ):
     """Start document alignment on the passed parts, using the passed settings"""
@@ -924,6 +925,7 @@ def align(
             layer_name,
             beam_size,
             gap,
+            add_hyphens,
         )
     except Exception as e:
         if user:

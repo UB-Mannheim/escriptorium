@@ -1417,7 +1417,7 @@ class VirtualCollectionViewSet(ModelViewSet):
         Returns a paginated list of items for the VirtualCollection.
         """
         collection = self.get_object()
-        # prefetch related objects to prevent n+1 quries
+        # prefetch related objects to prevent n+1 queries
         items_qs = (
             collection.virtualcollectionitem_set.select_related(
                 "document_part", "document_part__document"

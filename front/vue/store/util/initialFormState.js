@@ -6,6 +6,7 @@ export default {
         values: "",
     },
     align: {
+        addHyphens: false,
         beamSize: "",
         gap: 600,
         layerName: "",

@@ -54,6 +54,7 @@ const actions = {
                 regionTypes: rootState.forms.align.regionTypes,
                 threshold: rootState.forms.align.threshold,
                 transcription: rootState.forms.align.transcription,
+                addHyphens: rootState.forms.align.addHyphens,
                 parts,
                 ...beamOrOffset,
                 ...witness,

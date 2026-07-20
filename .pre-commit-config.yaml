@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 7.3.0
     hooks:
       - id: flake8
         exclude: 'local_settings.py'
@@ -9,7 +9,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
     hooks:
       - id: check-ast
       - id: check-docstring-first
@@ -31,11 +31,11 @@ repos:
       - id: end-of-file-fixer
         exclude: '^app\/escriptorium\/templates\/export\/openiti_markdown\.mARkdown$'
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.2
+    rev: v2.4.2
     hooks:
       - id: codespell
         args: ['--write-changes', '--ignore-words-list=falsy,dfine', '--uri-ignore-words-list=groupes,projet']
-        exclude: '^.*\.po|app\/escriptorium\/static\/alto-4-1-baselines\.xsd|app\/apps\/core\/migrations\/0019_load_scripts\.py|front\/src\/stories\/util\/scripts.js|package-lock\.json.*$'
+        exclude: '^.*\.po|app\/escriptorium\/static\/alto-4-1-baselines\.xsd|app\/apps\/core\/migrations\/0019_load_scripts\.py|front\/src\/stories\/util\/scripts.js|app\/contributors_example\/contributors_list\.html|package-lock\.json.*$'
   - repo: meta
     hooks:
       - id: check-useless-excludes
