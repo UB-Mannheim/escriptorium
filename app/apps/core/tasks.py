@@ -231,6 +231,8 @@ def make_checkpoint_callback(model_dir):
                            monitor='val_metric',
                            mode='max',
                            save_top_k=-1,
+                           save_weights_only=True,
+                           save_on_train_epoch_end=False,
                            enable_version_counter=False)
 
 
