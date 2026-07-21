@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 07:41+0200\n"
+"POT-Creation-Date: 2026-07-21 21:53+0200\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -189,6 +189,16 @@ msgstr ""
 "If checked, the aligner will reuse the texto of the original transcripción "
 "when alineación could not be performed; if unchecked, those lines will be "
 "blank."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Add hyphens"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will attempt to reconstruct hyphenated words across "
+"line breaks."
+msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Use full transcribed document"
