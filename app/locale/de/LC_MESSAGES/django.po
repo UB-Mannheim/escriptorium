@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 07:41+0200\n"
+"POT-Creation-Date: 2026-07-21 21:53+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -189,6 +189,16 @@ msgstr ""
 "Wenn diese Option aktiviert ist, verwendet das Ausrichtungstool den Text der "
 "ursprünglichen Transkription, wenn die Ausrichtung nicht durchgeführt werden "
 "konnte; wenn sie deaktiviert ist, bleiben diese Zeilen leer."
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Add hyphens"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will attempt to reconstruct hyphenated words across "
+"line breaks."
+msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Use full transcribed document"
