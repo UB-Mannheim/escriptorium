@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 07:41+0200\n"
+"POT-Creation-Date: 2026-07-21 21:53+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -169,6 +169,16 @@ msgid ""
 "If checked, the aligner will reuse the text of the original transcription "
 "when alignment could not be performed; if unchecked, those lines will be "
 "blank."
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid "Add hyphens"
+msgstr ""
+
+#: apps/api/serializers.py apps/core/forms.py
+msgid ""
+"If checked, the aligner will attempt to reconstruct hyphenated words across "
+"line breaks."
 msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py
