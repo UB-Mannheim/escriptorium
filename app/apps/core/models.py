@@ -1225,7 +1225,19 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
 
     def delete(self, *args, **kwargs):
         send_event("document", self.document.pk, "part:delete", {"id": self.pk})
-        return super().delete(*args, **kwargs)
+        with transaction.atomic():
+            # Pre-lock affected rows in a consistent order (by pk) to prevent
+            # deadlocks when concurrent deletes trigger ordered_model's
+            # decrease_order() bulk UPDATE on overlapping row ranges.
+            list(
+                DocumentPart.objects.filter(
+                    document=self.document,
+                    order__gte=self.order,
+                )
+                .select_for_update()
+                .order_by("pk")
+            )
+            return super().delete(*args, **kwargs)
 
     @property
     def workflow(self):
