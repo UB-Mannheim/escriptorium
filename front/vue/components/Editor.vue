@@ -48,6 +48,10 @@
             :on-cancel="closeDeleteTranscriptionModal"
             :on-confirm="deleteTranscription"
         />
+        <TranscriptionModal
+            v-if="!legacyModeEnabled && editedLine"
+            :legacy-mode-enabled="legacyModeEnabled"
+        />
         <Alerts
             v-if="!legacyModeEnabled"
         />
@@ -66,6 +70,7 @@ import ExtraNav from "./ExtraNav.vue";
 import OntologyModal from "./OntologyModal/OntologyModal.vue";
 import TabContent from "./TabContent.vue";
 import TranscriptionManagement from "./TranscriptionManagement.vue";
+import TranscriptionModal from "./TranscriptionModal.vue";
 import TranscriptionsModal from "./TranscriptionsModal/TranscriptionsModal.vue";
 import "./Editor.css";
 
@@ -81,6 +86,7 @@ export default {
         OntologyModal,
         TabContent,
         TranscriptionManagement,
+        TranscriptionModal,
         TranscriptionsModal,
     },
     props: {
@@ -118,6 +124,7 @@ export default {
     },
     computed: {
         ...mapState({
+            editedLine: (state) => state.lines.editedLine,
             modalOpen: (state) => state.globalTools.modalOpen,
             partsLoaded: (state) => state.parts.loaded,
             transcriptionToDelete: (state) => state.transcriptions.transcriptionToDelete,

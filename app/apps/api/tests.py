@@ -798,6 +798,55 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
             self.assertEqual(resp.data["text_annotations"][0]["taxonomy_name"], "texttaxo")
             self.assertEqual(resp.data["text_annotations"][0]["frequency"], 3)
 
+    @override_settings(CACHES={
+        'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+    })
+    def test_stats_cache_refresh(self):
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-stats', kwargs={'pk': self.doc.pk})
+
+        # first call, no regions yet: gets cached
+        resp = self.client.get(uri)
+        self.assertEqual(resp.data["regions"], [])
+
+        # a region is added, but the stale cached response is still returned
+        self.factory.make_content(self.factory.make_part(document=self.doc))
+        resp = self.client.get(uri)
+        self.assertEqual(resp.data["regions"], [])
+
+        # forcing a refresh bypasses and updates the cache
+        resp = self.client.get(uri, {'refresh': 'true'})
+        self.assertEqual(resp.data["regions"][0]["frequency"], 1)
+
+        # subsequent calls without refresh now get the fresh cached value
+        resp = self.client.get(uri)
+        self.assertEqual(resp.data["regions"][0]["frequency"], 1)
+
+    def test_elements_by_type(self):
+        part = self.factory.make_part(document=self.doc)
+        transcription = self.factory.make_transcription(document=self.doc)
+        self.factory.make_content(part, transcription=transcription)
+
+        self.client.force_login(self.doc.owner)
+        uri = reverse('api:document-stats', kwargs={'pk': self.doc.pk})
+        stats_resp = self.client.get(uri)
+        region_type_id = stats_resp.data["regions"][0]["typology_id"]
+
+        uri = reverse('api:document-elements-by-type', kwargs={'pk': self.doc.pk})
+        resp = self.client.get(uri, {'category': 'regions', 'type': region_type_id})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data["parts"]), 1)
+        self.assertEqual(resp.data["parts"][0]["document_part_id"], part.pk)
+        self.assertEqual(resp.data["parts"][0]["frequency"], 1)
+        self.assertEqual(resp.data["parts"][0]["part_filename"], part.original_filename)
+
+        resp = self.client.get(uri, {'category': 'regions', 'type': 'none'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data["parts"]), 0)
+
+        resp = self.client.get(uri, {'category': 'invalid', 'type': 'none'})
+        self.assertEqual(resp.status_code, 400)
+
 
 class PartViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):
@@ -987,6 +1036,29 @@ class BlockViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.delete(uri)
         self.assertEqual(resp.status_code, 204, resp.content)
         self.assertFalse(Block.objects.filter(pk=self.block.pk).exists())
+
+    def test_update_locked(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:block-detail',
+                      kwargs={'document_pk': self.part.document.pk,
+                              'part_pk': self.part.pk,
+                              'pk': self.block.pk})
+
+        # patching only locked doesn't touch other fields
+        resp = self.client.patch(uri, {'locked': True}, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.block.refresh_from_db()
+        self.assertTrue(self.block.locked)
+
+        # a full update must pass locked through explicitly, or it gets reset
+        resp = self.client.put(uri, {
+            'document_part': self.part.pk,
+            'box': [[10, 10], [20, 20], [50, 50]],
+            'locked': True,
+        }, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.block.refresh_from_db()
+        self.assertTrue(self.block.locked)
 
     def test_delete_acquires_document_part_lock(self):
         # Regression test: block delete must SELECT FOR UPDATE the parent
@@ -1208,6 +1280,23 @@ class TranscriptionViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data['characters'][0]['char'], ' ')
         self.assertEqual(resp.data['characters'][-1]['char'], 'Z')
+
+    def test_parts_by_char(self):
+        self.factory.make_content(self.part, transcription=self.transcription)
+        self.client.force_login(self.user)
+        uri = reverse('api:transcription-parts-by-char', kwargs={
+            'document_pk': self.part.document.pk,
+            'pk': self.transcription.pk
+        })
+
+        resp = self.client.get(uri, {'char': 'e'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data['parts']), 1)
+        self.assertEqual(resp.data['parts'][0]['document_part_id'], self.part.pk)
+        self.assertEqual(resp.data['parts'][0]['frequency'], 44)
+
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 400)
 
 
 class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):

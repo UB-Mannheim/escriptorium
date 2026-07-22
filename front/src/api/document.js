@@ -30,6 +30,7 @@ export const retrieveDocumentStats = async ({
     documentId,
     sortField,
     sortDirection,
+    refresh,
 }) => {
     let params = {};
     if (sortField && sortDirection) {
@@ -38,11 +39,23 @@ export const retrieveDocumentStats = async ({
             direction: sortDirection,
         });
     }
+    if (refresh) {
+        params.refresh = "true";
+    }
     return await axios.get(
         `/documents/${documentId}/stats/`,
         { params },
     );
 };
+
+// retrieve the parts that contain a given type (category: regions, lines, text, image)
+export const retrieveElementsByType = async ({ documentId, category, typePk }) =>
+    await axios.get(`/documents/${documentId}/elements_by_type/`, {
+        params: {
+            category,
+            type: typePk == null ? "none" : typePk,
+        },
+    });
 
 // retrieve default types list by category (regions, lines, parts)
 export const retrieveDefaultOntology = async (category) =>
@@ -127,6 +140,17 @@ export const retrieveTranscriptionStats = async ({
         `/documents/${documentId}/transcriptions/${transcriptionId}/stats/?ordering=${ordering}`,
     );
 };
+
+// retrieve the parts that contain a given character, for a specific transcription on a document
+export const retrievePartsByChar = async ({
+    documentId,
+    transcriptionId,
+    char,
+}) =>
+    await axios.get(
+        `/documents/${documentId}/transcriptions/${transcriptionId}/parts_by_char/`,
+        { params: { char } },
+    );
 
 // retrieve the total number of characters in a specific transcription level on a document
 export const retrieveTranscriptionCharCount = async ({

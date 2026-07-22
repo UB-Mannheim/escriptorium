@@ -217,6 +217,15 @@
                                 <span>Image Annotation</span>
                             </button>
                         </li>
+                        <li v-if="!editorPanels.includes('elements')">
+                            <button
+                                type="button"
+                                @mousedown="onAddEditorPanel('elements')"
+                            >
+                                <TableIcon />
+                                <span>Overview</span>
+                            </button>
+                        </li>
                     </ul>
                 </template>
             </VDropdown>
@@ -234,6 +243,7 @@ import ImageAnnotationIcon from "../Icons/ImageAnnotationIcon/ImageAnnotationIco
 import RotateCCWIcon from "../Icons/RotateCCWIcon/RotateCCWIcon.vue";
 import RotateCWIcon from "../Icons/RotateCWIcon/RotateCWIcon.vue";
 import SegmentIcon from "../Icons/SegmentIcon/SegmentIcon.vue";
+import TableIcon from "../Icons/TableIcon/TableIcon.vue";
 import TextPanelIcon from "../Icons/TextPanelIcon/TextPanelIcon.vue";
 import ToggleButton from "../ToggleButton/ToggleButton.vue";
 import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
@@ -254,6 +264,7 @@ export default {
         RotateCCWIcon,
         RotateCWIcon,
         SegmentIcon,
+        TableIcon,
         TextPanelIcon,
         ToggleButton,
         TranscribeIcon,

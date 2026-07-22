@@ -682,7 +682,7 @@ class BlockSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Block
-        fields = ('pk', 'document_part', 'external_id', 'order', 'box', 'typology')
+        fields = ('pk', 'document_part', 'external_id', 'order', 'box', 'typology', 'locked')
 
 
 class LineTranscriptionSerializer(serializers.ModelSerializer):

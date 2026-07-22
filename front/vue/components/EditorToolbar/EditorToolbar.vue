@@ -71,6 +71,17 @@
                                 <span>Image Annotation</span>
                             </button>
                         </li>
+                        <li>
+                            <button
+                                type="button"
+                                @mousedown="() => onSwitchPanel({
+                                    index: panelIndex, panel: 'elements'
+                                })"
+                            >
+                                <TableIcon />
+                                <span>Overview</span>
+                            </button>
+                        </li>
                     </ul>
                 </template>
             </VMenu>
@@ -107,6 +118,7 @@ import EscrButton from "../Button/Button.vue";
 import ImageAnnotationIcon from "../Icons/ImageAnnotationIcon/ImageAnnotationIcon.vue";
 import RemovePanelIcon from "../Icons/RemovePanelIcon/RemovePanelIcon.vue";
 import SegmentIcon from "../Icons/SegmentIcon/SegmentIcon.vue";
+import TableIcon from "../Icons/TableIcon/TableIcon.vue";
 import TranscribeIcon from "../Icons/TranscribeIcon/TranscribeIcon.vue";
 import TextPanelIcon from "../Icons/TextPanelIcon/TextPanelIcon.vue";
 import { Dropdown as VDropdown, Menu as VMenu } from "floating-vue";
@@ -121,6 +133,7 @@ export default {
         ImageAnnotationIcon,
         RemovePanelIcon,
         SegmentIcon,
+        TableIcon,
         TranscribeIcon,
         TextPanelIcon,
         VDropdown,
@@ -168,6 +181,8 @@ export default {
                     return TextPanelIcon;
                 case "source":
                     return ImageAnnotationIcon;
+                case "elements":
+                    return TableIcon;
                 default:
                     return null;
             }
@@ -182,6 +197,8 @@ export default {
                     return "text/line ordering";
                 case "source":
                     return "text annotation";
+                case "elements":
+                    return "overview";
                 default:
                     return null;
             }

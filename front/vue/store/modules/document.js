@@ -623,11 +623,12 @@ const actions = {
     /**
      * Retrieve statistics about the document ontology
      */
-    async fetchDocumentStats({ commit, rootState, state }) {
+    async fetchDocumentStats({ commit, rootState, state }, { refresh } = {}) {
         const { data } = await retrieveDocumentStats({
             documentId: state.id,
             sortField: rootState.ontology.sortState?.field,
             sortDirection: rootState.ontology.sortState?.direction,
+            refresh,
         });
         if (data) {
             commit("setTypes", {

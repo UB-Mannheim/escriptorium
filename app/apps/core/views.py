@@ -655,6 +655,11 @@ class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, U
         return reverse('document-ontology', kwargs={'pk': self.object.pk})
 
 
+class DocumentOntologyOverview(LoginRequiredMixin, DocumentMixin, DetailView):
+    model = Document
+    template_name = "core/document_ontology_overview.html"
+
+
 class DocumentImages(LoginRequiredMixin, DocumentMixin, DetailView):
     model = Document
     template_name = "core/document_images.html"

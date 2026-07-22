@@ -1,0 +1,62 @@
+.escr-ontology-overview-page .escr-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.escr-ontology-overview-header h1 {
+    margin: 0;
+}
+
+.escr-ontology-overview-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.escr-ontology-overview-transcription {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.escr-ontology-overview-transcription h3 {
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* match the white select used by the transcription-layer dropdown in the editor
+   (see EditorTranscriptionDropdown.css), rather than the default grey dropdown */
+.escr-ontology-overview-transcription .escr-dropdown select {
+    background-color: var(--background1);
+}
+
+.escr-ontology-overview-loading {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 0;
+}
+
+.escr-ontology-overview-body {
+    display: flex;
+    gap: 1.5rem;
+    /* the page itself doesn't scroll (.escr-page-container caps at 100vh with
+       overflow hidden), so each column needs to scroll internally */
+    min-height: 0;
+}
+
+.escr-ontology-overview-types,
+.escr-ontology-overview-parts {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(100vh - 260px);
+}
+
+.escr-ontology-overview-types {
+    flex: 1 1 40%;
+}
+
+.escr-ontology-overview-parts {
+    flex: 1 1 60%;
+}

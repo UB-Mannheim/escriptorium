@@ -99,6 +99,12 @@ export const deleteRegion = async (document_id, part_id, id) =>
         `/documents/${document_id}/parts/${part_id}/blocks/${id}/`,
     );
 
+export const updateRegionLocked = async (document_id, part_id, id, locked) =>
+    await axios.patch(
+        `/documents/${document_id}/parts/${part_id}/blocks/${id}/`,
+        { locked },
+    );
+
 export const archiveTranscription = async (document_id, id) =>
     await axios.delete(`/documents/${document_id}/transcriptions/${id}/`);
 

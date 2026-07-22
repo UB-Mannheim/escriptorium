@@ -2,6 +2,7 @@ import json
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
 from django.db.models import Count, F, Prefetch, Q
@@ -719,11 +720,20 @@ class DocumentViewSet(ModelViewSet):
         serializer = DocumentSerializer(document, context={'user': request.user})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @method_decorator(cache_page(60 * 60))  # one hour
     @action(detail=True, methods=['get'])
     def stats(self, request, pk=None):
         document = self.get_object()
         order_param = self.request.query_params.get('ordering')
+        refresh = self.request.query_params.get('refresh') == 'true'
+
+        # cache the default (unordered) response for an hour, since computing it
+        # requires several aggregate queries; bypass/refresh it explicitly so a
+        # stats request right after an import doesn't stay stale for an hour
+        cache_key = f'document-{document.pk}-stats'
+        if not order_param and not refresh:
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return Response(cached)
 
         if order_param in ['frequency', '-frequency']:
             order_by = order_param
@@ -765,12 +775,48 @@ class DocumentViewSet(ModelViewSet):
                                      frequency=Count('*'))
                            .order_by(order_by))
 
-        return Response({
-            'regions': regions,
-            'lines': lines,
-            'image_annotations': img_annotations,
-            'text_annotations': text_annotations
-        })
+        data = {
+            'regions': list(regions),
+            'lines': list(lines),
+            'image_annotations': list(img_annotations),
+            'text_annotations': list(text_annotations),
+        }
+
+        if not order_param:
+            cache.set(cache_key, data, 60 * 60)
+
+        return Response(data)
+
+    @action(detail=True, methods=['get'])
+    def elements_by_type(self, request, pk=None):
+        document = self.get_object()
+        category = self.request.query_params.get('category')
+        type_param = self.request.query_params.get('type')
+
+        try:
+            model, type_field, part_field = {
+                'regions': (Block, 'typology', 'document_part'),
+                'lines': (Line, 'typology', 'document_part'),
+                'text': (TextAnnotation, 'taxonomy', 'part'),
+                'image': (ImageAnnotation, 'taxonomy', 'part'),
+            }[category]
+        except KeyError:
+            return Response({'error': 'invalid category.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        qs = model.objects.filter(**{f'{part_field}__document': document})
+        if type_param == 'none':
+            qs = qs.filter(**{f'{type_field}__isnull': True})
+        else:
+            qs = qs.filter(**{type_field: type_param})
+
+        parts = (qs.values(f'{part_field}_id')
+                   .annotate(part_name=F(f'{part_field}__name'),
+                             part_filename=F(f'{part_field}__original_filename'),
+                             frequency=Count('*'))
+                   .order_by(f'{part_field}__order'))
+
+        return Response({'parts': list(parts)})
 
     @action(detail=True)
     def part_ids(self, request, pk=None):
@@ -1039,6 +1085,41 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
             'line_count': line_count,
             'characters': chars
         })
+
+    @action(detail=True, methods=['GET'])
+    def parts_by_char(self, request, document_pk=None, pk=None):
+        transcription = self.get_object()
+        char = request.query_params.get('char')
+        if not char:
+            return Response({'error': 'char query param is required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        with connection.cursor() as cursor:
+            cursor.execute('''
+            SELECT "core_documentpart"."id", "core_documentpart"."name",
+                   "core_documentpart"."original_filename", count(*) as frequency
+            FROM "core_linetranscription", regexp_split_to_table(content, '') t(char),
+                 core_line, core_documentpart
+            WHERE "core_linetranscription"."line_id" = "core_line"."id"
+            AND "core_line"."document_part_id" = "core_documentpart"."id"
+            AND "core_documentpart"."document_id" = %s
+            AND "core_linetranscription"."transcription_id" = %s
+            AND t.char = %s
+            GROUP BY "core_documentpart"."id", "core_documentpart"."name",
+                     "core_documentpart"."original_filename"
+            ORDER BY "core_documentpart"."order";
+            ''', [self.document.pk, transcription.pk, char])
+            parts = [
+                {
+                    'document_part_id': part_id,
+                    'part_name': name,
+                    'part_filename': filename,
+                    'frequency': frequency,
+                }
+                for part_id, name, filename, frequency in cursor.fetchall()
+            ]
+
+        return Response({'parts': parts})
 
 
 class TypologyViewSet(ModelViewSet):
