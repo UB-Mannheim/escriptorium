@@ -61,6 +61,12 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
     background-color: white;
 }
 
+/* transcription content font, overridden by --transcription-font-family when a custom font is active */
+.escr-editor-tabcontent #diplomatic-lines,
+.escr-editor-tabcontent #transcription-panel svg text {
+    font-family: var(--transcription-font-family, "Noto Sans", "Resized Arabic", sans-serif);
+}
+
 /* confidence visualization scale panel */
 .confidence-scale {
     display: flex;

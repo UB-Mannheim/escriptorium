@@ -49,6 +49,15 @@
                 :options="linePositionOptions"
                 required
             />
+            <DropdownField
+                label="Transcription Font"
+                help-text="Font used to display this document's transcription text in the
+                    editor, overriding the project and user fonts. Leave as Default to
+                    inherit from the project, user, or built-in font."
+                :disabled="disabled"
+                :on-change="(e) => handleTextFieldInput('transcriptionFont', e.target.value)"
+                :options="fontOptions"
+            />
             <MetadataField
                 :disabled="disabled"
                 :items="metadata"
@@ -141,6 +150,11 @@ export default {
             type: Function,
             required: true,
         },
+        /** list of available fonts from the api */
+        fonts: {
+            type: Array,
+            default: () => [],
+        },
         /**
          * Full list of scripts from the database
          */
@@ -165,6 +179,7 @@ export default {
             readDirection: (state) => state.forms.editDocument.readDirection,
             selectedTags: (state) => state.forms.editDocument.tags,
             tagName: (state) => state.forms.editDocument.tagName,
+            transcriptionFont: (state) => state.forms.editDocument.transcriptionFont,
         }),
         /**
          * Consider the form invalid if missing required fields.
@@ -212,6 +227,24 @@ export default {
                 label: script.name,
                 selected: script.name === this.mainScript,
             }));
+        },
+        /** dropdown options for transcription font, with a leading "Default" entry */
+        fontOptions() {
+            const selectedFont = this.transcriptionFont
+                ? this.transcriptionFont.toString()
+                : "";
+            return [
+                {
+                    value: "",
+                    label: "Default",
+                    selected: !selectedFont,
+                },
+                ...this.fonts.map((font) => ({
+                    value: font.pk.toString(),
+                    label: font.name,
+                    selected: font.pk.toString() === selectedFont,
+                })),
+            ];
         },
     },
     methods: {

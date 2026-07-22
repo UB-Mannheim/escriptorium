@@ -7,6 +7,7 @@ import {
     deleteProject,
     editProject,
     retrieveDocumentsList,
+    retrieveFonts,
     retrieveProject,
     retrieveProjectDocumentTags,
     retrieveScripts,
@@ -53,6 +54,9 @@ const state = () => ({
     menuOpen: false,
     name: "",
     nextPage: "",
+    transcriptionFont: null,
+    /** fonts: [{ pk, name, url, size_adjust }] */
+    fonts: [],
     /**
      * scripts: [{
      *     id: Number,
@@ -120,6 +124,7 @@ const actions = {
                     guidelines: state.guidelines,
                     tags: state.tags.map((tag) => tag.pk),
                     tagName: "",
+                    transcriptionFont: state.transcriptionFont || "",
                 },
             },
             { root: true },
@@ -163,6 +168,7 @@ const actions = {
                 readDirection: rootState.forms?.editDocument?.readDirection,
                 linePosition: rootState.forms?.editDocument?.linePosition,
                 tags: rootState.forms?.editDocument?.tags,
+                transcriptionFont: rootState.forms?.editDocument?.transcriptionFont,
             });
             if (data) {
                 // try to create metadata too
@@ -322,6 +328,7 @@ const actions = {
             commit("setName", data.name);
             commit("setSlug", data.slug);
             commit("setGuidelines", data.guidelines);
+            commit("setTranscriptionFont", data.transcription_font || null);
             const tagPks = data.tags.map((tag) => tag.pk);
             commit(
                 "setTags",
@@ -339,6 +346,7 @@ const actions = {
                         tags: tagPks,
                         tagColor: "",
                         tagName: "",
+                        transcriptionFont: data.transcription_font || "",
                     },
                 },
                 { root: true },
@@ -350,6 +358,7 @@ const actions = {
         await dispatch("fetchProjectDocuments");
         await dispatch("fetchProjectDocumentTags");
         await dispatch("fetchScripts");
+        await dispatch("fetchFonts");
     },
     /**
      * Fetch documents in the current project.
@@ -407,6 +416,14 @@ const actions = {
             throw new Error("Unable to retrieve scripts");
         }
     },
+    async fetchFonts({ commit }) {
+        const { data } = await retrieveFonts();
+        if (data?.results) {
+            commit("setFonts", data.results);
+        } else {
+            throw new Error("Unable to retrieve fonts");
+        }
+    },
     /**
      * Open the "create document" modal.
      */
@@ -448,16 +465,18 @@ const actions = {
     },
     async saveProject({ commit, dispatch, state, rootState }) {
         commit("setLoading", true);
-        const { name, guidelines, tags } = rootState.forms.editProject;
+        const { name, guidelines, tags, transcriptionFont } = rootState.forms.editProject;
         try {
             const { data } = await editProject(state.id, {
                 name,
                 guidelines,
                 tags,
+                transcriptionFont,
             });
             if (data) {
                 commit("setName", name);
                 commit("setGuidelines", guidelines);
+                commit("setTranscriptionFont", transcriptionFont || null);
                 const tagPks = data.tags.map((tag) => tag.pk);
                 commit(
                     "setTags",
@@ -580,6 +599,12 @@ const mutations = {
     },
     setScripts(state, scripts) {
         state.scripts = scripts;
+    },
+    setFonts(state, fonts) {
+        state.fonts = fonts;
+    },
+    setTranscriptionFont(state, font) {
+        state.transcriptionFont = font || null;
     },
     setSharedWithGroups(state, groups) {
         state.sharedWithGroups = groups;

@@ -24,6 +24,7 @@
                         <NewProjectModal
                             v-if="createModalOpen"
                             :disabled="loading"
+                            :fonts="fonts"
                             :new-project="true"
                             :on-save="createNewProject"
                             :on-cancel="closeCreateModal"
@@ -139,6 +140,7 @@ export default {
             createModalOpen: (state) => state.projects.createModalOpen,
             deleteModalOpen: (state) => state.projects.deleteModalOpen,
             firstName: (state) => state.user.firstName,
+            fonts: (state) => state.projects.fonts,
             loading: (state) => state.projects.loading,
             nextPage: (state) => state.projects.nextPage,
             projects: (state) => state.projects.projects,
@@ -169,6 +171,7 @@ export default {
             await this.fetchCurrentUser();
             await this.fetchProjects();
             await this.fetchAllProjectTags();
+            await this.fetchFonts();
         } catch (error) {
             this.addError(error);
         }
@@ -181,6 +184,7 @@ export default {
             "createNewProjectTag",
             "deleteProject",
             "fetchAllProjectTags",
+            "fetchFonts",
             "fetchProjects",
             "fetchNextPage",
             "openCreateModal",

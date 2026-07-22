@@ -14,6 +14,7 @@ from core.models import (
     DocumentPartType,
     DocumentTag,
     DocumentType,
+    Font,
     InstanceSettings,
     LineTranscription,
     LineType,
@@ -72,6 +73,11 @@ class LineTranscriptionAdmin(admin.ModelAdmin):
 class ScriptAdmin(admin.ModelAdmin):
     list_display = ['name', 'text_direction']
     list_filter = ['text_direction']
+
+
+class FontAdmin(admin.ModelAdmin):
+    list_display = ['name', 'size_adjust', 'file']
+    search_fields = ['name']
 
 
 class OcrModelAdmin(admin.ModelAdmin):
@@ -164,6 +170,7 @@ admin.site.register(DocumentPartType)
 admin.site.register(BlockType)
 admin.site.register(LineType)
 admin.site.register(Script, ScriptAdmin)
+admin.site.register(Font, FontAdmin)
 admin.site.register(Metadata)
 admin.site.register(OcrModel, OcrModelAdmin)
 admin.site.register(OcrModelDocument, OcrModelDocumentAdmin)

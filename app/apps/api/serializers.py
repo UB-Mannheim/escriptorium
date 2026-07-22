@@ -25,6 +25,7 @@ from core.models import (
     DocumentPartMetadata,
     DocumentPartType,
     DocumentTag,
+    Font,
     ImageAnnotation,
     ImageAnnotationComponentValue,
     InstanceSettings,
@@ -91,6 +92,14 @@ class ScriptSerializer(serializers.ModelSerializer):
     class Meta:
         model = Script
         fields = '__all__'
+
+
+class FontSerializer(serializers.ModelSerializer):
+    url = serializers.FileField(source='file', read_only=True)
+
+    class Meta:
+        model = Font
+        fields = ('pk', 'name', 'url', 'size_adjust')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -421,6 +430,9 @@ class DocumentSerializer(serializers.ModelSerializer):
     shared_with_users = UserSerializer(many=True, read_only=True)
     shared_with_groups = GroupSerializer(many=True, read_only=True)
     transcriptions = TranscriptionSerializer(many=True, read_only=True)
+    transcription_font = serializers.PrimaryKeyRelatedField(
+        queryset=Font.objects.all(), allow_null=True, required=False)
+    effective_transcription_font = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -428,11 +440,16 @@ class DocumentSerializer(serializers.ModelSerializer):
                   'main_script', 'read_direction', 'line_offset', 'show_confidence_viz',
                   'valid_block_types', 'valid_line_types', 'valid_part_types',
                   'parts_count', 'tags', 'created_at', 'updated_at', 'project_name', 'project_id',
-                  'shared_with_users', 'shared_with_groups')
+                  'shared_with_users', 'shared_with_groups',
+                  'transcription_font', 'effective_transcription_font')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['project'].queryset = Project.objects.for_user_write(self.context['user'])
+
+    def get_effective_transcription_font(self, document):
+        font = document.get_effective_transcription_font(self.context.get('user'))
+        return FontSerializer(font).data if font else None
 
     def validate_main_script(self, value):
         try:

@@ -1,3 +1,11 @@
+/* transcription font applied to inputs, comparison text, and history content */
+#trans-modal #trans-input,
+#trans-modal #vertical_text_input,
+#trans-modal #comparison .d-table-cell:not(.text-muted),
+.escr-line-version .escr-line-content {
+    font-family: var(--transcription-font-family, "Noto Sans", "Resized Arabic", sans-serif);
+}
+
 /* line-by-line transcription modal */
 .escr-line-modal .modal-content {
     background-color: var(--background1);

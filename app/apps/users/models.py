@@ -30,6 +30,15 @@ class User(AbstractUser):
         default=False,
         help_text=_("Use the legacy version of the user interface. If unchecked, features that have not yet been ported to the new interface may become unavailable. Likewise, if checked, newer features may become unavailable."),
     )
+    preferred_transcription_font = models.ForeignKey(
+        "core.Font",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name=_("Preferred transcription font"),
+        help_text=_("Font used to render transcription content in the editor, unless overridden at the document or project level."),
+    )
 
     # If not set, quotas will be calculated from instance quota settings, if set to 0, user is blocked
     # quota_disk_storage is to be defined in Mb

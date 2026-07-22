@@ -144,6 +144,8 @@ const state = () => ({
      */
     transcriptions: [],
     types: [],
+    effectiveTranscriptionFont: null,
+    transcriptionFont: null,
 });
 
 const getters = {};
@@ -221,6 +223,7 @@ const actions = {
                     readDirection: state.readDirection,
                     tags: state.tags.map((tag) => tag.pk),
                     tagName: "",
+                    transcriptionFont: state.transcriptionFont || "",
                 },
             },
             { root: true },
@@ -334,6 +337,8 @@ const actions = {
             commit("setReadDirection", data.read_direction);
             commit("setLinePosition", data.line_offset);
             commit("setName", data.name);
+            commit("setTranscriptionFont", data.transcription_font || null);
+            commit("setEffectiveTranscriptionFont", data.effective_transcription_font || null);
             commit("setPartsCount", data.parts_count);
             commit("setProjectSlug", data.project);
             commit("setProjectId", data.project_id);
@@ -386,6 +391,7 @@ const actions = {
                         readDirection: data.read_direction,
                         tags: state.tags.map((tag) => tag.pk),
                         tagName: "",
+                        transcriptionFont: data.transcription_font || "",
                     },
                 },
                 { root: true },
@@ -490,8 +496,9 @@ const actions = {
         }
         commit("setLoading", { key: "document", loading: false });
 
-        // fetch scripts, metadata, tasks, models, textual witnesses
+        // fetch supporting data needed by the editor
         await dispatch({ type: "project/fetchScripts" }, { root: true });
+        await dispatch({ type: "project/fetchFonts" }, { root: true });
         await dispatch("fetchDocumentMetadata");
         await dispatch("fetchDocumentTasks");
         await dispatch("fetchDocumentModels");
@@ -881,6 +888,7 @@ const actions = {
             name,
             readDirection,
             tags,
+            transcriptionFont,
         } = rootState.forms.editDocument;
         // split modified metadata by operation
         const { metadataToCreate, metadataToUpdate, metadataToDelete } =
@@ -898,6 +906,7 @@ const actions = {
                     readDirection,
                     project: state.projectSlug,
                     tags,
+                    transcriptionFont,
                 }),
                 // create, update, delete metadata as needed
                 ...metadataToCreate.map((metadatum) =>
@@ -947,6 +956,8 @@ const actions = {
                 commit("setLinePosition", linePosition);
                 commit("setMainScript", mainScript);
                 commit("setReadDirection", readDirection);
+                commit("setTranscriptionFont", transcriptionFont || null);
+                commit("setEffectiveTranscriptionFont", documentResponse.data.effective_transcription_font || null);
                 commit(
                     "setTags",
                     documentResponse.data.tags.map((tag) => ({
@@ -1082,6 +1093,12 @@ const mutations = {
     },
     setEditModalOpen(state, open) {
         state.editModalOpen = open;
+    },
+    setEffectiveTranscriptionFont(state, font) {
+        state.effectiveTranscriptionFont = font || null;
+    },
+    setTranscriptionFont(state, font) {
+        state.transcriptionFont = font || null;
     },
     setId(state, id) {
         state.id = id;

@@ -27,18 +27,20 @@ export const createProjectTag = async ({ name, color }) =>
     });
 
 // create a project by providing a name (and optional other metadata)
-export const createProject = async ({ name, guidelines, tags }) =>
+export const createProject = async ({ name, guidelines, tags, transcriptionFont }) =>
     await axios.post("/projects/", {
         name,
         guidelines,
         tags,
+        transcription_font: transcriptionFont || null,
     });
 
-export const editProject = async (projectId, { name, guidelines, tags }) =>
+export const editProject = async (projectId, { name, guidelines, tags, transcriptionFont }) =>
     await axios.put(`/projects/${projectId}/`, {
         name,
         guidelines,
         tags,
+        transcription_font: transcriptionFont || null,
     });
 
 // delete a project by ID

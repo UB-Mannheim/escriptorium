@@ -36,6 +36,15 @@
             >
                 Must be a valid URL starting with http:// or https://.
             </span>
+            <DropdownField
+                label="Transcription Font"
+                help-text="Font used to display transcription text for documents in this
+                    project, unless overridden at the document level. Leave as Default to
+                    inherit from the user or built-in font."
+                :disabled="disabled"
+                :on-change="(e) => handleTextFieldInput('transcriptionFont', e.target.value)"
+                :options="fontOptions"
+            />
             <TagsField
                 label="Tags"
                 :disabled="disabled"
@@ -65,6 +74,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import DropdownField from "../Dropdown/DropdownField.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
 import TagsField from "../TagsField/TagsField.vue";
@@ -75,6 +85,7 @@ import "./EditProjectModal.css";
 export default {
     name: "EscrEditProjectModal",
     components: {
+        DropdownField,
         EscrButton,
         EscrModal,
         TagsField,
@@ -117,6 +128,11 @@ export default {
             type: Function,
             required: true,
         },
+        /** list of available fonts from the api */
+        fonts: {
+            type: Array,
+            default: () => [],
+        },
         /**
          * Full list of tags across all projects
          */
@@ -131,9 +147,28 @@ export default {
             name: (state) => state.forms.editProject.name,
             selectedTags: (state) => state.forms.editProject.tags,
             tagName: (state) => state.forms.editProject.tagName,
+            transcriptionFont: (state) => state.forms.editProject.transcriptionFont,
         }),
         invalid() {
             return !this.name || (!!this.guidelines && !this.isHttpUrl(this.guidelines));
+        },
+        /** dropdown options for transcription font, with a leading "Default" entry */
+        fontOptions() {
+            const selectedFont = this.transcriptionFont
+                ? this.transcriptionFont.toString()
+                : "";
+            return [
+                {
+                    value: "",
+                    label: "Default",
+                    selected: !selectedFont,
+                },
+                ...this.fonts.map((font) => ({
+                    value: font.pk.toString(),
+                    label: font.name,
+                    selected: font.pk.toString() === selectedFont,
+                })),
+            ];
         },
     },
     methods: {

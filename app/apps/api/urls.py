@@ -12,6 +12,7 @@ from api.views import (
     DocumentTagViewSet,
     DocumentTranscriptionViewSet,
     DocumentViewSet,
+    FontViewSet,
     GroupViewSet,
     ImageAnnotationViewSet,
     ImportViewSet,
@@ -35,6 +36,7 @@ from api.views import (
 
 router = routers.DefaultRouter()
 router.register(r'scripts', ScriptViewSet)
+router.register(r'fonts', FontViewSet)
 router.register(r'textual-witnesses', TextualWitnessViewSet)
 router.register(r'projects', ProjectViewSet)
 router.register(r'documents', DocumentViewSet)

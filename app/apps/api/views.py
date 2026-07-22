@@ -42,6 +42,7 @@ from api.serializers import (
     DocumentSerializer,
     DocumentTagSerializer,
     DocumentTasksSerializer,
+    FontSerializer,
     ImageAnnotationSerializer,
     ImportSerializer,
     LineOrderSerializer,
@@ -83,6 +84,7 @@ from core.models import (
     DocumentPartMetadata,
     DocumentPartType,
     DocumentTag,
+    Font,
     ImageAnnotation,
     Line,
     LineTranscription,
@@ -227,6 +229,12 @@ class ScriptViewSet(ReadOnlyModelViewSet):
     serializer_class = ScriptSerializer
 
 
+class FontViewSet(ReadOnlyModelViewSet):
+    pagination_class = ExtraLargeResultsSetPagination
+    queryset = Font.objects.all()
+    serializer_class = FontSerializer
+
+
 class TextualWitnessViewSet(ModelViewSet):
     queryset = TextualWitness.objects.all()
     serializer_class = TextualWitnessSerializer
@@ -316,7 +324,9 @@ class DocumentViewSet(ModelViewSet):
     ordering_fields = ['name', 'parts_count', 'updated_at']
 
     def get_queryset(self):
-        qs = Document.objects.for_user(self.request.user).prefetch_related(
+        qs = Document.objects.for_user(self.request.user).select_related(
+            'transcription_font', 'project__transcription_font',
+        ).prefetch_related(
             Prefetch('valid_block_types', queryset=BlockType.objects.order_by('name')),
             Prefetch('valid_line_types', queryset=LineType.objects.order_by('name')),
         ).annotate(parts_count=Count('parts', distinct=True)).order_by('-updated_at')

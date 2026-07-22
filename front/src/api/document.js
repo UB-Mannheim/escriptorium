@@ -177,6 +177,7 @@ export const createDocument = async ({
     readDirection,
     linePosition,
     tags,
+    transcriptionFont,
 }) =>
     await axios.post("/documents/", {
         name,
@@ -185,6 +186,7 @@ export const createDocument = async ({
         read_direction: readDirection,
         line_offset: linePosition,
         tags,
+        transcription_font: transcriptionFont || null,
     });
 
 // delete a document
@@ -194,7 +196,7 @@ export const deleteDocument = async ({ documentId }) =>
 // edit a document
 export const editDocument = async (
     documentId,
-    { name, project, mainScript, readDirection, linePosition, tags },
+    { name, project, mainScript, readDirection, linePosition, tags, transcriptionFont },
 ) =>
     await axios.put(`/documents/${documentId}/`, {
         name,
@@ -203,6 +205,7 @@ export const editDocument = async (
         read_direction: readDirection,
         line_offset: linePosition,
         tags,
+        transcription_font: transcriptionFont || null,
     });
 
 // retrieve document metadata

@@ -397,6 +397,32 @@ class Script(ExportModelOperationsMixin("Script"), models.Model):
         return self.name
 
 
+class Font(models.Model):
+    """
+    A custom font uploaded by an instance administrator (through the Django admin)
+    that can be used to render transcription content in the editor panels.
+    """
+    name = models.CharField(max_length=255, unique=True)
+    file = models.FileField(
+        upload_to="fonts/",
+        validators=[FileExtensionValidator(["ttf", "otf", "woff", "woff2"])],
+        help_text=_("Font file in ttf, otf, woff or woff2 format."),
+    )
+    # scale factor (1.0 = 100%) to normalize fonts that render visually larger or smaller than others.
+    size_adjust = models.FloatField(
+        default=1.0,
+        help_text=_("Size adjustment factor (1.0 = 100%) to normalize the visual size of this font."),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class DocumentMetadata(ExportModelOperationsMixin("DocumentMetadata"), CascadeUpdate, models.Model):
     document = models.ForeignKey("core.Document", on_delete=models.CASCADE)
     key = models.ForeignKey(Metadata, on_delete=models.CASCADE)
@@ -472,6 +498,15 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
     )
 
     tags = models.ManyToManyField(ProjectTag, blank=True, related_name='tags_project')
+
+    transcription_font = models.ForeignKey(
+        "core.Font",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text=_("Font used to render transcription content for documents in this project, unless overridden at the document level."),
+    )
 
     objects = ProjectManager()
 
@@ -606,6 +641,15 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
 
     tags = models.ManyToManyField(DocumentTag, blank=True, related_name='tags_document')
 
+    transcription_font = models.ForeignKey(
+        "core.Font",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text=_("Font used to render this document's transcription content, overriding the project and user fonts."),
+    )
+
     objects = DocumentManager()
 
     cascade_to = 'project'
@@ -633,6 +677,18 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
             )
 
         return res
+
+    def get_effective_transcription_font(self, user=None):
+        """
+        Resolve the font used to render this document's transcription content,
+        following the priority cascade document > project > user.
+        Returns a Font instance or None (in which case the default font is used).
+        """
+        return (
+            self.transcription_font
+            or self.project.transcription_font
+            or (getattr(user, "preferred_transcription_font", None) if user else None)
+        )
 
     @property
     def is_published(self):

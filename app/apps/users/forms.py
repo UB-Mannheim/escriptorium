@@ -193,7 +193,8 @@ class InvitationAcceptForm(BootstrapFormMixin, UserCreationForm):
 class ProfileForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'legacy_mode')
+        fields = ('email', 'first_name', 'last_name', 'legacy_mode',
+                  'preferred_transcription_font')
 
 
 class GroupForm(BootstrapFormMixin, forms.ModelForm):
