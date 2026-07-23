@@ -11,7 +11,11 @@
 </div>
 {% endif %}
 
-<a href="{% url 'model-upload' %}" class="btn btn-success float-sm-right">{% trans "Upload a model" %}</a>
+<div class="float-sm-right">
+  <a href="{% url 'model-upload' %}" class="btn btn-success">{% trans "Upload a model" %}</a>
+  <a href="https://htrmopo.inria.fr/catalog" target="_blank" rel="noopener" class="btn btn-secondary">{% trans "Find a model" %}</a>
+  <a href="https://htrmopo.inria.fr/upload" target="_blank" rel="noopener" class="btn btn-secondary">{% trans "Publish a model" %}</a>
+</div>
 <h1>{% trans "Models" %}</h1>
 {% include 'core/models_list/table.html' %}
 {% endblock %}
