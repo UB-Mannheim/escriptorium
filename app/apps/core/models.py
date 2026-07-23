@@ -1236,6 +1236,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                 )
                 .select_for_update()
                 .order_by("pk")
+                .only("id")
             )
             return super().delete(*args, **kwargs)
 
