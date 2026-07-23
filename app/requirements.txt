@@ -26,6 +26,7 @@ git+https://github.com/dasmiq/passim.git@v2.0.1#egg=passim
 Pillow>=5.4.1
 psutil
 psycopg2-binary
+pyspark==4.1.1
 pyvips~=2.1.12
 redis~=4.4.4
 requests>=2.21
