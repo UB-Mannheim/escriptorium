@@ -1544,7 +1544,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                     lt.new_version()
 
                 lt.version_author = user and user.username or ''
-                lt.version_source = 'kraken:' + model.name
+                version_source = 'kraken:' + model.name
+                if len(version_source) > 128:
+                    version_source = version_source[:125] + '...'
+                lt.version_source = version_source
 
                 for pred in it:
                     lt.content = pred.prediction
