@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0078_qualify_existing_ocrmodels'),
+        ('core', '0080_block_locked'),
     ]
 
     operations = [

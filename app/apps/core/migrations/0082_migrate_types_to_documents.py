@@ -118,13 +118,13 @@ def migrate_types_to_documents(apps, schema_editor):
 
 
 def unsupported_reverse(apps, schema_editor):
-    raise NotImplementedError("0080_migrate_types_to_documents cannot be reversed")
+    raise NotImplementedError("0082_migrate_types_to_documents cannot be reversed")
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0079_document_scoped_types'),
+        ('core', '0081_document_scoped_types'),
     ]
 
     operations = [

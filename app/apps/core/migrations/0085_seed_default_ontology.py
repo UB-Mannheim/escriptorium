@@ -44,7 +44,7 @@ def unseed_default_ontology(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0082_type_unique_constraints'),
+        ('core', '0084_type_unique_constraints'),
     ]
 
     operations = [
