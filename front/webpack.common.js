@@ -2,6 +2,8 @@ const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const VueLoaderPlugin = require("vue-loader/lib/plugin");
 const CompressionPlugin = require("compression-webpack-plugin");
+const BundleTracker = require("webpack-bundle-tracker");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = {
     entry: {
@@ -20,16 +22,24 @@ module.exports = {
     },
 
     output: {
-        filename: "[name].js",
+        filename: "bundles/[name].[contenthash:8].js",
+        chunkFilename: "bundles/[name].[contenthash:8].chunk.js",
         path: path.resolve(__dirname, "./dist/"),
         publicPath: "",
     },
 
     plugins: [
-        new MiniCssExtractPlugin(),
+        new CleanWebpackPlugin(),
+        new MiniCssExtractPlugin({
+            filename: "bundles/[name].[contenthash:8].css",
+            chunkFilename: "bundles/[name].[contenthash:8].chunk.css",
+        }),
         new VueLoaderPlugin(),
         new CompressionPlugin({
             test: /\.(js|css)$/,
+        }),
+        new BundleTracker({
+            filename: path.resolve(__dirname, "./dist/webpack-stats.json"),
         }),
     ],
 

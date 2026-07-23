@@ -1,5 +1,6 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n static bootstrap %}
+{% load render_bundle from webpack_loader %}
 {% block head_title %}{% if object %}{% trans "Update a Document" %}{% else %}{% trans "Create a new Document" %}{% endif %}{% endblock %}
 
 {% block body %}
@@ -30,7 +31,7 @@
         </script>
     {% endif %}
 
-    <script src="{% static 'editor.js' %}"></script>
+    {% render_bundle 'editor' 'js' %}
 {% endblock %}
 
 
@@ -44,6 +45,6 @@
 
 {% block extrastyle %}
     {% if not request.user.legacy_mode %}
-        <link href="{% static 'editor.css' %}" rel="stylesheet" type="text/css">
+        {% render_bundle 'editor' 'css' %}
     {% endif %}
 {% endblock extrastyle %}

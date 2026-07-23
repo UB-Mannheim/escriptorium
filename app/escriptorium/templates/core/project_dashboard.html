@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n static %}
+{% load render_bundle from webpack_loader %}
 
 {% block head_title %}{{ project.name }}{% endblock %}
 
@@ -18,13 +19,13 @@
 
 {% block extrascript %}
     {% if not request.user.legacy_mode %}
-        <script src="{% static 'projectDashboard.js' %}"></script>
+        {% render_bundle 'projectDashboard' 'js' %}
     {% endif %}
 {% endblock extrascript %}
 
 {% block extrastyle %}
     {% if not request.user.legacy_mode %}
-        <link href="{% static 'projectDashboard.css' %}" rel="stylesheet" type="text/css">
+        {% render_bundle 'projectDashboard' 'css' %}
     {% endif %}
 {% endblock extrastyle %}
 
