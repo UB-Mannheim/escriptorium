@@ -41,7 +41,8 @@ class TaskReport(models.Model):
     )
     workflow_state = models.PositiveSmallIntegerField(
         default=WORKFLOW_STATE_QUEUED,
-        choices=WORKFLOW_STATE_CHOICES
+        choices=WORKFLOW_STATE_CHOICES,
+        db_index=True,
     )
     group = models.ForeignKey(TaskGroup, null=True, on_delete=models.SET_NULL)
 
@@ -55,7 +56,7 @@ class TaskReport(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     # celery task id
-    task_id = models.CharField(max_length=64, blank=True, null=True)
+    task_id = models.CharField(max_length=64, blank=True, null=True, db_index=True)
 
     # shared_task method name
     method = models.CharField(max_length=512, blank=True, null=True)
