@@ -25,7 +25,7 @@ module.exports = {
         filename: "bundles/[name].[contenthash:8].js",
         chunkFilename: "bundles/[name].[contenthash:8].chunk.js",
         path: path.resolve(__dirname, "./dist/"),
-        publicPath: "",
+        publicPath: "/static/",
     },
 
     plugins: [
