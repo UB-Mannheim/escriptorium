@@ -1701,13 +1701,15 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
             # save the updated file name in db
             self.image = update_name(self.image.name)
 
-        self.save()
-
-        # we need this one right away
+        # Generate thumbnail BEFORE self.save() to avoid race with django-cleanup:
+        # a concurrent request's self.save() can trigger django-cleanup to delete
+        # the file we just wrote before we get a chance to thumbnail it.
         get_thumbnailer(self.image).get_thumbnail(
             settings.THUMBNAIL_ALIASES[""]["large"]
         )
         generate_part_thumbnails.delay(instance_pk=self.pk)
+
+        self.save()
 
         # rotate lines
         for line in self.lines.all():
