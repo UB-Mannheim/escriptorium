@@ -3,10 +3,12 @@ import os
 import subprocess
 import tempfile
 from shutil import copyfile
-from unittest.mock import patch
+from unittest.mock import patch, call, MagicMock
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image as PILImage
 
 from core.models import LineTranscription, Transcription
 from core.tests.factory import CoreFactoryTestCase
@@ -634,3 +636,46 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         finally:
             # clean up tempfile
             os.remove(filepath)
+
+    def test_rotate_rgb(self):
+        """Test rotate with a standard RGB image succeeds"""
+        part = self.factory.make_part()
+        part.rotate(90)
+        with PILImage.open(part.image.file.name) as im:
+            self.assertIn(im.mode, ('L', 'RGB', 'RGBA'))
+
+    def test_rotate_regression_race_with_django_cleanup(self):
+        """Regression: thumbnail must be generated before self.save().
+
+        Simulates the django-cleanup race condition: save() deletes the old
+        image file (as django-cleanup does on post_delete). With the old code
+        save() ran first, so get_thumbnailer found the file already deleted and
+        raised NoSourceGenerator. With the fix, thumbnailing happens first
+        while the file still exists.
+        """
+        import os
+
+        part = self.factory.make_part()
+        image_path = part.image.path
+        assert os.path.exists(image_path)
+
+        thumbnail_file_existed = []
+
+        def tracking_get_thumbnailer(fieldfile):
+            thumbnail_file_existed.append(os.path.exists(fieldfile.path))
+            mock_thumb = MagicMock()
+            mock_thumb.get_thumbnail.return_value.url = '/test/thumb.png'
+            return mock_thumb
+
+        def save_with_cleanup(instance, *args, **kwargs):
+            if os.path.exists(image_path):
+                os.remove(image_path)
+
+        with patch('core.models.get_thumbnailer', tracking_get_thumbnailer):
+            with patch.object(type(part), 'save', save_with_cleanup):
+                part.rotate(90)
+
+        self.assertTrue(thumbnail_file_existed[0],
+            "Image file must exist when get_thumbnailer runs — "
+            "thumbnailing must happen before self.save() to avoid "
+            "the django-cleanup race condition")
