@@ -271,6 +271,8 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if getattr(self.context.get('view'), 'swagger_fake_view', False):
+            return
         self.fields['components'].queryset = AnnotationComponent.objects.filter(document=self.context['view'].kwargs['document_pk'])
 
     def create(self, data):
@@ -867,6 +869,10 @@ class ProcessSerializerMixin():
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if getattr(self.context.get("view"), 'swagger_fake_view', False):
+            self.user = None
+            self.document = None
+            return
         self.user = self.context["view"].request.user
         self.document = self.context["document"]
 

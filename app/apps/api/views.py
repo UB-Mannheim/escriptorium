@@ -851,6 +851,8 @@ class TaskReportViewSet(ModelViewSet):
 
 class DocumentPermissionMixin():
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_queryset()
         try:
             self.document = (Document.objects
                              .for_user(self.request.user)
@@ -897,6 +899,8 @@ class ImportViewSet(DocumentPermissionMixin, GenericViewSet, CreateModelMixin):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
+        if getattr(self, 'swagger_fake_view', False):
+            return context
         context['user'] = self.request.user
         context['document'] = Document.objects.get(pk=self.kwargs.get('document_pk'))
         return context
@@ -1174,6 +1178,8 @@ class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = AnnotationTaxonomySerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_queryset()
         qs = (super().get_queryset()
               .filter(document=self.document)
               .prefetch_related('typology', 'components'))
@@ -1369,6 +1375,8 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_queryset()
         qs = (super().get_queryset()
               .filter(line__document_part=self.kwargs['part_pk'])
               .filter(line__document_part__document=self.kwargs['document_pk'])
@@ -1404,6 +1412,8 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         return Response(serializer.data)
 
     def get_serializer_class(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return self.serializer_class
         lines = Line.objects.filter(document_part=self.kwargs['part_pk'])
 
         class RuntimeSerializer(self.serializer_class):

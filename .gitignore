@@ -26,5 +26,7 @@ yarn.lock
 wsl-dev*
 wsl_dev*
 test_media/
+venv/
+schema.yaml
 .vscode
 *.mo

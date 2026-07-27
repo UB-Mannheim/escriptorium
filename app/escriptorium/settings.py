@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'captcha',
+    'drf_spectacular',
 
     'bootstrap',
     'versioning',
@@ -462,6 +463,33 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.CustomPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    # silence schema generation warnings for now
+    'DISABLE_ERRORS_AND_WARNINGS': True,
+    'TITLE': 'eScriptorium API',
+    'DESCRIPTION': """eScriptorium REST API
+
+### Authentication
+
+- Django Session Login: [/api/api-auth/login/](../api-auth/login/)
+- Token Auth: `POST /api/token-auth/`
+
+After login, use the **Authorize** button.
+
+Token endpoint:
+POST /api/token-auth/
+
+### Licenses
+[MIT License](https://choosealicense.com/licenses/mit/)
+""",
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAuthenticated'],
 }
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
