@@ -467,6 +467,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
+    # silence schema generation warnings for now
+    'DISABLE_ERRORS_AND_WARNINGS': True,
     'TITLE': 'eScriptorium API',
     'DESCRIPTION': """eScriptorium REST API
 
@@ -486,24 +488,8 @@ POST /api/token-auth/
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
-    'SECURITY': [
-        {'cookieAuth': []},
-        {'tokenAuth': []},
-    ],
     'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
     'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAuthenticated'],
-    'SECURITY_SCHEMES': {
-        'tokenAuth': {
-            'type': 'http',
-            'scheme': 'bearer',
-            'bearerFormat': 'Token',
-        },
-        'cookieAuth': {
-            'type': 'apiKey',
-            'in': 'cookie',
-            'name': 'sessionid',
-        },
-    },
 }
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
