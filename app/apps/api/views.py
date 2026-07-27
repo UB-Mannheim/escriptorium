@@ -1020,14 +1020,15 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def rotate(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
-        angle = self.request.data.get('angle')
-        if angle:
-            document_part.rotate(angle, user=self.request.user)
-            return Response({'status': 'done'}, status=200)
-        else:
-            return Response({'error': "Post an angle."},
-                            status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            document_part = DocumentPart.objects.select_for_update().get(pk=pk)
+            angle = self.request.data.get('angle')
+            if angle:
+                document_part.rotate(angle, user=self.request.user)
+                return Response({'status': 'done'}, status=200)
+            else:
+                return Response({'error': "Post an angle."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def crop(self, request, document_pk=None, pk=None):
