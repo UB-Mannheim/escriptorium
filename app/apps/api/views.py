@@ -290,7 +290,7 @@ class ProjectViewSet(ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
         # re-instantiate serializer to use updated data
-        serializer = ProjectSerializer(project)
+        serializer = ProjectSerializer(project, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -594,11 +594,20 @@ class DocumentViewSet(ModelViewSet):
             return Response({'error': "Invalid transcription."},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        # the model has to be one the user may read
+        try:
+            model = (OcrModel.objects
+                     .for_user_read(request.user)
+                     .get(pk=request.data['model']))
+        except (OcrModel.DoesNotExist, ValueError, TypeError):
+            return Response({'error': "Invalid model."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         from core.tasks import forced_align
         for part in parts:
             forced_align.delay(
                 instance_pk=part.pk,
-                model_pk=request.data['model'],
+                model_pk=model.pk,
                 transcription_pk=request.data['transcription'],
                 part_pk=part.pk,
                 user_pk=request.user.pk
@@ -861,6 +870,18 @@ class DocumentPermissionMixin():
             raise PermissionDenied
 
         return super().get_queryset()
+
+    def get_authorised_part(self):
+        """The part named in the URL, checked against the authorised document.
+
+        get_queryset() authorises the document; this additionally ties the
+        part to it. Everything reached by pk goes through here or
+        get_queryset().
+        """
+        self.get_queryset()  # runs the document permission check above
+        return get_object_or_404(DocumentPart,
+                                 pk=self.kwargs['part_pk'],
+                                 document=self.document)
 
 
 class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
@@ -1280,6 +1301,12 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         # We can't used the DetailedLineSerializer, since the Transcription serializer requires a line property,
         # which is unknown at this time - the line has not been created yet.
         # We may want to move this code into the DetailedLineSerializer's create method at some point.
+
+        # The part comes from the URL, not the payload.
+        part = self.get_authorised_part()
+        for line in lines:
+            line['document_part'] = part.pk
+
         serializer = LineSerializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -1305,7 +1332,7 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
 
         # Finally, for a response, we want to create all the newly created lines along with their transcriptions.
         # Simplest way to do this - just use the PKs to load the lines again
-        qs = Line.objects.filter(pk__in=line_pks)
+        qs = self.get_queryset().filter(pk__in=line_pks)
         serializer = DetailedLineSerializer(qs, many=True)
         return serializer.data
 
@@ -1321,7 +1348,8 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request, document_pk=None, part_pk=None):
         deleted_lines = request.data.get("lines")
-        qs = Line.objects.filter(pk__in=deleted_lines)
+        # get_queryset() confines this to the part named in the URL
+        qs = self.get_queryset().filter(pk__in=deleted_lines)
         serializer = DetailedLineSerializer(qs, many=True)
         json = serializer.data
         qs.delete()
@@ -1338,7 +1366,7 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         if len(original_lines) > MAX_MERGE_SIZE:
             return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
 
-        lines = list(Line.objects.filter(pk__in=original_lines))
+        lines = list(self.get_queryset().filter(pk__in=original_lines))
         if not lines:
             return Response(dict(status='error', error=_("None of the requested lines were found.")), status=status.HTTP_404_NOT_FOUND)
 
@@ -1360,7 +1388,13 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
         data = request.data.get('lines')
-        qs = Line.objects.filter(pk__in=[line['pk'] for line in data])
+        qs = self.get_queryset().filter(pk__in=[line['pk'] for line in data])
+        if qs.count() != len(data):
+            # a pk outside this part: refuse rather than reorder the subset that
+            # did match (LineOrderListSerializer also assumes a full match)
+            return Response({'status': 'error',
+                             'error': _("Some lines could not be found in this part.")},
+                            status=status.HTTP_404_NOT_FOUND)
         serializer = LineOrderSerializer(qs, data=data, many=True)
         if serializer.is_valid():
             resp = serializer.save()
@@ -1389,7 +1423,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 
     def create(self, request, document_pk=None, part_pk=None):
         response = super().create(request, document_pk=document_pk, part_pk=part_pk)
-        document_part = DocumentPart.objects.get(pk=part_pk)
+        document_part = self.get_authorised_part()
         document_part.calculate_progress()
         document_part.save()
         return response
@@ -1414,7 +1448,11 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     def get_serializer_class(self):
         if getattr(self, 'swagger_fake_view', False):
             return self.serializer_class
-        lines = Line.objects.filter(document_part=self.kwargs['part_pk'])
+        # scoped to the document too, so the part is tied to the document
+        # named in the URL
+        lines = Line.objects.filter(
+            document_part=self.kwargs['part_pk'],
+            document_part__document=self.kwargs['document_pk'])
 
         class RuntimeSerializer(self.serializer_class):
             line = PrimaryKeyRelatedField(queryset=lines)
@@ -1423,7 +1461,8 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['POST'])
     def bulk_create(self, request, document_pk=None, part_pk=None, pk=None):
         lines = request.data.get("lines")
-        serializer = LineTranscriptionSerializer(data=lines, many=True)
+        # get_serializer_class() narrows `line` to this part
+        serializer = self.get_serializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -1435,8 +1474,9 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         response = []
         errors = []
         for line in lines:
-            lt = get_object_or_404(LineTranscription, pk=line["pk"])
-            serializer = LineTranscriptionSerializer(lt, data=line, partial=True)
+            # scoped to the part in the URL
+            lt = get_object_or_404(self.get_queryset(), pk=line["pk"])
+            serializer = self.get_serializer(lt, data=line, partial=True)
 
             if serializer.is_valid():
                 try:
@@ -1460,7 +1500,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['POST'])
     def bulk_delete(self, request, document_pk=None, part_pk=None, pk=None):
         lines = request.data.get("lines")
-        qs = LineTranscription.objects.filter(pk__in=lines)
+        qs = self.get_queryset().filter(pk__in=lines)
         qs.update(content='')
         return Response(status=status.HTTP_204_NO_CONTENT, )
 

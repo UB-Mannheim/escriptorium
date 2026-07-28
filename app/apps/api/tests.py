@@ -16,11 +16,13 @@ from core.models import (
     Document,
     DocumentMetadata,
     DocumentPart,
+    DocumentTag,
     Line,
     LineTranscription,
     LineType,
     Metadata,
     OcrModel,
+    ProjectTag,
     Transcription,
 )
 from core.tests.factory import CoreFactoryTestCase
@@ -1134,7 +1136,9 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:line-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(12):
+        # +1 over the unscoped version: the queryset now runs the document
+        # permission check instead of deleting straight off Line.objects
+        with self.assertNumQueries(13):
             resp = self.client.post(uri, {'lines': [self.line.pk]},
                                     content_type='application/json')
         self.assertEqual(Line.objects.count(), 2)
@@ -1343,7 +1347,8 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
 
-        with self.assertNumQueries(25):
+        # +1: the part is now resolved through the authorised document
+        with self.assertNumQueries(26):
             resp = self.client.post(uri, {
                 'line': self.line2.pk,
                 'transcription': self.transcription.pk,
@@ -1392,7 +1397,9 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:linetranscription-bulk-update',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
 
-        with self.assertNumQueries(36):
+        # -2: the scoped queryset select_related's line and transcription,
+        # which the per-pk LineTranscription.objects lookups did not
+        with self.assertNumQueries(34):
             resp = self.client.put(uri, {'lines': [
                 {'pk': self.lt.pk,
                  'content': 'test1 new',
@@ -1414,7 +1421,8 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:linetranscription-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(5):
+        # +1: the document permission check
+        with self.assertNumQueries(6):
             resp = self.client.post(uri, {'lines': [self.lt.pk, self.lt2.pk]},
                                     content_type='application/json')
             lines = LineTranscription.objects.all()
@@ -1732,3 +1740,184 @@ class RelatedFieldNarrowingTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.status_code, 200, resp.content)
         self.assertEqual(mock_segment.si.call_args.kwargs['instance_pks'],
                          [self.mine.pk])
+
+
+class PkScopingTestCase(CoreFactoryTestCase):
+    """Endpoints that take pks in the body resolve them through the
+    viewset queryset, so they stay within the object named in the URL.
+
+    Note the fixture: factory.make_project() get_or_creates on the slug, so
+    calling it without a name returns one shared project for every document -
+    and its owner then has legitimate project-owner rights over the second
+    document. Both therefore get an explicitly named project, and setUp
+    asserts the separation before any test runs.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.caller = self.factory.make_user()
+        caller_doc = self.factory.make_document(
+            owner=self.caller,
+            project=self.factory.make_project(name='caller project',
+                                              owner=self.caller))
+        self.mine = self.factory.make_part(document=caller_doc)
+
+        self.other = self.factory.make_user()
+        other_doc = self.factory.make_document(
+            owner=self.other,
+            project=self.factory.make_project(name='other project',
+                                              owner=self.other))
+        self.theirs = self.factory.make_part(document=other_doc)
+
+        self.assertNotIn(other_doc, Document.objects.for_user(self.caller))
+
+        self.other_line = Line.objects.create(
+            document_part=self.theirs, baseline=[[0, 0], [10, 10]])
+        self.other_line2 = Line.objects.create(
+            document_part=self.theirs, baseline=[[20, 20], [30, 30]])
+        self.other_lt = self.other_line.transcriptions.create(
+            transcription=other_doc.transcriptions.first(),
+            content='other content')
+
+        self.client.force_login(self.caller)
+        self.kwargs = {'document_pk': self.mine.document.pk,
+                       'part_pk': self.mine.pk}
+
+    def call(self, name, payload, method='post'):
+        return getattr(self.client, method)(
+            reverse(name, kwargs=self.kwargs), data=payload,
+            content_type='application/json')
+
+    def test_line_bulk_delete_is_scoped_to_the_part(self):
+        resp = self.call('api:line-bulk-delete', {'lines': [self.other_line.pk]})
+        self.assertTrue(Line.objects.filter(pk=self.other_line.pk).exists())
+        self.assertNotIn(b'other content', resp.content)
+
+    def test_line_merge_is_scoped_to_the_part(self):
+        resp = self.call('api:line-merge',
+                         {'lines': [self.other_line.pk, self.other_line2.pk]})
+        self.assertEqual(resp.status_code, 404, resp.content)
+        self.assertTrue(Line.objects.filter(pk=self.other_line.pk).exists())
+        self.assertNotIn(b'other content', resp.content)
+
+    def test_line_move_is_scoped_to_the_part(self):
+        resp = self.call('api:line-move',
+                         {'lines': [{'pk': self.other_line.pk, 'order': 5}]})
+        self.assertEqual(resp.status_code, 404, resp.content)
+        self.other_line.refresh_from_db()
+        self.assertEqual(self.other_line.order, 0)
+
+    def test_line_bulk_create_ignores_payload_part(self):
+        # document_part in the body must not override the part in the URL
+        self.call('api:line-bulk-create',
+                  {'lines': [{'document_part': self.theirs.pk,
+                              'baseline': [[1, 1], [2, 2]]}]})
+        self.assertEqual(Line.objects.filter(document_part=self.theirs).count(), 2)
+
+    def test_line_bulk_create_requires_a_part_of_the_document(self):
+        # a document_pk paired with a part_pk from another document
+        resp = self.client.post(
+            reverse('api:line-bulk-create',
+                    kwargs={'document_pk': self.mine.document.pk,
+                            'part_pk': self.theirs.pk}),
+            data={'lines': [{'baseline': [[1, 1], [2, 2]]}]},
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 404, resp.content)
+        self.assertEqual(Line.objects.filter(document_part=self.theirs).count(), 2)
+
+    def test_lt_bulk_update_is_scoped_to_the_part(self):
+        resp = self.call('api:linetranscription-bulk-update',
+                         {'lines': [{'pk': self.other_lt.pk,
+                                     'content': 'changed'}]}, 'put')
+        self.assertEqual(resp.status_code, 404, resp.content)
+        self.other_lt.refresh_from_db()
+        self.assertEqual(self.other_lt.content, 'other content')
+
+    def test_lt_bulk_delete_is_scoped_to_the_part(self):
+        self.call('api:linetranscription-bulk-delete',
+                  {'lines': [self.other_lt.pk]})
+        self.other_lt.refresh_from_db()
+        self.assertEqual(self.other_lt.content, 'other content')
+
+    def test_lt_bulk_create_requires_a_line_of_the_part(self):
+        resp = self.call('api:linetranscription-bulk-create',
+                         {'lines': [{'line': self.other_line2.pk,
+                                     'transcription': self.theirs.document.transcriptions.first().pk,
+                                     'content': 'added'}]})
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertEqual(
+            LineTranscription.objects.filter(line=self.other_line2).count(), 0)
+
+    def test_collection_rejects_foreign_parts(self):
+        resp = self.client.post(
+            reverse('api:virtualcollection-list'),
+            data={'name': 'mine', 'items_to_save': [
+                {'document_part': self.theirs.pk,
+                 'transcription_layer': self.theirs.document.transcriptions.first().pk}]},
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+
+    def test_collection_accepts_own_parts(self):
+        resp = self.client.post(
+            reverse('api:virtualcollection-list'),
+            data={'name': 'mine', 'items_to_save': [
+                {'document_part': self.mine.pk,
+                 'transcription_layer': self.mine.document.transcriptions.first().pk}]},
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 201, resp.content)
+
+    def _another_users_model(self, job):
+        model = self.factory.make_model(self.theirs.document, job=job)
+        model.public = False
+        model.save()
+        return model
+
+    @patch('api.serializers.segment')
+    def test_segment_requires_a_readable_model(self, mock_segment):
+        model = self._another_users_model(OcrModel.MODEL_JOB_SEGMENT)
+        resp = self.client.post(
+            reverse('api:document-segment', kwargs={'pk': self.mine.document.pk}),
+            data={'parts': [self.mine.pk], 'steps': 'both', 'model': model.pk})
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertFalse(mock_segment.si.called)
+
+    @patch('api.serializers.transcribe')
+    def test_transcribe_requires_a_readable_model(self, mock_transcribe):
+        model = self._another_users_model(OcrModel.MODEL_JOB_RECOGNIZE)
+        resp = self.client.post(
+            reverse('api:document-transcribe', kwargs={'pk': self.mine.document.pk}),
+            data={'parts': [self.mine.pk], 'model': model.pk,
+                  'transcription': self.mine.document.transcriptions.first().pk})
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertFalse(mock_transcribe.si.called)
+
+    @patch('core.tasks.forced_align.delay')
+    def test_forced_align_requires_a_readable_model(self, mock_align):
+        model = self._another_users_model(OcrModel.MODEL_JOB_RECOGNIZE)
+        resp = self.client.post(
+            reverse('api:document-forced-align',
+                    kwargs={'pk': self.mine.document.pk}),
+            data={'parts': [self.mine.pk], 'model': model.pk,
+                  'transcription': self.mine.document.transcriptions.first().pk},
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertFalse(mock_align.called)
+
+    def test_document_tag_must_belong_to_a_writable_project(self):
+        tag = DocumentTag.objects.create(project=self.theirs.document.project,
+                                         name='other-doctag', color='#fff')
+        resp = self.client.patch(
+            reverse('api:document-detail', kwargs={'pk': self.mine.document.pk}),
+            data={'tags': [tag.pk]}, content_type='application/json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertEqual(self.mine.document.tags.count(), 0)
+
+    def test_project_tag_must_belong_to_the_caller(self):
+        tag = ProjectTag.objects.create(user=self.other, name='other-projtag',
+                                        color='#fff')
+        resp = self.client.patch(
+            reverse('api:project-detail',
+                    kwargs={'pk': self.mine.document.project.pk}),
+            data={'tags': [tag.pk]}, content_type='application/json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertEqual(self.mine.document.project.tags.count(), 0)
