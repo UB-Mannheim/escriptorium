@@ -82,7 +82,6 @@ INSTALLED_APPS = [
     'reporting',
     'django_prometheus',
     'solo',
-    'webpack_loader',
 ]
 
 MIDDLEWARE = [
@@ -314,16 +313,6 @@ if CUSTOM_HOME:
 if CUSTOM_CONTRIBUTORS:
     # custom contributors directory
     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'contributors'))
-
-WEBPACK_LOADER = {
-    'DEFAULT': {
-        'BUNDLE_DIR_NAME': '',  # webpack's output.filename already includes the "bundles/" prefix in the stats file
-        'STATS_FILE': os.path.join(FRONTEND_DIR, 'webpack-stats.json'),
-        'POLL_INTERVAL': 0.1,
-        'IGNORE': [r'.+\.hot-update\.js', r'.+\.map'],
-        'CACHE': not DEBUG,
-    }
-}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
