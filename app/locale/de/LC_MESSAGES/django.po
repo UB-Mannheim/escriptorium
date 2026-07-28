@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 21:53+0200\n"
+"POT-Creation-Date: 2026-07-28 19:08+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -426,6 +426,16 @@ msgid "Top to bottom"
 msgstr "Von oben nach unten"
 
 #: apps/core/models.py
+msgid "Font file in ttf, otf, woff or woff2 format."
+msgstr ""
+
+#: apps/core/models.py
+msgid ""
+"Size adjustment factor (1.0 = 100%) to normalize the visual size of this "
+"font."
+msgstr ""
+
+#: apps/core/models.py
 msgid ""
 "An optional URL pointing to an external document that explains content "
 "editing and authorship guidelines for this project, in order to guide a team "
@@ -444,6 +454,12 @@ msgstr "Mit Benutzern teilen"
 #: apps/core/models.py
 msgid "Share with teams"
 msgstr "Mit Teams teilen"
+
+#: apps/core/models.py
+msgid ""
+"Font used to render transcription content for documents in this project, "
+"unless overridden at the document level."
+msgstr ""
 
 #: apps/core/models.py
 msgid "Draft"
@@ -503,6 +519,12 @@ msgstr ""
 "Wenn diese Option aktiviert ist, können Sie farbige Overlays für die "
 "Konfidenzwerte der automatischen Transkription (OCR/HTR) ein- und "
 "ausschalten."
+
+#: apps/core/models.py
+msgid ""
+"Font used to render this document's transcription content, overriding the "
+"project and user fonts."
+msgstr ""
 
 #: apps/core/models.py
 msgid "Couldn't find the alignment task."
@@ -1082,6 +1104,16 @@ msgstr ""
 "Benutzeroberfläche portiert wurden, möglicherweise nicht verfügbar. Wenn "
 "diese Option aktiviert ist, sind möglicherweise neuere Funktionen nicht "
 "verfügbar."
+
+#: apps/users/models.py
+msgid "Preferred transcription font"
+msgstr ""
+
+#: apps/users/models.py
+msgid ""
+"Font used to render transcription content in the editor, unless overridden "
+"at the document or project level."
+msgstr ""
 
 #: apps/users/models.py
 msgid "Error"
@@ -1887,6 +1919,10 @@ msgstr "Bildannotationen"
 msgid "Text Annotations"
 msgstr "Textannotationen"
 
+#: escriptorium/templates/core/document_ontology_overview.html
+msgid "Ontology Overview"
+msgstr ""
+
 #: escriptorium/templates/core/documents_tasks_list.html
 msgid "Task Monitoring"
 msgstr "Aufgabenüberwachung"
@@ -2040,6 +2076,14 @@ msgstr ""
 #: escriptorium/templates/core/ocrmodel_form.html
 msgid "Upload a model"
 msgstr "Modell hochladen"
+
+#: escriptorium/templates/core/models_list/main.html
+msgid "Find a model"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/main.html
+msgid "Publish a model"
+msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/delete.html
 msgid "Delete right"
