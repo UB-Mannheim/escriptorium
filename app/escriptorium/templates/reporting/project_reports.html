@@ -1,6 +1,5 @@
 {% extends 'core/project_nav.html' %}
 {% load i18n static bootstrap report pagination cache %}
-{% load render_bundle from webpack_loader %}
 {% block head_title %}{% trans "Project reports" %}{% endblock %}
 
 {% block nav-reports-active %}active{% endblock %}
@@ -256,5 +255,5 @@
 
 {% block scripts %}
   {{ block.super }}
-  {% render_bundle 'doclist' 'js' %}
+  <script src="{% static 'doclist.js' %}" type="text/javascript"></script>
 {% endblock %}

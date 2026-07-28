@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load i18n static %}
-{% load render_bundle from webpack_loader %}
 
 {% block head_title %}{% trans "My Projects" %}{% endblock %}
 
@@ -46,13 +45,13 @@
 
 {% block extrascript %}
     {% if not request.user.legacy_mode %}
-        {% render_bundle 'projectsList' 'js' %}
+        <script src="{% static 'projectsList.js' %}"></script>
     {% endif %}
 {% endblock extrascript %}
 
 {% block extrastyle %}
     {% if not request.user.legacy_mode %}
-        {% render_bundle 'projectsList' 'css' %}
+        <link href="{% static 'projectsList.css' %}" rel="stylesheet" type="text/css">
     {% endif %}
 {% endblock extrastyle %}
 
