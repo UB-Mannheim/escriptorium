@@ -1,6 +1,5 @@
 {% extends 'core/project_nav.html' %}
 {% load i18n static thumbnail bootstrap %}
-{% load render_bundle from webpack_loader %}
 {% block head_title %}{% trans "My Documents" %}{% endblock %}
 
 {% block nav-docs-active %}active{% endblock %}
@@ -158,5 +157,5 @@
 
 {% block scripts %}
   {{ block.super }}
-  {% render_bundle 'doclist' 'js' %}
+  <script src="{% static 'doclist.js' %}"></script>
 {% endblock %}

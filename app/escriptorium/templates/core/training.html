@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load i18n static %}
-{% load render_bundle from webpack_loader %}
 
 {% block head_title %}{% trans "Model Training" %}{% endblock %}
 
@@ -18,13 +17,13 @@
 
 {% block extrascript %}
     {% if not request.user.legacy_mode %}
-        {% render_bundle 'modelTraining' 'js' %}
+        <script src="{% static 'modelTraining.js' %}"></script>
     {% endif %}
 {% endblock extrascript %}
 
 {% block extrastyle %}
     {% if not request.user.legacy_mode %}
-        {% render_bundle 'modelTraining' 'css' %}
+        <link href="{% static 'modelTraining.css' %}" rel="stylesheet" type="text/css">
     {% endif %}
 {% endblock extrastyle %}
 

@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load i18n static %}
-{% load render_bundle from webpack_loader %}
 
 {% block head_title %}{{ document.name }}{% endblock %}
 
@@ -21,7 +20,7 @@
 
 {% block extrascript %}
     {% if not request.user.legacy_mode %}
-        {% render_bundle 'documentDashboard' 'js' %}
+        <script src="{% static 'documentDashboard.js' %}"></script>
     {% endif %}
 {% endblock extrascript %}
 
@@ -34,6 +33,6 @@
 
 {% block extrastyle %}
     {% if not request.user.legacy_mode %}
-        {% render_bundle 'documentDashboard' 'css' %}
+        <link href="{% static 'documentDashboard.css' %}" rel="stylesheet" type="text/css">
     {% endif %}
 {% endblock extrastyle %}
