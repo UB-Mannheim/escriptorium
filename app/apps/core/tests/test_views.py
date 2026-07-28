@@ -15,6 +15,8 @@ from core.models import (
     Document,
     DocumentPartType,
     LineType,
+    OcrModel,
+    OcrModelRight,
 )
 from core.tests.factory import CoreFactory
 from imports.serializers import OntologyImportSerializer
@@ -375,3 +377,85 @@ class DocumentTestCase(TestCase):
         self.assertEqual(messages[0].message, 'Ontology import finished successfully!')
         self.assertEqual(messages[0].level_tag, 'success')
         self.assertEqual(messages[0].extra_tags, report.uri)
+
+
+class OcrModelRightsTestCase(TestCase):
+    """The owner check runs from dispatch(), so it covers every method."""
+
+    def setUp(self):
+        self.factory = CoreFactory()
+        self.other = self.factory.make_user()
+        self.caller = self.factory.make_user()
+        self.grantee = self.factory.make_user()
+
+        self.model = OcrModel.objects.create(
+            name='private model', owner=self.other,
+            job=OcrModel.MODEL_JOB_RECOGNIZE, file_size=0, public=False)
+        # a right the owner granted to a colleague
+        self.right = OcrModelRight.objects.create(
+            ocr_model=self.model, user=self.grantee)
+
+    def rights_url(self):
+        return reverse('model-rights', kwargs={'pk': self.model.pk})
+
+    def delete_url(self, right=None):
+        return reverse('model-right-delete',
+                       kwargs={'modelPk': self.model.pk,
+                               'pk': (right or self.right).pk})
+
+    def test_stranger_cannot_view_rights(self):
+        self.client.force_login(self.caller)
+        self.assertEqual(self.client.get(self.rights_url()).status_code, 403)
+
+    def test_stranger_cannot_grant_themselves_a_right(self):
+        # the form narrows `user` to the model owner's groups, so the caller
+        # shares one - otherwise the grant fails validation rather than authz
+        group = Group.objects.create(name='shared group')
+        self.other.groups.add(group)
+        self.caller.groups.add(group)
+
+        self.client.force_login(self.caller)
+        resp = self.client.post(self.rights_url(),
+                                data={'user': self.caller.pk, 'group': ''})
+
+        self.assertEqual(resp.status_code, 403)
+        self.assertFalse(OcrModelRight.objects.filter(
+            ocr_model=self.model, user=self.caller).exists())
+
+    def test_stranger_cannot_delete_a_right(self):
+        self.client.force_login(self.caller)
+        resp = self.client.post(self.delete_url())
+
+        self.assertEqual(resp.status_code, 403)
+        self.assertTrue(OcrModelRight.objects.filter(pk=self.right.pk).exists())
+
+    def test_right_pk_is_confined_to_the_model_in_the_url(self):
+        other = OcrModel.objects.create(
+            name='another model', owner=self.caller,
+            job=OcrModel.MODEL_JOB_RECOGNIZE, file_size=0, public=False)
+
+        self.client.force_login(self.caller)
+        # caller owns the model in the url, but names a right on another one
+        resp = self.client.post(
+            reverse('model-right-delete',
+                    kwargs={'modelPk': other.pk, 'pk': self.right.pk}))
+
+        self.assertEqual(resp.status_code, 404)
+        self.assertTrue(OcrModelRight.objects.filter(pk=self.right.pk).exists())
+
+    def test_owner_can_still_view_grant_and_delete(self):
+        group = Group.objects.create(name='owner group')
+        self.other.groups.add(group)
+        colleague = self.factory.make_user()
+        colleague.groups.add(group)
+
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(self.rights_url()).status_code, 200)
+
+        self.client.post(self.rights_url(),
+                         data={'user': colleague.pk, 'group': ''})
+        self.assertTrue(OcrModelRight.objects.filter(
+            ocr_model=self.model, user=colleague).exists())
+
+        self.client.post(self.delete_url())
+        self.assertFalse(OcrModelRight.objects.filter(pk=self.right.pk).exists())

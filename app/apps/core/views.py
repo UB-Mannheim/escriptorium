@@ -998,51 +998,64 @@ class ModelCancelTraining(LoginRequiredMixin, SuccessMessageMixin, DetailView):
             return HttpResponseRedirect(self.get_success_url())
 
 
-class ModelRights(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+class OcrModelRightsMixin(LoginRequiredMixin):
+    """Rights are granted on the model named in the URL, so every method
+    checks the caller owns that model."""
+
+    model_url_kwarg = 'pk'
+
+    @cached_property
+    def ocr_model(self):
+        model = get_object_or_404(OcrModel, pk=self.kwargs[self.model_url_kwarg])
+
+        if self.request.user != model.owner or model.public:
+            raise PermissionDenied
+
+        return model
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            self.ocr_model  # let LoginRequiredMixin redirect anonymous first
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ModelRights(OcrModelRightsMixin, SuccessMessageMixin, CreateView):
     model = OcrModelRight
     template_name = "core/models_list/rights/main.html"
     success_message = _("Right added successfully!")
     form_class = ModelRightsForm
 
     def get_context_data(self, **kwargs):
-        model = get_object_or_404(OcrModel, pk=self.kwargs['pk'])
-
-        if self.request.user != model.owner or model.public:
-            raise PermissionDenied
-
-        kwargs['object_list'] = model.ocr_model_rights.all()
-        kwargs['model_name'] = model.name
+        kwargs['object_list'] = self.ocr_model.ocr_model_rights.all()
+        kwargs['model_name'] = self.ocr_model.name
 
         return super().get_context_data(**kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({'ocr_model_id': self.kwargs['pk']})
+        kwargs.update({'ocr_model_id': self.ocr_model.pk})
         return kwargs
 
     def form_valid(self, form):
-        form.instance.ocr_model = OcrModel.objects.get(pk=self.kwargs['pk'])
+        form.instance.ocr_model = self.ocr_model
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('model-rights', kwargs={'pk': self.kwargs['pk']})
+        return reverse('model-rights', kwargs={'pk': self.ocr_model.pk})
 
 
-class ModelRightDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+class ModelRightDelete(OcrModelRightsMixin, SuccessMessageMixin, DeleteView):
     model = OcrModelRight
     template_name = 'core/models_list/rights/delete.html'
     success_message = _("Right deleted successfully!")
+    model_url_kwarg = 'modelPk'
 
-    def get_context_data(self, **kwargs):
-        model = get_object_or_404(OcrModel, pk=self.kwargs['modelPk'])
-
-        if self.request.user != model.owner or model.public:
-            raise PermissionDenied
-
-        return super().get_context_data(**kwargs)
+    def get_queryset(self):
+        # the right pk is its own url kwarg, so confine it to the model too
+        return OcrModelRight.objects.filter(ocr_model=self.ocr_model)
 
     def get_success_url(self):
-        return reverse('model-rights', kwargs={'pk': self.kwargs['modelPk']})
+        return reverse('model-rights', kwargs={'pk': self.ocr_model.pk})
 
 
 class DocumentsTasksList(LoginRequiredMixin, TemplateView):
