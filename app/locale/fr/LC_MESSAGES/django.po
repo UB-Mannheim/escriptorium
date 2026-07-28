@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 21:53+0200\n"
+"POT-Creation-Date: 2026-07-28 19:08+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -384,6 +384,16 @@ msgid "Top to bottom"
 msgstr "Haut en bas"
 
 #: apps/core/models.py
+msgid "Font file in ttf, otf, woff or woff2 format."
+msgstr ""
+
+#: apps/core/models.py
+msgid ""
+"Size adjustment factor (1.0 = 100%) to normalize the visual size of this "
+"font."
+msgstr ""
+
+#: apps/core/models.py
 msgid ""
 "An optional URL pointing to an external document that explains content "
 "editing and authorship guidelines for this project, in order to guide a team "
@@ -397,6 +407,12 @@ msgstr "Partager avec d'autres usagers"
 #: apps/core/models.py
 msgid "Share with teams"
 msgstr "Partager avec d'autres équipes"
+
+#: apps/core/models.py
+msgid ""
+"Font used to render transcription content for documents in this project, "
+"unless overridden at the document level."
+msgstr ""
 
 #: apps/core/models.py
 msgid "Draft"
@@ -452,6 +468,12 @@ msgstr ""
 msgid ""
 "If checked, enable toggling on and off colorized overlays for automatic "
 "transcription (OCR/HTR) confidences."
+msgstr ""
+
+#: apps/core/models.py
+msgid ""
+"Font used to render this document's transcription content, overriding the "
+"project and user fonts."
 msgstr ""
 
 #: apps/core/models.py
@@ -996,6 +1018,16 @@ msgid ""
 "Use the legacy version of the user interface. If unchecked, features that "
 "have not yet been ported to the new interface may become unavailable. "
 "Likewise, if checked, newer features may become unavailable."
+msgstr ""
+
+#: apps/users/models.py
+msgid "Preferred transcription font"
+msgstr ""
+
+#: apps/users/models.py
+msgid ""
+"Font used to render transcription content in the editor, unless overridden "
+"at the document or project level."
 msgstr ""
 
 #: apps/users/models.py
@@ -1746,6 +1778,10 @@ msgstr ""
 msgid "Text Annotations"
 msgstr ""
 
+#: escriptorium/templates/core/document_ontology_overview.html
+msgid "Ontology Overview"
+msgstr ""
+
 #: escriptorium/templates/core/documents_tasks_list.html
 msgid "Task Monitoring"
 msgstr ""
@@ -1894,6 +1930,14 @@ msgstr ""
 #: escriptorium/templates/core/models_list/main.html
 #: escriptorium/templates/core/ocrmodel_form.html
 msgid "Upload a model"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/main.html
+msgid "Find a model"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/main.html
+msgid "Publish a model"
 msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/delete.html
