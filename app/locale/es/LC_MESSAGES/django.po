@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-21 21:53+0200\n"
+"POT-Creation-Date: 2026-07-28 19:08+0200\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -417,6 +417,16 @@ msgid "Top to bottom"
 msgstr "Top to bottom"
 
 #: apps/core/models.py
+msgid "Font file in ttf, otf, woff or woff2 format."
+msgstr ""
+
+#: apps/core/models.py
+msgid ""
+"Size adjustment factor (1.0 = 100%) to normalize the visual size of this "
+"font."
+msgstr ""
+
+#: apps/core/models.py
 msgid ""
 "An optional URL pointing to an external document that explains content "
 "editing and authorship guidelines for this project, in order to guide a team "
@@ -434,6 +444,12 @@ msgstr "Share with users"
 #: apps/core/models.py
 msgid "Share with teams"
 msgstr "Share with teams"
+
+#: apps/core/models.py
+msgid ""
+"Font used to render transcription content for documents in this project, "
+"unless overridden at the document level."
+msgstr ""
 
 #: apps/core/models.py
 msgid "Draft"
@@ -492,6 +508,12 @@ msgid ""
 msgstr ""
 "If checked, enable toggling on and off colorized overlays for automático "
 "transcripción (OCR/HTR) confidences."
+
+#: apps/core/models.py
+msgid ""
+"Font used to render this document's transcription content, overriding the "
+"project and user fonts."
+msgstr ""
 
 #: apps/core/models.py
 msgid "Couldn't find the alignment task."
@@ -1054,6 +1076,16 @@ msgstr ""
 "Use the legacy version of the usuario interface. If unchecked, features that "
 "have not yet been ported to the nuevo interface may become no disponible. "
 "Likewise, if checked, newer features may become no disponible."
+
+#: apps/users/models.py
+msgid "Preferred transcription font"
+msgstr ""
+
+#: apps/users/models.py
+msgid ""
+"Font used to render transcription content in the editor, unless overridden "
+"at the document or project level."
+msgstr ""
 
 #: apps/users/models.py
 msgid "Error"
@@ -1811,6 +1843,10 @@ msgstr "imagen Annotations"
 msgid "Text Annotations"
 msgstr "texto Annotations"
 
+#: escriptorium/templates/core/document_ontology_overview.html
+msgid "Ontology Overview"
+msgstr ""
+
 #: escriptorium/templates/core/documents_tasks_list.html
 msgid "Task Monitoring"
 msgstr "Task Monitoring"
@@ -1962,6 +1998,14 @@ msgstr ""
 #: escriptorium/templates/core/ocrmodel_form.html
 msgid "Upload a model"
 msgstr "subir a modelo"
+
+#: escriptorium/templates/core/models_list/main.html
+msgid "Find a model"
+msgstr ""
+
+#: escriptorium/templates/core/models_list/main.html
+msgid "Publish a model"
+msgstr ""
 
 #: escriptorium/templates/core/models_list/rights/delete.html
 msgid "Delete right"
