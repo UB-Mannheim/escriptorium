@@ -32,7 +32,7 @@ COPY ./app/contributors /usr/src/app/contributors
 COPY --from=frontend /build/dist /usr/src/app/front
 
 RUN apt-get update -q && \
-    apt-get install -y --no-install-recommends gettext && \
+    apt-get install -y --no-install-recommends gettext curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 RUN python manage.py compilemessages
