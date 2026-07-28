@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load i18n static bootstrap %}
-{% load render_bundle from webpack_loader %}
 {% block head_title %}{% trans "Tasks monitoring" %}{% endblock %}
 
 {% block body %}
@@ -12,5 +11,5 @@
 
 {% block scripts %}
   {{ block.super }}
-  {% render_bundle 'docstasks' 'js' %}
+  <script src="{% static 'docstasks.js' %}"></script>
 {% endblock %}
