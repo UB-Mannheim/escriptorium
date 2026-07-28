@@ -16,11 +16,13 @@ from core.models import (
     Document,
     DocumentMetadata,
     DocumentPart,
+    DocumentTag,
     Line,
     LineTranscription,
     LineType,
     Metadata,
     OcrModel,
+    ProjectTag,
     Transcription,
 )
 from core.tests.factory import CoreFactoryTestCase
@@ -1134,7 +1136,7 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:line-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(16):
             resp = self.client.post(uri, {'lines': [self.line.pk]},
                                     content_type='application/json')
         self.assertEqual(Line.objects.count(), 2)
@@ -1343,7 +1345,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
 
-        with self.assertNumQueries(25):
+        with self.assertNumQueries(26):
             resp = self.client.post(uri, {
                 'line': self.line2.pk,
                 'transcription': self.transcription.pk,
@@ -1392,7 +1394,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:linetranscription-bulk-update',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
 
-        with self.assertNumQueries(36):
+        with self.assertNumQueries(34):
             resp = self.client.put(uri, {'lines': [
                 {'pk': self.lt.pk,
                  'content': 'test1 new',
@@ -1414,7 +1416,7 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:linetranscription-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             resp = self.client.post(uri, {'lines': [self.lt.pk, self.lt2.pk]},
                                     content_type='application/json')
             lines = LineTranscription.objects.all()
@@ -1696,3 +1698,172 @@ class DocumentPartMetadataTestCase(CoreFactoryTestCase):
             resp = self.client.delete(uri)
         self.assertEqual(resp.status_code, 204, resp.content)
         self.assertEqual(self.part.metadata.count(), 0)
+
+
+class TenantIsolationTestCase(CoreFactoryTestCase):
+    def setUp(self):
+        super().setUp()
+        self.attacker = self.factory.make_user()
+        attacker_doc = self.factory.make_document(
+            owner=self.attacker,
+            project=self.factory.make_project(name='attacker project',
+                                              owner=self.attacker))
+        self.mine = self.factory.make_part(document=attacker_doc)
+
+        self.victim = self.factory.make_user()
+        victim_doc = self.factory.make_document(
+            owner=self.victim,
+            project=self.factory.make_project(name='victim project',
+                                              owner=self.victim))
+        self.theirs = self.factory.make_part(document=victim_doc)
+
+        self.assertNotIn(victim_doc, Document.objects.for_user(self.attacker))
+
+        self.victim_line = Line.objects.create(
+            document_part=self.theirs, baseline=[[0, 0], [10, 10]])
+        self.victim_line2 = Line.objects.create(
+            document_part=self.theirs, baseline=[[20, 20], [30, 30]])
+        self.victim_lt = self.victim_line.transcriptions.create(
+            transcription=victim_doc.transcriptions.first(),
+            content='VICTIM CONTENT')
+
+        self.client.force_login(self.attacker)
+        self.kwargs = {'document_pk': self.mine.document.pk,
+                       'part_pk': self.mine.pk}
+
+    def call(self, name, payload, method='post'):
+        return getattr(self.client, method)(
+            reverse(name, kwargs=self.kwargs), data=payload,
+            content_type='application/json')
+
+    def test_line_bulk_delete_spares_foreign_lines(self):
+        resp = self.call('api:line-bulk-delete', {'lines': [self.victim_line.pk]})
+        self.assertTrue(Line.objects.filter(pk=self.victim_line.pk).exists())
+        self.assertNotIn(b'VICTIM CONTENT', resp.content)
+
+    def test_line_merge_spares_foreign_lines(self):
+        resp = self.call('api:line-merge',
+                         {'lines': [self.victim_line.pk, self.victim_line2.pk]})
+        self.assertEqual(resp.status_code, 404, resp.content)
+        self.assertTrue(Line.objects.filter(pk=self.victim_line.pk).exists())
+        self.assertNotIn(b'VICTIM CONTENT', resp.content)
+
+    def test_line_move_spares_foreign_lines(self):
+        resp = self.call('api:line-move',
+                         {'lines': [{'pk': self.victim_line.pk, 'order': 5}]})
+        self.assertEqual(resp.status_code, 404, resp.content)
+        self.victim_line.refresh_from_db()
+        self.assertEqual(self.victim_line.order, 0)
+
+    def test_line_bulk_create_ignores_payload_part(self):
+        self.call('api:line-bulk-create',
+                  {'lines': [{'document_part': self.theirs.pk,
+                              'baseline': [[1, 1], [2, 2]]}]})
+        self.assertEqual(Line.objects.filter(document_part=self.theirs).count(), 2)
+
+    def test_line_bulk_create_rejects_foreign_part_in_url(self):
+        resp = self.client.post(
+            reverse('api:line-bulk-create',
+                    kwargs={'document_pk': self.mine.document.pk,
+                            'part_pk': self.theirs.pk}),
+            data={'lines': [{'baseline': [[1, 1], [2, 2]]}]},
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 404, resp.content)
+        self.assertEqual(Line.objects.filter(document_part=self.theirs).count(), 2)
+
+    def test_lt_bulk_update_spares_foreign_transcriptions(self):
+        resp = self.call('api:linetranscription-bulk-update',
+                         {'lines': [{'pk': self.victim_lt.pk,
+                                     'content': 'DEFACED'}]}, 'put')
+        self.assertEqual(resp.status_code, 404, resp.content)
+        self.victim_lt.refresh_from_db()
+        self.assertEqual(self.victim_lt.content, 'VICTIM CONTENT')
+
+    def test_lt_bulk_delete_spares_foreign_transcriptions(self):
+        self.call('api:linetranscription-bulk-delete',
+                  {'lines': [self.victim_lt.pk]})
+        self.victim_lt.refresh_from_db()
+        self.assertEqual(self.victim_lt.content, 'VICTIM CONTENT')
+
+    def test_lt_bulk_create_rejects_foreign_line(self):
+        resp = self.call('api:linetranscription-bulk-create',
+                         {'lines': [{'line': self.victim_line2.pk,
+                                     'transcription': self.theirs.document.transcriptions.first().pk,
+                                     'content': 'INJECTED'}]})
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertEqual(
+            LineTranscription.objects.filter(line=self.victim_line2).count(), 0)
+
+    def test_collection_rejects_foreign_parts(self):
+        resp = self.client.post(
+            reverse('api:virtualcollection-list'),
+            data={'name': 'mine', 'items_to_save': [
+                {'document_part': self.theirs.pk,
+                 'transcription_layer': self.theirs.document.transcriptions.first().pk}]},
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+
+    def test_collection_accepts_own_parts(self):
+        resp = self.client.post(
+            reverse('api:virtualcollection-list'),
+            data={'name': 'mine', 'items_to_save': [
+                {'document_part': self.mine.pk,
+                 'transcription_layer': self.mine.document.transcriptions.first().pk}]},
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 201, resp.content)
+
+    def _victim_model(self, job):
+        model = self.factory.make_model(self.theirs.document, job=job)
+        model.public = False
+        model.save()
+        return model
+
+    @patch('api.serializers.segment')
+    def test_segment_rejects_foreign_private_model(self, mock_segment):
+        model = self._victim_model(OcrModel.MODEL_JOB_SEGMENT)
+        resp = self.client.post(
+            reverse('api:document-segment', kwargs={'pk': self.mine.document.pk}),
+            data={'parts': [self.mine.pk], 'steps': 'both', 'model': model.pk})
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertFalse(mock_segment.si.called)
+
+    @patch('api.serializers.transcribe')
+    def test_transcribe_rejects_foreign_private_model(self, mock_transcribe):
+        model = self._victim_model(OcrModel.MODEL_JOB_RECOGNIZE)
+        resp = self.client.post(
+            reverse('api:document-transcribe', kwargs={'pk': self.mine.document.pk}),
+            data={'parts': [self.mine.pk], 'model': model.pk,
+                  'transcription': self.mine.document.transcriptions.first().pk})
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertFalse(mock_transcribe.si.called)
+
+    @patch('core.tasks.forced_align.delay')
+    def test_forced_align_rejects_foreign_private_model(self, mock_align):
+        model = self._victim_model(OcrModel.MODEL_JOB_RECOGNIZE)
+        resp = self.client.post(
+            reverse('api:document-forced-align',
+                    kwargs={'pk': self.mine.document.pk}),
+            data={'parts': [self.mine.pk], 'model': model.pk,
+                  'transcription': self.mine.document.transcriptions.first().pk},
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertFalse(mock_align.called)
+
+    def test_document_rejects_foreign_tag(self):
+        tag = DocumentTag.objects.create(project=self.theirs.document.project,
+                                         name='THEIR-DOCTAG', color='#fff')
+        resp = self.client.patch(
+            reverse('api:document-detail', kwargs={'pk': self.mine.document.pk}),
+            data={'tags': [tag.pk]}, content_type='application/json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertEqual(self.mine.document.tags.count(), 0)
+
+    def test_project_rejects_foreign_tag(self):
+        tag = ProjectTag.objects.create(user=self.victim, name='THEIR-PROJTAG',
+                                        color='#fff')
+        resp = self.client.patch(
+            reverse('api:project-detail',
+                    kwargs={'pk': self.mine.document.project.pk}),
+            data={'tags': [tag.pk]}, content_type='application/json')
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertEqual(self.mine.document.project.tags.count(), 0)
