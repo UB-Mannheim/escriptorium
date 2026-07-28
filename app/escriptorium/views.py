@@ -50,19 +50,18 @@ def check_celery_broker():
     app.connection().ensure_connection(max_retries=0, timeout=2)
 
 
-CHECKS = {
-    'database': check_database,
-    'cache': check_cache,
-    'celery_broker': check_celery_broker,
-}
-
-
 @require_GET
 @never_cache
 def health_ready(request):
     """Readiness: report on each backing service, 503 if any of them is down."""
+    checks = {
+        'database': check_database,
+        'cache': check_cache,
+        'celery_broker': check_celery_broker,
+    }
+
     results = {}
-    for name, check in CHECKS.items():
+    for name, check in checks.items():
         try:
             check()
         except Exception as e:
