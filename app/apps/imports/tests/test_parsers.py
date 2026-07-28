@@ -1,4 +1,5 @@
 import os
+from io import BytesIO
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
@@ -14,7 +15,13 @@ from core.models import (
     Metadata,
 )
 from core.tests.factory import CoreFactoryTestCase
-from imports.parsers import METSRemoteParser, METSZipParser, ParseError
+from imports.parsers import (
+    METSRemoteParser,
+    METSZipParser,
+    ParseError,
+    make_parser,
+    safe_xml_parser,
+)
 from reporting.models import TaskReport
 
 SAMPLES_DIR = os.path.join(
@@ -262,3 +269,45 @@ class METSZipParserTestCase(CoreFactoryTestCase):
         self.assertEqual(Block.objects.count(), 17)
         self.assertEqual(Line.objects.count(), 66)
         self.assertEqual(LineTranscription.objects.count(), 129)
+
+
+class ExternalEntityTestCase(CoreFactoryTestCase):
+    """Imported XML is uploaded or fetched by URL.
+
+    Recent lxml refuses the external entity on its own, but lxml is transitive
+    here and unpinned, so these assert the parser we pass rather than the
+    default we happen to get.
+    """
+
+    SAMPLE = (
+        b'<?xml version="1.0"?>'
+        b'<!DOCTYPE alto [ <!ENTITY ext SYSTEM "file:///etc/passwd"> ]>'
+        b'<alto xmlns="http://www.loc.gov/standards/alto/ns-v4#">'
+        b'<Description><fileName>&ext;</fileName></Description></alto>'
+    )
+
+    def make_upload(self, content, name="sample.xml"):
+        handler = BytesIO(content)
+        handler.name = name
+        return handler
+
+    def test_safe_parser_does_not_resolve_external_entities(self):
+        root = etree.parse(self.make_upload(self.SAMPLE), safe_xml_parser()).getroot()
+        self.assertNotIn("root:x:0:0", etree.tostring(root).decode())
+
+    def test_make_parser_does_not_resolve_external_entities(self):
+        document = self.factory.make_document()
+        report = TaskReport.objects.create(user=document.owner, label="entities")
+        parser = make_parser(document, self.make_upload(self.SAMPLE), report=report)
+        self.assertNotIn("root:x:0:0", etree.tostring(parser.root).decode())
+
+    def test_entity_expansion_is_bounded(self):
+        entities = b"".join(
+            b'<!ENTITY e%d "' % i + b"&e%d;" % (i - 1) * 10 + b'">'
+            for i in range(1, 10)
+        )
+        nested = (b'<!DOCTYPE r [<!ENTITY e0 "AAAAAAAAAA">' + entities
+                + b"]><alto xmlns=\"http://www.loc.gov/standards/alto/ns-v4#\">"
+                b"<x>&e9;</x></alto>")
+        with self.assertRaises(etree.XMLSyntaxError):
+            etree.parse(self.make_upload(nested), safe_xml_parser())

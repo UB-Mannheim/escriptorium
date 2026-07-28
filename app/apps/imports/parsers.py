@@ -38,6 +38,23 @@ XML_EXTENSIONS = ["xml", "alto"]  # , 'abbyy'
 OWN_RISK = "the validity of the data can not be automatically checked, use at your own risks."
 
 
+def safe_xml_parser():
+    """Parser for untrusted input: imported XML is uploaded or fetched by URL.
+
+    resolve_entities is what stops an external entity in the internal subset
+    from reading a local file. lxml >= 6 / libxml2 >= 2.13 already default it
+    to 'internal', but lxml is a transitive dependency here (kraken, htrmopo,
+    oitei, Sickle) and unpinned, so the default is not ours to rely on.
+
+    A fresh parser per call because lxml parser instances are not safe to
+    share between threads, and these run under Celery workers.
+    """
+    return etree.XMLParser(resolve_entities=False,
+                           load_dtd=False,
+                           no_network=True,
+                           huge_tree=False)
+
+
 class DiskQuotaReachedError(Exception):
     pass
 
@@ -442,7 +459,7 @@ class METSZipParser(ZipParser, METSBaseParser):
             for xml_filename in xml_filenames:
                 with archive.open(xml_filename) as zipped_file:
                     try:
-                        root = etree.parse(zipped_file).getroot()
+                        root = etree.parse(zipped_file, safe_xml_parser()).getroot()
                         schemas = root.nsmap.values()
                     except (etree.XMLSyntaxError, KeyError):
                         logger.debug(f"Skipping file {xml_filename} in archive as it isn't a METS file")
@@ -548,7 +565,7 @@ class XMLParser(ParserDocument):
                     raise ParseError(message)
         else:
             try:
-                self.root = etree.parse(self.file).getroot()
+                self.root = etree.parse(self.file, safe_xml_parser()).getroot()
             except (AttributeError, etree.XMLSyntaxError) as e:
                 raise ParseError("Invalid XML. %s" % e.args[0])
         # instance attribute storing all line confidences, for computing the average at the end
@@ -561,7 +578,7 @@ class XMLParser(ParserDocument):
                 response = requests.get(self.schema_location)
                 response.raise_for_status()
                 content = response.content
-                schema_root = etree.XML(content)
+                schema_root = etree.XML(content, safe_xml_parser())
             except requests.exceptions.RequestException as e:
                 logger.exception(e)
                 if self.report:
@@ -938,7 +955,7 @@ class PagexmlParser(XMLParser):
     def total(self):
         # PAGE file can contain multiple parts
         if not self.root:
-            self.root = etree.parse(self.file).getroot()
+            self.root = etree.parse(self.file, safe_xml_parser()).getroot()
         return len(self.root.findall("Page", self.root.nsmap))
 
     def get_filename(self, pageTag):
@@ -1253,7 +1270,7 @@ def make_parser(document, file_handler, name=None, report=None, zip_allowed=True
     ext = os.path.splitext(file_handler.name)[1][1:]
     if ext in XML_EXTENSIONS:
         try:
-            root = etree.parse(file_handler).getroot()
+            root = etree.parse(file_handler, safe_xml_parser()).getroot()
         except etree.XMLSyntaxError as e:
             raise ParseError(e.msg)
         try:
