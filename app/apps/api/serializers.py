@@ -56,6 +56,15 @@ from users.models import Group, User
 logger = logging.getLogger(__name__)
 
 
+def narrow_related(field, queryset):
+    """Restrict the objects a related field accepts, many=True included.
+
+    A many=True field is a ManyRelatedField wrapper and DRF resolves each pk
+    through its child_relation, so the queryset has to be assigned there.
+    """
+    getattr(field, 'child_relation', field).queryset = queryset
+
+
 class ImageField(serializers.ImageField):
     def __init__(self, *args, thumbnails=None, **kwargs):
         self.thumbnails = thumbnails
@@ -273,7 +282,9 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         if getattr(self.context.get('view'), 'swagger_fake_view', False):
             return
-        self.fields['components'].queryset = AnnotationComponent.objects.filter(document=self.context['view'].kwargs['document_pk'])
+        narrow_related(self.fields['components'],
+                       AnnotationComponent.objects.filter(
+                           document=self.context['view'].kwargs['document_pk']))
 
     def create(self, data):
         try:
@@ -929,7 +940,8 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def process(self):
         super().process()
@@ -980,7 +992,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
         ).for_user_read(self.user)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def validate_parts(self, data):
         if len(data) < 2:
@@ -1183,7 +1196,8 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
         ).for_user_read(self.user)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def validate(self, data):
         data = super().validate(data)
@@ -1251,8 +1265,8 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
             document=self.document)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(
-            document=self.document)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def process(self):
         super().process()
@@ -1404,7 +1418,8 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
                 for rt in self.document.valid_block_types.all()
             },
         }
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def validate(self, data):
         data = super().validate(data)
