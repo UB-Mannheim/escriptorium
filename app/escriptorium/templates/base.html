@@ -1,5 +1,4 @@
-{% load i18n language_flags_tags static %}
-{% load render_bundle from webpack_loader %}<!DOCTYPE html>
+{% load i18n language_flags_tags static %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}" data-bs-theme="dark">
   <head>
     <meta charset="utf-8">
@@ -32,10 +31,10 @@
     </script>
 
     {% block styles %}
-    {% render_bundle 'vendor' 'css' %}
-    {% render_bundle 'main' 'css' %}
+    <link href="{% static 'vendor.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'main.css' %}" rel="stylesheet" type="text/css">
     {% if not user.legacy_mode %}
-    {% render_bundle 'globalNavigation' 'css' %}
+    <link href="{% static 'globalNavigation.css' %}" rel="stylesheet" type="text/css">
     {% endif %}
     <link href="{% static 'css/flags.css' %}" rel="stylesheet" type="text/css">
     {% endblock styles %}
@@ -185,12 +184,12 @@
     </div>
     </section></main>
 
-    {% render_bundle 'vendor' 'js' %}
+    <script src="{% static 'vendor.js' %}"></script>
 
     {% block scripts %}
-    {% render_bundle 'main' 'js' %}
+    <script src="{% static 'main.js' %}"></script>
     {% if not user.legacy_mode %}
-    {% render_bundle 'globalNavigation' 'js' %}
+    <script src="{% static 'globalNavigation.js' %}"></script>
     {% endif %}
     <script>
      const DEBUG = {% if debug %}true{% else %}false{% endif %};
