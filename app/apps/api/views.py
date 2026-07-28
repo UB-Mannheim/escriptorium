@@ -15,6 +15,8 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import cache_page
 from django_filters import Filter, FilterSet
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
 from rest_framework import filters, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -25,7 +27,13 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.response import Response
-from rest_framework.serializers import PrimaryKeyRelatedField
+from rest_framework.serializers import (
+    CharField,
+    FileField,
+    IntegerField,
+    ListField,
+    PrimaryKeyRelatedField,
+)
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
@@ -304,6 +312,20 @@ class ProjectViewSet(ModelViewSet):
         serializer = ProjectSerializer(project, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        methods=['get'],
+        operation_id='projects_ontology_retrieve',
+        responses={200: OntologyConfigSerializer},
+        description="Retrieve the project's ontology config, used as the default "
+                    "ontology for documents created in it. Null if none is set.",
+    )
+    @extend_schema(
+        methods=['delete'],
+        operation_id='projects_ontology_destroy',
+        request=None,
+        responses={204: OpenApiResponse(description='Ontology config cleared')},
+        description="Clear the project's ontology config.",
+    )
     @action(detail=True, methods=['get', 'delete'], url_path='ontology')
     def ontology(self, request, pk=None):
         project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
@@ -313,6 +335,14 @@ class ProjectViewSet(ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(project.ontology_config)
 
+    @extend_schema(
+        operation_id='projects_ontology_export',
+        responses={
+            (200, 'application/yaml'): OpenApiTypes.BINARY,
+            404: OpenApiResponse(description='No ontology config set on this project'),
+        },
+        description="Download the project's ontology config as a YAML file.",
+    )
     @action(detail=True, methods=['get'], url_path='ontology/export')
     def ontology_export(self, request, pk=None):
         project = self.get_object()
@@ -322,6 +352,16 @@ class ProjectViewSet(ModelViewSet):
         response['Content-Disposition'] = 'attachment; filename=ontology_export.yml'
         return response
 
+    @extend_schema(
+        operation_id='projects_ontology_import',
+        request={'multipart/form-data': inline_serializer(
+            name='ProjectOntologyImportRequest',
+            fields={'file': FileField(help_text='Ontology file, v2 YAML or legacy v1 JSON.')},
+        )},
+        responses={200: OntologyConfigSerializer},
+        description="Upload an ontology file and store it as the project's ontology "
+                    "config. Returns the stored, normalized config.",
+    )
     @action(detail=True, methods=['post'], url_path='ontology/import', parser_classes=[MultiPartParser])
     def ontology_import(self, request, pk=None):
         project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
@@ -673,6 +713,22 @@ class DocumentViewSet(ModelViewSet):
 
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=inline_serializer(
+            name='ModifyOntologyRequest',
+            fields={
+                'valid_part_types': ListField(child=IntegerField(), required=False),
+                'valid_line_types': ListField(child=IntegerField(), required=False),
+                'valid_block_types': ListField(child=IntegerField(), required=False),
+            },
+        ),
+        # response is left to auto-detection: DocumentSerializer.__init__ needs a
+        # context['user'], which spectacular only provides via the view's
+        # get_serializer(), not when instantiating the class from a responses= dict.
+        description="Set the document's valid part/line/block types from a list of type "
+                    "pks. Template types (document=null) get copied onto the document; "
+                    "types the document owns that aren't listed are dropped.",
+    )
     @action(detail=True, methods=['patch'])
     def modify_ontology(self, request, pk=None):
         # special PATCH action to modify documents' ontology nested relationships
@@ -879,6 +935,12 @@ class DocumentViewSet(ModelViewSet):
         ids = list(obj.parts.values_list("pk", flat=True))
         return Response(ids)
 
+    @extend_schema(
+        operation_id='documents_ontology_export',
+        responses={(200, 'application/yaml'): OpenApiTypes.BINARY},
+        description="Download the document's ontology (types, annotation components and "
+                    "taxonomies) as a YAML file.",
+    )
     @action(detail=True, methods=['get'], url_path='ontology/export')
     def ontology_export(self, request, pk=None):
         document = self.get_object()
@@ -886,6 +948,19 @@ class DocumentViewSet(ModelViewSet):
         response['Content-Disposition'] = 'attachment; filename=ontology_export.yml'
         return response
 
+    @extend_schema(
+        operation_id='documents_ontology_import',
+        request={'multipart/form-data': inline_serializer(
+            name='DocumentOntologyImportRequest',
+            fields={'file': FileField(help_text='Ontology file, v2 YAML or legacy v1 JSON.')},
+        )},
+        responses={200: inline_serializer(
+            name='DocumentOntologyImportResponse',
+            fields={'warnings': ListField(child=CharField())},
+        )},
+        description="Upload an ontology file and apply it to the document. Returns the "
+                    "warnings for entries that could not be applied as-is.",
+    )
     @action(detail=True, methods=['post'], url_path='ontology/import', parser_classes=[MultiPartParser])
     def ontology_import(self, request, pk=None):
         document = self.get_object()
@@ -1233,6 +1308,8 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 class TypologyViewSet(ModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
+        if getattr(self, 'swagger_fake_view', False):
+            return qs
         # POST queryset should be all()
         if self.request.method == "GET":
             # GET queryset should be only public types (owned rows are
@@ -1267,6 +1344,8 @@ class AnnotationTypeViewSet(TypologyViewSet):
 
     def get_queryset(self):
         qs = super(TypologyViewSet, self).get_queryset()
+        if getattr(self, 'swagger_fake_view', False):
+            return qs
         if self.request.method == "GET":
             return qs.filter(public=True)
         elif self.request.method in ["PUT", "PATCH", "DELETE"]:
