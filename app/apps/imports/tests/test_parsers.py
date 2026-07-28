@@ -14,6 +14,8 @@ from core.models import (
     LineTranscription,
     Metadata,
 )
+from django.test import override_settings
+
 from core.tests.factory import CoreFactoryTestCase
 from imports.parsers import (
     METSRemoteParser,
@@ -32,16 +34,19 @@ SAMPLES_DIR = os.path.join(
 PFX = "{http://www.loc.gov/METS/}"
 
 
-def mocked_get(uri):
+def mocked_get(uri, **kwargs):
     with ZipFile(SAMPLES_DIR + "/complex_archive.zip") as archive:
         filename = os.path.basename(uri)
         try:
             with archive.open(filename) as file:
-                return Mock(content=file.read(), status_code=200)
+                return Mock(content=file.read(), status_code=200, headers={})
         except Exception:
             raise RequestException("Uhoh, something went wrong.")
 
 
+# the mocked hosts are deliberately unresolvable, so skip the address
+# check; the domain and scheme checks stay on (see imports/tests/test_fetch.py)
+@override_settings(IMPORT_ALLOW_PRIVATE_ADDRESSES=True)
 class METSRemoteParserTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()

@@ -529,6 +529,13 @@ TEXT_ALIGNMENT_ENABLED = os.getenv('TEXT_ALIGNMENT', "False").lower() not in ("f
 
 IMPORT_ALLOWED_DOMAINS = os.getenv('IMPORT_ALLOWED_DOMAINS', '*').split(',')
 
+# Imports fetch URLs the user supplies, so by default they may not reach the
+# loopback, link-local, private or reserved ranges. Set this only where the
+# IIIF or METS source is on the internal network, and prefer narrowing
+# IMPORT_ALLOWED_DOMAINS instead.
+IMPORT_ALLOW_PRIVATE_ADDRESSES = os.getenv(
+    'IMPORT_ALLOW_PRIVATE_ADDRESSES', 'False').lower() in ('true', '1')
+
 # Sentry support
 SENTRY_DSN = os.getenv('SENTRY_DSN')
 ESCRIPTORIUM_ENV = os.getenv('ESCRIPTORIUM_ENV', 'dev')

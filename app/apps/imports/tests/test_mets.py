@@ -22,6 +22,9 @@ SAMPLES_DIR = os.path.join(
 PFX = "{http://www.loc.gov/METS/}"
 
 
+# the mocked hosts are deliberately unresolvable, so skip the address
+# check; the domain and scheme checks stay on (see imports/tests/test_fetch.py)
+@override_settings(IMPORT_ALLOW_PRIVATE_ADDRESSES=True)
 class METSProcessorTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()

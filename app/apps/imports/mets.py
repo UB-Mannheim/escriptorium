@@ -6,11 +6,12 @@ from collections import namedtuple
 from urllib.parse import urljoin, urlparse
 
 import requests
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from lxml import html
 from PIL import Image
+
+from imports import fetch
 
 logger = logging.getLogger(__name__)
 
@@ -208,14 +209,18 @@ class METSProcessor:
     def handle_remote_pointer(self, href, mets_page_image, mets_page_sources, layer_name, layers_count):
         uri = self.build_remote_uri(href)
 
-        domain = urlparse(uri).netloc
-        if '*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS:
+        # checked here as well as inside fetch.get, to keep naming the domain
+        # the administrator would have to allow
+        if not fetch.domain_allowed(uri):
+            domain = urlparse(uri).netloc
             self.report.append(f'The domain of the file URI is not allowed during import. Please contact an administrator to add the following domain to the list: "{domain}".', logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count
 
-        # Downloading the file content
+        # Downloading the file content. The uri comes out of the METS document,
+        # so it is user-supplied at one remove: fetch.get applies the scheme and
+        # address checks, and re-applies all of them on every redirect hop.
         try:
-            get_resp = requests.get(uri)
+            get_resp = fetch.get(uri)
             is_image, content_type = self.check_is_image(get_resp)
 
             # Already have an image for this page — skip the duplicate
@@ -240,6 +245,9 @@ class METSProcessor:
                 # {scheme}://{server}{/prefix}/{identifier}/{region}/{size}/{rotation}/{quality}.{format}
                 scheme_server_prefix, identifier, region, size, rotation, quality_format = uri.rsplit('/', 5)
                 file.name = identifier + '.jpg'
+        except fetch.UnsafeUriError as e:
+            self.report.append(f"Refused to fetch {uri}: {e}", logger_fct=logger.error)
+            return mets_page_image, mets_page_sources, layers_count
         except requests.exceptions.RequestException as e:
             self.report.append(f"File not found on remote URI {uri}: {e}", logger_fct=logger.error)
             return mets_page_image, mets_page_sources, layers_count

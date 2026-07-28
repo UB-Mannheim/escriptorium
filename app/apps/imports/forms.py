@@ -1,7 +1,6 @@
 import io
 import json
 import os
-from urllib.parse import urlparse
 
 import requests
 from bootstrap.forms import BootstrapFormMixin
@@ -13,6 +12,7 @@ from django.utils.translation import gettext as _
 
 from core.forms import RegionTypesFormMixin
 from core.models import DocumentPart, Transcription
+from imports import fetch
 from imports.export import ALTO_FORMAT, ENABLED_EXPORTERS
 from imports.models import DocumentImport
 from imports.parsers import ParseError, make_parser
@@ -24,12 +24,13 @@ class FileImportError(Exception):
     pass
 
 
-def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
+def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None,
+              check_domain=True):
     try:
         headers = {
             'User-Agent': 'eScriptorium'
         }
-        resp = requests.get(uri, headers=headers)
+        resp = fetch.get(uri, headers=headers, check_domain=check_domain)
         resp.raise_for_status()
         content = resp.content
         buf = io.BytesIO(content)
@@ -45,6 +46,8 @@ def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
         raise FileImportError(_("The document is unreachable, unreadable or the host timed out."))
     except json.decoder.JSONDecodeError:
         raise FileImportError(_("The document pointed to by the given uri doesn't seem to be valid json."))
+    except fetch.UnsafeUriError as e:
+        raise FileImportError(e.args[0])
     except ParseError as e:
         msg = _("Couldn't parse the given file or its validation failed")
         if len(e.args):
@@ -53,10 +56,8 @@ def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
 
 
 def clean_import_uri(uri, document, tmp_file_name, is_mets=False, mets_base_uri=None):
-    domain = urlparse(uri).netloc
-    if ('*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS):
-        raise FileImportError(_("You're not allowed to import files from this domain, please contact your instance administrator."))
-
+    # the domain allowlist, the scheme and the address checks all live in
+    # fetch.validate_uri now, so they apply to redirect targets too
     return clean_uri(uri, document, tmp_file_name, is_mets=is_mets, mets_base_uri=mets_base_uri)
 
 
