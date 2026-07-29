@@ -57,6 +57,13 @@ logger = logging.getLogger(__name__)
 
 
 def narrow_related(field, queryset):
+    """Restrict the objects a related field accepts, many=True included.
+
+    Assigning .queryset on a many=True field is a no-op: that field is a
+    ManyRelatedField wrapper, and DRF resolves each pk through its
+    child_relation, which keeps the queryset the field was *declared* with.
+    Narrowing the wrapper therefore restricts nothing at all.
+    """
     getattr(field, 'child_relation', field).queryset = queryset
 
 
@@ -158,6 +165,10 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # ProjectTag is per user; without this a project can be labelled with -
+        # and the response then discloses - anybody's tag. Falls back to none()
+        # rather than the declared all() when built without a context, so a
+        # missing context can only ever narrow.
         request = (self.context.get("request")
                    or getattr(self.context.get("view"), "request", None))
         user = getattr(request, "user", None)
@@ -285,8 +296,6 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if getattr(self.context.get('view'), 'swagger_fake_view', False):
-            return
         narrow_related(self.fields['components'],
                        AnnotationComponent.objects.filter(
                            document=self.context['view'].kwargs['document_pk']))
@@ -465,6 +474,8 @@ class DocumentSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         user = self.context['user']
         self.fields['project'].queryset = Project.objects.for_user_write(user)
+        # DocumentTag is scoped to a project; without this a document can be
+        # labelled with - and the response then discloses - anybody's tag
         narrow_related(self.fields['tags'], DocumentTag.objects.filter(
             project__in=Project.objects.for_user_write(user)))
 
@@ -888,10 +899,6 @@ class ProcessSerializerMixin():
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if getattr(self.context.get("view"), 'swagger_fake_view', False):
-            self.user = None
-            self.document = None
-            return
         self.user = self.context["view"].request.user
         self.document = self.context["document"]
 
@@ -1561,6 +1568,12 @@ class VirtualCollectionSerializer(serializers.ModelSerializer):
         ]
 
     def validate_items_to_save(self, items):
+        """Check every pk in the payload against what the user may read.
+
+        items_to_save is a bag of raw pks written straight to the database, so
+        without this a user can fill a collection they own with anybody's pages
+        - which the items endpoint then lists back to them, and training reads.
+        """
         if not items:
             return items
 
@@ -1582,6 +1595,7 @@ class VirtualCollectionSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     _("Invalid document_part: %(pk)s.")
                     % {"pk": item.get("document_part")})
+            # the layer has to belong to the same document as the part
             if layers.get(item.get("transcription_layer")) != part.document_id:
                 raise serializers.ValidationError(
                     _("Invalid transcription_layer: %(pk)s.")

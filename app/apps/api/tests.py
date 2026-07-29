@@ -1633,7 +1633,7 @@ class DocumentPartMetadataTestCase(CoreFactoryTestCase):
         self.client.force_login(self.user)
         uri = reverse('api:partmetadata-list',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
-        with self.assertNumQueries(14):
+        with self.assertNumQueries(15):
             resp = self.client.post(uri, {'key': {'name': 'testname', 'cidoc': 'testcidoc'},
                                           'value': 'testvalue'},
                                     content_type='application/json')
@@ -1648,7 +1648,7 @@ class DocumentPartMetadataTestCase(CoreFactoryTestCase):
         uri = reverse('api:partmetadata-list',
                       kwargs={'document_pk': self.part.document.pk,
                               'part_pk': self.part.pk})
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             resp = self.client.post(uri, {'key': {'name': 'testmd'},
                                           'value': 'testvalue2'},
                                     content_type='application/json')
@@ -1700,7 +1700,53 @@ class DocumentPartMetadataTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part.metadata.count(), 0)
 
 
+class RelatedFieldNarrowingTestCase(CoreFactoryTestCase):
+    """
+    Narrowing a many=True related field has to reach its child_relation:
+    that is where DRF resolves each pk, so narrowing only the wrapper lets
+    a request act on parts belonging to somebody else's document.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.mine = self.factory.make_part()
+        self.theirs = self.factory.make_part()
+        self.assertNotEqual(self.mine.document.owner, self.theirs.document.owner)
+        self.client.force_login(self.mine.document.owner)
+        self.uri = reverse('api:document-segment',
+                           kwargs={'pk': self.mine.document.pk})
+
+    @patch('api.serializers.segment')
+    def test_segment_rejects_another_documents_parts(self, mock_segment):
+        # the task must never be handed a part pk from another document
+        resp = self.client.post(self.uri, data={
+            'parts': [self.theirs.pk],
+            'steps': 'both',
+        })
+        self.assertEqual(resp.status_code, 400, resp.content)
+        self.assertFalse(mock_segment.si.called)
+
+    @patch('api.serializers.segment')
+    def test_segment_accepts_its_own_parts(self, mock_segment):
+        resp = self.client.post(self.uri, data={
+            'parts': [self.mine.pk],
+            'steps': 'both',
+        })
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(mock_segment.si.call_args.kwargs['instance_pks'],
+                         [self.mine.pk])
+
+
 class TenantIsolationTestCase(CoreFactoryTestCase):
+    """Endpoints that take pks in the body must not reach another tenant.
+
+    Note the fixture: factory.make_project() get_or_creates on the slug, so
+    calling it without a name returns one shared project for every document -
+    and its owner then has legitimate project-owner rights over what is meant
+    to be the victim. Both tenants therefore get an explicitly named project,
+    and setUp asserts the isolation before any test runs.
+    """
+
     def setUp(self):
         super().setUp()
         self.attacker = self.factory.make_user()
@@ -1756,12 +1802,14 @@ class TenantIsolationTestCase(CoreFactoryTestCase):
         self.assertEqual(self.victim_line.order, 0)
 
     def test_line_bulk_create_ignores_payload_part(self):
+        # document_part in the body must not override the part in the URL
         self.call('api:line-bulk-create',
                   {'lines': [{'document_part': self.theirs.pk,
                               'baseline': [[1, 1], [2, 2]]}]})
         self.assertEqual(Line.objects.filter(document_part=self.theirs).count(), 2)
 
     def test_line_bulk_create_rejects_foreign_part_in_url(self):
+        # own document_pk paired with somebody else's part_pk
         resp = self.client.post(
             reverse('api:line-bulk-create',
                     kwargs={'document_pk': self.mine.document.pk,

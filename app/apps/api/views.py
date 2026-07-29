@@ -309,11 +309,13 @@ class DocumentTagViewSet(ModelViewSet):
     pagination_class = LargeResultsSetPagination
 
     def perform_create(self, serializer):
-        project = Project.objects.get(pk=self.kwargs.get('project_pk'))
+        project = Project.objects.for_user_write(
+            self.request.user).get(pk=self.kwargs.get('project_pk'))
         return serializer.save(project=project)
 
     def get_queryset(self):
-        return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
+        return DocumentTag.objects.filter(
+            project__in=Project.objects.for_user_read(self.request.user))
 
 
 class DocumentViewSet(ModelViewSet):
@@ -860,8 +862,6 @@ class TaskReportViewSet(ModelViewSet):
 
 class DocumentPermissionMixin():
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return super().get_queryset()
         try:
             self.document = (Document.objects
                              .for_user(self.request.user)
@@ -872,7 +872,8 @@ class DocumentPermissionMixin():
         return super().get_queryset()
 
     def get_authorised_part(self):
-        self.get_queryset()
+        if not hasattr(self, 'document') or self.document is None:
+            self.get_queryset()
         return get_object_or_404(DocumentPart,
                                  pk=self.kwargs['part_pk'],
                                  document=self.document)
@@ -899,12 +900,14 @@ class PartMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = DocumentPartMetadataSerializer
 
     def get_queryset(self):
-        qs = super().get_queryset().filter(part=self.kwargs.get('part_pk'))
+        qs = super().get_queryset().filter(
+            part__document=self.kwargs.get('document_pk'),
+            part=self.kwargs.get('part_pk'))
         return qs
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['part'] = DocumentPart.objects.get(pk=self.kwargs.get('part_pk'))
+        context['part'] = self.get_authorised_part()
         return context
 
 
@@ -914,8 +917,6 @@ class ImportViewSet(DocumentPermissionMixin, GenericViewSet, CreateModelMixin):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        if getattr(self, 'swagger_fake_view', False):
-            return context
         context['user'] = self.request.user
         context['document'] = Document.objects.get(pk=self.kwargs.get('document_pk'))
         return context
@@ -1013,26 +1014,25 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def recalculate_ordering(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
+        document_part = DocumentPart.objects.get(document=document_pk, pk=pk)
         document_part.recalculate_ordering()
         serializer = LineOrderSerializer(document_part.lines.all(), many=True)
         return Response({'status': 'done', 'lines': serializer.data}, status=200)
 
     @action(detail=True, methods=['post'])
     def rotate(self, request, document_pk=None, pk=None):
-        with transaction.atomic():
-            document_part = DocumentPart.objects.select_for_update().get(pk=pk)
-            angle = self.request.data.get('angle')
-            if angle:
-                document_part.rotate(angle, user=self.request.user)
-                return Response({'status': 'done'}, status=200)
-            else:
-                return Response({'error': "Post an angle."},
-                                status=status.HTTP_400_BAD_REQUEST)
+        document_part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        angle = self.request.data.get('angle')
+        if angle:
+            document_part.rotate(angle, user=self.request.user)
+            return Response({'status': 'done'}, status=200)
+        else:
+            return Response({'error': "Post an angle."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def crop(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
+        document_part = DocumentPart.objects.get(document=document_pk, pk=pk)
         x1 = self.request.data.get('x1')
         y1 = self.request.data.get('y1')
         x2 = self.request.data.get('x2')
@@ -1194,8 +1194,6 @@ class AnnotationTaxonomyViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = AnnotationTaxonomySerializer
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return super().get_queryset()
         qs = (super().get_queryset()
               .filter(document=self.document)
               .prefetch_related('typology', 'components'))
@@ -1402,8 +1400,6 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     pagination_class = LargeResultsSetPagination
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return super().get_queryset()
         qs = (super().get_queryset()
               .filter(line__document_part=self.kwargs['part_pk'])
               .filter(line__document_part__document=self.kwargs['document_pk'])
@@ -1439,8 +1435,6 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         return Response(serializer.data)
 
     def get_serializer_class(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return self.serializer_class
         lines = Line.objects.filter(
             document_part=self.kwargs['part_pk'],
             document_part__document=self.kwargs['document_pk'])
