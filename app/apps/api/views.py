@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views.decorators.cache import cache_page
 from django_filters import Filter, FilterSet
@@ -21,7 +22,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.response import Response
 from rest_framework.serializers import PrimaryKeyRelatedField
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
@@ -308,12 +309,30 @@ class DocumentTagViewSet(ModelViewSet):
     serializer_class = DocumentTagSerializer
     pagination_class = LargeResultsSetPagination
 
+    @cached_property
+    def project(self):
+        """The project named in the URL, authorised for the requesting user.
+
+        Tags are per project: reading one needs read access to the project,
+        changing one needs write access.
+        """
+        qs = (Project.objects.for_user_read(self.request.user)
+              if self.request.method in SAFE_METHODS
+              else Project.objects.for_user_write(self.request.user))
+        try:
+            return qs.get(pk=self.kwargs.get('project_pk'))
+        except Project.DoesNotExist:
+            raise PermissionDenied
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        self.project
+
     def perform_create(self, serializer):
-        project = Project.objects.get(pk=self.kwargs.get('project_pk'))
-        return serializer.save(project=project)
+        return serializer.save(project=self.project)
 
     def get_queryset(self):
-        return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
+        return DocumentTag.objects.filter(project=self.project)
 
 
 class DocumentViewSet(ModelViewSet):
@@ -859,29 +878,50 @@ class TaskReportViewSet(ModelViewSet):
 
 
 class DocumentPermissionMixin():
-    def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return super().get_queryset()
+    @cached_property
+    def document(self):
+        """The document named in the URL, authorised for the requesting user."""
         try:
-            self.document = (Document.objects
-                             .for_user(self.request.user)
-                             .get(pk=self.kwargs.get('document_pk')))
+            return (Document.objects
+                    .for_user(self.request.user)
+                    .get(pk=self.kwargs.get('document_pk')))
         except Document.DoesNotExist:
             raise PermissionDenied
 
+    def initial(self, request, *args, **kwargs):
+        """Authorise the document on every request, whatever the method.
+
+        initial() rather than get_queryset(), so the check covers the paths
+        that do not build a queryset - create() goes straight to the
+        serializer. initial() runs inside DRF's dispatch(), so PermissionDenied
+        is rendered by the API exception handler rather than Django's HTML 403
+        page.
+        """
+        super().initial(request, *args, **kwargs)
+        if getattr(self, 'swagger_fake_view', False):
+            return
+        self.document
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_queryset()
+        self.document  # authorise before the queryset is built
         return super().get_queryset()
 
-    def get_authorised_part(self):
+    @cached_property
+    def part(self):
         """The part named in the URL, checked against the authorised document.
 
-        get_queryset() authorises the document; this additionally ties the
-        part to it. Everything reached by pk goes through here or
-        get_queryset().
+        A queryset built from self.kwargs['part_pk'] alone is not enough: the
+        document is authorised, but nothing ties the part to it. Everything
+        reached by pk goes through here or get_queryset().
         """
-        self.get_queryset()  # runs the document permission check above
         return get_object_or_404(DocumentPart,
                                  pk=self.kwargs['part_pk'],
                                  document=self.document)
+
+    def get_authorised_part(self):
+        return self.part
 
 
 class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
@@ -905,12 +945,13 @@ class PartMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = DocumentPartMetadataSerializer
 
     def get_queryset(self):
-        qs = super().get_queryset().filter(part=self.kwargs.get('part_pk'))
-        return qs
+        # the part is resolved through the authorised document, not from the
+        # url kwarg alone
+        return super().get_queryset().filter(part=self.get_authorised_part())
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['part'] = DocumentPart.objects.get(pk=self.kwargs.get('part_pk'))
+        context['part'] = self.get_authorised_part()
         return context
 
 
@@ -991,7 +1032,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):
-        part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        part = self.get_object()
         serializer = PartMoveSerializer(part=part, data=request.data)
         if serializer.is_valid():
             serializer.move()
@@ -1001,7 +1042,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, document_pk=None, pk=None):
-        part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        part = self.get_object()
         part.cancel_tasks(username=self.request.user.username)
         part.refresh_from_db()
         return Response({'status': 'canceled', 'workflow': part.workflow})
@@ -1011,7 +1052,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         # If quotas are enforced, assert that the user still has free CPU minutes
         if not settings.DISABLE_QUOTAS and not request.user.has_free_cpu_minutes():
             return Response({'error': "You don't have any CPU minutes left."}, status=status.HTTP_400_BAD_REQUEST)
-        part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        part = self.get_object()
         onlyParam = request.query_params.get("only")
         only = onlyParam and list(map(int, onlyParam.split(',')))
         recalculate_masks.delay(instance_pk=part.pk, user_pk=request.user.pk, only=only)
@@ -1019,14 +1060,14 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def recalculate_ordering(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
+        document_part = self.get_object()
         document_part.recalculate_ordering()
         serializer = LineOrderSerializer(document_part.lines.all(), many=True)
         return Response({'status': 'done', 'lines': serializer.data}, status=200)
 
     @action(detail=True, methods=['post'])
     def rotate(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
+        document_part = self.get_object()
         angle = self.request.data.get('angle')
         if angle:
             document_part.rotate(angle, user=self.request.user)
@@ -1037,7 +1078,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def crop(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
+        document_part = self.get_object()
         x1 = self.request.data.get('x1')
         y1 = self.request.data.get('y1')
         x2 = self.request.data.get('x2')
