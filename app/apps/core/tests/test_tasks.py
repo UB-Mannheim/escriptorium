@@ -4,10 +4,18 @@ import unittest
 from unittest.mock import patch
 
 from django.conf import settings
+from django.core.cache import cache
+from django.db import transaction
 from django.urls import reverse
 
 from core.models import Document, Line, OcrModel
-from core.tasks import align, detect_model_architecture, qualify_model
+from core.tasks import (
+    align,
+    detect_model_architecture,
+    generate_part_thumbnails,
+    lossless_compression,
+    qualify_model,
+)
 from core.tests.factory import CoreFactoryTestCase
 
 # DO NOT REMOVE THIS IMPORT, it will break a lot of tests
@@ -192,6 +200,78 @@ class TasksTestCase(CoreFactoryTestCase):
                     parts = apps_mock.get_model.return_value.objects.filter.return_value
                     apps_mock.get_model.return_value.objects.bulk_update.assert_called_with(parts, ["workflow_state"])
                     self.assertEqual(mock_log.output[0][:17], "ERROR:core.tasks:")
+
+    def test_delete_sets_cache_flag(self):
+        """DocumentPart.delete() sets a cache flag for short-circuiting pending tasks."""
+        # Bypass the factory's cleanup since we delete the part ourselves.
+        part = self.factory.make_part()
+        pk = part.pk
+        self.factory.cleanup_registry.remove(part)
+
+        self.assertIsNone(cache.get(f"dpd:{pk}"))
+
+        part.delete()
+
+        # on_commit fires after the atomic block in delete() exits.
+        self.assertIsNotNone(cache.get(f"dpd:{pk}"),
+                             msg=f"Cache key dpd:{pk} was not set after delete")
+
+    @patch('core.tasks.cache.get')
+    def test_generate_part_thumbnails_cache_hit(self, mock_cache_get):
+        """generate_part_thumbnails returns early on cache hit."""
+        mock_cache_get.return_value = True
+        with self.assertLogs('core.tasks', level='WARNING') as log:
+            result = generate_part_thumbnails.run(instance_pk=615861, user_pk=None)
+        self.assertIsNone(result)
+        self.assertIn(
+            'WARNING:core.tasks:Trying to generate thumbnails for '
+            'non-existent DocumentPart : 615861',
+            log.output[0])
+
+    @patch('core.tasks.cache.get')
+    def test_lossless_compression_cache_hit(self, mock_cache_get):
+        """lossless_compression returns early on cache hit."""
+        mock_cache_get.return_value = True
+        with self.assertLogs('core.tasks', level='WARNING') as log:
+            result = lossless_compression.run(instance_pk=615861, user_pk=None)
+        self.assertIsNone(result)
+        self.assertIn(
+            'WARNING:core.tasks:Trying to compress non-existent DocumentPart : 615861',
+            log.output[0])
+
+    def test_generate_part_thumbnails_does_not_exist_fallback(self):
+        """generate_part_thumbnails logs warning via DB fallback when no cache flag."""
+        with self.assertLogs('core.tasks', level='WARNING') as log:
+            generate_part_thumbnails.run(instance_pk=999999, user_pk=None)
+        self.assertIn(
+            'WARNING:core.tasks:Trying to generate thumbnails for '
+            'non-existent DocumentPart : 999999',
+            log.output[0])
+
+    def test_lossless_compression_does_not_exist_fallback(self):
+        """lossless_compression logs warning via DB fallback when no cache flag."""
+        with self.assertLogs('core.tasks', level='WARNING') as log:
+            lossless_compression.run(instance_pk=999999, user_pk=None)
+        self.assertIn(
+            'WARNING:core.tasks:Trying to compress non-existent DocumentPart : 999999',
+            log.output[0])
+
+    def test_race_convert_then_delete_then_linked_tasks(self):
+        """Simulate the race: enqueue convert, delete part, linked tasks log warning."""
+        part = self.factory.make_part()
+        pk = part.pk
+        self.factory.cleanup_registry.remove(part)
+
+        part.task('convert', commit=False)
+
+        part.delete()
+
+        for task in (generate_part_thumbnails, lossless_compression):
+            with self.subTest(task=task.__name__):
+                with self.assertLogs('core.tasks', level='WARNING') as log:
+                    result = task.run(instance_pk=pk, user_pk=None)
+                self.assertIsNone(result)
+                self.assertIn(f'non-existent DocumentPart : {pk}', log.output[0])
 
 
 def make_safetensors_file(path, kraken_meta):
