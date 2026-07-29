@@ -29,6 +29,7 @@ from core.models import (
     Metadata,
     Transcription,
 )
+from imports import fetch
 from imports.mets import METSProcessor
 from users.consumers import send_event
 from versioning.models import NoChangeException
@@ -1131,9 +1132,22 @@ class IIIFManifestParser(ParserDocument):
                 headers = {
                     'User-Agent': 'eScriptorium'
                 }
-                response = requests.get(url, headers=headers, stream=True, verify=False, timeout=10)
+                # the image urls come out of the manifest, so they are supplied
+                # by whoever supplied the manifest: same footing as the uri the
+                # import form takes, and validated the same way on every hop.
+                # check_domain is off because a manifest legitimately points at
+                # images on another host, which IMPORT_ALLOWED_DOMAINS - written
+                # for the manifest itself - would refuse.
+                response = fetch.get(url, check_domain=False, headers=headers,
+                                     stream=True, timeout=10)
                 response.raise_for_status()
                 return response
+
+            except fetch.UnsafeUriError as e:
+                # a refused target is reported for this canvas and not retried:
+                # retrying cannot change the answer, and the import carries on
+                # with the rest of the manifest
+                raise DownloadError(e.args[0])
 
             except requests.exceptions.HTTPError as http_error:
                 # retry on transient 5XX errors, but keep a record of the retry count
