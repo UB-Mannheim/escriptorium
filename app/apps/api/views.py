@@ -854,29 +854,6 @@ class DocumentViewSet(ModelViewSet):
         return Response(ids)
 
 
-class TaskGroupViewSet(ModelViewSet):
-    queryset = TaskGroup.objects.all().select_related('created_by')
-    serializer_class = TaskGroupSerializer
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        qs = qs.filter(document=self.kwargs.get('document_pk'))
-        return qs
-
-
-class TaskReportViewSet(ModelViewSet):
-    queryset = TaskReport.objects.all()
-    serializer_class = TaskReportSerializer
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['document', 'group']
-    ordering_fields = ['queued_at', 'started_at', 'done_at']
-    ordering = ['-queued_at', '-started_at', '-done_at']
-
-    def get_queryset(self):
-        qs = super().get_queryset().filter(user=self.request.user)
-        return qs
-
-
 class DocumentPermissionMixin():
     @cached_property
     def document(self):
@@ -922,6 +899,28 @@ class DocumentPermissionMixin():
 
     def get_authorised_part(self):
         return self.part
+
+
+class TaskGroupViewSet(DocumentPermissionMixin, ModelViewSet):
+    queryset = TaskGroup.objects.all().select_related('created_by')
+    serializer_class = TaskGroupSerializer
+
+    def get_queryset(self):
+        # scoped to the authorised document, not to the url kwarg alone
+        return super().get_queryset().filter(document=self.document)
+
+
+class TaskReportViewSet(ModelViewSet):
+    queryset = TaskReport.objects.all()
+    serializer_class = TaskReportSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['document', 'group']
+    ordering_fields = ['queued_at', 'started_at', 'done_at']
+    ordering = ['-queued_at', '-started_at', '-done_at']
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(user=self.request.user)
+        return qs
 
 
 class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):

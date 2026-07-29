@@ -24,10 +24,12 @@ from core.models import (
     Metadata,
     OcrModel,
     ProjectTag,
+    TextualWitness,
     Transcription,
+    VirtualCollection,
 )
 from core.tests.factory import CoreFactoryTestCase
-from reporting.models import TaskGroup
+from reporting.models import TaskGroup, TaskReport
 
 
 class UserViewSetTestCase(CoreFactoryTestCase):
@@ -2042,6 +2044,44 @@ class ObjectAuthorisationTestCase(CoreFactoryTestCase):
                             'part_pk': self.theirs.pk}))
         self.assertEqual(resp.status_code, 404, resp.content)
         self.assertNotIn(b'testmdvalue', resp.content)
+
+    # --- task groups --------------------------------------------------------
+
+    def test_task_groups_are_scoped_to_the_document(self):
+        TaskGroup.objects.create(document=self.other_doc, created_by=self.other,
+                                 task='core.tasks.segment')
+        resp = self.client.get(
+            reverse('api:task-group-list',
+                    kwargs={'document_pk': self.other_doc.pk}))
+        self.assertEqual(resp.status_code, 403, resp.content)
+        self.assertNotIn(self.other.username.encode(), resp.content)
+
+    def test_owner_still_sees_their_own_task_groups(self):
+        TaskGroup.objects.create(document=self.mine.document,
+                                 created_by=self.caller,
+                                 task='core.tasks.segment')
+        resp = self.client.get(
+            reverse('api:task-group-list',
+                    kwargs={'document_pk': self.mine.document.pk}))
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(resp.json()['count'], 1)
+
+    # --- the neighbouring viewsets scope by owner; assert that holds ---------
+
+    def test_owner_scoped_viewsets_hide_other_users_objects(self):
+        collection = VirtualCollection.objects.create(name='theirs',
+                                                      owner=self.other)
+        witness = TextualWitness.objects.create(name='theirs', owner=self.other)
+        report = TaskReport.objects.create(user=self.other,
+                                           document=self.other_doc,
+                                           label='theirs')
+        for name, pk in [('api:virtualcollection-detail', collection.pk),
+                         ('api:textualwitness-detail', witness.pk),
+                         ('api:taskreport-detail', report.pk)]:
+            resp = self.client.get(reverse(name, kwargs={'pk': pk}))
+            self.assertEqual(resp.status_code, 404,
+                             '%s exposed another user object: %s'
+                             % (name, resp.content))
 
     # --- document tags ------------------------------------------------------
 

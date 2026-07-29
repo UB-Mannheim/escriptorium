@@ -3,6 +3,7 @@ from io import BytesIO
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
+from django.test import override_settings
 from lxml import etree
 from requests.exceptions import RequestException
 
@@ -14,8 +15,6 @@ from core.models import (
     LineTranscription,
     Metadata,
 )
-from django.test import override_settings
-
 from core.tests.factory import CoreFactoryTestCase
 from imports.parsers import (
     METSRemoteParser,
@@ -312,7 +311,7 @@ class ExternalEntityTestCase(CoreFactoryTestCase):
             for i in range(1, 10)
         )
         nested = (b'<!DOCTYPE r [<!ENTITY e0 "AAAAAAAAAA">' + entities
-                + b"]><alto xmlns=\"http://www.loc.gov/standards/alto/ns-v4#\">"
-                b"<x>&e9;</x></alto>")
+                  + b"]><alto xmlns=\"http://www.loc.gov/standards/alto/ns-v4#\">"
+                  b"<x>&e9;</x></alto>")
         with self.assertRaises(etree.XMLSyntaxError):
             etree.parse(self.make_upload(nested), safe_xml_parser())
