@@ -12,6 +12,7 @@ import numpy as np
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from django.db.models import F, Q
 from django.utils.html import strip_tags
@@ -103,11 +104,15 @@ def generate_part_thumbnails(instance_pk=None, user_pk=None, **kwargs):
     if not getattr(settings, 'THUMBNAIL_ENABLE', True):
         return
 
+    if cache.get(f"dpd:{instance_pk}"):
+        logger.warning('Trying to generate thumbnails for non-existent DocumentPart : %d', instance_pk)
+        return
+
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to compress non-existent DocumentPart : %d', instance_pk)
+        logger.warning('Trying to generate thumbnails for non-existent DocumentPart : %d', instance_pk)
         return
 
     aliases = {}
@@ -132,7 +137,7 @@ def convert(instance_pk=None, user_pk=None, **kwargs):
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to convert non-existent DocumentPart : %d', instance_pk)
+        logger.warning('Trying to convert non-existent DocumentPart : %d', instance_pk)
         return
     part.convert()
 
@@ -148,11 +153,15 @@ def lossless_compression(instance_pk=None, user_pk=None, **kwargs):
         except User.DoesNotExist:
             user = None
 
+    if cache.get(f"dpd:{instance_pk}"):
+        logger.warning('Trying to compress non-existent DocumentPart : %d', instance_pk)
+        return
+
     try:
         DocumentPart = apps.get_model('core', 'DocumentPart')
         part = DocumentPart.objects.get(pk=instance_pk)
     except DocumentPart.DoesNotExist:
-        logger.error('Trying to compress non-existent DocumentPart : %d', instance_pk)
+        logger.warning('Trying to compress non-existent DocumentPart : %d', instance_pk)
         return
     part.compress()
 
