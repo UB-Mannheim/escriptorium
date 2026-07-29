@@ -20,6 +20,7 @@ from celery import chain
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField
+from django.core.cache import cache
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
@@ -1225,6 +1226,7 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
 
     def delete(self, *args, **kwargs):
         send_event("document", self.document.pk, "part:delete", {"id": self.pk})
+        pk = self.pk
         with transaction.atomic():
             # Pre-lock affected rows in a consistent order (by pk) to prevent
             # deadlocks when concurrent deletes trigger ordered_model's
@@ -1238,7 +1240,10 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                 .order_by("pk")
                 .only("id")
             )
-            return super().delete(*args, **kwargs)
+            ret = super().delete(*args, **kwargs)
+            transaction.on_commit(lambda: cache.set(
+                f"dpd:{pk}", True, 86400))
+            return ret
 
     @property
     def workflow(self):
