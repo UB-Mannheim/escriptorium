@@ -313,8 +313,8 @@ class ExternalEntityTestCase(CoreFactoryTestCase):
             for i in range(1, 10)
         )
         nested = (b'<!DOCTYPE r [<!ENTITY e0 "AAAAAAAAAA">' + entities
-                + b"]><alto xmlns=\"http://www.loc.gov/standards/alto/ns-v4#\">"
-                b"<x>&e9;</x></alto>")
+                  + b"]><alto xmlns=\"http://www.loc.gov/standards/alto/ns-v4#\">"
+                  b"<x>&e9;</x></alto>")
         with self.assertRaises(etree.XMLSyntaxError):
             etree.parse(self.make_upload(nested), safe_xml_parser())
 
