@@ -74,7 +74,10 @@ export const actions = {
             data,
         );
 
-        let newRegion = resp.data;
+        // the API returns the typology as a pk, but the segmenter colors and labels
+        // regions by type *name* -- without it a recreated region (e.g. when undoing
+        // a deletion) would come back grey
+        let newRegion = { ...resp.data, type: type?.name };
         commit("append", newRegion);
 
         return newRegion;
