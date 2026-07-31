@@ -30,8 +30,7 @@
 import { mapActions, mapState } from "vuex";
 import UploadIcon from "../Icons/UploadIcon/UploadIcon.vue";
 import ImageDropzone from "vue2-dropzone";
-import Dropzone from "dropzone";
-import { guardThumbnail } from "../../../src/util/dropzone";
+import { thumbnail } from "../../../src/util/dropzone";
 import "vue2-dropzone/dist/vue2Dropzone.min.css";
 
 export default {
@@ -59,9 +58,7 @@ export default {
                 timeout: 0,
                 // TIFFs can't be decoded by the browser, and dropzone reports that
                 // through the thumbnail callback rather than a separate error path
-                thumbnail: guardThumbnail(
-                    Dropzone.prototype.defaultOptions.thumbnail,
-                ),
+                thumbnail,
             }
         };
     },
