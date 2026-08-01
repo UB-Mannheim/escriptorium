@@ -1422,6 +1422,175 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
             self.assertEqual(lines[1].content, "")
             self.assertEqual(resp.status_code, 204)
 
+    def copy_uri(self):
+        return reverse('api:linetranscription-copy',
+                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+
+    def test_copy_to_new_layer(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(self.copy_uri(),
+                                {'source': self.transcription.pk, 'target_name': 'copied'},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+
+        target = Transcription.objects.get(document=self.part.document, name='copied')
+        self.assertEqual(resp.data['transcription']['pk'], target.pk)
+        copied = LineTranscription.objects.get(transcription=target, line=self.line)
+        self.assertEqual(copied.content, 'test')
+        # only the source's lines are copied, line2 has no content in `transcription`
+        self.assertEqual(target.linetranscription_set.count(), 1)
+
+    def test_copy_to_existing_layer_overwrites(self):
+        self.client.force_login(self.user)
+        # transcription2 already has content on self.line, which should be replaced
+        existing = LineTranscription.objects.create(
+            transcription=self.transcription2, line=self.line, content='to be replaced')
+
+        resp = self.client.post(self.copy_uri(),
+                                {'source': self.transcription.pk,
+                                 'target': self.transcription2.pk},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+
+        existing.refresh_from_db()
+        self.assertEqual(existing.content, 'test')
+        # line2 is untouched: the source has nothing for it
+        self.lt2.refresh_from_db()
+        self.assertEqual(self.lt2.content, 'test2')
+
+    def test_copied_lines_have_no_history(self):
+        """A copy doesn't carry over the source layer's history."""
+        self.client.force_login(self.user)
+        self.lt.new_version(author='someone')
+        self.lt.save()
+        self.assertEqual(len(self.lt.versions), 1)
+
+        self.client.post(self.copy_uri(),
+                         {'source': self.transcription.pk, 'target_name': 'copied'},
+                         content_type='application/json')
+
+        target = Transcription.objects.get(document=self.part.document, name='copied')
+        created = LineTranscription.objects.get(transcription=target, line=self.line)
+        self.assertEqual(created.versions, [])
+
+    def test_overwrite_keeps_previous_content_as_version(self):
+        self.client.force_login(self.user)
+        existing = LineTranscription.objects.create(
+            transcription=self.transcription2, line=self.line, content='to be replaced')
+        self.assertEqual(existing.versions, [])
+
+        resp = self.client.post(self.copy_uri(),
+                                {'source': self.transcription.pk,
+                                 'target': self.transcription2.pk},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.data)
+
+        existing.refresh_from_db()
+        self.assertEqual(existing.content, 'test')
+        self.assertEqual(len(existing.versions), 1)
+        self.assertEqual(existing.versions[0]['data']['content'], 'to be replaced')
+        self.assertEqual(existing.version_author, self.user.username)
+
+    def test_overwrite_preserves_prior_history(self):
+        self.client.force_login(self.user)
+        existing = LineTranscription.objects.create(
+            transcription=self.transcription2, line=self.line, content='first')
+        existing.new_version(author='someone')
+        existing.content = 'second'
+        existing.save()
+
+        self.client.post(self.copy_uri(),
+                         {'source': self.transcription.pk, 'target': self.transcription2.pk},
+                         content_type='application/json')
+
+        existing.refresh_from_db()
+        self.assertEqual(existing.content, 'test')
+        # the older revision is still there, under the one we just pushed
+        self.assertEqual([v['data']['content'] for v in existing.versions],
+                         ['second', 'first'])
+
+    def test_copy_is_a_noop_on_identical_content(self):
+        """Re-copying the same content doesn't pile up redundant versions."""
+        self.client.force_login(self.user)
+        payload = {'source': self.transcription.pk, 'target': self.transcription2.pk}
+        self.client.post(self.copy_uri(), payload, content_type='application/json')
+        self.client.post(self.copy_uri(), payload, content_type='application/json')
+
+        copied = LineTranscription.objects.get(
+            transcription=self.transcription2, line=self.line)
+        self.assertEqual(copied.content, 'test')
+        self.assertEqual(copied.versions, [])
+
+    def test_reapplying_a_copy_over_an_overwrite_adds_no_version(self):
+        self.client.force_login(self.user)
+        LineTranscription.objects.create(
+            transcription=self.transcription2, line=self.line, content='to be replaced')
+        payload = {'source': self.transcription.pk, 'target': self.transcription2.pk}
+
+        self.client.post(self.copy_uri(), payload, content_type='application/json')
+        overwritten = LineTranscription.objects.get(
+            transcription=self.transcription2, line=self.line)
+        self.assertEqual(len(overwritten.versions), 1)
+
+        # second identical copy changes nothing, so it records nothing
+        self.client.post(self.copy_uri(), payload, content_type='application/json')
+        overwritten.refresh_from_db()
+        self.assertEqual(len(overwritten.versions), 1)
+
+    def test_copy_rejects_same_layer(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(self.copy_uri(),
+                                {'source': self.transcription.pk,
+                                 'target': self.transcription.pk},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+        resp = self.client.post(self.copy_uri(),
+                                {'source': self.transcription.pk,
+                                 'target_name': self.transcription.name},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_copy_requires_exactly_one_target(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(self.copy_uri(), {'source': self.transcription.pk},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+        resp = self.client.post(self.copy_uri(),
+                                {'source': self.transcription.pk,
+                                 'target': self.transcription2.pk,
+                                 'target_name': 'copied'},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_copy_rejects_name_taken_by_archived_layer(self):
+        self.client.force_login(self.user)
+        archived = Transcription.objects.create(
+            document=self.part.document, name='gone', archived=True)
+
+        resp = self.client.post(self.copy_uri(),
+                                {'source': self.transcription.pk, 'target_name': 'gone'},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+        # the archived layer was not resurrected nor written to
+        self.assertEqual(archived.linetranscription_set.count(), 0)
+
+    def test_copy_rejects_foreign_document_layer(self):
+        self.client.force_login(self.user)
+        other = Transcription.objects.create(
+            document=self.factory.make_part().document, name='elsewhere')
+
+        resp = self.client.post(self.copy_uri(),
+                                {'source': self.transcription.pk, 'target': other.pk},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+        resp = self.client.post(self.copy_uri(),
+                                {'source': other.pk, 'target_name': 'copied'},
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
 
 class OcrModelViewSetTestCase(CoreFactoryTestCase):
     def setUp(self):

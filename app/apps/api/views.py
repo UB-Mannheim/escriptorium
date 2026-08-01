@@ -4,8 +4,8 @@ import logging
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
-from django.db import connection, transaction
-from django.db.models import Count, F, Prefetch, Q
+from django.db import IntegrityError, connection, transaction
+from django.db.models import Avg, Count, F, Prefetch, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -35,6 +35,7 @@ from api.serializers import (
     BlockTypeSerializer,
     CollectionRecognizeSerializer,
     CollectionSegmentSerializer,
+    CopyTranscriptionSerializer,
     DetailedGroupSerializer,
     DetailedLineSerializer,
     DocumentMetadataSerializer,
@@ -1463,6 +1464,113 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         qs = LineTranscription.objects.filter(pk__in=lines)
         qs.update(content='')
         return Response(status=status.HTTP_204_NO_CONTENT, )
+
+    @action(detail=False, methods=['POST'])
+    def copy(self, request, document_pk=None, part_pk=None, pk=None):
+        """
+        Copy the content of a transcription layer into another one, for this part only.
+        The target can be an existing layer ('target') or a new one ('target_name').
+        Copied lines carry no history of their own, but a line overwritten in the target
+        keeps its previous content as a version, so the overwrite can be reverted.
+        """
+        # get_queryset() is what resolves and permission-checks self.document
+        part_lts = self.get_queryset()
+        layers = Transcription.objects.filter(document=self.document, archived=False)
+
+        class RuntimeSerializer(CopyTranscriptionSerializer):
+            source = PrimaryKeyRelatedField(queryset=layers)
+            target = PrimaryKeyRelatedField(queryset=layers, required=False)
+
+        serializer = RuntimeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        source = serializer.validated_data['source']
+        target = serializer.validated_data.get('target')
+        target_name = serializer.validated_data.get('target_name')
+
+        part = get_object_or_404(DocumentPart, pk=part_pk, document=self.document)
+
+        if target is None:
+            # typing the name of an existing layer is a legitimate way to select it,
+            # but only among the ones the UI actually shows (i.e. not archived)
+            target = layers.filter(name=target_name).first()
+            if target is None:
+                try:
+                    target = Transcription.objects.create(
+                        name=target_name, document=self.document)
+                except IntegrityError:
+                    # an archived layer holds that name
+                    return Response(
+                        {'target_name': ['A transcription layer with this name already '
+                                         'exists on this document.']},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            sources = (LineTranscription.objects
+                       .filter(transcription=source, line__document_part=part)
+                       .select_related('line'))
+            existing = {lt.line_id: lt
+                        for lt in LineTranscription.objects.filter(
+                            transcription=target, line__document_part=part)}
+
+            to_create = []
+            to_update = []
+            for lt in sources:
+                target_lt = existing.get(lt.line_id)
+                if target_lt is None:
+                    to_create.append(LineTranscription(
+                        line=lt.line,
+                        transcription=target,
+                        content=lt.content,
+                        graphs=lt.graphs,
+                        avg_confidence=lt.avg_confidence,
+                        # the copy is explicitly history-less
+                        versions=[],
+                        version_author=request.user.username,
+                    ))
+                elif (target_lt.content == lt.content
+                      and target_lt.graphs == lt.graphs
+                      and target_lt.avg_confidence == lt.avg_confidence):
+                    # nothing to do, don't spam the history with a no-op
+                    continue
+                else:
+                    # the row we are about to clobber keeps its previous content as a
+                    # version, so an overwrite stays revertable
+                    try:
+                        target_lt.new_version(author=request.user.username,
+                                              source=settings.VERSIONING_DEFAULT_SOURCE)
+                    except NoChangeException:
+                        pass
+                    target_lt.content = lt.content
+                    target_lt.graphs = lt.graphs
+                    target_lt.avg_confidence = lt.avg_confidence
+                    to_update.append(target_lt)
+
+            # bulk_create/bulk_update don't go through LineTranscription.save(), so this
+            # doesn't trigger the CascadeUpdate chain once per line; part.save() below
+            # does it once for the whole copy.
+            LineTranscription.objects.bulk_create(to_create)
+            LineTranscription.objects.bulk_update(
+                to_update,
+                # new_version() touches the whole versioning block, not just `versions`
+                ['content', 'graphs', 'avg_confidence', 'versions', 'revision',
+                 'version_author', 'version_source', 'version_created_at',
+                 'version_updated_at'])
+
+            target.avg_confidence = (
+                target.linetranscription_set
+                .filter(avg_confidence__isnull=False)
+                .aggregate(avg=Avg('avg_confidence')).get('avg'))
+            target.save()
+
+            part.calculate_progress()
+            part.save()
+
+        copied = part_lts.filter(transcription=target,
+                                 line__in=[lt.line_id for lt in sources])
+        return Response({
+            'transcription': TranscriptionSerializer(target).data,
+            'lines': LineTranscriptionSerializer(copied, many=True).data,
+        }, status=status.HTTP_200_OK)
 
 
 class OcrModelViewSet(ModelViewSet):
