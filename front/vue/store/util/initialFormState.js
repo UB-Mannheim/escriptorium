@@ -30,6 +30,9 @@ export default {
         transcription: "",
         fullDoc: false,
     },
+    copyTranscription: {
+        target: "",
+    },
     editDocument: {
         linePosition: "",
         mainScript: "",

@@ -68,6 +68,28 @@
                         :disabled="disabled"
                     />
 
+                    <!-- Copy the current layer into another one -->
+                    <VDropdown
+                        theme="escr-tooltip-small"
+                        placement="bottom"
+                        :distance="8"
+                        :triggers="['hover']"
+                    >
+                        <EscrButton
+                            color="text"
+                            aria-label="Copy layer"
+                            :disabled="disabled"
+                            :on-click="() => openModal('copyTranscription')"
+                        >
+                            <template #button-icon>
+                                <CopyIcon />
+                            </template>
+                        </EscrButton>
+                        <template #popper>
+                            Copy layer
+                        </template>
+                    </VDropdown>
+
                     <!-- Line reordering -->
                     <VDropdown
                         theme="escr-tooltip-small"
@@ -278,6 +300,8 @@ import { Recogito } from "@recogito/recogito-js";
 import { debounce, groupBy } from "lodash";
 import { BasePanel , AnnoPanel } from "../../src/editor/mixins.js";
 import ChevronDownIcon from "./Icons/ChevronDownIcon/ChevronDownIcon.vue";
+import CopyIcon from "./Icons/CopyIcon/CopyIcon.vue";
+import EscrButton from "./Button/Button.vue";
 import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
 import LineOrderingIcon from "./Icons/LineOrderingIcon/LineOrderingIcon.vue";
 import DiploLine from "./DiploLine.vue";
@@ -291,8 +315,10 @@ import "../components/Common/Annotation.css";
 export default {
     components: {
         ChevronDownIcon,
+        CopyIcon,
         DiploLine,
         EditorToolbar,
+        EscrButton,
         GroupedLine,
         KeyboardIcon,
         LineOrderingIcon,
@@ -475,6 +501,7 @@ export default {
         }
     },
     methods: {
+        ...mapActions("globalTools", ["openModal"]),
         ...mapActions("textAnnotations", {
             createTextAnnotation: "create",
             deleteTextAnnotation: "delete",

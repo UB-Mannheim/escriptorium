@@ -220,6 +220,69 @@ export const actions = {
         }
     },
 
+    /**
+     * Copy the content of the selected transcription layer into another one, for the
+     * current part only. `target` is the pk of an existing layer, `targetName` the name
+     * of a layer to create; exactly one of them must be set.
+     * Note the copy carries no version history, so it can't be undone.
+     */
+    async copyLayer({ commit, dispatch, rootState, state }, { target, targetName }) {
+        const source = state.selectedTranscription;
+        try {
+            const resp = await api.copyTranscriptionLayer(
+                rootState.document.id,
+                rootState.parts.pk,
+                targetName ? { source, target_name: targetName } : { source, target },
+            );
+            const layer = resp.data.transcription;
+
+            if (!state.all.find((t) => t.pk === layer.pk)) {
+                commit("set", [...state.all, layer]);
+                commit(
+                    "forms/setFieldValue",
+                    {
+                        form: "transcriptionManagement",
+                        field: "transcriptions",
+                        value: [
+                            ...rootState.forms.transcriptionManagement.transcriptions,
+                            layer,
+                        ],
+                    },
+                    { root: true },
+                );
+            }
+
+            // the panel is showing the target: repaint it with the copied content
+            if (layer.pk === state.selectedTranscription) {
+                await dispatch("getCurrentContent", state.selectedTranscription);
+            }
+
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message: `Copied ${resp.data.lines.length} line(s) to "${layer.name}".`,
+                },
+                { root: true },
+            );
+        } catch (err) {
+            console.log("couldn't copy transcription layer", err);
+            const data = err.response && err.response.data;
+            const detail = data && (data.non_field_errors || data.target_name || data.target);
+            dispatch(
+                "alerts/add",
+                {
+                    color: "alert",
+                    message: detail
+                        ? `Couldn't copy the transcription layer: ${detail}`
+                        : "Couldn't copy the transcription layer.",
+                },
+                { root: true },
+            );
+            throw err;
+        }
+    },
+
     async archive({ commit, rootState }, transPk) {
         await api
             .archiveTranscription(rootState.document.id, transPk)

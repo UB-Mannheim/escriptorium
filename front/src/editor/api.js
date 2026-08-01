@@ -128,6 +128,12 @@ export const bulkUpdateLineTranscriptions = async (
         data,
     );
 
+export const copyTranscriptionLayer = async (document_id, part_id, data) =>
+    await axios.post(
+        `/documents/${document_id}/parts/${part_id}/transcriptions/copy/`,
+        data,
+    );
+
 export const moveLines = async (document_id, part_id, data) =>
     await axios.post(
         `/documents/${document_id}/parts/${part_id}/lines/move/`,
