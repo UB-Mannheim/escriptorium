@@ -1,7 +1,7 @@
 <template>
     <div :class="classes">
         <WarningIcon
-            v-if="color === 'danger'"
+            v-if="color === 'danger' || color === 'warning'"
         />
         <InfoFilledIcon
             v-else-if="color === 'secondary'"
@@ -22,7 +22,7 @@ export default {
             type: String,
             required: true,
             validator(value) {
-                return ["secondary", "danger"].includes(value);
+                return ["secondary", "warning", "danger"].includes(value);
             },
         },
         message: {
