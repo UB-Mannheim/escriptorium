@@ -42,3 +42,7 @@ def enable_tei_export(request):
 def models_version_retention(request):
     return {'MODELS_VERSION_RETENTION': getattr(settings,
                                                 'MODELS_VERSION_RETENTION')}
+
+
+def esc_languages(request):
+    return {'ESC_LANGUAGES': getattr(settings, 'ESC_LANGUAGES', ['en'])}
