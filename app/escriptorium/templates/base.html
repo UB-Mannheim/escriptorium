@@ -41,6 +41,7 @@
     {% block extrastyle %}{% endblock extrastyle %}
   </head>
   <body id="escriptorium" class="escr-body {% block bodyclass %}{% endblock %}">
+    {% csrf_token %}
     {% if user.legacy_mode %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <a class="navbar-brand" href="{% url 'home' %}">
@@ -145,18 +146,18 @@
           </li>
           {% endif %}
 
-          {% get_available_languages as languages %}
-          {% if languages|length > 1 %}
+          {% if ESC_LANGUAGES|length > 1 %}
           <li class="nav-item dropdown">
             <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"> {% flags_for_language 1 LANGUAGE_CODE %} <span class="caret"></span></a>
             <form action="{% url 'set_language' %}" method="post">
               {% csrf_token %}
               <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                {% for lang_code, lang_name in languages %}
+                {% for lang_code in ESC_LANGUAGES %}
+                {% get_language_info for lang_code as lang_info %}
                 <li>
                   {% language lang_code %}
-	          <button class="btn" type="submit" name="language" title="{{ lang_name }}" value="{{ lang_code }}">
-                    {% flags_for_language 1 lang_code %} <span class="{% if lang_code in LANGUAGE_CODE %}font-weight-bold{% endif %} ml-1">{{ lang_name }}</span>
+                  <button class="btn" type="submit" name="language" title="{{ lang_info.name_local }}" value="{{ lang_code }}">
+                    {% flags_for_language 1 lang_code %} <span class="{% if lang_code == LANGUAGE_CODE %}font-weight-bold{% endif %} ml-1">{{ lang_info.name_local }}</span>
                   </button>
                   {% endlanguage %}
                 </li>
@@ -173,6 +174,8 @@
       <global-navigation
         :is-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}"
         :search-disabled="{% if DISABLE_ES_SEARCH %}true{% else %}false{% endif %}"
+        :set-language-url="'{% url 'set_language' %}'"
+        :languages="{{ ESC_LANGUAGES }}"
       ></global-navigation>
     </div>
     {% endif %}
