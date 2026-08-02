@@ -123,6 +123,7 @@ TEMPLATES = [
                 'escriptorium.context_processors.enable_markdown_export',
                 'escriptorium.context_processors.enable_tei_export',
                 'escriptorium.context_processors.models_version_retention',
+                'escriptorium.context_processors.esc_languages',
             ],
         },
     },
