@@ -182,6 +182,12 @@
                 <ProfileIcon />
                 <span>Sign in</span>
             </a>
+            <LanguageSwitcher
+                v-if="languages && languages.length > 1"
+                class="escr-language-switcher"
+                :set-language-url="setLanguageUrl"
+                :languages="languages"
+            />
             <input
                 id="escr-lightdark-switcher"
                 type="checkbox"
@@ -203,6 +209,7 @@ import { Menu as VMenu } from "floating-vue";
 import DarkModeIcon from "../Icons/DarkModeIcon/DarkModeIcon.vue";
 import EscrLogo from "../Icons/EscrLogo/EscrLogo.vue";
 import HomeIcon from "../Icons/HomeIcon/HomeIcon.vue";
+import LanguageSwitcher from "../LanguageSwitcher/LanguageSwitcher.vue";
 import LightModeIcon from "../Icons/LightModeIcon/LightModeIcon.vue";
 import ModelsIcon from "../Icons/ModelsIcon/ModelsIcon.vue";
 import ProfileIcon from "../Icons/ProfileIcon/ProfileIcon.vue";
@@ -217,9 +224,10 @@ import { SCRIPT_NAME } from '../../../src/scriptname.js';
 export default {
     name: "EscrGlobalNavigation",
     components: {
-        EscrLogo,
         DarkModeIcon,
+        EscrLogo,
         HomeIcon,
+        LanguageSwitcher,
         LightModeIcon,
         ModelsIcon,
         ProfileIcon,
@@ -236,6 +244,14 @@ export default {
         searchDisabled: {
             type: Boolean,
             required: true,
+        },
+        setLanguageUrl: {
+            type: String,
+            required: true,
+        },
+        languages: {
+            type: Array,
+            default: null,
         },
     },
     data() {
