@@ -12,13 +12,13 @@ from django.core.cache import cache
 from django.db import connections
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_safe
 
 # keep a failing check from bloating the response with a whole traceback
 ERROR_MAX_LENGTH = 200
 
 
-@require_GET
+@require_safe
 @never_cache
 def health(request):
     """Liveness: no database, no cache, no broker. Just 'the app is serving'."""
@@ -51,7 +51,7 @@ def check_celery_broker():
         connection.ensure_connection(max_retries=0, timeout=2)
 
 
-@require_GET
+@require_safe
 @never_cache
 def health_ready(request):
     """Readiness: report on each backing service, 503 if any of them is down."""
