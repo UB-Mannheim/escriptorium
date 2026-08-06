@@ -47,7 +47,8 @@ def check_celery_broker():
     # reachability of the broker only; deliberately not app.control.ping(),
     # which polls the workers and is both slow and flaky
     from escriptorium.celery import app
-    app.connection().ensure_connection(max_retries=0, timeout=2)
+    with app.connection() as connection:
+        connection.ensure_connection(max_retries=0, timeout=2)
 
 
 @require_GET
