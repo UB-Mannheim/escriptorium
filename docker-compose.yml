@@ -19,6 +19,14 @@ services:
     command: uwsgi --ini /usr/src/app/uwsgi.ini
     expose:
       - 8000
+    healthcheck:
+      # entrypoint.sh runs migrate and collectstatic before the command
+      # starts, hence the generous start_period
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   channelserver:
     <<: *app
@@ -45,6 +53,13 @@ services:
       - media:/usr/src/app/media
     ports:
       - 8080:80
+    healthcheck:
+      # end to end: nginx serving, and django reachable through it
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   celery-main:
     <<: *app

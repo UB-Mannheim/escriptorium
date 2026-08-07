@@ -19,7 +19,12 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from escriptorium import views
+
 urlpatterns = [
+    # no trailing slash: APPEND_SLASH would otherwise redirect the probes
+    path('health', views.health, name='health'),
+    path('health/ready', views.health_ready, name='health-ready'),
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
     path('', include('imports.urls')),

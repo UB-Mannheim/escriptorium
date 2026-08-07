@@ -55,7 +55,7 @@ tests:
 
   script:
     - pip install -r app/requirements.txt
-    - python app/manage.py test -v 2 users api versioning imports core
+    - python app/manage.py test -v 2 users api versioning imports core escriptorium
 
 js-tests:
   stage: test
