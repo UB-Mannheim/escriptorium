@@ -22,7 +22,7 @@ module.exports = {
     output: {
         filename: "[name].js",
         path: path.resolve(__dirname, "./dist/"),
-        publicPath: "/static/",
+        publicPath: process.env.STATIC_URL || "/static/",
         clean: true,
     },
 
