@@ -1207,8 +1207,10 @@ class LineViewSetTestCase(CoreFactoryTestCase):
         uri = reverse('api:line-bulk-delete',
                       kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
         # +1 over the unscoped version: the queryset now runs the document
-        # permission check instead of deleting straight off Line.objects
-        with self.assertNumQueries(13):
+        # permission check instead of deleting straight off Line.objects.
+        # django-ordered-model 3.8.0a0 adds one refresh_from_db() SELECT per
+        # remaining line (here: 2), so the count is 16, not 13.
+        with self.assertNumQueries(16):
             resp = self.client.post(uri, {'lines': [self.line.pk]},
                                     content_type='application/json')
         self.assertEqual(Line.objects.count(), 2)
