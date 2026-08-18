@@ -21,6 +21,8 @@ from easy_thumbnails.files import get_thumbnailer
 from kraken.configs import (
     BLLASegmentationTrainingConfig,
     BLLASegmentationTrainingDataConfig,
+    PPOCRv6RecognitionTrainingConfig,
+    PPOCRv6RecognitionTrainingDataConfig,
     RecognitionInferenceConfig,
     VGSLRecognitionTrainingConfig,
     VGSLRecognitionTrainingDataConfig,
@@ -34,6 +36,8 @@ from kraken.train import (
     BLLASegmentationDataModule,
     BLLASegmentationModel,
     KrakenTrainer,
+    PPOCRv6RecognitionDataModule,
+    PPOCRv6RecognitionModel,
     VGSLRecognitionDataModule,
     VGSLRecognitionModel,
 )
@@ -74,6 +78,25 @@ def detect_model_architecture(file_path):
         if isinstance(v, dict) and v.get('_model'):
             return v['_model']
     return None
+
+
+VGSL_RECOGNITION_CLASSES = (VGSLRecognitionTrainingConfig,
+                            VGSLRecognitionTrainingDataConfig,
+                            VGSLRecognitionDataModule,
+                            VGSLRecognitionModel)
+
+RECOGNITION_TRAINING_CLASSES = {
+    'PPOCRv6Model': (PPOCRv6RecognitionTrainingConfig,
+                     PPOCRv6RecognitionTrainingDataConfig,
+                     PPOCRv6RecognitionDataModule,
+                     PPOCRv6RecognitionModel),
+    'TorchVGSLModel': VGSL_RECOGNITION_CLASSES,
+}
+
+
+def recognition_training_classes(architecture):
+    """Return kraken"""
+    return RECOGNITION_TRAINING_CLASSES.get(architecture, VGSL_RECOGNITION_CLASSES)
 
 
 @shared_task
@@ -699,27 +722,33 @@ def train_(qs, document=None, transcription=None, model=None, user=None, collect
         else:
             reorder = 'L'
 
+        architecture = detect_model_architecture(load) if load else None
+        (train_config_class,
+         data_config_class,
+         data_module_class,
+         module_class) = recognition_training_classes(architecture)
+
         logger.info(f'Starting recognition training on {accelerator}/{device} '
                     f'(precision: {AMP_MODE}, batch_size {BATCH_SIZE} '
-                    f', workers: {LOAD_THREADS}) with {len(ground_truth[partition:])} lines')
+                    f', workers: {LOAD_THREADS}, arch: {module_class.__name__}) '
+                    f'with {len(ground_truth[partition:])} lines')
 
-        rec_data_config = VGSLRecognitionTrainingDataConfig(
+        rec_data_config = data_config_class(
             training_data=[str(train_dir / 'train.arrow')],
             evaluation_data=[str(train_dir / 'val.arrow')],
             format_type='binary',
             num_workers=LOAD_THREADS,
+            bidi_reordering=reorder,
         )
-        rec_train_config = VGSLRecognitionTrainingConfig(
+        rec_train_config = train_config_class(
             batch_size=BATCH_SIZE,
-            load_hyper_parameters=True,
             resize='union',
-            reorder=reorder,
         )
-        rec_dm = VGSLRecognitionDataModule(rec_data_config)
+        rec_dm = data_module_class(rec_data_config)
         if load:
-            kraken_model = VGSLRecognitionModel.load_from_weights(load, rec_train_config)
+            kraken_model = module_class.load_from_weights(load, rec_train_config)
         else:
-            kraken_model = VGSLRecognitionModel(rec_train_config)
+            kraken_model = module_class(rec_train_config)
 
         # allow frontend feedback for per-collection training
         room_name = 'collection' if collection_pk else 'document'
