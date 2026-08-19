@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
 from solo.admin import SingletonModelAdmin
@@ -76,8 +77,31 @@ class ScriptAdmin(admin.ModelAdmin):
 
 
 class FontAdmin(admin.ModelAdmin):
-    list_display = ['name', 'size_adjust', 'file']
+    list_display = ['name', 'size_adjust', 'line_height', 'file']
     search_fields = ['name']
+    readonly_fields = ['preview']
+
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'file', 'preview')
+        }),
+        ('metrics', {
+            'fields': ('size_adjust', 'ascent_override', 'descent_override', 'line_height'),
+            'description': 'how the font itself sits on the line, applies everywhere '
+                           'transcriptions are shown'
+        }),
+        ('line editor input', {
+            'fields': ('input_height', 'input_padding_top', 'input_padding_bottom',
+                       'input_margin_top', 'input_margin_bottom', 'input_vertical_align'),
+            'description': 'layout of the input box in the line editor'
+        }),
+    )
+
+    def preview(self, font):
+        if font is None or not font.pk or not font.file:
+            return 'save the font to see a preview'
+        return render_to_string('admin/core/font_preview.html', {'font': font})
+    preview.short_description = 'preview'
 
 
 class OcrModelAdmin(admin.ModelAdmin):
