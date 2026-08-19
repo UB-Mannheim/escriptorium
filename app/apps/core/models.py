@@ -402,16 +402,73 @@ class Font(models.Model):
     A custom font uploaded by an instance administrator (through the Django admin)
     that can be used to render transcription content in the editor panels.
     """
+    VERTICAL_ALIGN_CHOICES = (
+        ("baseline", _("baseline")),
+        ("middle", _("middle")),
+        ("top", _("top")),
+        ("bottom", _("bottom")),
+        ("text-top", _("text top")),
+        ("text-bottom", _("text bottom")),
+        ("sub", _("subscript")),
+        ("super", _("superscript")),
+    )
+
     name = models.CharField(max_length=255, unique=True)
     file = models.FileField(
         upload_to="fonts/",
         validators=[FileExtensionValidator(["ttf", "otf", "woff", "woff2"])],
-        help_text=_("Font file in ttf, otf, woff or woff2 format."),
+        help_text=_("ttf, otf, woff or woff2"),
     )
-    # scale factor (1.0 = 100%) to normalize fonts that render visually larger or smaller than others.
     size_adjust = models.FloatField(
         default=1.0,
-        help_text=_("Size adjustment factor (1.0 = 100%) to normalize the visual size of this font."),
+        verbose_name=_("size"),
+        help_text=_("scale factor, 1.0 keeps the font as it is"),
+    )
+    ascent_override = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("ascent"),
+        help_text=_("room above the baseline, raise it when tall glyphs get cut"),
+    )
+    descent_override = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("descent"),
+        help_text=_("room below the baseline, raise it when low glyphs get cut"),
+    )
+    line_height = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("line height"),
+        help_text=_("in em, empty keeps the default"),
+    )
+    input_height = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("height"),
+        help_text=_("in em, empty uses 1.1"),
+    )
+    input_padding_top = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("top padding"),
+        help_text=_("in em, moves the text down"),
+    )
+    input_padding_bottom = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("bottom padding"),
+        help_text=_("in em, moves the text up"),
+    )
+    input_margin_top = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("top margin"),
+        help_text=_("in em, moves the box down"),
+    )
+    input_margin_bottom = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("bottom margin"),
+        help_text=_("in em, can be negative to take back the top padding"),
+    )
+    input_vertical_align = models.CharField(
+        max_length=16, blank=True, default="",
+        choices=VERTICAL_ALIGN_CHOICES,
+        verbose_name=_("vertical align"),
+        help_text=_("empty keeps the default"),
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
