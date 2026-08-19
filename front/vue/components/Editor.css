@@ -65,6 +65,7 @@ div.escr-editor-tabcontent #diplo-panel .content-container {
 .escr-editor-tabcontent #diplomatic-lines,
 .escr-editor-tabcontent #transcription-panel svg text {
     font-family: var(--transcription-font-family, "Noto Sans", "Resized Arabic", sans-serif);
+    line-height: var(--transcription-font-line-height, inherit);
 }
 
 /* confidence visualization scale panel */
