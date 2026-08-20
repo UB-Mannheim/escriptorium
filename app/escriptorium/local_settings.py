@@ -41,11 +41,12 @@ TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
 VERSION_DATE = 'UBMA-2026-01-30'
 
+ESC_LANGUAGES = 'de,en,fr,es'.split(',')
 LANGUAGES = [
     ('de', _('German')),
     ('en', _('English')),
+    ('es', _('Spanish')),
     ('fr', _('French')),
-    ('es', _('Spanish'))
 ]
 
 LOCALE_PATHS = [
