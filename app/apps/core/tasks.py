@@ -577,7 +577,70 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 
-        segtrain_(qs, partition, topline, load, model, model_dir, user=user, room_pk=document_pk)
+        training_data = make_segmentation_training_data(qs[partition:])
+        evaluation_data = make_segmentation_training_data(qs[:partition])
+
+        accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
+
+        LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+        AMP_MODE = getattr(settings, 'KRAKEN_TRAINING_PRECISION', '32')
+
+        logger.info(f'Starting segmentation training on {accelerator}/{device} '
+                    f'(precision: {AMP_MODE}, workers: {LOAD_THREADS}) with '
+                    f'{len(training_data)} files')
+
+        seg_data_config = BLLASegmentationTrainingDataConfig(
+            training_data=training_data,
+            evaluation_data=evaluation_data,
+            format_type=None,
+            num_workers=LOAD_THREADS,
+        )
+        seg_train_config = BLLASegmentationTrainingConfig(
+            resize='union',
+            topline=topline,
+            quit='early',
+        )
+        seg_dm = BLLASegmentationDataModule(seg_data_config)
+        if load:
+            kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
+        else:
+            kraken_model = BLLASegmentationModel(seg_train_config)
+
+        trainer = KrakenTrainer(accelerator=accelerator,
+                                devices=device,
+                                min_epochs=seg_train_config.min_epochs,
+                                max_epochs=seg_train_config.epochs,
+                                precision=AMP_MODE,
+                                enable_summary=False,
+                                enable_progress_bar=False,
+                                val_check_interval=1.0,
+                                callbacks=[FrontendFeedback(model, model_dir, document_pk),
+                                           make_checkpoint_callback(model_dir)])
+
+        trainer.fit(kraken_model, seg_dm)
+
+        # best checkpoint path from lightning's ModelCheckpoint callback
+        best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
+        best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
+
+        if not best_path:
+            logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
+            raise DidNotConverge
+
+        try:
+            fb_best = next((cb.best_metric for cb in trainer.callbacks if isinstance(cb, FrontendFeedback)), 0.0)
+            best_score_val = float(best_score) if best_score is not None else fb_best
+            dest = model_file_path(model, '.safetensors')
+            logger.info(f'Converting best model {best_path} (accuracy: {best_score_val}) to {dest}.')
+            convert_models([best_path], dest)
+            switch_model_file(model, '.safetensors')
+            model.training_accuracy = best_score_val
+        except FileNotFoundError:
+            logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
+            if user:
+                user.notify(_("Training didn't get better results than base model!"),
+                            id="seg-no-gain-error", level='warning')
+            restore_base_model_file(model, load)
 
     except DidNotConverge:
         send_event('document', ground_truth[0].document.pk, "training:error", {
@@ -1416,8 +1479,72 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         )
         partition = max(1, int(len(ground_truth) / 10))
 
-        segtrain_(qs, partition, topline, load, model, model_dir, user=user,
-                  room_pk=collection_pk, room_name="collection")
+        training_data = make_segmentation_training_data(qs[partition:])
+        evaluation_data = make_segmentation_training_data(qs[:partition])
+
+        accelerator, device = _to_ptl_device(
+            getattr(settings, "KRAKEN_TRAINING_DEVICE", "cpu")
+        )
+        LOAD_THREADS = getattr(settings, "KRAKEN_TRAINING_LOAD_THREADS", 0)
+        AMP_MODE = getattr(settings, "KRAKEN_TRAINING_PRECISION", "32")
+
+        seg_data_config = BLLASegmentationTrainingDataConfig(
+            training_data=training_data,
+            evaluation_data=evaluation_data,
+            format_type=None,
+            num_workers=LOAD_THREADS,
+        )
+        seg_train_config = BLLASegmentationTrainingConfig(
+            resize='union',
+            topline=topline,
+            quit='early',
+        )
+        seg_dm = BLLASegmentationDataModule(seg_data_config)
+        if load:
+            kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
+        else:
+            kraken_model = BLLASegmentationModel(seg_train_config)
+
+        trainer = KrakenTrainer(
+            accelerator=accelerator,
+            devices=device,
+            min_epochs=seg_train_config.min_epochs,
+            max_epochs=seg_train_config.epochs,
+            precision=AMP_MODE,
+            enable_summary=False,
+            enable_progress_bar=False,
+            val_check_interval=1.0,
+            callbacks=[FrontendFeedback(model, model_dir, collection_pk, "collection"),
+                       make_checkpoint_callback(model_dir)],
+        )
+
+        trainer.fit(kraken_model, seg_dm)
+
+        # best checkpoint path from lightning's ModelCheckpoint callback
+        best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
+        best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
+
+        if not best_path:
+            logger.info(f"Model {os.path.split(model.file.path)[0]} did not improve.")
+            raise DidNotConverge
+
+        try:
+            fb_best = next((cb.best_metric for cb in trainer.callbacks if isinstance(cb, FrontendFeedback)), 0.0)
+            best_score_val = float(best_score) if best_score is not None else fb_best
+            dest = model_file_path(model, ".safetensors")
+            logger.info(f"Converting best model {best_path} (accuracy: {best_score_val}) to {dest}.")
+            convert_models([best_path], dest)
+            switch_model_file(model, ".safetensors")
+            model.training_accuracy = best_score_val
+        except FileNotFoundError:
+            logger.info(f"Model {os.path.split(model.file.path)[0]} did not improve.")
+            if user:
+                user.notify(
+                    _("Training didn't get better results than base model!"),
+                    id="seg-no-gain-error",
+                    level="warning",
+                )
+            restore_base_model_file(model, load)
     except DidNotConverge:
         send_event(
             "collection", collection_pk, "training:error", {"id": model.pk}
