@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-21 07:35+0200\n"
+"POT-Creation-Date: 2026-08-21 08:09+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -192,13 +192,15 @@ msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Add hyphens"
-msgstr ""
+msgstr "Bindestriche hinzufügen"
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid ""
 "If checked, the aligner will attempt to reconstruct hyphenated words across "
 "line breaks."
 msgstr ""
+"Wenn aktiviert, versucht der Aligner, mit Bindestrich umgebrochene Wörter "
+"über Zeilenumbrüche hinweg wiederherzustellen."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Use full transcribed document"
@@ -267,21 +269,22 @@ msgstr ""
 "Maximaler Offset und Strahlengröße dürfen nicht beide ungleich Null sein."
 
 #: apps/api/serializers.py
-#, fuzzy, python-format
-#| msgid "Transcribed document parts"
+#, python-format
 msgid "Invalid document_part: %(pk)s."
-msgstr "Transkribierte Dokumentteile"
+msgstr "Ungültiges document_part: %(pk)s."
 
 #: apps/api/serializers.py
 #, python-format
 msgid "Invalid transcription_layer: %(pk)s."
-msgstr ""
+msgstr "Ungültiges transcription_layer: %(pk)s."
 
 #: apps/api/serializers.py
 msgid ""
 "Either use model_name to create a new model, or provide a base model pk to "
 "retrain."
 msgstr ""
+"Entweder model_name verwenden, um ein neues Modell zu erstellen, oder die pk "
+"eines Basismodells zum Nachtrainieren angeben."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You can't overwrite the existing file of a model you don't own."
@@ -299,11 +302,11 @@ msgstr "'Zeilen' ist erforderlich."
 
 #: apps/api/views.py
 msgid "None of the requested lines were found."
-msgstr ""
+msgstr "Keine der angeforderten Zeilen wurde gefunden."
 
 #: apps/api/views.py
 msgid "Some lines could not be found in this part."
-msgstr ""
+msgstr "Einige Zeilen konnten in diesem Teil nicht gefunden werden."
 
 #: apps/core/forms.py
 msgid "All projects"
@@ -442,13 +445,15 @@ msgstr "Von oben nach unten"
 
 #: apps/core/models.py
 msgid "Font file in ttf, otf, woff or woff2 format."
-msgstr ""
+msgstr "Schriftdatei im ttf-, otf-, woff- oder woff2-Format."
 
 #: apps/core/models.py
 msgid ""
 "Size adjustment factor (1.0 = 100%) to normalize the visual size of this "
 "font."
 msgstr ""
+"Skalierungsfaktor (1.0 = 100 %), um die visuelle Größe dieser Schriftart zu "
+"normalisieren."
 
 #: apps/core/models.py
 msgid ""
@@ -475,6 +480,9 @@ msgid ""
 "Font used to render transcription content for documents in this project, "
 "unless overridden at the document level."
 msgstr ""
+"Schriftart, die zum Darstellen des Transkriptionstexts für Dokumente in "
+"diesem Projekt verwendet wird, sofern sie nicht auf Dokumentebene "
+"überschrieben wird."
 
 #: apps/core/models.py
 msgid "Draft"
@@ -540,6 +548,8 @@ msgid ""
 "Font used to render this document's transcription content, overriding the "
 "project and user fonts."
 msgstr ""
+"Schriftart, die zum Darstellen des Transkriptionstexts dieses Dokuments "
+"verwendet wird; überschreibt die Projekt- und Benutzerschriftart."
 
 #: apps/core/models.py
 msgid "Couldn't find the alignment task."
@@ -748,7 +758,7 @@ msgstr "Dokument wurde erfolgreich zum ausgewählten Projekt migriert!"
 
 #: apps/imports/fetch.py
 msgid "Only http and https addresses can be imported."
-msgstr ""
+msgstr "Es können nur http- und https-Adressen importiert werden."
 
 #: apps/imports/fetch.py
 msgid ""
@@ -760,7 +770,7 @@ msgstr ""
 
 #: apps/imports/fetch.py
 msgid "The address is missing a host."
-msgstr ""
+msgstr "Der Adresse fehlt ein Host."
 
 #: apps/imports/fetch.py apps/imports/forms.py
 msgid "The document is unreachable, unreadable or the host timed out."
@@ -771,10 +781,12 @@ msgstr ""
 #: apps/imports/fetch.py
 msgid "Importing from a private or local network address is not allowed."
 msgstr ""
+"Das Importieren von einer privaten oder lokalen Netzwerkadresse ist nicht "
+"erlaubt."
 
 #: apps/imports/fetch.py
 msgid "Too many redirects while fetching the document."
-msgstr ""
+msgstr "Zu viele Weiterleitungen beim Abrufen des Dokuments."
 
 #: apps/imports/forms.py
 #, python-brace-format
@@ -914,6 +926,7 @@ msgid "METS Import"
 msgstr "METS-Import"
 
 #: apps/imports/parsers.py
+#, python-brace-format
 msgid "No match found for file {} with filename \"{}\"."
 msgstr "Keine Übereinstimmung für Datei {} mit Dateiname \"{}\" gefunden."
 
@@ -1037,8 +1050,8 @@ msgstr "Abgebrochen"
 #, python-format
 msgid "%d user disabled."
 msgid_plural "%d users disabled."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d Benutzer deaktiviert."
+msgstr[1] "%d Benutzer deaktiviert."
 
 #: apps/users/admin.py
 #, python-format
@@ -1138,13 +1151,15 @@ msgstr ""
 
 #: apps/users/models.py
 msgid "Preferred transcription font"
-msgstr ""
+msgstr "Bevorzugte Transkriptionsschriftart"
 
 #: apps/users/models.py
 msgid ""
 "Font used to render transcription content in the editor, unless overridden "
 "at the document or project level."
 msgstr ""
+"Schriftart, die zum Darstellen des Transkriptionstexts im Editor verwendet "
+"wird, sofern sie nicht auf Dokument- oder Projektebene überschrieben wird."
 
 #: apps/users/models.py
 msgid "Error"
@@ -1939,7 +1954,7 @@ msgstr "Textannotationen"
 
 #: escriptorium/templates/core/document_ontology_overview.html
 msgid "Ontology Overview"
-msgstr ""
+msgstr "Ontologie-Übersicht"
 
 #: escriptorium/templates/core/documents_tasks_list.html
 msgid "Task Monitoring"
@@ -2097,11 +2112,11 @@ msgstr "Modell hochladen"
 
 #: escriptorium/templates/core/models_list/main.html
 msgid "Find a model"
-msgstr ""
+msgstr "Modell suchen"
 
 #: escriptorium/templates/core/models_list/main.html
 msgid "Publish a model"
-msgstr ""
+msgstr "Modell veröffentlichen"
 
 #: escriptorium/templates/core/models_list/rights/delete.html
 msgid "Delete right"
