@@ -31,6 +31,7 @@ const LANGUAGE_NAMES = {
     en: "English",
     fr: "Français",
     de: "Deutsch",
+    es: "Español",
 };
 
 export default {
