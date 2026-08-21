@@ -441,7 +441,7 @@ def fit_segmentation(load, architecture, qs, partition, topline, model, model_di
     seg_train_config = train_config_class(
         resize='union',
         topline=topline,
-        load_hyper_parameters=True,
+        quit='early',
     )
     seg_dm = data_module_class(seg_data_config)
     if load:
@@ -451,8 +451,8 @@ def fit_segmentation(load, architecture, qs, partition, topline, model, model_di
 
     trainer = KrakenTrainer(accelerator=accelerator,
                             devices=device,
-                            # max_epochs=2,
-                            # min_epochs=5,
+                            min_epochs=seg_train_config.min_epochs,
+                            max_epochs=seg_train_config.epochs,
                             precision=AMP_MODE,
                             enable_summary=False,
                             enable_progress_bar=False,
