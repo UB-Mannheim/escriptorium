@@ -400,7 +400,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         seg_train_config = BLLASegmentationTrainingConfig(
             resize='union',
             topline=topline,
-            load_hyper_parameters=True,
+            quit='early',
         )
         seg_dm = BLLASegmentationDataModule(seg_data_config)
         if load:
@@ -410,8 +410,8 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
 
         trainer = KrakenTrainer(accelerator=accelerator,
                                 devices=device,
-                                # max_epochs=2,
-                                # min_epochs=5,
+                                min_epochs=seg_train_config.min_epochs,
+                                max_epochs=seg_train_config.epochs,
                                 precision=AMP_MODE,
                                 enable_summary=False,
                                 enable_progress_bar=False,
@@ -1304,7 +1304,7 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         seg_train_config = BLLASegmentationTrainingConfig(
             resize='union',
             topline=topline,
-            load_hyper_parameters=True,
+            quit='early',
         )
         seg_dm = BLLASegmentationDataModule(seg_data_config)
         if load:
@@ -1315,6 +1315,8 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         trainer = KrakenTrainer(
             accelerator=accelerator,
             devices=device,
+            min_epochs=seg_train_config.min_epochs,
+            max_epochs=seg_train_config.epochs,
             precision=AMP_MODE,
             enable_summary=False,
             enable_progress_bar=False,
