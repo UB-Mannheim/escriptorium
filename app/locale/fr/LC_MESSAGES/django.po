@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-21 07:35+0200\n"
+"POT-Creation-Date: 2026-08-21 08:09+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -237,12 +237,12 @@ msgstr ""
 #: apps/api/serializers.py
 #, python-format
 msgid "Invalid document_part: %(pk)s."
-msgstr ""
+msgstr "document_part invalide : %(pk)s."
 
 #: apps/api/serializers.py
 #, python-format
 msgid "Invalid transcription_layer: %(pk)s."
-msgstr ""
+msgstr "transcription_layer invalide : %(pk)s."
 
 #: apps/api/serializers.py
 msgid ""
@@ -268,7 +268,7 @@ msgstr ""
 
 #: apps/api/views.py
 msgid "Some lines could not be found in this part."
-msgstr ""
+msgstr "Certaines lignes n'ont pas pu être trouvées dans cette partie."
 
 #: apps/core/forms.py
 msgid "All projects"
@@ -696,17 +696,19 @@ msgstr ""
 
 #: apps/imports/fetch.py
 msgid "Only http and https addresses can be imported."
-msgstr ""
+msgstr "Seules les adresses http et https peuvent être importées."
 
 #: apps/imports/fetch.py
 msgid ""
 "You're not allowed to import files from this domain, please contact your "
 "instance administrator."
 msgstr ""
+"Vous n'êtes pas autorisé à importer des fichiers depuis ce domaine, veuillez "
+"contacter l'administrateur de votre instance."
 
 #: apps/imports/fetch.py
 msgid "The address is missing a host."
-msgstr ""
+msgstr "L'adresse ne spécifie pas d'hôte."
 
 #: apps/imports/fetch.py apps/imports/forms.py
 msgid "The document is unreachable, unreadable or the host timed out."
@@ -715,27 +717,33 @@ msgstr ""
 #: apps/imports/fetch.py
 msgid "Importing from a private or local network address is not allowed."
 msgstr ""
+"L'importation depuis une adresse de réseau privée ou locale n'est pas "
+"autorisée."
 
 #: apps/imports/fetch.py
 msgid "Too many redirects while fetching the document."
-msgstr ""
+msgstr "Trop de redirections lors de la récupération du document."
 
 #: apps/imports/forms.py
 #, python-brace-format
 msgid "Failed to download the document pointed to by the given uri ({error})."
 msgstr ""
+"Échec du téléchargement du document pointé par l'uri fournie ({error})."
 
 #: apps/imports/forms.py
 msgid "The document cannot be downloaded, certificate verify failed."
 msgstr ""
+"Le document ne peut pas être téléchargé, la vérification du certificat a "
+"échoué."
 
 #: apps/imports/forms.py
 msgid "The document pointed to by the given uri doesn't seem to be valid json."
 msgstr ""
+"Le document pointé par l'uri fournie ne semble pas être un JSON valide."
 
 #: apps/imports/forms.py
 msgid "Couldn't parse the given file or its validation failed"
-msgstr ""
+msgstr "Impossible d'analyser le fichier fourni ou sa validation a échoué"
 
 #: apps/imports/forms.py
 #, python-brace-format
@@ -841,6 +849,7 @@ msgid "METS Import"
 msgstr ""
 
 #: apps/imports/parsers.py
+#, python-brace-format
 msgid "No match found for file {} with filename \"{}\"."
 msgstr ""
 
@@ -1308,7 +1317,7 @@ msgstr "Espagnol"
 
 #: escriptorium/local_settings.py escriptorium/settings.py
 msgid "French"
-msgstr ""
+msgstr "Français"
 
 #: escriptorium/templates/403.html
 msgid "You don't have permission to view or edit this document."
