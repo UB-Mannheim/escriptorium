@@ -679,6 +679,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
             "thumbnailing must happen before self.save() to avoid "
             "the django-cleanup race condition")
 
+
 class OcrModelCancelTrainingTestCase(CoreFactoryTestCase):
     """cancel_training must be idempotent: when the training task is already
     over (or no report exists) it must clear the stuck training flag instead
