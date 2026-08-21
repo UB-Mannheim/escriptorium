@@ -2316,10 +2316,13 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     def cancel_training(self, revoke_task=True, username=None):
         if revoke_task:
             report = self.reports.last()
-            if not report or not report.task_id or report.workflow_state in TASK_FINAL_STATES:
-                raise ProcessFailureException(_("Couldn't find the training task."))
-
-            report.cancel(username)
+            # Only cancel the task if the report is still queued or running.
+            # If the report is already in a final state (or missing), there is
+            # nothing to revoke; the flag is cleared below, which also
+            # self-heals a stuck training flag.
+            if (report is not None and report.task_id
+                    and report.workflow_state not in TASK_FINAL_STATES):
+                report.cancel(username)
 
         self.training = False
         self.save()
