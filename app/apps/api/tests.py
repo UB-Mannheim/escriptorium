@@ -1418,7 +1418,9 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                               'part_pk': self.part.pk})
 
         # +1: the part is now resolved through the authorised document
-        with self.assertNumQueries(26):
+        # +5: create() uses update_or_create, which wraps the lookup and the
+        # insert in its own transaction
+        with self.assertNumQueries(31):
             resp = self.client.post(uri, {
                 'line': self.line2.pk,
                 'transcription': self.transcription.pk,
@@ -1451,7 +1453,9 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
             document_part=self.part)
         # +1: create now authorises the document, which it did not
         # do when the check hung off get_queryset()
-        with self.assertNumQueries(29):
+        # +10: the request is wrapped in a transaction, and each line is
+        # created through update_or_create (lookup + its own savepoint)
+        with self.assertNumQueries(39):
             resp = self.client.post(
                 uri,
                 {'lines': [
@@ -1463,6 +1467,45 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
                      'content': 'new transcription 2'},
                 ]}, content_type='application/json')
             self.assertEqual(resp.status_code, 200)
+
+    def test_bulk_create_of_an_existing_line_transcription(self):
+        # a (line, transcription) pair that already has a row must not
+        # violate the unique constraint: the existing row is updated
+        self.client.force_login(self.user)
+        uri = reverse('api:linetranscription-bulk-create',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        resp = self.client.post(
+            uri,
+            {'lines': [
+                {'line': self.line.pk,
+                 'transcription': self.transcription.pk,
+                 'content': 'updated content'},
+            ]}, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.lt.refresh_from_db()
+        self.assertEqual(self.lt.content, 'updated content')
+        self.assertEqual(
+            LineTranscription.objects.filter(line=self.line,
+                                             transcription=self.transcription).count(), 1)
+
+    def test_bulk_create_with_a_line_twice_in_the_payload(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:linetranscription-bulk-create',
+                      kwargs={'document_pk': self.part.document.pk, 'part_pk': self.part.pk})
+        resp = self.client.post(
+            uri,
+            {'lines': [
+                {'line': self.line2.pk,
+                 'transcription': self.transcription.pk,
+                 'content': 'first'},
+                {'line': self.line2.pk,
+                 'transcription': self.transcription.pk,
+                 'content': 'second'},
+            ]}, content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        lt = LineTranscription.objects.get(
+            line=self.line2, transcription=self.transcription)
+        self.assertEqual(lt.content, 'second')
 
     def test_bulk_update(self):
         self.client.force_login(self.user)
