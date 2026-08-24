@@ -760,6 +760,13 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
         fields = ('pk', 'line', 'transcription', 'content', 'graphs', 'avg_confidence',
                   'versions', 'version_author', 'version_source', 'version_updated_at')
 
+    def create(self, validated_data):
+        line = validated_data.pop('line')
+        transcription = validated_data.pop('transcription')
+        lt, _created = LineTranscription.objects.update_or_create(
+            line=line, transcription=transcription, defaults=validated_data)
+        return lt
+
     def cleanup(self, data):
         cleaned_data = bleach.clean(data, tags=['em', 'strong', 's', 'u'], strip=False)
         cleaned_data = html.unescape(cleaned_data)
