@@ -1499,10 +1499,22 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         return RuntimeSerializer
 
     @action(detail=False, methods=['POST'])
+    @transaction.atomic
     def bulk_create(self, request, document_pk=None, part_pk=None, pk=None):
         lines = request.data.get("lines")
-        # get_serializer_class() narrows `line` to this part
-        serializer = self.get_serializer(data=lines, many=True)
+        # get_serializer_class() narrows `line` to this part. The
+        # unique-together validator is dropped: a line that already has a
+        # LineTranscription for the given transcription (stale client state,
+        # e.g. the row was created by an OCR run or a concurrent request) is
+        # updated instead of rejected, so a repeated save cannot violate the
+        # unique constraint on (line, transcription).
+        serializer_class = self.get_serializer_class()
+
+        class UpsertSerializer(serializer_class):
+            def get_unique_together_validators(self):
+                return []
+
+        serializer = UpsertSerializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
