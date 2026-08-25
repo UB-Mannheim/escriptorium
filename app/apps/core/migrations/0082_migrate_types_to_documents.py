@@ -21,10 +21,10 @@ WHERE bt.document_id IS NULL;
 
 UPDATE core_block b
    SET typology_id = nt.id
-  FROM core_documentpart dp, core_blocktype ot, core_blocktype nt
- WHERE dp.id = b.document_part_id AND ot.id = b.typology_id
-   AND ot.document_id IS NULL
-   AND nt.document_id = dp.document_id AND nt.name = ot.name;
+  FROM core_documentpart dp, core_blocktype told, core_blocktype nt
+ WHERE dp.id = b.document_part_id AND told.id = b.typology_id
+   AND told.document_id IS NULL
+   AND nt.document_id = dp.document_id AND nt.name = told.name;
 
 DELETE FROM core_document_valid_block_types;
 
@@ -51,10 +51,10 @@ WHERE lt.document_id IS NULL;
 
 UPDATE core_line l
    SET typology_id = nt.id
-  FROM core_documentpart dp, core_linetype ot, core_linetype nt
- WHERE dp.id = l.document_part_id AND ot.id = l.typology_id
-   AND ot.document_id IS NULL
-   AND nt.document_id = dp.document_id AND nt.name = ot.name;
+  FROM core_documentpart dp, core_linetype told, core_linetype nt
+ WHERE dp.id = l.document_part_id AND told.id = l.typology_id
+   AND told.document_id IS NULL
+   AND nt.document_id = dp.document_id AND nt.name = told.name;
 
 DELETE FROM core_document_valid_line_types;
 
@@ -81,10 +81,10 @@ WHERE pt.document_id IS NULL;
 
 UPDATE core_documentpart dp
    SET typology_id = nt.id
-  FROM core_documentparttype ot, core_documentparttype nt
- WHERE ot.id = dp.typology_id
-   AND ot.document_id IS NULL
-   AND nt.document_id = dp.document_id AND nt.name = ot.name;
+  FROM core_documentparttype told, core_documentparttype nt
+ WHERE told.id = dp.typology_id
+   AND told.document_id IS NULL
+   AND nt.document_id = dp.document_id AND nt.name = told.name;
 
 DELETE FROM core_document_valid_part_types;
 

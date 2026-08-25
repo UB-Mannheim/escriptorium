@@ -154,9 +154,9 @@ class DocumentPartType(Typology):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['document', 'name'],
-                                     name='unique_parttype_name_per_doc'),
+                                    name='unique_parttype_name_per_doc'),
             models.UniqueConstraint(fields=['name'], condition=Q(document__isnull=True),
-                                     name='unique_parttype_template_name'),
+                                    name='unique_parttype_template_name'),
         ]
 
 
@@ -170,9 +170,9 @@ class BlockType(Typology):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['document', 'name'],
-                                     name='unique_blocktype_name_per_doc'),
+                                    name='unique_blocktype_name_per_doc'),
             models.UniqueConstraint(fields=['name'], condition=Q(document__isnull=True),
-                                     name='unique_blocktype_template_name'),
+                                    name='unique_blocktype_template_name'),
         ]
 
 
@@ -186,9 +186,9 @@ class LineType(Typology):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['document', 'name'],
-                                     name='unique_linetype_name_per_doc'),
+                                    name='unique_linetype_name_per_doc'),
             models.UniqueConstraint(fields=['name'], condition=Q(document__isnull=True),
-                                     name='unique_linetype_template_name'),
+                                    name='unique_linetype_template_name'),
         ]
 
 

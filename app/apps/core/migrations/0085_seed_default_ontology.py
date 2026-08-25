@@ -4,7 +4,7 @@ from django.db import migrations
 # default ontology. These are public+default global (document=NULL) rows:
 # new documents copy them at creation time (see Document.save()); existing
 # documents are unaffected. Safe to delete the old ones outright - the
-# 0080 data migration already retargeted all existing content to
+# 0082 data migration already retargeted all existing content to
 # document-owned rows, so nothing still points at these global rows.
 
 OLD_BLOCK_TYPES = ['Title', 'Main', 'Commentary', 'Illustration']
