@@ -336,15 +336,19 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         for field_name, model in (('valid_block_types', BlockType),
-                                   ('valid_line_types', LineType),
-                                   ('valid_part_types', DocumentPartType)):
+                                  ('valid_line_types', LineType),
+                                  ('valid_part_types', DocumentPartType)):
             template_names = model.objects.filter(document__isnull=True, public=True).values_list('name', flat=True)
             if self.instance.pk:
                 owned_names = model.objects.filter(document=self.instance).values_list('name', flat=True)
             else:
                 owned_names = template_names
-            names = sorted(set(template_names) | set(owned_names))
-            self.fields[field_name].choices = [(name, name) for name in names]
+            names = set(template_names) | set(owned_names)
+            if self.is_bound:
+                # accept the types added with + button just before submitting
+                posted = self.data.getlist(field_name)
+                names |= set(model.objects.filter(name__in=posted).values_list('name', flat=True))
+            self.fields[field_name].choices = [(name, name) for name in sorted(names)]
             self.initial[field_name] = list(owned_names)
 
         self.compo_form = ComponentFormSet(
@@ -378,15 +382,15 @@ class DocumentOntologyForm(BootstrapFormMixin, forms.ModelForm):
         instance = super().save(commit=commit)
 
         for field_name, model in (('valid_block_types', BlockType),
-                                   ('valid_line_types', LineType),
-                                   ('valid_part_types', DocumentPartType)):
+                                  ('valid_line_types', LineType),
+                                  ('valid_part_types', DocumentPartType)):
             checked_names = set(self.cleaned_data.get(field_name, []))
             templates_by_name = {
                 t.name: t for t in model.objects.filter(document__isnull=True, public=True)
             }
             for name in checked_names:
                 get_or_create_doc_type(instance, model, name,
-                                        color=getattr(templates_by_name.get(name), 'color', None))
+                                       color=getattr(templates_by_name.get(name), 'color', None))
             model.objects.filter(document=instance).exclude(name__in=checked_names).delete()
 
         self.compo_form.save()
