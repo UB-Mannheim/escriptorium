@@ -51,8 +51,9 @@ def normalize(config):
     for key, _model in TYPE_KEYS:
         entries = config.get(key) or []
         config[key] = [
-            {'name': entry, 'color': None} if isinstance(entry, str)
-            else {'name': entry.get('name'), 'color': entry.get('color')}
+            {'name': entry.get('name'), 'color': entry.get('color')}
+            if isinstance(entry, dict)
+            else {'name': entry, 'color': None}
             for entry in entries
         ]
     config['annotation_components'] = config.get('annotation_components') or []
@@ -112,10 +113,12 @@ def apply_ontology_config(document, config):
     warnings = []
 
     for key, model in TYPE_KEYS:
+        has_color = hasattr(model, 'color')
         for entry in config.get(key) or []:
-            typo, created = get_or_create_doc_type(document, model, entry['name'], color=entry.get('color'))
-            if not created and entry.get('color') and not typo.color:
-                typo.color = entry['color']
+            color = entry.get('color') if has_color else None
+            typo, created = get_or_create_doc_type(document, model, entry['name'], color=color)
+            if not created and color and not typo.color:
+                typo.color = color
                 typo.save(update_fields=['color'])
 
     existing_components = {
