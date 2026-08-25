@@ -254,25 +254,22 @@ class JsonExporter(BaseExporter):
                 "key": md.key.name,
                 "value": md.value,
             }
-            for md in part.metadata.select_related("key").all()
+            for md in part.metadata.all()
         ]
 
-    def _serialize_transcription(self, line):
-        """
-        Return the selected transcription for a line if available.
-        Works with the prefetch_transcription() helper, which stores the result
-        on line.transcription as a list.
-        """
-        lt = None
+    def _transcriptions_prefetch(self):
+        # pull every exported layer in one go so lines never query on their own
+        LineTranscription = apps.get_model("core", "LineTranscription")
+        return Prefetch(
+            "transcriptions",
+            to_attr="prefetched_transcriptions",
+            queryset=LineTranscription.objects.filter(
+                transcription_id__in=self.transcription_pks
+            ).order_by("transcription_id"),
+        )
 
-        prefetched = getattr(line, "transcription", None)
-        if prefetched:
-            lt = prefetched[0]
-        else:
-            lt = line.transcriptions.filter(
-                transcription=self.transcription
-            ).first()
-
+    def _serialize_transcription(self, lt):
+        """one line transcription row or none when the line has no text on that layer"""
         if not lt:
             return None
 
@@ -304,7 +301,14 @@ class JsonExporter(BaseExporter):
         return data
 
     def _serialize_line(self, line):
-        return {
+        layers = getattr(line, "prefetched_transcriptions", None) or []
+        selected = None
+        for lt in layers:
+            if lt.transcription_id == self.transcription_id:
+                selected = lt
+                break
+
+        data = {
             "pk": line.pk,
             "external_id": line.external_id,
             "order": line.order,
@@ -316,8 +320,15 @@ class JsonExporter(BaseExporter):
             "mask": line.mask,
             "box": line.get_box(),
             "block_pk": line.block_id,
-            "transcription": self._serialize_transcription(line),
+            "transcription": self._serialize_transcription(selected),
         }
+
+        if self.all_transcriptions:
+            data["transcriptions"] = [
+                self._serialize_transcription(lt) for lt in layers
+            ]
+
+        return data
 
     def _serialize_block(self, block):
         lines = []
@@ -339,7 +350,7 @@ class JsonExporter(BaseExporter):
             "lines": lines,
         }
 
-    def _serialize_part(self, part, include_orphans, region_filters):
+    def _serialize_part(self, part, include_orphans, region_filters, image_names):
         Line = apps.get_model("core", "Line")
 
         blocks_qs = (
@@ -349,7 +360,9 @@ class JsonExporter(BaseExporter):
             .prefetch_related(
                 Prefetch(
                     "lines",
-                    queryset=Line.objects.prefetch_transcription(self.transcription)
+                    queryset=Line.objects.prefetch_related(
+                        self._transcriptions_prefetch()
+                    )
                     .select_related("typology", "block")
                     .order_by("order", "pk"),
                     to_attr="prefetched_lines",
@@ -363,8 +376,8 @@ class JsonExporter(BaseExporter):
         orphan_lines = []
         if include_orphans:
             orphan_qs = (
-                part.lines.prefetch_transcription(self.transcription)
-                .filter(block=None)
+                part.lines.filter(block=None)
+                .prefetch_related(self._transcriptions_prefetch())
                 .select_related("typology", "block")
                 .order_by("order", "pk")
             )
@@ -373,6 +386,7 @@ class JsonExporter(BaseExporter):
         image_data = {
             "filename": part.filename,
             "original_filename": part.original_filename,
+            "archive_filename": image_names.get(part.pk),
             "uri": part.image.url if getattr(part, "image", None) and self.include_images else None,
             "width": getattr(part.image, "width", None) if getattr(part, "image", None) else None,
             "height": getattr(part.image, "height", None) if getattr(part, "image", None) else None,
@@ -410,7 +424,7 @@ class JsonExporter(BaseExporter):
             filtering_lines=False,
         )
 
-        parts = (
+        parts = list(
             DocumentPart.objects.filter(document=self.document, pk__in=self.part_pks)
             .select_related("typology")
             .prefetch_related("metadata__key")
@@ -418,9 +432,17 @@ class JsonExporter(BaseExporter):
         )
 
         if self.all_transcriptions:
-            transcriptions = Transcription.objects.filter(document=self.document)
+            transcriptions = list(
+                Transcription.objects.filter(document=self.document).order_by("name", "pk")
+            )
         else:
             transcriptions = [self.transcription]
+
+        self.transcription_pks = [t.pk for t in transcriptions]
+        self.transcription_id = self.transcription.pk if self.transcription else None
+
+        image_entries = self._collect_images(parts) if self.include_images else []
+        image_names = {part_pk: arcname for arcname, _, part_pk in image_entries}
 
         payload = {
             "document": {
@@ -450,7 +472,7 @@ class JsonExporter(BaseExporter):
                 "include_characters": self.include_characters,
             },
             "parts": [
-                self._serialize_part(part, include_orphans, region_filters)
+                self._serialize_part(part, include_orphans, region_filters, image_names)
                 for part in parts
             ],
         }
@@ -468,36 +490,20 @@ class JsonExporter(BaseExporter):
                 for m in self.document.ocr_models.all()
             ]
 
+        part_pks = [part.pk for part in parts]
+
         if self.include_annotations:
-            payload["annotations"] = self._serialize_annotations(parts)
+            payload["annotations"] = self._serialize_annotations(part_pks)
 
         if self.include_comments:
-            payload["comments"] = self._serialize_comments(parts)
+            payload["comments"] = self._serialize_comments(part_pks)
 
         json_content = json.dumps(payload, ensure_ascii=False, indent=2)
 
-        # Collect (arcname, absolute-path-or-None-for-json) entries.
-        # The JSON payload is always the first entry; images (when requested)
-        # follow with a dedup pass for duplicate basenames.
+        # json payload first then images under the names recorded in the payload
         json_arcname = os.path.basename(self.filepath)
         entries = [(json_arcname, None)]  # None => write json_content in-memory
-        if self.include_images:
-            seen = set()
-            for part in parts:
-                if not part.image:
-                    continue
-                try:
-                    image_path = part.image.path
-                except (ValueError, NotImplementedError):
-                    continue
-                if not os.path.exists(image_path):
-                    continue
-                arcname = os.path.basename(part.image.name)
-                if arcname in seen:
-                    base, ext = os.path.splitext(arcname)
-                    arcname = f"{base}_{part.pk}{ext}"
-                seen.add(arcname)
-                entries.append((arcname, image_path))
+        entries += [(arcname, path) for arcname, path, _ in image_entries]
 
         archive_path = self._build_archive(entries, json_content)
 
@@ -509,6 +515,27 @@ class JsonExporter(BaseExporter):
                 pass
         self.filepath = archive_path
 
+    def _collect_images(self, parts):
+        """returns arcname path part_pk triples with duplicate names deduped by part pk"""
+        entries = []
+        seen = set()
+        for part in parts:
+            if not part.image:
+                continue
+            try:
+                image_path = part.image.path
+            except (ValueError, NotImplementedError):
+                continue
+            if not os.path.exists(image_path):
+                continue
+            arcname = os.path.basename(part.image.name)
+            if arcname in seen:
+                base, ext = os.path.splitext(arcname)
+                arcname = f"{base}_{part.pk}{ext}"
+            seen.add(arcname)
+            entries.append((arcname, image_path, part.pk))
+        return entries
+
     def _build_archive(self, entries, json_content):
         """Pack entries into the container format the user picked.
 
@@ -517,7 +544,7 @@ class JsonExporter(BaseExporter):
         Returns the on-disk archive path (self.filepath with a rewritten
         extension: .zip or .tar.gz).
         """
-        base_path = self.filepath.rsplit(".", 1)[0]
+        base_path = os.path.splitext(self.filepath)[0]
         if self.archive_format == "tar.gz":
             archive_path = base_path + ".tar.gz"
             with tarfile.open(archive_path, "w:gz") as tf:
@@ -540,48 +567,46 @@ class JsonExporter(BaseExporter):
                         zf.write(path, arcname)
         return archive_path
 
-    def _serialize_annotations(self, parts):
+    def _serialize_annotations(self, part_pks):
         ImageAnnotation = apps.get_model("core", "ImageAnnotation")
         TextAnnotation = apps.get_model("core", "TextAnnotation")
 
         annotations = []
-        for part in parts:
-            for ann in ImageAnnotation.objects.filter(part=part).select_related("taxonomy").prefetch_related("components__component"):
-                annotations.append({
-                    "type": "image",
-                    "part_pk": part.pk,
-                    "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
-                    "w3c": ann.as_w3c(),
-                })
-            for ann in TextAnnotation.objects.filter(part=part).select_related("taxonomy", "start_line", "end_line").prefetch_related("components__component"):
-                annotations.append({
-                    "type": "text",
-                    "part_pk": part.pk,
-                    "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
-                    "w3c": ann.as_w3c(),
-                })
+        for ann in ImageAnnotation.objects.filter(part_id__in=part_pks).select_related("taxonomy").prefetch_related("components__component").order_by("part_id", "pk"):
+            annotations.append({
+                "type": "image",
+                "part_pk": ann.part_id,
+                "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
+                "w3c": ann.as_w3c(),
+            })
+        for ann in TextAnnotation.objects.filter(part_id__in=part_pks).select_related("taxonomy", "start_line", "end_line").prefetch_related("components__component").order_by("part_id", "pk"):
+            annotations.append({
+                "type": "text",
+                "part_pk": ann.part_id,
+                "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
+                "w3c": ann.as_w3c(),
+            })
         return annotations
 
-    def _serialize_comments(self, parts):
+    def _serialize_comments(self, part_pks):
         ImageAnnotation = apps.get_model("core", "ImageAnnotation")
         TextAnnotation = apps.get_model("core", "TextAnnotation")
 
         comments = []
-        for part in parts:
-            for ann in ImageAnnotation.objects.filter(part=part, comments__isnull=False).exclude(comments=[]).select_related("taxonomy"):
-                comments.append({
-                    "type": "image",
-                    "part_pk": part.pk,
-                    "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
-                    "comments": ann.comments,
-                })
-            for ann in TextAnnotation.objects.filter(part=part, comments__isnull=False).exclude(comments=[]).select_related("taxonomy"):
-                comments.append({
-                    "type": "text",
-                    "part_pk": part.pk,
-                    "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
-                    "comments": ann.comments,
-                })
+        for ann in ImageAnnotation.objects.filter(part_id__in=part_pks, comments__isnull=False).exclude(comments=[]).select_related("taxonomy").order_by("part_id", "pk"):
+            comments.append({
+                "type": "image",
+                "part_pk": ann.part_id,
+                "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
+                "comments": ann.comments,
+            })
+        for ann in TextAnnotation.objects.filter(part_id__in=part_pks, comments__isnull=False).exclude(comments=[]).select_related("taxonomy").order_by("part_id", "pk"):
+            comments.append({
+                "type": "text",
+                "part_pk": ann.part_id,
+                "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
+                "comments": ann.comments,
+            })
         return comments
 
 
@@ -655,7 +680,6 @@ ENABLED_EXPORTERS = {
     TEXT_FORMAT: {"class": TextExporter, "label": "Text"},
     PAGEXML_FORMAT: {"class": PageXMLExporter, "label": "PAGE"},
     ALTO_FORMAT: {"class": AltoExporter, "label": "ALTO"},
-    TEI_XML_FORMAT: {"class": TEIXMLExporter, "label": "TEI XML"},
     JSON_FORMAT: {"class": JsonExporter, "label": "JSON"},
 }
 
