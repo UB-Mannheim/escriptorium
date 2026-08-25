@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0023_alter_user_legacy_mode_default'),
+        ('users', '0024_user_preferred_transcription_font'),
     ]
 
     operations = [
