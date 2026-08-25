@@ -328,12 +328,12 @@ class ProjectViewSet(ModelViewSet):
     )
     @action(detail=True, methods=['get', 'delete'], url_path='ontology')
     def ontology(self, request, pk=None):
-        project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
         if request.method == 'DELETE':
+            project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
             project.ontology_config = None
             project.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(project.ontology_config)
+        return Response(self.get_object().ontology_config)
 
     @extend_schema(
         operation_id='projects_ontology_export',
@@ -365,7 +365,11 @@ class ProjectViewSet(ModelViewSet):
     @action(detail=True, methods=['post'], url_path='ontology/import', parser_classes=[MultiPartParser])
     def ontology_import(self, request, pk=None):
         project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
-        config = parse_ontology_file(request.FILES['file'])
+        uploaded = request.FILES.get('file')
+        if not uploaded:
+            return Response({'error': 'Please provide an ontology file.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        config = parse_ontology_file(uploaded)
         config = normalize(config)
         serializer = OntologyConfigSerializer(data=config)
         serializer.is_valid(raise_exception=True)
@@ -782,6 +786,8 @@ class DocumentViewSet(ModelViewSet):
 
         # save the document and return it in the response data
         document.save()
+        # the type rows prefetched by get_object are stale after the writes above
+        document.refresh_from_db()
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -964,7 +970,11 @@ class DocumentViewSet(ModelViewSet):
     @action(detail=True, methods=['post'], url_path='ontology/import', parser_classes=[MultiPartParser])
     def ontology_import(self, request, pk=None):
         document = self.get_object()
-        config = parse_ontology_file(request.FILES['file'])
+        uploaded = request.FILES.get('file')
+        if not uploaded:
+            return Response({'error': 'Please provide an ontology file.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        config = parse_ontology_file(uploaded)
         config = normalize(config)
         serializer = OntologyConfigSerializer(data=config)
         serializer.is_valid(raise_exception=True)
@@ -1306,6 +1316,8 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 
 
 class TypologyViewSet(ModelViewSet):
+    pagination_class = LargeResultsSetPagination
+
     def get_queryset(self):
         qs = super().get_queryset()
         if getattr(self, 'swagger_fake_view', False):
