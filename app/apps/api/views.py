@@ -10,7 +10,6 @@ from django.db.models import Count, F, Prefetch, Q
 from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -1685,14 +1684,11 @@ class DownloadViewSet(viewsets.ReadOnlyModelViewSet):
             raise Http404("download expired")
         if not os.path.exists(obj.file_path):
             raise Http404("file missing on disk")
-        obj.accessed_at = timezone.now()
-        obj.accessed_count = (obj.accessed_count or 0) + 1
+        obj.touch_access()
         obj.save(update_fields=['accessed_at', 'accessed_count'])
-        response = FileResponse(
+        return FileResponse(
             open(obj.file_path, 'rb'),
             content_type=obj.mime_type or 'application/octet-stream',
+            as_attachment=True,
+            filename=os.path.basename(obj.file_path),
         )
-        response['Content-Disposition'] = (
-            'attachment; filename="%s"' % os.path.basename(obj.file_path)
-        )
-        return response

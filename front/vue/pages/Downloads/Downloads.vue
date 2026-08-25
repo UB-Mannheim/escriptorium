@@ -12,8 +12,14 @@
         >
             Could not load downloads: {{ error }}
         </p>
+        <p
+            v-else-if="!items.length"
+            class="text-muted"
+        >
+            No downloads yet. Exports and archives you queue will show up here.
+        </p>
         <table
-            v-else-if="items.length"
+            v-else
             class="table table-sm"
         >
             <thead>
@@ -108,8 +114,15 @@ export default {
             this.loading = true;
             this.error = null;
             try {
-                const r = await axios.get("/api/downloads/");
-                this.items = r.data.results || r.data || [];
+                // walk every api page or old rows stay hidden
+                const items = [];
+                let url = "/api/downloads/";
+                while (url) {
+                    const r = await axios.get(url);
+                    items.push(...(r.data.results || r.data || []));
+                    url = r.data.next || null;
+                }
+                this.items = items;
             } catch (e) {
                 this.error = e.message || String(e);
             } finally {
