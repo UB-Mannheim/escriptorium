@@ -675,7 +675,7 @@ const actions = {
     async importOntology({ state, dispatch }, file) {
         try {
             const { data } = await importDocumentOntology(state.id, file);
-            await dispatch("fetchDocumentStats");
+            await dispatch("fetchDocumentStats", { refresh: true });
             if (data?.warnings?.length) {
                 dispatch(
                     "alerts/add",
