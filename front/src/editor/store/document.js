@@ -584,6 +584,29 @@ export const actions = {
             valid_block_types: validTypes["regions"],
         });
 
+
+        await Promise.all(
+            [
+                ["regions", "valid_block_types"],
+                ["lines", "valid_line_types"],
+            ].map(async ([category, field]) => {
+                const formTypes = rootState.forms.ontology[category] || [];
+                await Promise.all(
+                    (data[field] || []).map(async (row) => {
+                        const formType = formTypes.find((t) => t.name === row.name);
+                        if (formType?.color && formType.color !== row.color) {
+                            await updateType(category, {
+                                typePk: row.pk,
+                                name: row.name,
+                                color: formType.color,
+                            });
+                            row.color = formType.color;
+                        }
+                    }),
+                );
+            }),
+        );
+
         let page = 1;
         var img_taxos = [];
         while (page) {

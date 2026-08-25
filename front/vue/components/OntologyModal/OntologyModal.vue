@@ -352,8 +352,12 @@ export default {
      * On mount, set the existing color settings on state.
      */
     mounted() {
-        Object.values(this.settingKeys).forEach((settingKey) => {
-            this.colorFormState[settingKey] = this.colorSettings[settingKey] || {};
+        Object.entries(this.settingKeys).forEach(([tab, settingKey]) => {
+            const colors = { ...(this.colorSettings[settingKey] || {}) };
+            (this.validTypes[tab] || []).forEach((t) => {
+                if (t.color) colors[t.name] = t.color;
+            });
+            this.colorFormState[settingKey] = colors;
         });
     },
     methods: {
@@ -408,8 +412,12 @@ export default {
                 });
             } else {
                 // unchecking a default item = removing it from the form array
+                const formItem = this.formState[this.tab]?.find(
+                    (t) => t.name === value.name,
+                );
                 this.handleGenericArrayInput({
-                    form: "ontology", field: this.tab, action: "remove", value
+                    form: "ontology", field: this.tab, action: "remove",
+                    value: formItem || value,
                 });
             }
         },
@@ -458,16 +466,16 @@ export default {
         getTypeColor(type, idx, key) {
             let color = null;
             const settingKey = this.settingKeys[key];
-            if (type.color) {
-                // color persisted server-side on the type itself
-                color = type.color;
-            } else if (
+            if (
                 this.colorFormState &&
                 this.colorFormState[settingKey] &&
                 this.colorFormState[settingKey][type.name]
             ) {
-                // color picked earlier in this session, not saved yet
+                // color picked in this session or saved on the document's type
                 color = this.colorFormState[settingKey][type.name];
+            } else if (type.color) {
+                // color persisted server side on the type itself
+                color = type.color;
             } else if (Object.hasOwn(this.defaultColors, key)) {
                 // in the original baseline editor, a string was added to an integer to get
                 // this number!
