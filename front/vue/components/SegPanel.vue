@@ -375,6 +375,7 @@ import SegLine from "./SegLine.vue";
 import SegmentationToolbar from "./SegmentationToolbar/SegmentationToolbar.vue";
 import Help from "./Help.vue";
 import { Segmenter } from "../../src/baseline.editor.js";
+import { withRetry } from "../../src/editor/util/retry.js";
 
 export default Vue.extend({
     components: {
@@ -684,6 +685,17 @@ export default Vue.extend({
                     }.bind(this)
                 );
                 this.segmenter.events.addEventListener(
+                    "baseline-editor:region-too-small",
+                    function () {
+                        this.add({
+                            color: "alert",
+                            message:
+                                "That region was too small to be created and has " +
+                                "been discarded. Try drawing a larger one.",
+                        });
+                    }.bind(this)
+                );
+                this.segmenter.events.addEventListener(
                     "baseline-editor:delete",
                     function (ev) {
                         let data = ev.detail;
@@ -887,17 +899,38 @@ export default Vue.extend({
                 this.segmenter.refresh();
             }
         },
+        /**
+         * Surface a failed save to the user.
+         *
+         * The editor saves as you draw, so a swallowed error leaves an element on the
+         * canvas that looks saved but isn't -- the loss is only discovered when the
+         * page is reloaded. Anything that reaches here has already been retried.
+         */
+        reportSaveFailure(kind, err, action = "save") {
+            const status = err?.response?.status;
+            const detail = status ? ` (error ${status})` : "";
+            this.add({
+                color: "alert",
+                message:
+                    `Could not ${action} a ${kind}${detail}. Your latest change was ` +
+                    "not recorded -- please reload the page to see what was saved.",
+                delay: 60000,
+            });
+            console.error(`couldn't ${action} ${kind}`, err);
+        },
         // undo manager helpers
         async bulkCreate(data, createInEditor) {
             if (data.regions && data.regions.length) {
                 // note: regions dont get a bulk_create
                 for (let i = 0; i < data.regions.length; i++) {
                     try {
-                        const newRegion = await this.$store.dispatch("regions/create", {
-                            pk: data.regions[i].id,
-                            box: data.regions[i].box,
-                            type: data.regions[i].type,
-                        });
+                        const newRegion = await withRetry(() =>
+                            this.$store.dispatch("regions/create", {
+                                pk: data.regions[i].id,
+                                box: data.regions[i].box,
+                                type: data.regions[i].type,
+                            }),
+                        );
                         if (createInEditor) {
                             this.segmenter.loadRegion(newRegion);
                         }
@@ -905,38 +938,45 @@ export default Vue.extend({
                         data.regions[i].context.pk = newRegion.pk;
                         this.$store.commit("regions/load", newRegion.pk);
                     } catch (err) {
-                        console.log("couldn't create region", err);
+                        // the region is already drawn on the canvas but has no pk, so
+                        // without this the user would keep working on something that
+                        // was never saved and only find it missing on the next load
+                        this.reportSaveFailure("region", err);
+                    } finally {
+                        this.segmenter.refreshRegionSavedState();
                     }
                 }
             }
             if (data.lines && data.lines.length) {
                 try {
-                    const newLines = await this.$store.dispatch("lines/bulkCreate", {
-                        lines: data.lines.map((l) => {
-                            const mapped = {
-                                pk: l.pk,
-                                baseline: l.baseline,
-                                mask: l.mask,
-                                region: (l.region && l.region.context.pk) || null,
-                                type: l.type,
-                            };
+                    const newLines = await withRetry(() =>
+                        this.$store.dispatch("lines/bulkCreate", {
+                            lines: data.lines.map((l) => {
+                                const mapped = {
+                                    pk: l.pk,
+                                    baseline: l.baseline,
+                                    mask: l.mask,
+                                    region: (l.region && l.region.context.pk) || null,
+                                    type: l.type,
+                                };
 
-                            if (l.transcriptionsForUndelete) {
-                                mapped.transcriptions = l.transcriptionsForUndelete?.map(
-                                    (t) => {
-                                        return {
-                                            content: t.content,
-                                            transcription: t.transcription,
-                                        };
-                                    }
-                                );
-                            }
+                                if (l.transcriptionsForUndelete) {
+                                    mapped.transcriptions = l.transcriptionsForUndelete?.map(
+                                        (t) => {
+                                            return {
+                                                content: t.content,
+                                                transcription: t.transcription,
+                                            };
+                                        }
+                                    );
+                                }
 
-                            return mapped;
+                                return mapped;
+                            }),
+                            transcription:
+                                this.$store.state.transcriptions.selectedTranscription,
                         }),
-                        transcription:
-              this.$store.state.transcriptions.selectedTranscription,
-                    });
+                    );
                     for (let i = 0; i < newLines.length; i++) {
                         let line = newLines[i];
                         // create a new line in case the event didn't come from the editor
@@ -951,7 +991,7 @@ export default Vue.extend({
                         this.$store.commit("lines/load", line.pk);
                     }
                 } catch (err) {
-                    console.log("couldn't create lines", err);
+                    this.reportSaveFailure("line", err);
                 }
             }
         },
@@ -960,33 +1000,37 @@ export default Vue.extend({
                 for (let i = 0; i < data.regions.length; i++) {
                     try {
                         let region = data.regions[i];
-                        const updatedRegion = await this.$store.dispatch("regions/update", {
-                            pk: region.context.pk,
-                            box: region.box,
-                            type: region.type,
-                        });
+                        const updatedRegion = await withRetry(() =>
+                            this.$store.dispatch("regions/update", {
+                                pk: region.context.pk,
+                                box: region.box,
+                                type: region.type,
+                            }),
+                        );
                         let segmenterRegion = this.segmenter.regions.find(
                             (r) => r.context.pk == updatedRegion.pk
                         );
-                        segmenterRegion.update(updatedRegion.box);
+                        if (segmenterRegion) segmenterRegion.update(updatedRegion.box);
                     } catch (err) {
-                        console.log("couldn't update region", err);
+                        this.reportSaveFailure("region", err);
                     }
                 }
             }
             if (data.lines && data.lines.length) {
                 try {
-                    const updatedLines = await this.$store.dispatch(
-                        "lines/bulkUpdate",
-                        data.lines.map((l) => {
-                            return {
-                                pk: l.context.pk,
-                                baseline: l.baseline,
-                                mask: l.mask,
-                                region: l.region && l.region.context.pk,
-                                type: l.type,
-                            };
-                        })
+                    const updatedLines = await withRetry(() =>
+                        this.$store.dispatch(
+                            "lines/bulkUpdate",
+                            data.lines.map((l) => {
+                                return {
+                                    pk: l.context.pk,
+                                    baseline: l.baseline,
+                                    mask: l.mask,
+                                    region: l.region && l.region.context.pk,
+                                    type: l.type,
+                                };
+                            })
+                        ),
                     );
                     for (let i = 0; i < updatedLines.length; i++) {
                         let line = updatedLines[i];
@@ -996,30 +1040,32 @@ export default Vue.extend({
                         let segmenterLine = this.segmenter.lines.find(
                             (l) => l.context.pk == line.pk
                         );
-                        segmenterLine.update(line.baseline, line.mask, region, line.order);
+                        if (segmenterLine) {
+                            segmenterLine.update(line.baseline, line.mask, region, line.order);
+                        }
                     }
                 } catch (err) {
-                    console.log("couldn't update line", err);
+                    this.reportSaveFailure("line", err);
                 }
             }
         },
 
         async deleteRegion(region) {
+            // a region that was never saved has nothing to delete
+            if (region.context.pk == null) return;
             try {
-                this.$store.dispatch(
-                    "regions/delete",
-                    region.context.pk
+                // note the await: without it the dispatch's rejection escapes this
+                // try/catch entirely and the region is removed from the canvas even
+                // though it is still in the database
+                await withRetry(() =>
+                    this.$store.dispatch("regions/delete", region.context.pk),
                 );
                 let segRegion = this.segmenter.regions.find(
                     (r) => r.context.pk == region.context.pk
                 );
                 if (segRegion) segRegion.remove();
             } catch (err) {
-                console.log(
-                    "couldn't delete region #",
-                    region.context.pk,
-                    err
-                );
+                this.reportSaveFailure("region", err, "delete");
             }
         },
 
@@ -1028,15 +1074,18 @@ export default Vue.extend({
                 // regions don't have a bulk delete
                 await Promise.all(data.regions.map((r) => this.deleteRegion(r)));
             }
-            if (data.lines && data.lines.length) {
+            // a line that was never saved has nothing to delete
+            const pks = (data.lines || [])
+                .map((l) => l.context.pk)
+                .filter((pk) => pk != null);
+            if (pks.length) {
                 try {
-                    const { deletedPKs, deletedLines } = await this.$store.dispatch(
-                        "lines/bulkDelete",
-                        data.lines.map((l) => l.context.pk)
+                    const { deletedPKs, deletedLines } = await withRetry(() =>
+                        this.$store.dispatch("lines/bulkDelete", pks),
                     );
                     this.processDeleteResponse(data, deletedPKs, deletedLines);
                 } catch (err) {
-                    console.error("couldn't bulk delete lines", err);
+                    this.reportSaveFailure("line", err, "delete");
                 }
             }
         },

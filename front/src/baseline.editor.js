@@ -178,10 +178,32 @@ class SegmenterRegion {
         this.remove();
     }
 
+    /**
+     * True until the region has been persisted and given a pk by the backend.
+     * Rendered differently so an unsaved region can't be mistaken for a saved one.
+     */
+    isUnsaved() {
+        return (
+            this.segmenter.idField &&
+            this.context &&
+            this.context[this.segmenter.idField] == null
+        );
+    }
+
+    /**
+     * Dash the outline of a region that has no pk yet.
+     */
+    refreshSavedState() {
+        this.polygonPath.dashArray = this.isUnsaved()
+            ? [10 / this.segmenter.getRatio(), 6 / this.segmenter.getRatio()]
+            : null;
+    }
+
     refresh() {
         this.color = this.segmenter.regionColors[this.type || "None"] || "#808080";
         this.tooltipText = this.type;
         this.polygonPath.strokeColor = this.color;
+        this.refreshSavedState();
         this.polygonPath.fillColor =
             this.segmenter.mode == "regions" ? this.color : null;
         this.polygonPath.selectedColor = this.segmenter.shadeColor(
@@ -1381,7 +1403,13 @@ export class Segmenter {
 
     finishRegion(region) {
         if (Math.abs(region.polygonPath.area) < this.regionAreaThreshold) {
+            // dropping this silently makes a region the user believes they drew
+            // disappear with no explanation
             region.remove();
+            this.trigger("baseline-editor:region-too-small", {
+                area: Math.abs(region.polygonPath.area),
+                threshold: this.regionAreaThreshold,
+            });
         } else {
             this.bindRegionEvents(region);
             region.updateDataFromCanvas();
@@ -2118,6 +2146,16 @@ export class Segmenter {
                 }.bind(this),
             ),
         };
+    }
+
+    /**
+     * Re-evaluate the saved/unsaved styling of every region, after a save
+     * attempt resolved (or failed) and pks may have changed.
+     */
+    refreshRegionSavedState() {
+        for (let i in this.regions) {
+            this.regions[i].refreshSavedState();
+        }
     }
 
     trigger(eventName, data) {
