@@ -19,6 +19,7 @@ module.exports = {
         imagesPage: "./vue/exports/imagesPage.js",
         ontologyOverviewPage: "./vue/exports/ontologyOverviewPage.js",
         modelTraining: "./vue/exports/modelTraining.js",
+        downloads: "./vue/exports/downloads.js",
     },
 
     output: {

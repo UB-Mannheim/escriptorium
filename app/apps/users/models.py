@@ -127,6 +127,16 @@ class User(AbstractUser):
         return Token.objects.create(user=self)
     expiry_date = models.DateTimeField(null=True, blank=True)
 
+    # Number of days a download stays on the server before the housekeeping
+    # command removes it. 0 disables auto-cleanup for this user.
+    download_retention_days = models.PositiveIntegerField(
+        default=30,
+        help_text=(
+            "How many days downloads (exports, archives) are kept on the "
+            "server before automatic cleanup. Set to 0 to disable auto-cleanup."
+        ),
+    )
+
     def is_account_expired(self):
         """
         check if the user's account has expired
