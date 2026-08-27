@@ -937,12 +937,12 @@ export default Vue.extend({
                         // also update pk in the original data for undo/redo
                         data.regions[i].context.pk = newRegion.pk;
                         this.$store.commit("regions/load", newRegion.pk);
-                        this.segmenter.refreshRegionSavedState();
                     } catch (err) {
                         // the region is already drawn on the canvas but has no pk, so
                         // without this the user would keep working on something that
                         // was never saved and only find it missing on the next load
                         this.reportSaveFailure("region", err);
+                    } finally {
                         this.segmenter.refreshRegionSavedState();
                     }
                 }
@@ -1010,7 +1010,7 @@ export default Vue.extend({
                         let segmenterRegion = this.segmenter.regions.find(
                             (r) => r.context.pk == updatedRegion.pk
                         );
-                        segmenterRegion.update(updatedRegion.box);
+                        if (segmenterRegion) segmenterRegion.update(updatedRegion.box);
                     } catch (err) {
                         this.reportSaveFailure("region", err);
                     }
@@ -1040,7 +1040,9 @@ export default Vue.extend({
                         let segmenterLine = this.segmenter.lines.find(
                             (l) => l.context.pk == line.pk
                         );
-                        segmenterLine.update(line.baseline, line.mask, region, line.order);
+                        if (segmenterLine) {
+                            segmenterLine.update(line.baseline, line.mask, region, line.order);
+                        }
                     }
                 } catch (err) {
                     this.reportSaveFailure("line", err);
@@ -1049,6 +1051,8 @@ export default Vue.extend({
         },
 
         async deleteRegion(region) {
+            // a region that was never saved has nothing to delete
+            if (region.context.pk == null) return;
             try {
                 // note the await: without it the dispatch's rejection escapes this
                 // try/catch entirely and the region is removed from the canvas even
@@ -1070,13 +1074,14 @@ export default Vue.extend({
                 // regions don't have a bulk delete
                 await Promise.all(data.regions.map((r) => this.deleteRegion(r)));
             }
-            if (data.lines && data.lines.length) {
+            // a line that was never saved has nothing to delete
+            const pks = (data.lines || [])
+                .map((l) => l.context.pk)
+                .filter((pk) => pk != null);
+            if (pks.length) {
                 try {
                     const { deletedPKs, deletedLines } = await withRetry(() =>
-                        this.$store.dispatch(
-                            "lines/bulkDelete",
-                            data.lines.map((l) => l.context.pk)
-                        ),
+                        this.$store.dispatch("lines/bulkDelete", pks),
                     );
                     this.processDeleteResponse(data, deletedPKs, deletedLines);
                 } catch (err) {
