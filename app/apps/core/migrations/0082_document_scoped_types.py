@@ -9,7 +9,7 @@ import core.utils
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0080_block_locked'),
+        ('core', '0081_font_ascent_override_font_descent_override_and_more'),
     ]
 
     operations = [

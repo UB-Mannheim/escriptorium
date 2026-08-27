@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0083_drop_valid_type_m2m'),
+        ('core', '0084_drop_valid_type_m2m'),
     ]
 
     operations = [

@@ -124,7 +124,7 @@ def unsupported_reverse(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0081_document_scoped_types'),
+        ('core', '0082_document_scoped_types'),
     ]
 
     operations = [
