@@ -55,8 +55,15 @@ export default {
     },
     export: {
         fileFormat: "",
+        includeAll: false,
         includeImages: false,
         includeCharacters: false,
+        includeMetadata: false,
+        includeModels: false,
+        includeAnnotations: false,
+        includeGraph: false,
+        includeComments: false,
+        allTranscriptions: false,
         regionTypes: [],
         transcription: "",
     },
@@ -70,6 +77,10 @@ export default {
         mode: "images",
         overwrite: false,
         uploadFile: "",
+    },
+    downloadArchive: {
+        archiveFormat: "zip",
+        includeImages: true,
     },
     moveImages: {
         index: "",
