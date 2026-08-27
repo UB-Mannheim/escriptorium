@@ -110,9 +110,22 @@ def document_export(task, file_format, part_pks,
 
         transcription = Transcription.objects.get(document=document, pk=transcription_pk)
         exporter = ENABLED_EXPORTERS[file_format]["class"](
-            part_pks, region_types,
-            include_images, include_characters,
-            user, document, report, transcription
+            part_pks=part_pks,
+            region_types=region_types,
+            include_images=include_images,
+            include_characters=include_characters,
+            include_metadata=kwargs.get("include_metadata", False),
+            include_models=kwargs.get("include_models", False),
+            include_graph=kwargs.get("include_graph", False),
+            include_annotations=kwargs.get("include_annotations", False),
+            include_comments=kwargs.get("include_comments", False),
+            all_transcriptions=kwargs.get("all_transcriptions", False),
+            anonymize=kwargs.get("anonymize", False),
+            archive_format=kwargs.get("archive_format", "zip"),
+            user=user,
+            document=document,
+            report=report,
+            transcription=transcription,
         )
         exporter.render()
     except Exception as e:

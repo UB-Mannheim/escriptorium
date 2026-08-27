@@ -310,7 +310,7 @@ class Annotation(CascadeUpdate, models.Model):
             "type": "Annotation",
             "body": [
                 {"type": "TextualBody", "value": comment, "purpose": "commenting"}
-                for comment in self.comments
+                for comment in (self.comments or [])
             ]
             + [
                 {
