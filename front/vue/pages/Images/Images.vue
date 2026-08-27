@@ -78,7 +78,12 @@
                             v-if="importProgress"
                             class="import-progress"
                         >
-                            <EscrLoader :loading="true" />
+                            <!-- always loading: this is a spinner beside the progress
+                            text, it has no no-data state -->
+                            <EscrLoader
+                                :loading="true"
+                                no-data-message=""
+                            />
                             <span>{{ importProgress }}</span>
                         </div>
                     </div>
