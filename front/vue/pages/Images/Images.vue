@@ -267,6 +267,14 @@
                                 <ul class="escr-vertical-menu">
                                     <li>
                                         <button
+                                            @mousedown="() => openModal('downloadArchive')"
+                                        >
+                                            <DownloadIcon class="escr-menuitem-icon" />
+                                            <span>Download Archive</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
                                             @mousedown="() => openDeleteModal()"
                                         >
                                             <TrashIcon class="escr-menuitem-icon" />
@@ -489,6 +497,14 @@
                     :on-submit="handleSubmitExport"
                     :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
                 />
+                <!-- download archive images modal -->
+                <DownloadArchiveModal
+                    v-if="taskModalOpen && taskModalOpen.downloadArchive"
+                    :disabled="loading && (loading.images || loading.document)"
+                    :on-cancel="() => closeTaskModal('downloadArchive')"
+                    :on-submit="handleSubmitDownloadArchive"
+                    scope="Document"
+                />
                 <!-- redraw masks modal -->
                 <ConfirmModal
                     v-if="redrawModalOpen"
@@ -531,6 +547,8 @@ import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
 import EscrTable from "../../components/Table/Table.vue";
 import ExportIcon from "../../components/Icons/ExportIcon/ExportIcon.vue";
+import DownloadArchiveModal from "../../components/DownloadArchiveModal/DownloadArchiveModal.vue";
+import DownloadIcon from "../../components/Icons/DownloadIcon/DownloadIcon.vue";
 import ExportModal from "../../components/ExportModal/ExportModal.vue";
 import GridIcon from "../../components/Icons/GridIcon/GridIcon.vue";
 import HiddenImagesIndicator from "./HiddenImagesIndicator.vue";
@@ -571,6 +589,8 @@ export default {
         AlignIcon,
         AlignModal,
         ConfirmModal,
+        DownloadArchiveModal,
+        DownloadIcon,
         EscrButton,
         EscrLoader,
         EscrPage,
@@ -933,6 +953,7 @@ export default {
             "fetchNextPage",
             "fetchParts",
             "handleSubmitAlign",
+            "handleSubmitDownloadArchive",
             "handleSubmitExport",
             "handleSubmitRedrawMasks",
             "handleSubmitSegmentation",

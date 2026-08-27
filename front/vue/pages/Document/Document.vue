@@ -309,6 +309,14 @@
                     :on-submit="handleSubmitExport"
                     scope="Document"
                 />
+                <!-- download archive modal -->
+                <DownloadArchiveModal
+                    v-if="taskModalOpen && taskModalOpen.downloadArchive"
+                    :disabled="loading && loading.document"
+                    :on-cancel="() => closeTaskModal('downloadArchive')"
+                    :on-submit="handleSubmitDownloadArchive"
+                    scope="Document"
+                />
                 <!-- cancel task modal -->
                 <ConfirmModal
                     v-if="taskModalOpen && taskModalOpen.cancelWarning"
@@ -329,6 +337,7 @@
 import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapState } from "vuex";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
+import DownloadArchiveModal from "../../components/DownloadArchiveModal/DownloadArchiveModal.vue";
 import ExportModal from "../../components/ExportModal/ExportModal.vue";
 import ArrowRightIcon from "../../components/Icons/ArrowRightIcon/ArrowRightIcon.vue";
 import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
@@ -367,6 +376,7 @@ export default {
         ArrowRightIcon,
         CharactersCard,
         ConfirmModal,
+        DownloadArchiveModal,
         EditDocumentModal,
         EscrButton,
         EscrDropdown,
@@ -645,6 +655,7 @@ export default {
             "fetchDocumentTasksThrottled",
             "handleImportDone",
             "handleSubmitAlign",
+            "handleSubmitDownloadArchive",
             "handleSubmitExport",
             "handleSubmitImport",
             "handleSubmitSegmentation",

@@ -1,20 +1,66 @@
 import logging
 import os.path
+from datetime import timedelta
 
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Q
+from django.utils import timezone as django_timezone
 from django.utils.translation import gettext as _
 
 from escriptorium.utils import send_email
 from imports.export import ENABLED_EXPORTERS
+from reporting.models import Download
 
 # DO NOT REMOVE THIS IMPORT, it will break celery tasks located in this file
 from reporting.tasks import create_task_reporting  # noqa F401
 from users.consumers import send_event
 
 logger = logging.getLogger(__name__)
+
+
+def _register_download(user, report, filepath, label):
+    """Create a reporting.Download row for a freshly produced export file.
+
+    Isolated in a helper so the render-else branch stays legible and future
+    exporters (not just JSON/ZIP archives) can share the same registration.
+    Failures are logged and swallowed -- the export itself already succeeded,
+    a missing Download row is a UX regression, not a data-loss bug.
+    """
+    try:
+        stat = os.stat(filepath)
+    except OSError:
+        logger.warning("Cannot stat export file %s; skipping Download row.", filepath)
+        return None
+
+    if filepath.endswith(".tar.gz"):
+        mime = "application/gzip"
+    elif filepath.endswith(".zip"):
+        mime = "application/zip"
+    elif filepath.endswith(".json"):
+        mime = "application/json"
+    else:
+        mime = "application/octet-stream"
+
+    retention_days = getattr(user, "download_retention_days", 30) or 0
+    expires_at = None
+    if retention_days > 0:
+        expires_at = django_timezone.now() + timedelta(days=retention_days)
+
+    try:
+        return Download.objects.create(
+            user=user,
+            task_report=report,
+            label=label or os.path.basename(filepath),
+            file_path=filepath,
+            file_size=stat.st_size,
+            mime_type=mime,
+            expires_at=expires_at,
+        )
+    except Exception:
+        logger.exception("Failed to register Download for %s", filepath)
+        return None
 
 
 @shared_task(bind=True)
@@ -147,6 +193,14 @@ def document_export(task, file_format, part_pks,
         report.end()
 
         rel_path = os.path.relpath(exporter.filepath, settings.MEDIA_ROOT)
+
+        # Register the produced file as a Download so it shows up in
+        # /downloads/ and expires per the user's retention preference.
+        _register_download(user=user,
+                           report=report,
+                           filepath=exporter.filepath,
+                           label=report.label if report else exporter.filepath)
+
         user.notify(_('Export done!'),
                     level='success',
                     links=[{'text': _('Download'),

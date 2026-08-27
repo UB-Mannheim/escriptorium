@@ -352,6 +352,22 @@ const actions = {
         }
     },
     /**
+     * Handle submitting the Download-Archive modal from the Images page.
+     * Delegates to the document module which owns the full-archive plumbing.
+     */
+    async handleSubmitDownloadArchive({ commit, dispatch }) {
+        try {
+            commit("setLoading", { key: "images", loading: true });
+            await dispatch("document/handleSubmitDownloadArchive", null, {
+                root: true,
+            });
+            commit("setLoading", { key: "images", loading: false });
+        } catch (error) {
+            commit("setLoading", { key: "images", loading: false });
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
      * Handle submitting the redraw masks modal.
      */
     async handleSubmitRedrawMasks({ commit, dispatch, rootState, state }) {
