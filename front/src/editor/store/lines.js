@@ -189,7 +189,15 @@ export const actions = {
         let createdLines = [];
         for (let i = 0; i < data.lines.length; i++) {
             let l = data.lines[i];
-            let newLine = l;
+            // the API returns the typology as a pk, but the segmenter colors and
+            // labels lines by type *name* -- without it a recreated line (e.g. when
+            // undoing a deletion) would come back untyped
+            let newLine = {
+                ...l,
+                type: rootState.document.types.lines.find(
+                    (t) => t.pk == l.typology,
+                )?.name,
+            };
 
             newLine.currentTrans = {
                 avg_confidence: null,
