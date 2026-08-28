@@ -109,7 +109,11 @@ class FontSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Font
-        fields = ('pk', 'name', 'url', 'size_adjust')
+        fields = ('pk', 'name', 'url', 'size_adjust', 'ascent_override',
+                  'descent_override', 'line_height', 'input_height',
+                  'input_padding_top', 'input_padding_bottom',
+                  'input_margin_top', 'input_margin_bottom',
+                  'input_vertical_align')
 
 
 class UserSerializer(serializers.ModelSerializer):
