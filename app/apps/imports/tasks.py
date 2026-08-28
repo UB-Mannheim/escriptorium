@@ -183,7 +183,7 @@ def document_export(task, file_format, part_pks,
                         id="export-error",
                         level='danger')
 
-        send_event('document', document.pk, "import:error", {
+        send_event('document', document.pk, "export:error", {
             "id": document.pk,
             "reason": str(e)
         })

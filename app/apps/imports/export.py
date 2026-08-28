@@ -453,11 +453,11 @@ class JsonExporter(BaseExporter):
                 "main_script": self.document.main_script.name if self.document.main_script else None,
                 "valid_block_types": [
                     {"pk": bt.pk, "name": bt.name}
-                    for bt in self.document.valid_block_types.all().order_by("name")
+                    for bt in self.document.block_types.all().order_by("name")
                 ],
                 "valid_line_types": [
                     {"pk": lt.pk, "name": lt.name}
-                    for lt in self.document.valid_line_types.all().order_by("name")
+                    for lt in self.document.line_types.all().order_by("name")
                 ],
             },
             "export": {
