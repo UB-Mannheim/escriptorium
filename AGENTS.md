@@ -101,6 +101,20 @@ eScriptorium supports deployment under a URL prefix (e.g. `/escriptorium/`).
   `GlobalNavigation.vue`.
 - Webpack: `publicPath` is `process.env.STATIC_URL || "/static/"`. For a
   subpath deployment, build with `STATIC_URL=/escriptorium/static/ npm run production --prefix front` so asset URLs inside the bundles (e.g. fonts) carry the prefix.
+- Static serving: Django serves static files only while `DEBUG=True`
+  (`static()` patterns in `urls.py`). With `DEBUG=False` the web server must
+  serve them, e.g.:
+  ```nginx
+  location /escriptorium/static/ {
+      alias /opt/escriptorium/app/static/;
+  }
+  location /escriptorium/media/ {
+      alias /opt/escriptorium/app/media/;
+  }
+  location /escriptorium/ {
+      proxy_pass http://127.0.0.1:8000;
+  }
+  ```
 
 ### Search settings naming
 
