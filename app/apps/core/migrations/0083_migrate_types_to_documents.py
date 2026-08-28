@@ -128,5 +128,33 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # The retargeting UPDATEs join the type tables on (document_id, name);
+        # the unique constraints for those columns only exist from 0085 on, so
+        # create temporary indexes or the UPDATEs scan the type tables for
+        # every block/line row.
+        migrations.RunSQL(
+            [
+                "CREATE INDEX tmp_0083_blocktype_doc_name ON core_blocktype (document_id, name);",
+                "CREATE INDEX tmp_0083_linetype_doc_name ON core_linetype (document_id, name);",
+                "CREATE INDEX tmp_0083_parttype_doc_name ON core_documentparttype (document_id, name);",
+            ],
+            [
+                "DROP INDEX tmp_0083_blocktype_doc_name;",
+                "DROP INDEX tmp_0083_linetype_doc_name;",
+                "DROP INDEX tmp_0083_parttype_doc_name;",
+            ],
+        ),
         migrations.RunPython(migrate_types_to_documents, unsupported_reverse),
+        migrations.RunSQL(
+            [
+                "DROP INDEX tmp_0083_blocktype_doc_name;",
+                "DROP INDEX tmp_0083_linetype_doc_name;",
+                "DROP INDEX tmp_0083_parttype_doc_name;",
+            ],
+            [
+                "CREATE INDEX tmp_0083_blocktype_doc_name ON core_blocktype (document_id, name);",
+                "CREATE INDEX tmp_0083_linetype_doc_name ON core_linetype (document_id, name);",
+                "CREATE INDEX tmp_0083_parttype_doc_name ON core_documentparttype (document_id, name);",
+            ],
+        ),
     ]
