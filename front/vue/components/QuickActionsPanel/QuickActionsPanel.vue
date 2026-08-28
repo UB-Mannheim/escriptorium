@@ -71,6 +71,18 @@
                 </template>
             </EscrButton>
         </li>
+        <li>
+            <EscrButton
+                color="text"
+                :disabled="!data || data.disabled"
+                :on-click="() => openModal('downloadArchive')"
+                :label="`Download Archive ${data && data.scope}`"
+            >
+                <template #button-icon>
+                    <DownloadIcon />
+                </template>
+            </EscrButton>
+        </li>
     </ul>
 </template>
 
@@ -78,6 +90,7 @@
 import { Dropdown as VDropdown } from "floating-vue";
 import { mapActions } from "vuex";
 import AlignIcon from "../Icons/AlignIcon/AlignIcon.vue";
+import DownloadIcon from "../Icons/DownloadIcon/DownloadIcon.vue";
 import EscrButton from "../Button/Button.vue";
 import ExportIcon from "../Icons/ExportIcon/ExportIcon.vue";
 import ImportIcon from "../Icons/ImportIcon/ImportIcon.vue";
@@ -89,6 +102,7 @@ export default {
     name: "EscrQuickActionsPanel",
     components: {
         AlignIcon,
+        DownloadIcon,
         EscrButton,
         ExportIcon,
         ImportIcon,

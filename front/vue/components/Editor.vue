@@ -263,20 +263,36 @@ export default {
                     styleEl.id = styleId;
                     document.head.appendChild(styleEl);
                 }
-                const sizeAdjust = Math.round((font.size_adjust ?? 1) * 100);
+                const pct = (value) => `${Math.round(value * 100)}%`;
+                const descriptors = [`size-adjust: ${pct(font.size_adjust ?? 1)}`];
+                if (font.ascent_override) {
+                    descriptors.push(`ascent-override: ${pct(font.ascent_override)}`);
+                }
+                if (font.descent_override) {
+                    descriptors.push(`descent-override: ${pct(font.descent_override)}`);
+                }
                 styleEl.textContent = `@font-face {
                     font-family: "escr-transcription-font";
                     src: url("${font.url}");
-                    size-adjust: ${sizeAdjust}%;
+                    ${descriptors.join("; ")};
                 }`;
                 this.$el.style.setProperty(
                     "--transcription-font-family",
                     `"escr-transcription-font", "Noto Sans", "Resized Arabic", sans-serif`,
                 );
+                if (font.line_height) {
+                    this.$el.style.setProperty(
+                        "--transcription-font-line-height",
+                        `${font.line_height}em`,
+                    );
+                } else {
+                    this.$el.style.removeProperty("--transcription-font-line-height");
+                }
             } else {
                 // no font set: remove the override and fall back to default
                 if (styleEl) styleEl.textContent = "";
                 this.$el.style.removeProperty("--transcription-font-family");
+                this.$el.style.removeProperty("--transcription-font-line-height");
             }
         },
         websocketListener(e) {

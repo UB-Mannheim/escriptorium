@@ -3,6 +3,7 @@ from django.urls import path
 
 from reporting.views import (
     DocumentReport,
+    DownloadsPage,
     ProjectReport,
     QuotasLeaderboard,
     ReportDetail,
@@ -15,4 +16,5 @@ urlpatterns = [
     path('quotas/instance/', staff_member_required(QuotasLeaderboard.as_view()), name='quotas-leaderboard'),
     path('project/<str:slug>/reports/', ProjectReport.as_view(), name='project-report'),
     path('document/<int:pk>/reports/', DocumentReport.as_view(), name='document-report'),
+    path('downloads/', DownloadsPage.as_view(), name='downloads'),
 ]

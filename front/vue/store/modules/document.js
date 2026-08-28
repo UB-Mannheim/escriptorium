@@ -778,6 +778,39 @@ const actions = {
         }
     },
     /**
+     * Handle submitting the Download-Archive modal. Queues a full-JSON export
+     * with all optional data (except OCR models) and anonymized users; the
+     * user only picked whether to bundle the raw images.
+     */
+    async handleSubmitDownloadArchive({ commit, dispatch, state }) {
+        try {
+            commit("setLoading", { key: "document", loading: true });
+            await dispatch(
+                "tasks/downloadArchive",
+                {
+                    documentId: state.id,
+                    parts: [],
+                },
+                { root: true },
+            );
+            dispatch("tasks/closeModal", "downloadArchive", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message:
+                        "Archive queued. It will show up on your Downloads page when ready.",
+                },
+                { root: true },
+            );
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+        }
+    },
+    /**
      * Handle submitting the import modal. Queue the task and close the modal.
      */
     async handleSubmitImport({ commit, dispatch, rootState, state }) {

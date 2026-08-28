@@ -229,6 +229,20 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
         label=_("Include character bounding boxes."),
         help_text=_("This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition."))
 
+    include_metadata = forms.BooleanField(required=False, initial=False, label=_("Include metadata"), help_text=_("Includes document metadata and part metadata."))
+    include_models = forms.BooleanField(required=False, initial=False, label=_("Include OCR models"), help_text=_("Includes the OCR models used to produce the transcriptions."))
+    all_transcriptions = forms.BooleanField(required=False, initial=False, label=_("Include all transcriptions"), help_text=_("Includes all transcriptions of the document, not only the one selected."))
+    include_graph = forms.BooleanField(required=False, initial=False, label=_("Include graph"), help_text=_("Includes the graph of the document with all its regions and lines."))
+    include_annotations = forms.BooleanField(required=False, initial=False, label=_("Include annotations"), help_text=_("Includes image and text annotations."))
+    include_comments = forms.BooleanField(required=False, initial=False, label=_("Include user comments"), help_text=_("Includes user comments on annotations."))
+    anonymize = forms.BooleanField(required=False, initial=False, label=_("Anonymize users"), help_text=_("Replaces user identifiers in the export with opaque tokens."))
+    archive_format = forms.ChoiceField(
+        choices=(('zip', 'ZIP'), ('tar.gz', 'Gzipped tar')),
+        initial='zip', required=False,
+        label=_("Archive format"),
+        help_text=_("Container format for the downloaded archive. Only applies to the JSON exporter."),
+    )
+
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
@@ -257,8 +271,34 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
                               document_pk=self.document.pk,
                               include_images=self.cleaned_data['include_images'],
                               include_characters=self.cleaned_data['include_characters'],
+                              include_metadata=self.cleaned_data['include_metadata'],
+                              include_models=self.cleaned_data['include_models'],
+                              include_graph=self.cleaned_data['include_graph'],
+                              include_annotations=self.cleaned_data['include_annotations'],
+                              include_comments=self.cleaned_data['include_comments'],
+                              all_transcriptions=self.cleaned_data['all_transcriptions'],
+                              anonymize=self.cleaned_data['anonymize'],
+                              archive_format=self.cleaned_data.get('archive_format') or 'zip',
                               user_pk=self.user.pk,
-                              report_label=_('Export %(document_name)s') % {'document_name': self.document.name})
+                              report_label=self._report_label())
+
+    def _report_label(self):
+        # A JSON export with everything switched on + anonymize is the
+        # Download-Archive quick action; label it distinctly so users can tell
+        # a full backup apart from a regular export in the Tasks list.
+        is_full_archive = (
+            self.cleaned_data.get('file_format') == 'json'
+            and self.cleaned_data.get('anonymize')
+            and self.cleaned_data.get('all_transcriptions')
+            and self.cleaned_data.get('include_annotations')
+            and self.cleaned_data.get('include_comments')
+            and self.cleaned_data.get('include_metadata')
+            and self.cleaned_data.get('include_graph')
+            and self.cleaned_data.get('include_characters')
+        )
+        template = (_('Download Archive %(document_name)s') if is_full_archive
+                    else _('Export %(document_name)s'))
+        return template % {'document_name': self.document.name}
 
 
 class DocumentOntologyImportForm(BootstrapFormMixin, forms.Form):

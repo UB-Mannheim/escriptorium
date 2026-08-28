@@ -1,6 +1,7 @@
 import os.path
 from unittest import mock
 
+from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
@@ -586,6 +587,9 @@ class DocumentExportTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()
 
+        # clear the cached site so query counts stay stable
+        Site.objects.clear_cache()
+
         self.trans = self.factory.make_transcription()
         self.user = self.trans.document.owner  # shortcut
         self.parts = []
@@ -608,7 +612,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_simple(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(24):
+        with self.assertNumQueries(25):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
@@ -622,7 +626,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_alto(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(34):
+        with self.assertNumQueries(35):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
@@ -647,7 +651,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                     transcription=self.trans,
                     content='line %d:%d' % (i, j))
         self.client.force_login(self.user)
-        with self.assertNumQueries(34):
+        with self.assertNumQueries(35):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,

@@ -128,6 +128,7 @@
               <a class="dropdown-item" href="{% url 'profile' %}">{% trans "Profile" %}</a>
               <a class="dropdown-item" href="{% url 'report-list' %}">{% trans "Task reports" %}</a>
               <a class="dropdown-item" href="{% url 'documents-tasks-list' %}">{% trans "Tasks monitoring" %}</a>
+              <a class="dropdown-item" href="{% url 'downloads' %}">{% trans "Downloads" %}</a>
               {% if user.is_staff %}
               <a class="dropdown-item" href="{% url 'quotas-leaderboard' %}">{% trans "Leaderboard" %}</a>
               <div class="dropdown-divider"></div>

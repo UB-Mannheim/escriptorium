@@ -16,6 +16,7 @@ const state = () => ({
     modalOpen: {
         align: false,
         cancelWarning: false,
+        downloadArchive: false,
         export: false,
         imageCancelWarning: false,
         import: false,
@@ -145,16 +146,54 @@ const actions = {
         }
     },
     /**
+     * "Download Archive" quick action -- a full JSON export with almost every
+     * option forced on. The user only picks whether to include the raw image
+     * files. OCR models stay out; user identifiers are anonymized in the
+     * exporter itself.
+     */
+    async downloadArchive({ rootState }, { documentId, parts }) {
+        const form = rootState?.forms?.downloadArchive || {};
+        await exportDocument({
+            documentId,
+            regionTypes: rootState?.document?.regionTypes?.map(
+                (rt) => rt.pk.toString(),
+            ) || [],
+            fileFormat: "json",
+            // Any transcription layer works here; allTranscriptions=True forces
+            // every layer into the archive so this pick is nominal.
+            transcription: rootState?.document?.transcriptions?.[0]?.pk || "",
+            includeImages: !!form.includeImages,
+            includeCharacters: true,
+            includeMetadata: true,
+            includeModels: false,
+            includeAnnotations: true,
+            includeGraph: true,
+            includeComments: true,
+            allTranscriptions: true,
+            anonymize: true,
+            archiveFormat: form.archiveFormat || "zip",
+            parts,
+        });
+    },
+    /**
      * Queue the export task for a document.
      */
     async exportDocument({ rootState }, { documentId, parts }) {
+        const exportForm = rootState?.forms?.export;
+        const includeAll = exportForm?.includeAll;
         await exportDocument({
             documentId,
-            regionTypes: rootState?.forms?.export?.regionTypes,
-            fileFormat: rootState?.forms?.export?.fileFormat,
-            transcription: rootState?.forms?.export?.transcription,
-            includeImages: rootState?.forms?.export?.includeImages,
-            includeCharacters: rootState?.forms?.export?.includeCharacters,
+            regionTypes: exportForm?.regionTypes,
+            fileFormat: exportForm?.fileFormat,
+            transcription: exportForm?.transcription,
+            includeImages: includeAll || exportForm?.includeImages,
+            includeCharacters: includeAll || exportForm?.includeCharacters,
+            includeMetadata: includeAll || exportForm?.includeMetadata,
+            includeModels: includeAll || exportForm?.includeModels,
+            includeAnnotations: includeAll || exportForm?.includeAnnotations,
+            includeGraph: includeAll || exportForm?.includeGraph,
+            includeComments: includeAll || exportForm?.includeComments,
+            allTranscriptions: includeAll || exportForm?.allTranscriptions,
             parts,
         });
     },

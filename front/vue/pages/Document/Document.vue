@@ -309,6 +309,14 @@
                     :on-submit="handleSubmitExport"
                     scope="Document"
                 />
+                <!-- download archive modal -->
+                <DownloadArchiveModal
+                    v-if="taskModalOpen && taskModalOpen.downloadArchive"
+                    :disabled="loading && loading.document"
+                    :on-cancel="() => closeTaskModal('downloadArchive')"
+                    :on-submit="handleSubmitDownloadArchive"
+                    scope="Document"
+                />
                 <!-- cancel task modal -->
                 <ConfirmModal
                     v-if="taskModalOpen && taskModalOpen.cancelWarning"
@@ -329,6 +337,7 @@
 import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapState } from "vuex";
 import AlignModal from "../../components/AlignModal/AlignModal.vue";
+import DownloadArchiveModal from "../../components/DownloadArchiveModal/DownloadArchiveModal.vue";
 import ExportModal from "../../components/ExportModal/ExportModal.vue";
 import ArrowRightIcon from "../../components/Icons/ArrowRightIcon/ArrowRightIcon.vue";
 import CharactersCard from "../../components/CharactersCard/CharactersCard.vue";
@@ -367,6 +376,7 @@ export default {
         ArrowRightIcon,
         CharactersCard,
         ConfirmModal,
+        DownloadArchiveModal,
         EditDocumentModal,
         EscrButton,
         EscrDropdown,
@@ -645,6 +655,7 @@ export default {
             "fetchDocumentTasksThrottled",
             "handleImportDone",
             "handleSubmitAlign",
+            "handleSubmitDownloadArchive",
             "handleSubmitExport",
             "handleSubmitImport",
             "handleSubmitSegmentation",
@@ -692,19 +703,35 @@ export default {
                     styleEl.id = styleId;
                     document.head.appendChild(styleEl);
                 }
-                const sizeAdjust = Math.round((font.size_adjust ?? 1) * 100);
+                const pct = (value) => `${Math.round(value * 100)}%`;
+                const descriptors = [`size-adjust: ${pct(font.size_adjust ?? 1)}`];
+                if (font.ascent_override) {
+                    descriptors.push(`ascent-override: ${pct(font.ascent_override)}`);
+                }
+                if (font.descent_override) {
+                    descriptors.push(`descent-override: ${pct(font.descent_override)}`);
+                }
                 styleEl.textContent = `@font-face {
                     font-family: "escr-transcription-font";
                     src: url("${font.url}");
-                    size-adjust: ${sizeAdjust}%;
+                    ${descriptors.join("; ")};
                 }`;
                 this.$el.style.setProperty(
                     "--transcription-font-family",
                     `"escr-transcription-font", "Noto Sans", "Resized Arabic", sans-serif`,
                 );
+                if (font.line_height) {
+                    this.$el.style.setProperty(
+                        "--transcription-font-line-height",
+                        `${font.line_height}em`,
+                    );
+                } else {
+                    this.$el.style.removeProperty("--transcription-font-line-height");
+                }
             } else {
                 if (styleEl) styleEl.textContent = "";
                 this.$el.style.removeProperty("--transcription-font-family");
+                this.$el.style.removeProperty("--transcription-font-line-height");
             }
         },
         async websocketTaskListener(e) {

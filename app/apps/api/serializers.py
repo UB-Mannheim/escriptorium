@@ -8,6 +8,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Count, Max, Min
 from django.db.utils import IntegrityError
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from easy_thumbnails.files import get_thumbnailer
@@ -50,7 +51,7 @@ from core.tasks import _chunks, segment, segtrain, train, transcribe
 from imports.forms import FileImportError, clean_import_uri, clean_upload_file
 from imports.models import DocumentImport
 from imports.tasks import document_import
-from reporting.models import TaskGroup, TaskReport
+from reporting.models import Download, TaskGroup, TaskReport
 from users.consumers import send_event
 from users.models import Group, User
 
@@ -109,7 +110,11 @@ class FontSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Font
-        fields = ('pk', 'name', 'url', 'size_adjust')
+        fields = ('pk', 'name', 'url', 'size_adjust', 'ascent_override',
+                  'descent_override', 'line_height', 'input_height',
+                  'input_padding_top', 'input_padding_bottom',
+                  'input_margin_top', 'input_margin_bottom',
+                  'input_vertical_align')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -1823,3 +1828,39 @@ class CollectionSegmentSerializer(BaseCollectionTrainSerializer):
         self.fields["model"].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
         ).for_user_read(user)
+
+
+class DownloadSerializer(serializers.ModelSerializer):
+    """Compact list-friendly serializer for reporting.Download rows.
+
+    `file_path` is intentionally NOT surfaced (server-side detail); the
+    client should hit the /file/ action via the fingerprint to fetch the
+    payload.
+    """
+    file_url = serializers.SerializerMethodField()
+    task_report_id = serializers.PrimaryKeyRelatedField(
+        source="task_report", read_only=True,
+    )
+    is_expired = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Download
+        fields = [
+            "fingerprint",
+            "label",
+            "mime_type",
+            "file_size",
+            "created_at",
+            "expires_at",
+            "accessed_at",
+            "accessed_count",
+            "task_report_id",
+            "file_url",
+            "is_expired",
+        ]
+
+    def get_file_url(self, obj):
+        return reverse("api:download-file", kwargs={"fingerprint": obj.fingerprint})
+
+    def get_is_expired(self, obj):
+        return obj.is_expired()

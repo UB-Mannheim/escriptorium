@@ -6,6 +6,13 @@
     font-family: var(--transcription-font-family, "Noto Sans", "Resized Arabic", sans-serif);
 }
 
+/* trans-input is left out, it is a form-control so its line height is set inline instead */
+#trans-modal #vertical_text_input,
+#trans-modal #comparison .d-table-cell:not(.text-muted),
+.escr-line-version .escr-line-content {
+    line-height: var(--transcription-font-line-height, inherit);
+}
+
 /* line-by-line transcription modal */
 .escr-line-modal .modal-content {
     background-color: var(--background1);

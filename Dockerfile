@@ -5,7 +5,7 @@ COPY ./front /build
 RUN npm ci && npm run production
 
 # Pull official base image
-FROM registry.gitlab.com/scripta/escriptorium/base:drf-spectacular
+FROM registry.gitlab.com/scripta/escriptorium/base:dfine043
 
 # try to autodetect number of cpus available
 # ENV NGINX_WORKER_PROCESSES auto

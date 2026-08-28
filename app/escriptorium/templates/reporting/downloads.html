@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load render_bundle from webpack_loader %}
+
+{% block head_title %}{% trans "Downloads" %}{% endblock %}
+
+{% block body %}
+<h1>{% trans "Downloads" %}</h1>
+<div id="vue-downloads"></div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+{% render_bundle 'downloads' 'js' %}
+{% endblock %}
