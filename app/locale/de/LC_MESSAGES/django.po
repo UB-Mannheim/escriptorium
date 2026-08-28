@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-21 08:09+0200\n"
+"POT-Creation-Date: 2026-08-28 08:36+0200\n"
 "PO-Revision-Date: 2022-04-02 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -444,16 +444,120 @@ msgid "Top to bottom"
 msgstr "Von oben nach unten"
 
 #: apps/core/models.py
-msgid "Font file in ttf, otf, woff or woff2 format."
-msgstr "Schriftdatei im ttf-, otf-, woff- oder woff2-Format."
+msgid "baseline"
+msgstr "Grundlinie"
 
 #: apps/core/models.py
-msgid ""
-"Size adjustment factor (1.0 = 100%) to normalize the visual size of this "
-"font."
-msgstr ""
-"Skalierungsfaktor (1.0 = 100 %), um die visuelle Größe dieser Schriftart zu "
-"normalisieren."
+msgid "middle"
+msgstr "Mitte"
+
+#: apps/core/models.py
+msgid "top"
+msgstr "oben"
+
+#: apps/core/models.py
+msgid "bottom"
+msgstr "unten"
+
+#: apps/core/models.py
+msgid "text top"
+msgstr "Textoberkante"
+
+#: apps/core/models.py
+msgid "text bottom"
+msgstr "Textunterkante"
+
+#: apps/core/models.py
+msgid "subscript"
+msgstr "Tiefzeichen"
+
+#: apps/core/models.py
+msgid "superscript"
+msgstr "Hochzeichen"
+
+#: apps/core/models.py
+msgid "ttf, otf, woff or woff2"
+msgstr "ttf, otf, woff oder woff2"
+
+#: apps/core/models.py
+msgid "size"
+msgstr "Größe"
+
+#: apps/core/models.py
+msgid "scale factor, 1.0 keeps the font as it is"
+msgstr "Skalierungsfaktor, 1.0 belässt die Schriftart unverändert"
+
+#: apps/core/models.py
+msgid "ascent"
+msgstr "Aufstieg"
+
+#: apps/core/models.py
+msgid "room above the baseline, raise it when tall glyphs get cut"
+msgstr "Platz über der Grundlinie, erhöhen, wenn hohe Glyphen abgeschnitten werden"
+
+#: apps/core/models.py
+msgid "descent"
+msgstr "Abstieg"
+
+#: apps/core/models.py
+msgid "room below the baseline, raise it when low glyphs get cut"
+msgstr "Platz unter der Grundlinie, erhöhen, wenn tiefe Glyphen abgeschnitten werden"
+
+#: apps/core/models.py
+msgid "line height"
+msgstr "Zeilenhöhe"
+
+#: apps/core/models.py
+msgid "in em, empty keeps the default"
+msgstr "in em, leer behält den Standard"
+
+#: apps/core/models.py
+msgid "height"
+msgstr "Höhe"
+
+#: apps/core/models.py
+msgid "in em, empty uses 1.1"
+msgstr "in em, leer verwendet 1.1"
+
+#: apps/core/models.py
+msgid "top padding"
+msgstr "Innenabstand oben"
+
+#: apps/core/models.py
+msgid "in em, moves the text down"
+msgstr "in em, verschiebt den Text nach unten"
+
+#: apps/core/models.py
+msgid "bottom padding"
+msgstr "Innenabstand unten"
+
+#: apps/core/models.py
+msgid "in em, moves the text up"
+msgstr "in em, verschiebt den Text nach oben"
+
+#: apps/core/models.py
+msgid "top margin"
+msgstr "Rand oben"
+
+#: apps/core/models.py
+msgid "in em, moves the box down"
+msgstr "in em, verschiebt den Kasten nach unten"
+
+#: apps/core/models.py
+msgid "bottom margin"
+msgstr "Rand unten"
+
+#: apps/core/models.py
+msgid "in em, can be negative to take back the top padding"
+msgstr "in em, kann negativ sein, um den Innenabstand oben zurückzunehmen"
+
+#: apps/core/models.py
+msgid "vertical align"
+msgstr "vertikale Ausrichtung"
+
+#: apps/core/models.py
+msgid "empty keeps the default"
+msgstr "leer behält den Standard"
 
 #: apps/core/models.py
 msgid ""
@@ -618,10 +722,6 @@ msgstr "Segmentieren"
 #: apps/core/models.py
 msgid "Recognize"
 msgstr "Transkribieren"
-
-#: apps/core/models.py
-msgid "Couldn't find the training task."
-msgstr "Konnte die Trainings-Aufgabe nicht finden."
 
 #: apps/core/tasks.py
 msgid "D-FINE model fine-tuning is not supported at the moment."
@@ -886,13 +986,84 @@ msgstr ""
 "ungültig."
 
 #: apps/imports/forms.py
+msgid "Include metadata"
+msgstr "Metadaten einbeziehen"
+
+#: apps/imports/forms.py
+msgid "Includes document metadata and part metadata."
+msgstr "Enthält die Dokument- und Teilemetadaten."
+
+#: apps/imports/forms.py
+msgid "Include OCR models"
+msgstr "OCR-Modelle einbeziehen"
+
+#: apps/imports/forms.py
+msgid "Includes the OCR models used to produce the transcriptions."
+msgstr "Enthält die OCR-Modelle, die zur Erzeugung der Transkriptionen verwendet wurden."
+
+#: apps/imports/forms.py
+msgid "Include all transcriptions"
+msgstr "Alle Transkriptionen einbeziehen"
+
+#: apps/imports/forms.py
+msgid "Includes all transcriptions of the document, not only the one selected."
+msgstr "Enthält alle Transkriptionen des Dokuments, nicht nur die ausgewählte."
+
+#: apps/imports/forms.py
+msgid "Include graph"
+msgstr "Graph einbeziehen"
+
+#: apps/imports/forms.py
+msgid "Includes the graph of the document with all its regions and lines."
+msgstr "Enthält den Graphen des Dokuments mit allen Regionen und Zeilen."
+
+#: apps/imports/forms.py
+msgid "Include annotations"
+msgstr "Annotationen einbeziehen"
+
+#: apps/imports/forms.py
+msgid "Includes image and text annotations."
+msgstr "Enthält Bild- und Textannotationen."
+
+#: apps/imports/forms.py
+msgid "Include user comments"
+msgstr "Nutzerkommentare einbeziehen"
+
+#: apps/imports/forms.py
+msgid "Includes user comments on annotations."
+msgstr "Enthält Nutzerkommentare zu Annotationen."
+
+#: apps/imports/forms.py
+msgid "Anonymize users"
+msgstr "Nutzer anonymisieren"
+
+#: apps/imports/forms.py
+msgid "Replaces user identifiers in the export with opaque tokens."
+msgstr "Ersetzt die Benutzerkennungen im Export durch Token ohne Personenbezug."
+
+#: apps/imports/forms.py
+msgid "Archive format"
+msgstr "Archivformat"
+
+#: apps/imports/forms.py
+msgid ""
+"Container format for the downloaded archive. Only applies to the JSON "
+"exporter."
+msgstr "Containerformat des heruntergeladenen Archivs. Gilt nur für den JSON-Exporter."
+
+#: apps/imports/forms.py
+#, python-format
+msgid "Download Archive %(document_name)s"
+msgstr "Archiv %(document_name)s herunterladen"
+
+#: apps/imports/forms.py
 #, python-format
 msgid "Export %(document_name)s"
 msgstr "Exportiere %(document_name)s"
 
 #: apps/imports/forms.py
-msgid "A file containing a document ontology in JSON format"
-msgstr "Datei, die eine Dokumenten-Ontologie im JSON-Format enthält"
+msgid "A file containing a document ontology in JSON or YAML format"
+msgstr "Eine Datei mit einer Dokumentontologie im JSON- oder YAML-Format"
 
 #: apps/imports/parsers.py
 msgid "Invalid PDF file."
@@ -1525,6 +1696,11 @@ msgstr "Aufgabenberichte"
 #: escriptorium/templates/core/documents_tasks_list.html
 msgid "Tasks monitoring"
 msgstr "Aufgabenüberwachung"
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/reporting/downloads.html
+msgid "Downloads"
+msgstr "Downloads"
 
 #: escriptorium/templates/base.html
 #: escriptorium/templates/reporting/quotas_leaderboard.html
