@@ -108,6 +108,34 @@ eScriptorium supports deployment under a URL prefix (e.g. `/escriptorium/`).
 `DISABLE_ES_SEARCH`, `ES_SEARCH_URL`, `ES_SEARCH_COMMON_INDEX`. Keep the
 variable name and the environment variable key identical when renaming.
 
+## Preparing a production release
+
+Workflow for integrating a new upstream release into this branch:
+
+1. **Rebase on upstream**: fetch `scripta`, then `git rebase scripta/develop`
+   (or on a local branch that stacks pending changes on top of it, e.g.
+   `opensearch`). Recurring conflict points: `app/requirements.txt` (keep
+   the local pins: `pyvips~=2.1`, unpinned `celery` for passim,
+   `opensearch-py` instead of `elasticsearch`), templates, and
+   `local_settings.py`.
+2. **Audit new frontend code for subpath compatibility**: upstream adds Vue
+   components regularly — check them for root-absolute paths (`href="/"`,
+   `action="/"`, `"/api/...`) and prefix them with `SCRIPT_NAME` (see
+   "Non-root / subpath installation" above).
+3. **Update translations**: `makemessages -l de -l es -l fr --add-location file`
+   (see "Internationalization"), resolve fuzzy entries, translate new
+   strings, drop `#~` obsolete entries, commit the catalogs.
+4. **Update frontend dependencies**: `npm upgrade --prefix front`, commit
+   the new `front/package-lock.json` (fold repeated lockfile-only commits
+   into one), and verify `npm run production --prefix front` builds.
+5. **Run the test suite**: `./run_tests.sh` (repo root; sets `JAVA_HOME`
+   and Spark loopback args for passim/seriatim), i.e.
+   `manage.py test -v 2 users api versioning imports core escriptorium --keepdb`.
+6. **Bump `VERSION_DATE`**: set `VERSION_DATE = 'UBMA-<YYYY-MM-DD>'` in
+   `app/escriptorium/local_settings.py` as a fresh commit on top; do not
+   amend or stack older `Update VERSION_DATE` commits.
+7. **Force-push** to `UB-Mannheim/ubma1` and deploy.
+
 ## Git conventions
 
 Conventional commits: `type(scope): description` where type is `feat`, `fix`, `chore`, `refactor`, `test`, `docs`.
