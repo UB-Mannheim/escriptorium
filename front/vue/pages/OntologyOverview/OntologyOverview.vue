@@ -95,6 +95,7 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 import EscrDropdown from "../../components/Dropdown/Dropdown.vue";
 import EscrLoader from "../../components/Loader/Loader.vue";
 import EscrPage from "../Page/Page.vue";
@@ -142,12 +143,12 @@ export default {
             let docBreadcrumbs = [{ title: "Loading..." }, { title: "Loading..." }];
             if (this.projectName && this.projectSlug && this.documentName) {
                 docBreadcrumbs = [
-                    { title: this.projectName, href: `/project/${this.projectSlug}/` },
-                    { title: this.documentName, href: `/document/${this.documentId}/` },
+                    { title: this.projectName, href: SCRIPT_NAME + `/project/${this.projectSlug}/` },
+                    { title: this.documentName, href: SCRIPT_NAME + `/document/${this.documentId}/` },
                 ];
             }
             return [
-                { title: "My Projects", href: "/projects/" },
+                { title: "My Projects", href: SCRIPT_NAME + "/projects/" },
                 ...docBreadcrumbs,
                 { title: "Ontology Overview" },
             ];
