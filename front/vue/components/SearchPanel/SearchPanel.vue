@@ -1,7 +1,7 @@
 <template>
     <form
         method="get"
-        action="/search/"
+        :action="searchAction"
     >
         <input
             v-if="data && data.projectId"
@@ -47,11 +47,17 @@
 </template>
 <script>
 import EscrButton from "../Button/Button.vue";
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 import "./SearchPanel.css";
 
 export default {
     name: "EscrSearchPanel",
     components: { EscrButton },
+    computed: {
+        searchAction() {
+            return SCRIPT_NAME + "/search/";
+        },
+    },
     props: {
         /**
          * Data for the search panel, an object containing searchScope, disabled, and optionally
