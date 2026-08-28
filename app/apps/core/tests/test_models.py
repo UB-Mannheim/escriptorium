@@ -22,16 +22,16 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.part_2 = self.factory.make_part(document=self.part.document)
         self.part_3 = self.factory.make_part(document=self.part.document)
         self.transcription = self.factory.make_transcription(document=self.part.document)
-        self.factory.make_content(self.part, transcription=self.transcription)
-        self.factory.make_content(self.part_2, transcription=self.transcription)
-        self.factory.make_content(self.part_3, transcription=self.transcription)
+        self.factory.make_content(self.part, transcription=self.transcription, block_type_name="blocktype1")
+        self.factory.make_content(self.part_2, transcription=self.transcription, block_type_name="blocktype2")
+        self.factory.make_content(self.part_3, transcription=self.transcription, block_type_name="blocktype3")
         self.user = self.factory.make_user()
         self.witness = self.factory.make_witness(owner=self.user)
         self.n_gram = 4
         self.max_offset = 20
         self.beam_size = 10
         self.gap = 600
-        self.region_types = [rt.id for rt in self.part.document.valid_block_types.all()] + ["Orphan", "Undefined"]
+        self.region_types = [rt.id for rt in self.part.document.block_types.all()] + ["Orphan", "Undefined"]
 
         tpk = self.transcription.pk
         dpk = self.part.document.pk
@@ -426,7 +426,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 merge=True,
                 full_doc=True,
                 threshold=0.0,
-                region_types=[self.part.document.valid_block_types.first().id],
+                region_types=[self.part.document.block_types.first().id],
                 layer_name=None,
                 beam_size=0,
                 gap=self.gap,

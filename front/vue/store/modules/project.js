@@ -1,15 +1,19 @@
 import axios from "axios";
 import {
+    clearProjectOntology,
     createDocument,
     createDocumentMetadata,
     createProjectDocumentTag,
     deleteDocument,
     deleteProject,
     editProject,
+    exportProjectOntology,
+    importProjectOntology,
     retrieveDocumentsList,
     retrieveFonts,
     retrieveProject,
     retrieveProjectDocumentTags,
+    retrieveProjectOntology,
     retrieveScripts,
     shareProject,
 } from "../../../src/api";
@@ -57,6 +61,11 @@ const state = () => ({
     transcriptionFont: null,
     /** fonts: [{ pk, name, url, size_adjust }] */
     fonts: [],
+    /**
+     * The project's default ontology config (applied to every new document
+     * of this project), or null if unset.
+     */
+    ontologyConfig: null,
     /**
      * scripts: [{
      *     id: Number,
@@ -359,6 +368,69 @@ const actions = {
         await dispatch("fetchProjectDocumentTags");
         await dispatch("fetchScripts");
         await dispatch("fetchFonts");
+        await dispatch("fetchProjectOntology");
+    },
+    /**
+     * Fetch the project's default ontology config, if any.
+     */
+    async fetchProjectOntology({ commit, state, dispatch }) {
+        try {
+            const { data } = await retrieveProjectOntology(state.id);
+            commit("setOntologyConfig", data || null);
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Import an ontology config file (YAML or legacy JSON) as this
+     * project's default ontology, applied to every new document.
+     */
+    async importOntology({ commit, state, dispatch }, file) {
+        try {
+            const { data } = await importProjectOntology(state.id, file);
+            commit("setOntologyConfig", data || null);
+            dispatch(
+                "alerts/add",
+                { color: "success", message: "Default ontology imported successfully" },
+                { root: true },
+            );
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Download the project's default ontology config as a YAML file.
+     */
+    async exportOntology({ state, dispatch }) {
+        try {
+            const { data } = await exportProjectOntology(state.id);
+            const url = window.URL.createObjectURL(new Blob([data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "ontology_export.yml");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Clear the project's default ontology config.
+     */
+    async clearOntology({ commit, state, dispatch }) {
+        try {
+            await clearProjectOntology(state.id);
+            commit("setOntologyConfig", null);
+            dispatch(
+                "alerts/add",
+                { color: "success", message: "Default ontology cleared" },
+                { root: true },
+            );
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
     },
     /**
      * Fetch documents in the current project.
@@ -596,6 +668,9 @@ const mutations = {
     },
     setNextPage(state, nextPage) {
         state.nextPage = nextPage;
+    },
+    setOntologyConfig(state, ontologyConfig) {
+        state.ontologyConfig = ontologyConfig;
     },
     setScripts(state, scripts) {
         state.scripts = scripts;

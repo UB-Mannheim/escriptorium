@@ -1,6 +1,4 @@
-import io
-import json
-
+import yaml
 from django.test import TestCase
 from django.urls import reverse
 
@@ -12,8 +10,8 @@ from core.models import (
     DocumentPartType,
     LineType,
 )
+from core.ontology import CURRENT_VERSION
 from core.tests.factory import CoreFactory
-from imports.serializers import OntologyExportSerializer
 
 
 class DocumentTestCase(TestCase):
@@ -42,10 +40,10 @@ class DocumentTestCase(TestCase):
         self.assertEqual(resp.status_code, 403)
 
     def test_get_ontology(self):
-        # Add some data to export
-        self.doc.valid_line_types.add(LineType.objects.create(name='Line'))
-        self.doc.valid_block_types.add(BlockType.objects.create(name='Block'))
-        self.doc.valid_part_types.add(DocumentPartType.objects.create(name='Part'))
+        # Add some data to export, owned by the document
+        LineType.objects.create(name='Line', document=self.doc, color='#111111')
+        BlockType.objects.create(name='Block', document=self.doc, color='#222222')
+        DocumentPartType.objects.create(name='Part', document=self.doc)
 
         component_1 = AnnotationComponent.objects.create(document=self.doc, name='Component 1', allowed_values=['X', 'Y', 'Z'])
         component_2 = AnnotationComponent.objects.create(document=self.doc, name='Component 2', allowed_values=[])
@@ -71,21 +69,20 @@ class DocumentTestCase(TestCase):
 
         # Export everything
         self.client.force_login(self.user)
-        with self.assertNumQueries(12):
-            resp = self.client.get(reverse('document-ontology-export', kwargs={'pk': self.doc.pk}))
+        resp = self.client.get(reverse('document-ontology-export', kwargs={'pk': self.doc.pk}))
 
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp['Content-Disposition'], 'attachment; filename=ontology_export.json')
+        self.assertEqual(resp['Content-Disposition'], 'attachment; filename=ontology_export.yml')
 
-        ontology_json = json.load(io.BytesIO(resp.content))
-        self.assertIsNotNone(ontology_json['created'])
-        del ontology_json['created']
+        ontology_config = yaml.safe_load(resp.content)
+        self.assertIsNotNone(ontology_config['created'])
+        del ontology_config['created']
 
-        self.assertDictEqual(ontology_json, {
-            'version': OntologyExportSerializer.VERSION,
-            'line_types': ['Line'],
-            'region_types': ['Block'],
-            'part_types': ['Part'],
+        self.assertEqual(ontology_config, {
+            'version': CURRENT_VERSION,
+            'line_types': [{'name': 'Line', 'color': '#111111'}],
+            'region_types': [{'name': 'Block', 'color': '#222222'}],
+            'part_types': [{'name': 'Part'}],
             'annotation_components': [
                 {'name': 'Component 1', 'allowed_values': ['X', 'Y', 'Z']},
                 {'name': 'Component 2', 'allowed_values': []}

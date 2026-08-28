@@ -29,6 +29,7 @@ psutil
 psycopg2-binary
 pyspark==4.1.1
 pyvips~=2.1.12
+PyYAML
 redis~=4.4.4
 requests>=2.21
 sentry-sdk>=1.10

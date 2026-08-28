@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
 from django.db.models import Count, F, Prefetch, Q
-from django.http import FileResponse, Http404, HttpResponseRedirect
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -16,6 +16,8 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import cache_page
 from django_filters import Filter, FilterSet
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
 from rest_framework import filters, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -23,9 +25,16 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.response import Response
-from rest_framework.serializers import PrimaryKeyRelatedField
+from rest_framework.serializers import (
+    CharField,
+    FileField,
+    IntegerField,
+    ListField,
+    PrimaryKeyRelatedField,
+)
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
@@ -102,6 +111,15 @@ from core.models import (
     TextualWitness,
     Transcription,
     VirtualCollection,
+    get_or_create_doc_type,
+)
+from core.ontology import (
+    OntologyConfigSerializer,
+    apply_ontology_config,
+    dump_yaml,
+    export_ontology_config,
+    normalize,
+    parse_ontology_file,
 )
 from core.tasks import recalculate_masks
 from imports.forms import ExportForm, ImportForm
@@ -296,6 +314,71 @@ class ProjectViewSet(ModelViewSet):
         serializer = ProjectSerializer(project, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        methods=['get'],
+        operation_id='projects_ontology_retrieve',
+        responses={200: OntologyConfigSerializer},
+        description="Retrieve the project's ontology config, used as the default "
+                    "ontology for documents created in it. Null if none is set.",
+    )
+    @extend_schema(
+        methods=['delete'],
+        operation_id='projects_ontology_destroy',
+        request=None,
+        responses={204: OpenApiResponse(description='Ontology config cleared')},
+        description="Clear the project's ontology config.",
+    )
+    @action(detail=True, methods=['get', 'delete'], url_path='ontology')
+    def ontology(self, request, pk=None):
+        if request.method == 'DELETE':
+            project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
+            project.ontology_config = None
+            project.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(self.get_object().ontology_config)
+
+    @extend_schema(
+        operation_id='projects_ontology_export',
+        responses={
+            (200, 'application/yaml'): OpenApiTypes.BINARY,
+            404: OpenApiResponse(description='No ontology config set on this project'),
+        },
+        description="Download the project's ontology config as a YAML file.",
+    )
+    @action(detail=True, methods=['get'], url_path='ontology/export')
+    def ontology_export(self, request, pk=None):
+        project = self.get_object()
+        if not project.ontology_config:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        response = HttpResponse(dump_yaml(project.ontology_config), content_type='application/yaml')
+        response['Content-Disposition'] = 'attachment; filename=ontology_export.yml'
+        return response
+
+    @extend_schema(
+        operation_id='projects_ontology_import',
+        request={'multipart/form-data': inline_serializer(
+            name='ProjectOntologyImportRequest',
+            fields={'file': FileField(help_text='Ontology file, v2 YAML or legacy v1 JSON.')},
+        )},
+        responses={200: OntologyConfigSerializer},
+        description="Upload an ontology file and store it as the project's ontology "
+                    "config. Returns the stored, normalized config.",
+    )
+    @action(detail=True, methods=['post'], url_path='ontology/import', parser_classes=[MultiPartParser])
+    def ontology_import(self, request, pk=None):
+        project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
+        uploaded = request.FILES.get('file')
+        if not uploaded:
+            return Response({'error': 'Please provide an ontology file.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        config = parse_ontology_file(uploaded)
+        config = normalize(config)
+        serializer = OntologyConfigSerializer(data=config)
+        serializer.is_valid(raise_exception=True)
+        project.ontology_config = serializer.validated_data
+        project.save()
+        return Response(project.ontology_config)
+
 
 class ProjectTagViewSet(ModelViewSet):
     queryset = ProjectTag.objects.all()
@@ -349,8 +432,8 @@ class DocumentViewSet(ModelViewSet):
         qs = Document.objects.for_user(self.request.user).select_related(
             'transcription_font', 'project__transcription_font',
         ).prefetch_related(
-            Prefetch('valid_block_types', queryset=BlockType.objects.order_by('name')),
-            Prefetch('valid_line_types', queryset=LineType.objects.order_by('name')),
+            Prefetch('block_types', queryset=BlockType.objects.order_by('name')),
+            Prefetch('line_types', queryset=LineType.objects.order_by('name')),
         ).annotate(parts_count=Count('parts', distinct=True)).order_by('-updated_at')
 
         if self.action in ['retrieve', 'list']:
@@ -636,6 +719,22 @@ class DocumentViewSet(ModelViewSet):
 
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=inline_serializer(
+            name='ModifyOntologyRequest',
+            fields={
+                'valid_part_types': ListField(child=IntegerField(), required=False),
+                'valid_line_types': ListField(child=IntegerField(), required=False),
+                'valid_block_types': ListField(child=IntegerField(), required=False),
+            },
+        ),
+        # response is left to auto-detection: DocumentSerializer.__init__ needs a
+        # context['user'], which spectacular only provides via the view's
+        # get_serializer(), not when instantiating the class from a responses= dict.
+        description="Set the document's valid part/line/block types from a list of type "
+                    "pks. Template types (document=null) get copied onto the document; "
+                    "types the document owns that aren't listed are dropped.",
+    )
     @action(detail=True, methods=['patch'])
     def modify_ontology(self, request, pk=None):
         # special PATCH action to modify documents' ontology nested relationships
@@ -652,58 +751,45 @@ class DocumentViewSet(ModelViewSet):
         document = self.get_object()
 
         # for all ontologies (part, line, block): check if array of pks is valid, and
-        # matching type objects exist, then set relations on the document to them
-
-        # part (image)
-        if 'valid_part_types' in request.data:
-            part_types = request.data['valid_part_types']
-            if not all([isinstance(pk, int) for pk in part_types]):
+        # matching type objects exist; listed rows that are templates (document=NULL)
+        # get a document-owned copy ensured by name, and owned rows not listed get
+        # dropped (SET_NULL-safe on content). A pk owned by another document is rejected.
+        mapping = {
+            'valid_part_types': (DocumentPartType, 'part_types'),
+            'valid_line_types': (LineType, 'line_types'),
+            'valid_block_types': (BlockType, 'block_types'),
+        }
+        for key, (model, rel) in mapping.items():
+            if key not in request.data:
+                continue
+            pks = request.data[key]
+            if not all([isinstance(pk, int) for pk in pks]):
                 return Response(
-                    {'error': "valid_part_types must be an array of PKs."},
+                    {'error': f"{key} must be an array of PKs."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            valid_part_types = DocumentPartType.objects.filter(pk__in=part_types)
-            if valid_part_types.count() < len(part_types):
+            rows = model.objects.filter(pk__in=pks)
+            if rows.count() < len(pks):
                 return Response(
-                    {'error': "At least one pk in valid_part_types is invalid."},
+                    {'error': f"At least one pk in {key} is invalid."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            document.valid_part_types.set(valid_part_types)
-
-        # line
-        if 'valid_line_types' in request.data:
-            line_types = request.data['valid_line_types']
-            if not all([isinstance(pk, int) for pk in line_types]):
-                return Response(
-                    {'error': "valid_line_types must be an array of PKs."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            valid_line_types = LineType.objects.filter(pk__in=line_types)
-            if valid_line_types.count() < len(line_types):
-                return Response(
-                    {'error': "At least one pk in valid_line_types is invalid."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            document.valid_line_types.set(valid_line_types)
-
-        # block (region)
-        if 'valid_block_types' in request.data:
-            block_types = request.data['valid_block_types']
-            if not all([isinstance(pk, int) for pk in block_types]):
-                return Response(
-                    {'error': "valid_block_types must be an array of PKs."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            valid_block_types = BlockType.objects.filter(pk__in=block_types)
-            if valid_block_types.count() < len(block_types):
-                return Response(
-                    {'error': "At least one pk in valid_block_types is invalid."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            document.valid_block_types.set(valid_block_types)
+            target = {}
+            for row in rows:
+                if row.document_id not in (None, document.pk):
+                    return Response(
+                        {'error': f"Invalid pk in {key}."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                target[row.name] = row
+            for name, src in target.items():
+                get_or_create_doc_type(document, model, name, color=getattr(src, 'color', None))
+            getattr(document, rel).exclude(name__in=target.keys()).delete()
 
         # save the document and return it in the response data
         document.save()
+        # the type rows prefetched by get_object are stale after the writes above
+        document.refresh_from_db()
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -776,6 +862,7 @@ class DocumentViewSet(ModelViewSet):
                    .filter(document_part__document=document)
                    .values('typology_id')
                    .annotate(typology_name=F('typology__name'),
+                             typology_color=F('typology__color'),
                              frequency=Count('*'))
                    .order_by(order_by))
 
@@ -783,6 +870,7 @@ class DocumentViewSet(ModelViewSet):
                  .filter(document_part__document=document)
                  .values('typology_id')
                  .annotate(typology_name=F('typology__name'),
+                           typology_color=F('typology__color'),
                            frequency=Count('*'))
                  .order_by(order_by))
 
@@ -854,6 +942,46 @@ class DocumentViewSet(ModelViewSet):
         obj = self.get_object()
         ids = list(obj.parts.values_list("pk", flat=True))
         return Response(ids)
+
+    @extend_schema(
+        operation_id='documents_ontology_export',
+        responses={(200, 'application/yaml'): OpenApiTypes.BINARY},
+        description="Download the document's ontology (types, annotation components and "
+                    "taxonomies) as a YAML file.",
+    )
+    @action(detail=True, methods=['get'], url_path='ontology/export')
+    def ontology_export(self, request, pk=None):
+        document = self.get_object()
+        response = HttpResponse(dump_yaml(export_ontology_config(document)), content_type='application/yaml')
+        response['Content-Disposition'] = 'attachment; filename=ontology_export.yml'
+        return response
+
+    @extend_schema(
+        operation_id='documents_ontology_import',
+        request={'multipart/form-data': inline_serializer(
+            name='DocumentOntologyImportRequest',
+            fields={'file': FileField(help_text='Ontology file, v2 YAML or legacy v1 JSON.')},
+        )},
+        responses={200: inline_serializer(
+            name='DocumentOntologyImportResponse',
+            fields={'warnings': ListField(child=CharField())},
+        )},
+        description="Upload an ontology file and apply it to the document. Returns the "
+                    "warnings for entries that could not be applied as-is.",
+    )
+    @action(detail=True, methods=['post'], url_path='ontology/import', parser_classes=[MultiPartParser])
+    def ontology_import(self, request, pk=None):
+        document = self.get_object()
+        uploaded = request.FILES.get('file')
+        if not uploaded:
+            return Response({'error': 'Please provide an ontology file.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        config = parse_ontology_file(uploaded)
+        config = normalize(config)
+        serializer = OntologyConfigSerializer(data=config)
+        serializer.is_valid(raise_exception=True)
+        warnings = apply_ontology_config(document, serializer.validated_data)
+        return Response({'warnings': warnings})
 
 
 class DocumentPermissionMixin():
@@ -1190,20 +1318,26 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 
 
 class TypologyViewSet(ModelViewSet):
+    pagination_class = LargeResultsSetPagination
+
     def get_queryset(self):
         qs = super().get_queryset()
+        if getattr(self, 'swagger_fake_view', False):
+            return qs
         # POST queryset should be all()
         if self.request.method == "GET":
-            # GET queryset should be only public types
+            # GET queryset should be only public types (owned rows are
+            # always public=False, so this stays the template catalogue)
             return qs.filter(public=True)
         elif self.request.method in ["PUT", "PATCH", "DELETE"]:
             # PUT/PATCH/DELETE (updating and deleting) require permissions
+            # over the document owning the row.
             return qs.filter(
-                Q(valid_in__owner=self.request.user)
-                | Q(valid_in__shared_with_users=self.request.user)
-                | Q(valid_in__shared_with_groups__user=self.request.user)
-                | Q(valid_in__project__owner=self.request.user)
-                | Q(valid_in__project__shared_with_users=self.request.user)
+                Q(document__owner=self.request.user)
+                | Q(document__shared_with_users=self.request.user)
+                | Q(document__shared_with_groups__user=self.request.user)
+                | Q(document__project__owner=self.request.user)
+                | Q(document__project__shared_with_users=self.request.user)
             ).distinct()
         return qs
 
@@ -1221,6 +1355,24 @@ class LineTypeViewSet(TypologyViewSet):
 class AnnotationTypeViewSet(TypologyViewSet):
     queryset = AnnotationType.objects.all()
     serializer_class = AnnotationTypeSerializer
+
+    def get_queryset(self):
+        qs = super(TypologyViewSet, self).get_queryset()
+        if getattr(self, 'swagger_fake_view', False):
+            return qs
+        if self.request.method == "GET":
+            return qs.filter(public=True)
+        elif self.request.method in ["PUT", "PATCH", "DELETE"]:
+            # AnnotationType has no document FK of its own; permission is
+            # derived from the documents of the taxonomies using it.
+            return qs.filter(
+                Q(annotationtaxonomy__document__owner=self.request.user)
+                | Q(annotationtaxonomy__document__shared_with_users=self.request.user)
+                | Q(annotationtaxonomy__document__shared_with_groups__user=self.request.user)
+                | Q(annotationtaxonomy__document__project__owner=self.request.user)
+                | Q(annotationtaxonomy__document__project__shared_with_users=self.request.user)
+            ).distinct()
+        return qs
 
 
 class DocumentPartTypeViewSet(TypologyViewSet):

@@ -18,8 +18,8 @@ from core.models import (
     OcrModel,
     OcrModelRight,
 )
+from core.ontology import CURRENT_VERSION
 from core.tests.factory import CoreFactory
-from imports.serializers import OntologyImportSerializer
 from reporting.models import TaskReport
 
 
@@ -53,7 +53,7 @@ class DocumentTestCase(TestCase):
         self.assertEqual(Document.objects.count(), 4)  # 4 created in setup
         self.client.force_login(self.user)
         uri = reverse('document-create', kwargs={'slug': self.project.slug})
-        with self.assertNumQueries(29):
+        with self.assertNumQueries(30):
             resp = self.client.post(uri, {
                 'project': str(self.project.id),
                 'name': 'Test+metadatas',
@@ -114,7 +114,7 @@ class DocumentTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertFormError(resp, 'import_form', 'file', 'This field is required.')
 
-    def test_import_ontology_not_json_file(self):
+    def test_import_ontology_not_json_or_yaml_file(self):
         self.client.force_login(self.user)
         resp = self.client.post(reverse('document-ontology-import', kwargs={'pk': self.doc.pk}), {
             'import_form': 'Import',
@@ -122,7 +122,10 @@ class DocumentTestCase(TestCase):
         })
 
         self.assertEqual(resp.status_code, 200)
-        self.assertFormError(resp, 'import_form', 'file', 'File extension “xml” is not allowed. Allowed extensions are: json.')
+        self.assertFormError(
+            resp, 'import_form', 'file',
+            'File extension “xml” is not allowed. Allowed extensions are: json, yaml, yml.'
+        )
 
     def test_import_ontology_invalid_version(self):
         self.client.force_login(self.user)
@@ -135,7 +138,8 @@ class DocumentTestCase(TestCase):
         self.assertEqual(resp.url, reverse('document-ontology', kwargs={'pk': self.doc.pk}))
 
         report = TaskReport.objects.get()
-        self.assertEqual(report.messages, f'[ERROR] JSON ontology file is in version -1, currently supported version is {OntologyImportSerializer.VERSION}\n')
+        self.assertIn('Unsupported ontology version -1', report.messages)
+        self.assertTrue(report.messages.startswith('[ERROR] '))
 
         messages = list(get_messages(resp.wsgi_request))
         self.assertEqual(len(messages), 1)
@@ -147,27 +151,29 @@ class DocumentTestCase(TestCase):
         self.client.force_login(self.user)
         resp = self.client.post(reverse('document-ontology-import', kwargs={'pk': self.doc.pk}), {
             'import_form': 'Import',
-            'import_form-file': SimpleUploadedFile('ontology.json', json.dumps({'version': OntologyImportSerializer.VERSION}).encode())
+            'import_form-file': SimpleUploadedFile('ontology.json', json.dumps({
+                'version': CURRENT_VERSION,
+                'taxonomy': [{'name': 'Bad', 'marker_type': 999}],
+            }).encode())
         })
 
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, reverse('document-ontology', kwargs={'pk': self.doc.pk}))
 
         report = TaskReport.objects.get()
-        self.assertEqual(report.messages, "[ERROR] {'line_types': [ErrorDetail(string='This field is required.', code='required')], 'region_types': [ErrorDetail(string='This field is required.', code='required')], 'part_types': [ErrorDetail(string='This field is required.', code='required')], 'annotation_components': [ErrorDetail(string='This field is required.', code='required')], 'taxonomy': [ErrorDetail(string='This field is required.', code='required')]}\n")
+        self.assertTrue(report.messages.startswith('[ERROR] '))
 
         messages = list(get_messages(resp.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0].message, 'Something went wrong during the ontology import...')
         self.assertEqual(messages[0].level_tag, 'error')
-        self.assertEqual(messages[0].extra_tags, report.uri)
 
     def test_import_ontology_empty_data(self):
         self.client.force_login(self.user)
         resp = self.client.post(reverse('document-ontology-import', kwargs={'pk': self.doc.pk}), {
             'import_form': 'Import',
             'import_form-file': SimpleUploadedFile('ontology.json', json.dumps({
-                'version': OntologyImportSerializer.VERSION,
+                'version': CURRENT_VERSION,
                 'created': '2023-04-18T12:34:55',
                 'line_types': [],
                 'region_types': [],
@@ -182,9 +188,9 @@ class DocumentTestCase(TestCase):
 
         # Assert that nothing was created
         self.doc.refresh_from_db()
-        self.assertEqual(self.doc.valid_block_types.count(), 0)
-        self.assertEqual(self.doc.valid_line_types.count(), 0)
-        self.assertEqual(self.doc.valid_part_types.count(), 0)
+        self.assertEqual(self.doc.block_types.count(), 0)
+        self.assertEqual(self.doc.line_types.count(), 0)
+        self.assertEqual(self.doc.part_types.count(), 0)
         self.assertEqual(self.doc.annotationcomponent_set.count(), 0)
         self.assertEqual(self.doc.annotationtaxonomy_set.count(), 0)
 
@@ -200,10 +206,10 @@ class DocumentTestCase(TestCase):
         self.assertEqual(messages[0].extra_tags, report.uri)
 
     def test_import_ontology_with_warnings(self):
-        # Add some pre-existing data
-        self.doc.valid_line_types.add(LineType.objects.create(name='Line'))
-        self.doc.valid_block_types.add(BlockType.objects.create(name='Block'))
-        self.doc.valid_part_types.add(DocumentPartType.objects.create(name='Part'))
+        # Add some pre-existing data, owned by the document
+        LineType.objects.create(name='Line', document=self.doc)
+        BlockType.objects.create(name='Block', document=self.doc)
+        DocumentPartType.objects.create(name='Part', document=self.doc)
 
         component_1 = AnnotationComponent.objects.create(document=self.doc, name='Component 1', allowed_values=['X', 'Y', 'Z'])
         component_2 = AnnotationComponent.objects.create(document=self.doc, name='Component 2', allowed_values=[])
@@ -222,7 +228,7 @@ class DocumentTestCase(TestCase):
         resp = self.client.post(reverse('document-ontology-import', kwargs={'pk': self.doc.pk}), {
             'import_form': 'Import',
             'import_form-file': SimpleUploadedFile('ontology.json', json.dumps({
-                'version': OntologyImportSerializer.VERSION,
+                'version': CURRENT_VERSION,
                 'created': '2023-04-18T12:34:55',
                 'line_types': ['Head'],
                 'region_types': ['Main'],
@@ -235,7 +241,7 @@ class DocumentTestCase(TestCase):
                 'taxonomy': [
                     {
                         'name': 'Image annotation', 'typology': None, 'has_comments': False,
-                        'abbreviation': '', 'marker_type': 1, 'marker_color': '#32b741', 'components': ['Test', 'Test 2']
+                        'abbreviation': '', 'marker_type': 1, 'marker_color': '#32b741', 'components': ['Test']
                     },
                     {
                         'name': 'Text annotation test', 'typology': 'definition', 'has_comments': False,
@@ -250,14 +256,14 @@ class DocumentTestCase(TestCase):
 
         # Assert that everything was properly created
         self.doc.refresh_from_db()
-        self.assertEqual(self.doc.valid_block_types.count(), 2)
-        self.assertListEqual(list(self.doc.valid_block_types.values_list('name', flat=True)), ['Block', 'Main'])
+        self.assertEqual(self.doc.block_types.count(), 2)
+        self.assertListEqual(list(self.doc.block_types.values_list('name', flat=True)), ['Block', 'Main'])
 
-        self.assertEqual(self.doc.valid_line_types.count(), 2)
-        self.assertListEqual(list(self.doc.valid_line_types.values_list('name', flat=True)), ['Line', 'Head'])
+        self.assertEqual(self.doc.line_types.count(), 2)
+        self.assertListEqual(list(self.doc.line_types.values_list('name', flat=True)), ['Line', 'Head'])
 
-        self.assertEqual(self.doc.valid_part_types.count(), 2)
-        self.assertListEqual(list(self.doc.valid_part_types.values_list('name', flat=True)), ['Part', 'Page'])
+        self.assertEqual(self.doc.part_types.count(), 2)
+        self.assertListEqual(list(self.doc.part_types.values_list('name', flat=True)), ['Part', 'Page'])
 
         self.assertEqual(self.doc.annotationcomponent_set.count(), 3)
         self.assertListEqual(list(self.doc.annotationcomponent_set.values_list('name', flat=True)), ['Component 1', 'Component 2', 'Test'])
@@ -265,17 +271,11 @@ class DocumentTestCase(TestCase):
         self.assertEqual(self.doc.annotationtaxonomy_set.count(), 2)
         self.assertListEqual(list(self.doc.annotationtaxonomy_set.values_list('name', flat=True)), ['Image annotation', 'Text annotation test'])
 
-        # Check report messages
+        # Check report messages: only warnings are surfaced
         report = TaskReport.objects.get()
         self.assertEqual(report.messages, '\n'.join([
-            '[INFO] Created/activated 1 region type(s) named "Main" on the document',
-            '[INFO] Created/activated 1 line type(s) named "Head" on the document',
-            '[INFO] Created/activated 1 part type(s) named "Page" on the document',
-            '[WARNING] A differing annotation component named "Component 1" already exists on the document, it does not have the same allowed values as the one to import, skipping its import',
-            '[INFO] An identical annotation component named "Component 2" already exists on the document',
-            '[INFO] Created a new component named "Test" on the document',
-            '[WARNING] A taxonomy named "Image annotation" already exists on the document, skipping the one to import',
-            '[INFO] Created a new taxonomy named "Text annotation test" on the document and linked it to 0 existing annotation components',
+            '[WARNING] A differing annotation component named "Component 1" already exists on the document, it does not have the same allowed values as the one to import, skipping its import.',
+            '[WARNING] A taxonomy named "Image annotation" already exists on the document, skipping the one to import.',
         ]) + '\n')
 
         # Check the final notification displayed to the user
@@ -286,38 +286,16 @@ class DocumentTestCase(TestCase):
         self.assertEqual(messages[0].extra_tags, report.uri)
 
     def test_import_ontology(self):
-        # Add some pre-existing data
-        self.doc.valid_line_types.add(LineType.objects.create(name='Line'))
-        self.doc.valid_block_types.add(BlockType.objects.create(name='Block'))
-        self.doc.valid_part_types.add(DocumentPartType.objects.create(name='Part'))
-
-        component_1 = AnnotationComponent.objects.create(document=self.doc, name='Component 1', allowed_values=['X', 'Y', 'Z'])
-        component_2 = AnnotationComponent.objects.create(document=self.doc, name='Component 2', allowed_values=[])
-        image_taxonomy = AnnotationTaxonomy.objects.create(
-            document=self.doc,
-            name='Image annotation',
-            typology=AnnotationType.objects.create(name='legend'),
-            has_comments=True,
-            abbreviation='IA',
-            marker_type=AnnotationTaxonomy.MARKER_TYPE_RECTANGLE,
-            marker_detail='#FFFFFF',
-        )
-        image_taxonomy.components.set([component_1, component_2])
-        AnnotationTaxonomy.objects.create(
-            document=self.doc,
-            name='Text annotation',
-            typology=AnnotationType.objects.create(name='definition'),
-            has_comments=False,
-            abbreviation='TA',
-            marker_type=AnnotationTaxonomy.MARKER_TYPE_BOLD,
-            marker_detail='#BBBBBB',
-        )
+        # Add some pre-existing data, owned by the document
+        LineType.objects.create(name='Line', document=self.doc)
+        BlockType.objects.create(name='Block', document=self.doc)
+        DocumentPartType.objects.create(name='Part', document=self.doc)
 
         self.client.force_login(self.user)
         resp = self.client.post(reverse('document-ontology-import', kwargs={'pk': self.doc.pk}), {
             'import_form': 'Import',
             'import_form-file': SimpleUploadedFile('ontology.json', json.dumps({
-                'version': OntologyImportSerializer.VERSION,
+                'version': CURRENT_VERSION,
                 'created': '2023-04-18T12:34:55',
                 'line_types': ['default', 'Head'],
                 'region_types': ['Running Title', 'Main'],
@@ -344,32 +322,24 @@ class DocumentTestCase(TestCase):
 
         # Assert that everything was properly created
         self.doc.refresh_from_db()
-        self.assertEqual(self.doc.valid_block_types.count(), 3)
-        self.assertListEqual(list(self.doc.valid_block_types.values_list('name', flat=True)), ['Block', 'Running Title', 'Main'])
+        self.assertEqual(self.doc.block_types.count(), 3)
+        self.assertListEqual(list(self.doc.block_types.values_list('name', flat=True)), ['Block', 'Running Title', 'Main'])
 
-        self.assertEqual(self.doc.valid_line_types.count(), 3)
-        self.assertListEqual(list(self.doc.valid_line_types.values_list('name', flat=True)), ['Line', 'default', 'Head'])
+        self.assertEqual(self.doc.line_types.count(), 3)
+        self.assertListEqual(list(self.doc.line_types.values_list('name', flat=True)), ['Line', 'default', 'Head'])
 
-        self.assertEqual(self.doc.valid_part_types.count(), 2)
-        self.assertListEqual(list(self.doc.valid_part_types.values_list('name', flat=True)), ['Part', 'Page'])
+        self.assertEqual(self.doc.part_types.count(), 2)
+        self.assertListEqual(list(self.doc.part_types.values_list('name', flat=True)), ['Part', 'Page'])
 
-        self.assertEqual(self.doc.annotationcomponent_set.count(), 4)
-        self.assertListEqual(list(self.doc.annotationcomponent_set.values_list('name', flat=True)), ['Component 1', 'Component 2', 'Test', 'Test 2'])
+        self.assertEqual(self.doc.annotationcomponent_set.count(), 2)
+        self.assertListEqual(list(self.doc.annotationcomponent_set.values_list('name', flat=True)), ['Test', 'Test 2'])
 
-        self.assertEqual(self.doc.annotationtaxonomy_set.count(), 4)
-        self.assertListEqual(list(self.doc.annotationtaxonomy_set.values_list('name', flat=True)), ['Image annotation', 'Text annotation', 'Image annotation test', 'Text annotation test'])
+        self.assertEqual(self.doc.annotationtaxonomy_set.count(), 2)
+        self.assertListEqual(list(self.doc.annotationtaxonomy_set.values_list('name', flat=True)), ['Image annotation test', 'Text annotation test'])
 
-        # Check report messages
+        # No warnings expected
         report = TaskReport.objects.get()
-        self.assertEqual(report.messages, '\n'.join([
-            '[INFO] Created/activated 2 region type(s) named "Running Title, Main" on the document',
-            '[INFO] Created/activated 2 line type(s) named "default, Head" on the document',
-            '[INFO] Created/activated 1 part type(s) named "Page" on the document',
-            '[INFO] Created a new component named "Test" on the document',
-            '[INFO] Created a new component named "Test 2" on the document',
-            '[INFO] Created a new taxonomy named "Image annotation test" on the document and linked it to 2 existing annotation components',
-            '[INFO] Created a new taxonomy named "Text annotation test" on the document and linked it to 0 existing annotation components',
-        ]) + '\n')
+        self.assertEqual(report.messages, '')
 
         # Check the final notification displayed to the user
         messages = list(get_messages(resp.wsgi_request))

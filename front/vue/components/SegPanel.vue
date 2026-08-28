@@ -602,6 +602,10 @@ export default Vue.extend({
                 let beSettings =
           userProfile.get("baseline-editor-" + this.$store.state.document.id) ||
           {};
+                // colors saved on the types themselves win over the old local ones
+                const typeColors = (types) => Object.fromEntries(
+                    types.filter((t) => t.color).map((t) => [t.name, t.color]),
+                );
                 this.$img = this.$refs.img;
 
                 this.segmenter = new Segmenter(this.$img, {
@@ -614,8 +618,14 @@ export default Vue.extend({
                     ),
                     lineTypes: this.$store.state.document.types.lines.map((t) => t.name),
                     baselinesColor: beSettings["color-baselines"] || null,
-                    regionColors: beSettings["color-regions"] || null,
-                    directionHintColors: beSettings["color-directions"] || null,
+                    regionColors: {
+                        ...(beSettings["color-regions"] || {}),
+                        ...typeColors(this.$store.state.document.types.regions),
+                    },
+                    directionHintColors: {
+                        ...(beSettings["color-directions"] || {}),
+                        ...typeColors(this.$store.state.document.types.lines),
+                    },
                     newUiEnabled: !this.legacyModeEnabled,
                     toolbar: this.$refs["segmentation-toolbar"]?.$el,
                     detachableToolbar: this.$refs["detachable-toolbar"]?.$el,

@@ -5,6 +5,7 @@ import os.path
 import bleach
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.db.models import Count, Max, Min
 from django.db.utils import IntegrityError
 from django.urls import reverse
@@ -249,28 +250,52 @@ class TranscriptionSerializer(serializers.ModelSerializer):
             return Transcription.objects.get(name=data['name'], document=document)
 
 
-class BlockTypeSerializer(serializers.ModelSerializer):
+class TemplateTypeCreateMixin:
+    """Race-safe get_or_create among document=NULL template rows by name,
+    shared by the Block/Line/Part/Annotation type serializers so that
+    POST /api/types/* dedups instead of minting a duplicate."""
+
+    def create(self, data):
+        lookup = {'name': data.pop('name')}
+        if hasattr(self.Meta.model, 'document'):
+            lookup['document'] = None
+        try:
+            with transaction.atomic():
+                obj, _created = self.Meta.model.objects.get_or_create(defaults=data, **lookup)
+                return obj
+        except IntegrityError:
+            return self.Meta.model.objects.get(**lookup)
+
+
+class BlockTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = BlockType
-        fields = ('pk', 'name')
+        fields = ('pk', 'name', 'color')
+        # name uniqueness is handled by create()'s race-safe get_or_create, not
+        # by rejecting the second POST outright (DRF would otherwise derive a
+        # UniqueValidator from the model's conditional UniqueConstraint).
+        extra_kwargs = {'name': {'validators': []}}
 
 
-class LineTypeSerializer(serializers.ModelSerializer):
+class LineTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = LineType
-        fields = ('pk', 'name')
+        fields = ('pk', 'name', 'color')
+        extra_kwargs = {'name': {'validators': []}}
 
 
-class DocumentPartTypeSerializer(serializers.ModelSerializer):
+class DocumentPartTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = DocumentPartType
         fields = ('pk', 'name')
+        extra_kwargs = {'name': {'validators': []}}
 
 
-class AnnotationTypeSerializer(serializers.ModelSerializer):
+class AnnotationTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = AnnotationType
         fields = ('pk', 'name')
+        extra_kwargs = {'name': {'validators': []}}
 
 
 class AnnotationComponentSerializer(serializers.ModelSerializer):
@@ -314,7 +339,11 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         except KeyError:
             typo_data = None
         if typo_data:
-            typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            try:
+                with transaction.atomic():
+                    typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            except IntegrityError:
+                typo = AnnotationType.objects.get(name=typo_data['name'])
         else:
             typo = None
         data['document_id'] = self.context['view'].kwargs['document_pk']
@@ -340,7 +369,11 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         except KeyError:
             typo_data = None
         if typo_data:
-            typo, _ = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            try:
+                with transaction.atomic():
+                    typo, _ = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            except IntegrityError:
+                typo = AnnotationType.objects.get(name=typo_data['name'])
         else:
             typo = None
         data['typology'] = typo
@@ -450,9 +483,9 @@ class DocumentSerializer(serializers.ModelSerializer):
     main_script = serializers.SlugRelatedField(slug_field='name',
                                                queryset=Script.objects.all())
 
-    valid_block_types = BlockTypeSerializer(many=True, read_only=True)
-    valid_line_types = LineTypeSerializer(many=True, read_only=True)
-    valid_part_types = DocumentPartTypeSerializer(many=True, read_only=True)
+    valid_block_types = BlockTypeSerializer(many=True, read_only=True, source='block_types')
+    valid_line_types = LineTypeSerializer(many=True, read_only=True, source='line_types')
+    valid_part_types = DocumentPartTypeSerializer(many=True, read_only=True, source='part_types')
     parts_count = serializers.ReadOnlyField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
@@ -1441,7 +1474,7 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
             **self.fields['region_types'].choices,
             **{
                 str(rt.id): rt.name
-                for rt in self.document.valid_block_types.all()
+                for rt in self.document.block_types.all()
             },
         }
         narrow_related(self.fields['parts'],

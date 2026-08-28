@@ -62,10 +62,15 @@ from core.models import (
     OcrModelRight,
     Project,
 )
+from core.ontology import (
+    OntologyConfigSerializer,
+    apply_ontology_config,
+    normalize,
+    parse_ontology_file,
+)
 from core.search import WORD_BY_WORD_SEARCH_MODE, build_highlighted_replacement_psql
 from core.tasks import replace_line_transcriptions_text
 from imports.forms import DocumentOntologyImportForm, ExportForm, ImportForm
-from imports.serializers import OntologyImportSerializer
 from reporting.models import TaskReport
 from users.models import User
 
@@ -607,7 +612,7 @@ class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, U
 
             # Creating a TaskReport object to store warnings and errors that occur during deserialization
             report = TaskReport.objects.create(
-                label=f'Ontology import from a JSON file in "{self.object}"',
+                label=f'Ontology import from a file in "{self.object}"',
                 user=request.user,
                 document=self.object,
             )
@@ -615,20 +620,15 @@ class DocumentOntology(LoginRequiredMixin, SuccessMessageMixin, DocumentMixin, U
 
             updated_with_warnings = False
             try:
-                # Parsing the provided JSON file
-                json_ontology = json.loads(request.FILES.get('import_form-file').read())
-                serializer = OntologyImportSerializer(self.object, data=json_ontology, report=report)
+                config = parse_ontology_file(request.FILES['import_form-file'])
+                config = normalize(config)
+                serializer = OntologyConfigSerializer(data=config)
+                serializer.is_valid(raise_exception=True)
 
-                # Checking its version is the supported one
-                json_version = json_ontology.get('version')
-                if json_version != serializer.VERSION:
-                    raise Exception(f'JSON ontology file is in version {json_version}, currently supported version is {serializer.VERSION}')
-
-                # Saving the data on the Document object
-                if serializer.is_valid(raise_exception=True):
-                    serializer.save()
-
-                updated_with_warnings = serializer.updated_with_warnings
+                warnings = apply_ontology_config(self.object, serializer.validated_data)
+                for warning in warnings:
+                    report.append('[WARNING] ' + warning)
+                updated_with_warnings = bool(warnings)
             except Exception as e:
                 report.error('[ERROR] ' + str(e))
 
