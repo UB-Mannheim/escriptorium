@@ -96,6 +96,7 @@
 </template>
 <script>
 import axios from "axios";
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 
 export default {
     name: "EscrDownloads",
@@ -116,7 +117,7 @@ export default {
             try {
                 // walk every api page or old rows stay hidden
                 const items = [];
-                let url = "/api/downloads/";
+                let url = SCRIPT_NAME + "/api/downloads/";
                 while (url) {
                     const r = await axios.get(url);
                     items.push(...(r.data.results || r.data || []));
@@ -134,7 +135,7 @@ export default {
                 return;
             }
             try {
-                await axios.delete(`/api/downloads/${item.fingerprint}/`);
+                await axios.delete(SCRIPT_NAME + `/api/downloads/${item.fingerprint}/`);
                 this.items = this.items.filter(
                     (x) => x.fingerprint !== item.fingerprint,
                 );

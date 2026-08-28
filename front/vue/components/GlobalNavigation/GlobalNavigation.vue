@@ -112,7 +112,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/downloads/">
+                            <a :href="url('/downloads/')">
                                 <span>Downloads</span>
                             </a>
                         </li>
