@@ -134,11 +134,12 @@ Workflow for integrating a new upstream release into this branch:
 6. **Bump `VERSION_DATE`**: set `VERSION_DATE = 'UBMA-<YYYY-MM-DD>'` in
    `app/escriptorium/local_settings.py` as a fresh commit on top; do not
    amend or stack older `Update VERSION_DATE` commits.
-7. **Force-push** to `UB-Mannheim/ubma1` and deploy.
 
 ## Git conventions
 
 Conventional commits: `type(scope): description` where type is `feat`, `fix`, `chore`, `refactor`, `test`, `docs`.
+
+Pushing (especially force-pushing) is only done when explicitly asked.
 
 Commit messages must include:
 ```
