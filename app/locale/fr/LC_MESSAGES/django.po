@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-21 08:09+0200\n"
+"POT-Creation-Date: 2026-08-28 08:36+0200\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -398,14 +398,120 @@ msgid "Top to bottom"
 msgstr "Haut en bas"
 
 #: apps/core/models.py
-msgid "Font file in ttf, otf, woff or woff2 format."
-msgstr ""
+msgid "baseline"
+msgstr "ligne de base"
 
 #: apps/core/models.py
-msgid ""
-"Size adjustment factor (1.0 = 100%) to normalize the visual size of this "
-"font."
-msgstr ""
+msgid "middle"
+msgstr "milieu"
+
+#: apps/core/models.py
+msgid "top"
+msgstr "haut"
+
+#: apps/core/models.py
+msgid "bottom"
+msgstr "bas"
+
+#: apps/core/models.py
+msgid "text top"
+msgstr "haut du texte"
+
+#: apps/core/models.py
+msgid "text bottom"
+msgstr "bas du texte"
+
+#: apps/core/models.py
+msgid "subscript"
+msgstr "indice inférieur"
+
+#: apps/core/models.py
+msgid "superscript"
+msgstr "indice supérieur"
+
+#: apps/core/models.py
+msgid "ttf, otf, woff or woff2"
+msgstr "ttf, otf, woff ou woff2"
+
+#: apps/core/models.py
+msgid "size"
+msgstr "taille"
+
+#: apps/core/models.py
+msgid "scale factor, 1.0 keeps the font as it is"
+msgstr "facteur d'échelle, 1.0 conserve la police telle quelle"
+
+#: apps/core/models.py
+msgid "ascent"
+msgstr "hausse"
+
+#: apps/core/models.py
+msgid "room above the baseline, raise it when tall glyphs get cut"
+msgstr "espace au-dessus de la ligne de base, augmentez-le si des glyphes hauts sont coupés"
+
+#: apps/core/models.py
+msgid "descent"
+msgstr "baisse"
+
+#: apps/core/models.py
+msgid "room below the baseline, raise it when low glyphs get cut"
+msgstr "espace en dessous de la ligne de base, augmentez-le si des glyphes bas sont coupés"
+
+#: apps/core/models.py
+msgid "line height"
+msgstr "interlignage"
+
+#: apps/core/models.py
+msgid "in em, empty keeps the default"
+msgstr "en em, vide conserve la valeur par défaut"
+
+#: apps/core/models.py
+msgid "height"
+msgstr "hauteur"
+
+#: apps/core/models.py
+msgid "in em, empty uses 1.1"
+msgstr "en em, vide utilise 1.1"
+
+#: apps/core/models.py
+msgid "top padding"
+msgstr "espacement interne haut"
+
+#: apps/core/models.py
+msgid "in em, moves the text down"
+msgstr "en em, décale le texte vers le bas"
+
+#: apps/core/models.py
+msgid "bottom padding"
+msgstr "espacement interne bas"
+
+#: apps/core/models.py
+msgid "in em, moves the text up"
+msgstr "en em, décale le texte vers le haut"
+
+#: apps/core/models.py
+msgid "top margin"
+msgstr "marge haute"
+
+#: apps/core/models.py
+msgid "in em, moves the box down"
+msgstr "en em, décale la zone vers le bas"
+
+#: apps/core/models.py
+msgid "bottom margin"
+msgstr "marge basse"
+
+#: apps/core/models.py
+msgid "in em, can be negative to take back the top padding"
+msgstr "en em, peut être négatif pour reprendre l'espacement interne haut"
+
+#: apps/core/models.py
+msgid "vertical align"
+msgstr "alignement vertical"
+
+#: apps/core/models.py
+msgid "empty keeps the default"
+msgstr "vide conserve la valeur par défaut"
 
 #: apps/core/models.py
 msgid ""
@@ -556,10 +662,6 @@ msgstr ""
 
 #: apps/core/models.py
 msgid "Recognize"
-msgstr ""
-
-#: apps/core/models.py
-msgid "Couldn't find the training task."
 msgstr ""
 
 #: apps/core/tasks.py
@@ -810,13 +912,84 @@ msgid ""
 msgstr ""
 
 #: apps/imports/forms.py
+msgid "Include metadata"
+msgstr "Inclure les métadonnées"
+
+#: apps/imports/forms.py
+msgid "Includes document metadata and part metadata."
+msgstr "Inclut les métadonnées du document et de ses parties."
+
+#: apps/imports/forms.py
+msgid "Include OCR models"
+msgstr "Inclure les modèles OCR"
+
+#: apps/imports/forms.py
+msgid "Includes the OCR models used to produce the transcriptions."
+msgstr "Inclut les modèles OCR utilisés pour produire les transcriptions."
+
+#: apps/imports/forms.py
+msgid "Include all transcriptions"
+msgstr "Inclure toutes les transcriptions"
+
+#: apps/imports/forms.py
+msgid "Includes all transcriptions of the document, not only the one selected."
+msgstr "Inclut toutes les transcriptions du document, pas seulement la sélectionnée."
+
+#: apps/imports/forms.py
+msgid "Include graph"
+msgstr "Inclure le graphe"
+
+#: apps/imports/forms.py
+msgid "Includes the graph of the document with all its regions and lines."
+msgstr "Inclut le graphe du document avec toutes ses régions et lignes."
+
+#: apps/imports/forms.py
+msgid "Include annotations"
+msgstr "Inclure les annotations"
+
+#: apps/imports/forms.py
+msgid "Includes image and text annotations."
+msgstr "Inclut les annotations d'image et de texte."
+
+#: apps/imports/forms.py
+msgid "Include user comments"
+msgstr "Inclure les commentaires des utilisateurs"
+
+#: apps/imports/forms.py
+msgid "Includes user comments on annotations."
+msgstr "Inclut les commentaires des utilisateurs sur les annotations."
+
+#: apps/imports/forms.py
+msgid "Anonymize users"
+msgstr "Anonymiser les utilisateurs"
+
+#: apps/imports/forms.py
+msgid "Replaces user identifiers in the export with opaque tokens."
+msgstr "Remplace les identifiants d'utilisateur de l'exportation par des jetons opaques."
+
+#: apps/imports/forms.py
+msgid "Archive format"
+msgstr "Format d'archive"
+
+#: apps/imports/forms.py
+msgid ""
+"Container format for the downloaded archive. Only applies to the JSON "
+"exporter."
+msgstr "Format du conteneur de l'archive téléchargée. S'applique uniquement à l'exportateur JSON."
+
+#: apps/imports/forms.py
+#, python-format
+msgid "Download Archive %(document_name)s"
+msgstr "Télécharger l'archive %(document_name)s"
+
+#: apps/imports/forms.py
 #, python-format
 msgid "Export %(document_name)s"
 msgstr ""
 
 #: apps/imports/forms.py
-msgid "A file containing a document ontology in JSON format"
-msgstr ""
+msgid "A file containing a document ontology in JSON or YAML format"
+msgstr "Un fichier contenant une ontologie de document au format JSON ou YAML"
 
 #: apps/imports/parsers.py
 msgid "Invalid PDF file."
@@ -1393,6 +1566,11 @@ msgstr ""
 #: escriptorium/templates/core/documents_tasks_list.html
 msgid "Tasks monitoring"
 msgstr ""
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/reporting/downloads.html
+msgid "Downloads"
+msgstr "Téléchargements"
 
 #: escriptorium/templates/base.html
 #: escriptorium/templates/reporting/quotas_leaderboard.html
