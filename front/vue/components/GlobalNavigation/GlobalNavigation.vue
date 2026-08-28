@@ -112,13 +112,8 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/downloads/">
-                                <span>My Exports</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/documents/tasks/">
-                                <span>Task Monitoring</span>
+                            <a :href="url('/downloads/')">
+                                <span>Downloads</span>
                             </a>
                         </li>
                     </ul>

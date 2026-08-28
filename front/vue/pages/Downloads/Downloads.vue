@@ -117,6 +117,7 @@
 </template>
 <script>
 import axios from "axios";
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 
 export default {
     name: "EscrDownloads",
@@ -138,7 +139,7 @@ export default {
             this.loading = true;
             this.error = null;
             try {
-                const r = await axios.get("/api/downloads/", {
+                const r = await axios.get(SCRIPT_NAME + "/api/downloads/", {
                     params: { page: this.page },
                 });
                 this.items = r.data.results || [];
@@ -159,7 +160,7 @@ export default {
                 return;
             }
             try {
-                await axios.delete(`/api/downloads/${item.fingerprint}/`);
+                await axios.delete(SCRIPT_NAME + `/api/downloads/${item.fingerprint}/`);
                 if (this.items.length === 1 && this.page > 1) {
                     this.page -= 1;
                 }
