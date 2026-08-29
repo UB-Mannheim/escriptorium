@@ -32,7 +32,7 @@ if [ "$HOSTNAME" = "ocr-01" ]; then
     # for everything that could use a GPU
     celery --app escriptorium worker --concurrency 2 --queues gpu --loglevel INFO --max-tasks-per-child=1 --optimization fair &
     nice celery --app escriptorium worker --concurrency 1 --queues intensive-inference --loglevel INFO --max-tasks-per-child=1 --optimization fair &
-    python manage.py runserver --settings escriptorium.local_settings --verbosity 2 0.0.0.0:8080
+    daphne -b 0.0.0.0 -p 8080 escriptorium.asgi:application
     # celery worker -l INFO -E -A escriptorium --optimization fair --prefetch-multiplier 1 --queues default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10
 
   else
