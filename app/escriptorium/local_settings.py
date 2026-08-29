@@ -27,7 +27,7 @@ STATIC_URL = FORCE_SCRIPT_NAME + '/static/'
 LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME + '/projects/'
 LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME + '/'
 
-# ALLOWED_HOSTS = ['localhost', 'ub-blade-10.bib.uni-mannheim.de', '134.155.36.10']
+ALLOWED_HOSTS = ['localhost', 'ocr-bw.bib.uni-mannheim.de']
 DEFAULT_FROM_EMAIL = 'stefan.weil@uni-mannheim.de'
 
 # Sender e-mail address for log messages sent by e-mail.
