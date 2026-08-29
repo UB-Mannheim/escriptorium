@@ -53,7 +53,7 @@ LOCALE_PATHS = [
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "locale"),
 ]
 
-DEBUG = True
+# DEBUG = True
 
 # https://stackoverflow.com/questions/62047354/build-absolute-uri-with-https-behind-reverse-proxy
 # USE_X_FORWARDED_HOST = True
