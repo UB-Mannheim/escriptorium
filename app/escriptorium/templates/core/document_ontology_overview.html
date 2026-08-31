@@ -1,6 +1,5 @@
 {% extends 'core/document_nav.html' %}
 {% load i18n static %}
-{% load render_bundle from webpack_loader %}
 {% block head_title %}{% trans "Ontology Overview" %}{% endblock %}
 
 {% block body %}
@@ -15,9 +14,9 @@
 {% block legacy_alerts %}{% endblock %}
 
 {% block extrascript %}
-{% render_bundle 'ontologyOverviewPage' 'js' %}
+<script src="{% static 'ontologyOverviewPage.js' %}"></script>
 {% endblock extrascript %}
 
 {% block extrastyle %}
-{% render_bundle 'ontologyOverviewPage' 'css' %}
+<link href="{% static 'ontologyOverviewPage.css' %}" rel="stylesheet" type="text/css">
 {% endblock extrastyle %}
