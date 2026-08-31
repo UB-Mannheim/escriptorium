@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
-{% load render_bundle from webpack_loader %}
+{% load i18n static %}
 
 {% block head_title %}{% trans "Downloads" %}{% endblock %}
 
@@ -11,5 +10,5 @@
 
 {% block scripts %}
 {{ block.super }}
-{% render_bundle 'downloads' 'js' %}
+<script src="{% static 'downloads.js' %}"></script>
 {% endblock %}
