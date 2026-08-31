@@ -49,6 +49,12 @@ class DocumentTestCase(TestCase):
             resp = self.client.get(uri)
             self.assertEqual(resp.status_code, 200)
 
+    def test_document_ontology_overview(self):
+        self.client.force_login(self.user)
+        uri = reverse('document-ontology-overview', kwargs={'pk': self.doc.pk})
+        resp = self.client.get(uri)
+        self.assertEqual(resp.status_code, 200)
+
     def test_create(self):
         self.assertEqual(Document.objects.count(), 4)  # 4 created in setup
         self.client.force_login(self.user)
