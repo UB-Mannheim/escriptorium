@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'django_filters',
     'captcha',
     'drf_spectacular',
+    'drf_spectacular_sidecar',
 
     'bootstrap',
     'versioning',
@@ -490,6 +491,9 @@ POST /api/token-auth/
     'COMPONENT_SPLIT_REQUEST': True,
     'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
     'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAuthenticated'],
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
 }
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
