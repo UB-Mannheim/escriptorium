@@ -723,6 +723,13 @@ export default Vue.extend({
                 this.segmenter.events.addEventListener(
                     "baseline-editor:merge",
                     async (ev) => {
+                        if (this.isWorking) {
+                            this.add({
+                                color: "text",
+                                message: "Still joining lines, wait for it to finish",
+                            });
+                            return;
+                        }
                         const data = ev.detail;
                         this.isWorking = true;
                         try {
