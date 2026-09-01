@@ -4,6 +4,17 @@ from django.test import TestCase
 from django.urls import reverse
 
 
+class APIAuthURLTestCase(TestCase):
+    def test_browsable_api_login_page(self):
+        # rest_framework.urls is included at the top level so that the
+        # 'rest_framework' namespace resolves from DRF's own templates
+        # (namespaces nested inside an app_name-ed include do not)
+        self.assertEqual(reverse('rest_framework:login'),
+                         '/api/api-auth/login/')
+        response = self.client.get('/api/api-auth/login/')
+        self.assertEqual(response.status_code, 200)
+
+
 class HealthTestCase(TestCase):
     def test_liveness(self):
         response = self.client.get(reverse('health'))
