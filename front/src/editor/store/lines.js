@@ -52,6 +52,7 @@ export const mutations = {
             state.all[index].baseline = line.baseline;
         if (line.mask !== undefined) state.all[index].mask = line.mask;
         if (line.region !== undefined) state.all[index].region = line.region;
+        if (line.type !== undefined) state.all[index].type = line.type;
 
         // Force reference update on the whole array
         // so that all components get a full refresh after an update
@@ -287,7 +288,14 @@ export const actions = {
                 }
                 if (line.region != lineData.region)
                     hasToRecalculateOrdering = true;
-                commit("update", lineData);
+                // api returns typology pk, panels label lines by type name -> map it back before storing it
+                commit("update", {
+                    ...lineData,
+                    type:
+                        rootState.document.types.lines.find(
+                            (t) => t.pk == lineData.typology,
+                        )?.name || null,
+                });
                 updatedLines.push(line);
             }
         }
