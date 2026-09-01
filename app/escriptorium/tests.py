@@ -1,7 +1,105 @@
+import asyncio
+import io
+import json
 from unittest.mock import patch
 
-from django.test import TestCase
-from django.urls import reverse
+from django.core.handlers.asgi import ASGIHandler, ASGIRequest
+from django.test import TestCase, TransactionTestCase, override_settings
+from django.urls import clear_script_prefix, reverse
+
+from escriptorium.middleware import ForceScriptNamePathMiddleware
+
+
+class ASGITestMixin:
+    # mimic daphne: no root_path in the scope, nginx strips the prefix
+    def asgi_scope(self, path, query_string=b'', sessionid=None):
+        headers = [(b'host', b'testserver')]
+        if sessionid:
+            headers.append((b'cookie', ('sessionid=' + sessionid).encode()))
+        return {
+            'type': 'http',
+            'asgi': {'version': '3.0'},
+            'http_version': '1.1',
+            'method': 'GET',
+            'scheme': 'http',
+            'path': path,
+            'query_string': query_string,
+            'root_path': '',
+            'headers': headers,
+            'server': ('testserver', 80),
+            'client': ('1.2.3.4', 5678),
+        }
+
+    def asgi_get(self, path, query_string=b'', sessionid=None):
+        # the ASGI handler runs views on a worker thread with its own
+        # database connection, so the data must be committed: use
+        # TransactionTestCase for tests that need database objects
+        scope = self.asgi_scope(path, query_string, sessionid)
+        messages = []
+
+        async def run():
+            async def receive():
+                return {'type': 'http.request', 'body': b'', 'more_body': False}
+
+            async def send(message):
+                messages.append(message)
+
+            try:
+                await ASGIHandler()(scope, receive, send)
+            finally:
+                clear_script_prefix()
+
+        asyncio.run(run())
+        return messages
+
+    def asgi_request(self, path='/api/users/', query_string=b''):
+        scope = self.asgi_scope(path, query_string)
+        return ASGIRequest(scope, io.BytesIO())
+
+
+class ForceScriptNamePathMiddlewareTestCase(ASGITestMixin, TestCase):
+    @override_settings(FORCE_SCRIPT_NAME='/escriptorium')
+    def test_asgi_request_path_gets_prefix(self):
+        request = self.asgi_request()
+        self.assertEqual(request.path, '/api/users/')
+        ForceScriptNamePathMiddleware(lambda r: None)(request)
+        self.assertEqual(request.path, '/escriptorium/api/users/')
+        self.assertEqual(
+            request.build_absolute_uri(),
+            'http://testserver/escriptorium/api/users/')
+
+    def test_noop_without_force_script_name(self):
+        request = self.asgi_request()
+        ForceScriptNamePathMiddleware(lambda r: None)(request)
+        self.assertEqual(request.path, '/api/users/')
+
+    @override_settings(FORCE_SCRIPT_NAME='/escriptorium')
+    def test_noop_when_path_already_prefixed(self):
+        request = self.asgi_request()
+        request.path = '/escriptorium/api/users/'
+        ForceScriptNamePathMiddleware(lambda r: None)(request)
+        self.assertEqual(request.path, '/escriptorium/api/users/')
+
+
+class ASGISubpathTestCase(ASGITestMixin, TransactionTestCase):
+    @override_settings(FORCE_SCRIPT_NAME='/escriptorium')
+    def test_pagination_next_link_contains_script_name(self):
+        from core.models import OcrModel
+        from core.tests.factory import CoreFactory
+
+        factory = CoreFactory()
+        user = factory.make_user()
+        for i in range(2):
+            OcrModel.objects.create(name='model-%d' % i, owner=user,
+                                    job=OcrModel.MODEL_JOB_SEGMENT,
+                                    file_size=0, public=True)
+        self.client.force_login(user)
+        sessionid = self.client.cookies['sessionid'].value
+        messages = self.asgi_get('/api/models/', b'paginate_by=1', sessionid)
+        body = b''.join(m.get('body', b'') for m in messages
+                        if m['type'] == 'http.response.body')
+        data = json.loads(body)
+        self.assertIn('/escriptorium/api/models/', data['next'])
 
 
 class APIAuthURLTestCase(TestCase):
