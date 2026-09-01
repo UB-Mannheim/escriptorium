@@ -171,6 +171,27 @@ class DocumentTagAdmin(admin.ModelAdmin):
     list_display = ['name', 'color', 'project']
 
 
+class TypologyAdmin(admin.ModelAdmin):
+    list_display = ['pk', 'name', 'public', 'default']
+    list_filter = ['public', 'default']
+    search_fields = ['name']
+
+
+class DocumentTypologyAdmin(TypologyAdmin):
+    list_display = ['pk', 'name', 'document_link', 'public', 'default']
+    search_fields = ['name', 'document__name']
+    list_select_related = ['document']
+    autocomplete_fields = ['document']
+
+    def document_link(self, obj):
+        if not obj.document_id:
+            return '-'
+        url = reverse('admin:core_document_change', args=[obj.document_id])
+        return format_html('<a href="{}">{}</a>', url, obj.document.name)
+    document_link.short_description = 'document'
+    document_link.admin_order_field = 'document__name'
+
+
 class InstanceSettingsAdmin(SingletonModelAdmin):
     list_display = ('page_batch_segmentation', 'page_batch_recognition')
     actions = None
@@ -189,17 +210,17 @@ admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
 admin.site.register(LineTranscription, LineTranscriptionAdmin)
-admin.site.register(DocumentType)
-admin.site.register(DocumentPartType)
-admin.site.register(BlockType)
-admin.site.register(LineType)
+admin.site.register(DocumentType, TypologyAdmin)
+admin.site.register(DocumentPartType, DocumentTypologyAdmin)
+admin.site.register(BlockType, DocumentTypologyAdmin)
+admin.site.register(LineType, DocumentTypologyAdmin)
 admin.site.register(Script, ScriptAdmin)
 admin.site.register(Font, FontAdmin)
 admin.site.register(Metadata)
 admin.site.register(OcrModel, OcrModelAdmin)
 admin.site.register(OcrModelDocument, OcrModelDocumentAdmin)
 admin.site.register(OcrModelRight, OcrModelRightAdmin)
-admin.site.register(AnnotationType)
+admin.site.register(AnnotationType, TypologyAdmin)
 admin.site.register(AnnotationTaxonomy)
 admin.site.register(AnnotationComponent)
 admin.site.register(DocumentTag, DocumentTagAdmin)
