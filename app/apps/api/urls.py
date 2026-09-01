@@ -84,7 +84,6 @@ urlpatterns = [
     path('', include(documents_router.urls)),
     path('', include(parts_router.urls)),
     path('', include(projects_router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('token-auth/', RegenerableAuthToken.as_view()),
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('swagger/', SpectacularSwaggerView.as_view(url_name='api:schema'), name='swagger-ui'),

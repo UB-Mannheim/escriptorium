@@ -31,6 +31,10 @@ urlpatterns = [
     path('', include('users.urls')),
     path('', include('reporting.urls')),
     path('api/', include('api.urls', namespace='api')),
+    # included at the top level (not inside the 'api' namespace) so that
+    # the 'rest_framework' namespace resolves from DRF's own templates
+    path('api/api-auth/', include('rest_framework.urls',
+                                  namespace='rest_framework')),
     path('captcha/', include('captcha.urls')),
     path('', include('django_prometheus.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
