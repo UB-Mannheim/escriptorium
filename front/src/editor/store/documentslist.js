@@ -90,7 +90,7 @@ export const actions = {
     async getAllTagsProject({ state, commit }) {
         commit("setUnlinkedTags", state.allProjectTags);
     },
-    async updateDocumentTags({ state, commit, _dispatch }, data) {
+    async updateDocumentTags({ state, commit }, data) {
         var selectedId = data.selectedtags ? data.selectedtags.split(",") : [];
         const toNumbers = (arr) => arr.map(Number);
         var name = data.name;
@@ -138,7 +138,7 @@ export const actions = {
             }
         }
     },
-    async updateProjectTag({ state, commit, _dispatch }, data) {
+    async updateProjectTag({ state, commit }, data) {
         await api.updatetag(state.projectID, data.pk, data);
         const index = state.allProjectTags.findIndex(
             (tag) => tag.pk == data.pk,
@@ -149,12 +149,12 @@ export const actions = {
             commit("setAllProjectTags", tpmTags);
         }
     },
-    async deleteProjectTag({ state, commit, _dispatch }, data) {
+    async deleteProjectTag({ state, commit }, data) {
         await api.deletetag(state.projectID, data.pk);
         let tpmTags = state.allProjectTags.filter((item) => item.pk != data.pk);
         commit("setAllProjectTags", tpmTags);
     },
-    async assignSingleTagToDocuments({ state, commit, _dispatch }, data) {
+    async assignSingleTagToDocuments({ state, commit }, data) {
         if (state.checkboxList.length > 0) {
             for (let i = 0; i < state.checkboxList.length; i++) {
                 const _document = await api.retrieveDocument(

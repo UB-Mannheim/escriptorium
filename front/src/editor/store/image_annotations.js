@@ -34,7 +34,7 @@ export const mutations = {
 };
 
 export const actions = {
-    async fetch({ commit, _dispatch, rootState }) {
+    async fetch({ commit, rootState }) {
         commit("reset");
         let next = true,
             page = 1;
@@ -67,7 +67,7 @@ export const actions = {
         return newAnnotation;
     },
 
-    async update({ _commit, rootState }, annotation) {
+    async update({ rootState }, annotation) {
         const resp = await api.updateImageAnnotation(
             rootState.document.id,
             rootState.parts.pk,
