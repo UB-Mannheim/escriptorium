@@ -167,8 +167,6 @@ const actions = {
             includeMetadata: true,
             includeModels: false,
             includeAnnotations: true,
-            includeGraph: true,
-            includeComments: true,
             allTranscriptions: true,
             anonymize: true,
             archiveFormat: form.archiveFormat || "zip",
@@ -191,8 +189,6 @@ const actions = {
             includeMetadata: includeAll || exportForm?.includeMetadata,
             includeModels: includeAll || exportForm?.includeModels,
             includeAnnotations: includeAll || exportForm?.includeAnnotations,
-            includeGraph: includeAll || exportForm?.includeGraph,
-            includeComments: includeAll || exportForm?.includeComments,
             allTranscriptions: includeAll || exportForm?.allTranscriptions,
             parts,
         });
