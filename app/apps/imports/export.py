@@ -4,6 +4,7 @@ import json
 import os.path
 import re
 import tarfile
+import tempfile
 import time
 import zipfile
 from datetime import datetime
@@ -28,6 +29,7 @@ DOCUMENT_FILENAME = "document.json"
 EXPORT_CONFIG_FILENAME = "export-config.json"
 PARTS_FILENAME = "parts.jsonl"
 ANNOTATIONS_FILENAME = "annotations.jsonl"
+JSONL_BATCH_BYTES = 1024 * 1024
 
 
 class EsZipFile(zipfile.ZipFile):
@@ -470,25 +472,35 @@ class JsonExporter(BaseExporter):
                 for m in self.document.ocr_models.all()
             ]
 
-        entries = [
-            (DOCUMENT_FILENAME, None, json.dumps(document, ensure_ascii=False, indent=2)),
-            (EXPORT_CONFIG_FILENAME, None,
-             json.dumps(export_config, ensure_ascii=False, indent=2)),
-            (PARTS_FILENAME, None, self._as_jsonl(
+        jsonl_paths = []
+        try:
+            jsonl_paths.append(self._write_jsonl(
                 self._serialize_part(part, include_orphans, region_filters, image_names)
                 for part in parts
-            )),
-        ]
+            ))
 
-        if self.include_annotations:
-            part_pks = [part.pk for part in parts]
-            entries.append((ANNOTATIONS_FILENAME, None,
-                            self._as_jsonl(self._serialize_annotations(part_pks))))
+            entries = [
+                (DOCUMENT_FILENAME, None, json.dumps(document, ensure_ascii=False, indent=2)),
+                (EXPORT_CONFIG_FILENAME, None,
+                 json.dumps(export_config, ensure_ascii=False, indent=2)),
+                (PARTS_FILENAME, jsonl_paths[0], None),
+            ]
 
-        # json files first then images under the names recorded in the parts
-        entries += [(arcname, path, None) for arcname, path, _ in image_entries]
+            if self.include_annotations:
+                part_pks = [part.pk for part in parts]
+                jsonl_paths.append(self._write_jsonl(self._serialize_annotations(part_pks)))
+                entries.append((ANNOTATIONS_FILENAME, jsonl_paths[-1], None))
 
-        archive_path = self._build_archive(entries)
+            # json files first then images under the names recorded in the parts
+            entries += [(arcname, path, None) for arcname, path, _ in image_entries]
+
+            archive_path = self._build_archive(entries)
+        finally:
+            for path in jsonl_paths:
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
 
         # Clean up the standalone json placeholder if it lingered.
         if os.path.exists(self.filepath) and self.filepath != archive_path:
@@ -519,9 +531,24 @@ class JsonExporter(BaseExporter):
             entries.append((arcname, image_path, part.pk))
         return entries
 
-    def _as_jsonl(self, rows):
+    def _write_jsonl(self, rows):
         """one compact json object per line"""
-        return "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
+        fd, path = tempfile.mkstemp(suffix=".jsonl", dir=os.path.dirname(self.filepath))
+        batch = []
+        batched = 0
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            for row in rows:
+                line = json.dumps(row, ensure_ascii=False)
+                batch.append(line)
+                batched += len(line)
+                if batched >= JSONL_BATCH_BYTES:
+                    fh.write("\n".join(batch) + "\n")
+                    batch = []
+                    batched = 0
+            if batch:
+                fh.write("\n".join(batch) + "\n")
+        os.chmod(path, 0o644)
+        return path
 
     def _build_archive(self, entries):
         """Pack entries into the container format the user picked.
@@ -558,22 +585,20 @@ class JsonExporter(BaseExporter):
         ImageAnnotation = apps.get_model("core", "ImageAnnotation")
         TextAnnotation = apps.get_model("core", "TextAnnotation")
 
-        annotations = []
-        for ann in ImageAnnotation.objects.filter(part_id__in=part_pks).select_related("taxonomy").prefetch_related("components__component").order_by("part_id", "pk"):
-            annotations.append({
+        for ann in ImageAnnotation.objects.filter(part_id__in=part_pks).select_related("taxonomy").prefetch_related("components__component").order_by("part_id", "pk").iterator():
+            yield {
                 "type": "image",
                 "part_pk": ann.part_id,
                 "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
                 "w3c": ann.as_w3c(),
-            })
-        for ann in TextAnnotation.objects.filter(part_id__in=part_pks).select_related("taxonomy", "start_line", "end_line").prefetch_related("components__component").order_by("part_id", "pk"):
-            annotations.append({
+            }
+        for ann in TextAnnotation.objects.filter(part_id__in=part_pks).select_related("taxonomy", "start_line", "end_line").prefetch_related("components__component").order_by("part_id", "pk").iterator():
+            yield {
                 "type": "text",
                 "part_pk": ann.part_id,
                 "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
                 "w3c": ann.as_w3c(),
-            })
-        return annotations
+            }
 
 
 class OpenITIMARkdownExporter(BaseExporter):
