@@ -457,7 +457,11 @@ class XmlImportTestCase(CoreFactoryTestCase):
         with open(mock_path, 'rb') as fh:
             # mock the image grabbing
             mock_resp = mock.Mock(content=fh.read(), status_code=200)
-            with mock.patch('requests.get', return_value=mock_resp):
+            with mock.patch('requests.get', return_value=mock_resp), \
+                    mock.patch('socket.getaddrinfo',
+                               side_effect=lambda *args, **kwargs:
+                               [(2, 1, 6, '', ('93.184.216.34',
+                                               args[1] or 80))]):
                 for part in imp.process():  # exhaust the generator
                     pass
 
