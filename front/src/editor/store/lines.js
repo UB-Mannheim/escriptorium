@@ -1,4 +1,4 @@
-import { assign, kebabCase } from "lodash";
+import { assign } from "lodash";
 import * as api from "../api";
 
 export const initialState = () => ({
@@ -261,13 +261,13 @@ export const actions = {
         } catch (err) {
             if (err.response && err.response.status === 400) {
                 console.error(
-                '[bulkUpdateLines] 400 Bad Request:',
-                {
-                    url:    err.config.url,
-                    method: err.config.method,
-                    payload: JSON.parse(err.config.data),
-                    response: err.response.data
-                }
+                    "[bulkUpdateLines] 400 Bad Request:",
+                    {
+                        url:    err.config.url,
+                        method: err.config.method,
+                        payload: JSON.parse(err.config.data),
+                        response: err.response.data
+                    }
                 )
             }
             throw err
@@ -405,7 +405,7 @@ export const actions = {
         commit("setMasksToRecalc", _.uniq(state.masksToRecalc.concat(only)));
         if (!state.debouncedRecalculateMasks) {
             // avoid calling this too often
-            state.debouncedRecalculateMasks = _.debounce(async function (only) {
+            state.debouncedRecalculateMasks = _.debounce(async function (_only) {
                 const params = {};
                 if (state.masksToRecalc.length > 0)
                     params.only = state.masksToRecalc.toString();
