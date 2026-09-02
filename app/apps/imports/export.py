@@ -24,6 +24,11 @@ OPENITI_MARKDOWN_FORMAT = "openitimarkdown"
 TEI_XML_FORMAT = "teixml"
 JSON_FORMAT = "json"
 
+DOCUMENT_FILENAME = "document.json"
+EXPORT_CONFIG_FILENAME = "export-config.json"
+PARTS_FILENAME = "parts.jsonl"
+ANNOTATIONS_FILENAME = "annotations.jsonl"
+
 
 class EsZipFile(zipfile.ZipFile):
     def writestr(self, arcname, data,
@@ -49,9 +54,7 @@ class BaseExporter:
         transcription=None,
         include_metadata=False,
         include_models=False,
-        include_graph=False,
         include_annotations=False,
-        include_comments=False,
         all_transcriptions=False,
         anonymize=False,
         archive_format="zip",
@@ -66,9 +69,7 @@ class BaseExporter:
         self.transcription = transcription
         self.include_metadata = include_metadata
         self.include_models = include_models
-        self.include_graph = include_graph
         self.include_annotations = include_annotations
-        self.include_comments = include_comments
         self.all_transcriptions = all_transcriptions
         # When True, JsonExporter (and any future format-specific exporter)
         # replaces user identifiers with opaque tokens instead of usernames.
@@ -295,20 +296,12 @@ class JsonExporter(BaseExporter):
         if self.include_characters:
             data["characters"] = lt.graphs
 
-        if self.include_graph:
-            data["graphs"] = lt.graphs
-
         return data
 
     def _serialize_line(self, line):
         layers = getattr(line, "prefetched_transcriptions", None) or []
-        selected = None
-        for lt in layers:
-            if lt.transcription_id == self.transcription_id:
-                selected = lt
-                break
 
-        data = {
+        return {
             "pk": line.pk,
             "external_id": line.external_id,
             "order": line.order,
@@ -320,15 +313,8 @@ class JsonExporter(BaseExporter):
             "mask": line.mask,
             "box": line.get_box(),
             "block_pk": line.block_id,
-            "transcription": self._serialize_transcription(selected),
+            "transcriptions": [self._serialize_transcription(lt) for lt in layers],
         }
-
-        if self.all_transcriptions:
-            data["transcriptions"] = [
-                self._serialize_transcription(lt) for lt in layers
-            ]
-
-        return data
 
     def _serialize_block(self, block):
         lines = []
@@ -439,49 +425,43 @@ class JsonExporter(BaseExporter):
             transcriptions = [self.transcription]
 
         self.transcription_pks = [t.pk for t in transcriptions]
-        self.transcription_id = self.transcription.pk if self.transcription else None
 
         image_entries = self._collect_images(parts) if self.include_images else []
         image_names = {part_pk: arcname for arcname, _, part_pk in image_entries}
 
-        payload = {
-            "document": {
-                "pk": self.document.pk,
-                "name": self.document.name,
-                "read_direction": self.document.read_direction,
-                "line_offset": self.document.line_offset,
-                "main_script": self.document.main_script.name if self.document.main_script else None,
-                "valid_block_types": [
-                    {"pk": bt.pk, "name": bt.name}
-                    for bt in self.document.block_types.all().order_by("name")
-                ],
-                "valid_line_types": [
-                    {"pk": lt.pk, "name": lt.name}
-                    for lt in self.document.line_types.all().order_by("name")
-                ],
-            },
-            "export": {
-                "file_format": self.file_format,
-                "transcriptions": [
-                    {"pk": t.pk, "name": t.name}
-                    for t in transcriptions
-                ],
-                "part_pks": list(self.part_pks),
-                "region_types": region_types,
-                "include_images": self.include_images,
-                "include_characters": self.include_characters,
-            },
-            "parts": [
-                self._serialize_part(part, include_orphans, region_filters, image_names)
-                for part in parts
+        document = {
+            "pk": self.document.pk,
+            "name": self.document.name,
+            "read_direction": self.document.read_direction,
+            "line_offset": self.document.line_offset,
+            "main_script": self.document.main_script.name if self.document.main_script else None,
+            "valid_block_types": [
+                {"pk": bt.pk, "name": bt.name}
+                for bt in self.document.block_types.all().order_by("name")
+            ],
+            "valid_line_types": [
+                {"pk": lt.pk, "name": lt.name}
+                for lt in self.document.line_types.all().order_by("name")
             ],
         }
 
+        export_config = {
+            "file_format": self.file_format,
+            "transcriptions": [
+                {"pk": t.pk, "name": t.name}
+                for t in transcriptions
+            ],
+            "part_pks": list(self.part_pks),
+            "region_types": region_types,
+            "include_images": self.include_images,
+            "include_characters": self.include_characters,
+        }
+
         if self.include_metadata:
-            payload["document"]["metadata"] = self._serialize_document_metadata()
+            document["metadata"] = self._serialize_document_metadata()
 
         if self.include_models:
-            payload["models"] = [
+            document["models"] = [
                 {
                     "pk": m.pk,
                     "name": m.name,
@@ -490,22 +470,25 @@ class JsonExporter(BaseExporter):
                 for m in self.document.ocr_models.all()
             ]
 
-        part_pks = [part.pk for part in parts]
+        entries = [
+            (DOCUMENT_FILENAME, None, json.dumps(document, ensure_ascii=False, indent=2)),
+            (EXPORT_CONFIG_FILENAME, None,
+             json.dumps(export_config, ensure_ascii=False, indent=2)),
+            (PARTS_FILENAME, None, self._as_jsonl(
+                self._serialize_part(part, include_orphans, region_filters, image_names)
+                for part in parts
+            )),
+        ]
 
         if self.include_annotations:
-            payload["annotations"] = self._serialize_annotations(part_pks)
+            part_pks = [part.pk for part in parts]
+            entries.append((ANNOTATIONS_FILENAME, None,
+                            self._as_jsonl(self._serialize_annotations(part_pks))))
 
-        if self.include_comments:
-            payload["comments"] = self._serialize_comments(part_pks)
+        # json files first then images under the names recorded in the parts
+        entries += [(arcname, path, None) for arcname, path, _ in image_entries]
 
-        json_content = json.dumps(payload, ensure_ascii=False, indent=2)
-
-        # json payload first then images under the names recorded in the payload
-        json_arcname = os.path.basename(self.filepath)
-        entries = [(json_arcname, None)]  # None => write json_content in-memory
-        entries += [(arcname, path) for arcname, path, _ in image_entries]
-
-        archive_path = self._build_archive(entries, json_content)
+        archive_path = self._build_archive(entries)
 
         # Clean up the standalone json placeholder if it lingered.
         if os.path.exists(self.filepath) and self.filepath != archive_path:
@@ -536,7 +519,11 @@ class JsonExporter(BaseExporter):
             entries.append((arcname, image_path, part.pk))
         return entries
 
-    def _build_archive(self, entries, json_content):
+    def _as_jsonl(self, rows):
+        """one compact json object per line"""
+        return "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
+
+    def _build_archive(self, entries):
         """Pack entries into the container format the user picked.
 
         `entries` is a list of (arcname, path). When `path` is None the
@@ -548,9 +535,9 @@ class JsonExporter(BaseExporter):
         if self.archive_format == "tar.gz":
             archive_path = base_path + ".tar.gz"
             with tarfile.open(archive_path, "w:gz") as tf:
-                for arcname, path in entries:
+                for arcname, path, content in entries:
                     if path is None:
-                        data = json_content.encode("utf-8")
+                        data = content.encode("utf-8")
                         info = tarfile.TarInfo(name=arcname)
                         info.size = len(data)
                         info.mode = 0o644
@@ -560,9 +547,9 @@ class JsonExporter(BaseExporter):
         else:
             archive_path = base_path + ".zip"
             with EsZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
-                for arcname, path in entries:
+                for arcname, path, content in entries:
                     if path is None:
-                        zf.writestr(arcname, json_content)
+                        zf.writestr(arcname, content)
                     else:
                         zf.write(path, arcname)
         return archive_path
@@ -587,27 +574,6 @@ class JsonExporter(BaseExporter):
                 "w3c": ann.as_w3c(),
             })
         return annotations
-
-    def _serialize_comments(self, part_pks):
-        ImageAnnotation = apps.get_model("core", "ImageAnnotation")
-        TextAnnotation = apps.get_model("core", "TextAnnotation")
-
-        comments = []
-        for ann in ImageAnnotation.objects.filter(part_id__in=part_pks, comments__isnull=False).exclude(comments=[]).select_related("taxonomy").order_by("part_id", "pk"):
-            comments.append({
-                "type": "image",
-                "part_pk": ann.part_id,
-                "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
-                "comments": ann.comments,
-            })
-        for ann in TextAnnotation.objects.filter(part_id__in=part_pks, comments__isnull=False).exclude(comments=[]).select_related("taxonomy").order_by("part_id", "pk"):
-            comments.append({
-                "type": "text",
-                "part_pk": ann.part_id,
-                "taxonomy": ann.taxonomy.name if ann.taxonomy else None,
-                "comments": ann.comments,
-            })
-        return comments
 
 
 class OpenITIMARkdownExporter(BaseExporter):

@@ -61,8 +61,6 @@ export default {
         includeMetadata: false,
         includeModels: false,
         includeAnnotations: false,
-        includeGraph: false,
-        includeComments: false,
         allTranscriptions: false,
         regionTypes: [],
         transcription: "",

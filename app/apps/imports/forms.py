@@ -232,9 +232,7 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
     include_metadata = forms.BooleanField(required=False, initial=False, label=_("Include metadata"), help_text=_("Includes document metadata and part metadata."))
     include_models = forms.BooleanField(required=False, initial=False, label=_("Include OCR models"), help_text=_("Includes the OCR models used to produce the transcriptions."))
     all_transcriptions = forms.BooleanField(required=False, initial=False, label=_("Include all transcriptions"), help_text=_("Includes all transcriptions of the document, not only the one selected."))
-    include_graph = forms.BooleanField(required=False, initial=False, label=_("Include graph"), help_text=_("Includes the graph of the document with all its regions and lines."))
     include_annotations = forms.BooleanField(required=False, initial=False, label=_("Include annotations"), help_text=_("Includes image and text annotations."))
-    include_comments = forms.BooleanField(required=False, initial=False, label=_("Include user comments"), help_text=_("Includes user comments on annotations."))
     anonymize = forms.BooleanField(required=False, initial=False, label=_("Anonymize users"), help_text=_("Replaces user identifiers in the export with opaque tokens."))
     archive_format = forms.ChoiceField(
         choices=(('zip', 'ZIP'), ('tar.gz', 'Gzipped tar')),
@@ -273,9 +271,7 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
                               include_characters=self.cleaned_data['include_characters'],
                               include_metadata=self.cleaned_data['include_metadata'],
                               include_models=self.cleaned_data['include_models'],
-                              include_graph=self.cleaned_data['include_graph'],
                               include_annotations=self.cleaned_data['include_annotations'],
-                              include_comments=self.cleaned_data['include_comments'],
                               all_transcriptions=self.cleaned_data['all_transcriptions'],
                               anonymize=self.cleaned_data['anonymize'],
                               archive_format=self.cleaned_data.get('archive_format') or 'zip',
@@ -291,9 +287,7 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
             and self.cleaned_data.get('anonymize')
             and self.cleaned_data.get('all_transcriptions')
             and self.cleaned_data.get('include_annotations')
-            and self.cleaned_data.get('include_comments')
             and self.cleaned_data.get('include_metadata')
-            and self.cleaned_data.get('include_graph')
             and self.cleaned_data.get('include_characters')
         )
         template = (_('Download Archive %(document_name)s') if is_full_archive
