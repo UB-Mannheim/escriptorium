@@ -844,7 +844,9 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.client.force_login(self.doc.owner)
         uri = reverse('api:document-stats', kwargs={'pk': self.doc.pk})
         with self.assertNumQueries(9):
-            resp = self.client.get(uri)
+            # request an explicit ordering, since the default "-frequency"
+            # ordering is non-deterministic for typologies with equal frequency
+            resp = self.client.get(uri + '?ordering=typology')
             self.assertEqual(resp.status_code, 200)
 
             self.assertEqual(resp.data["regions"][0]["typology_name"], "blocktype")
