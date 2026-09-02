@@ -109,7 +109,10 @@ def qualify_model(model_pk):
         return
     if model.file:
         model.architecture = detect_model_architecture(model.file.path)
-        model.save()
+        # Only update the architecture field: a plain save() would write back
+        # every field from the stale in-memory copy, e.g. resurrect
+        # training=True while the training task's cleanup is running.
+        model.save(update_fields=['architecture'])
 
 
 def _chunks(lst, n):
