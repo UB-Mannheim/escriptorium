@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 08:36+0200\n"
+"POT-Creation-Date: 2026-09-03 14:14+0000\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -447,7 +447,9 @@ msgstr "hausse"
 
 #: apps/core/models.py
 msgid "room above the baseline, raise it when tall glyphs get cut"
-msgstr "espace au-dessus de la ligne de base, augmentez-le si des glyphes hauts sont coupés"
+msgstr ""
+"espace au-dessus de la ligne de base, augmentez-le si des glyphes hauts sont "
+"coupés"
 
 #: apps/core/models.py
 msgid "descent"
@@ -455,7 +457,9 @@ msgstr "baisse"
 
 #: apps/core/models.py
 msgid "room below the baseline, raise it when low glyphs get cut"
-msgstr "espace en dessous de la ligne de base, augmentez-le si des glyphes bas sont coupés"
+msgstr ""
+"espace en dessous de la ligne de base, augmentez-le si des glyphes bas sont "
+"coupés"
 
 #: apps/core/models.py
 msgid "line height"
@@ -634,6 +638,20 @@ msgstr ""
 
 #: apps/core/models.py
 msgid "Element"
+msgstr ""
+
+#: apps/core/models.py
+#, python-format
+msgid "The segmentation model '%(name)s' has no file associated with it."
+msgstr ""
+
+#: apps/core/models.py
+msgid "No recognition model was provided."
+msgstr ""
+
+#: apps/core/models.py
+#, python-format
+msgid "The recognition model '%(name)s' has no file associated with it."
 msgstr ""
 
 #: apps/core/models.py
@@ -933,15 +951,8 @@ msgstr "Inclure toutes les transcriptions"
 
 #: apps/imports/forms.py
 msgid "Includes all transcriptions of the document, not only the one selected."
-msgstr "Inclut toutes les transcriptions du document, pas seulement la sélectionnée."
-
-#: apps/imports/forms.py
-msgid "Include graph"
-msgstr "Inclure le graphe"
-
-#: apps/imports/forms.py
-msgid "Includes the graph of the document with all its regions and lines."
-msgstr "Inclut le graphe du document avec toutes ses régions et lignes."
+msgstr ""
+"Inclut toutes les transcriptions du document, pas seulement la sélectionnée."
 
 #: apps/imports/forms.py
 msgid "Include annotations"
@@ -952,20 +963,14 @@ msgid "Includes image and text annotations."
 msgstr "Inclut les annotations d'image et de texte."
 
 #: apps/imports/forms.py
-msgid "Include user comments"
-msgstr "Inclure les commentaires des utilisateurs"
-
-#: apps/imports/forms.py
-msgid "Includes user comments on annotations."
-msgstr "Inclut les commentaires des utilisateurs sur les annotations."
-
-#: apps/imports/forms.py
 msgid "Anonymize users"
 msgstr "Anonymiser les utilisateurs"
 
 #: apps/imports/forms.py
 msgid "Replaces user identifiers in the export with opaque tokens."
-msgstr "Remplace les identifiants d'utilisateur de l'exportation par des jetons opaques."
+msgstr ""
+"Remplace les identifiants d'utilisateur de l'exportation par des jetons "
+"opaques."
 
 #: apps/imports/forms.py
 msgid "Archive format"
@@ -975,7 +980,9 @@ msgstr "Format d'archive"
 msgid ""
 "Container format for the downloaded archive. Only applies to the JSON "
 "exporter."
-msgstr "Format du conteneur de l'archive téléchargée. S'applique uniquement à l'exportateur JSON."
+msgstr ""
+"Format du conteneur de l'archive téléchargée. S'applique uniquement à "
+"l'exportateur JSON."
 
 #: apps/imports/forms.py
 #, python-format
