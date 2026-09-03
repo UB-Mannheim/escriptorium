@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 08:36+0200\n"
+"POT-Creation-Date: 2026-09-03 14:14+0000\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -685,6 +685,20 @@ msgstr "Element"
 
 #: apps/core/models.py
 #, python-format
+msgid "The segmentation model '%(name)s' has no file associated with it."
+msgstr ""
+
+#: apps/core/models.py
+msgid "No recognition model was provided."
+msgstr ""
+
+#: apps/core/models.py
+#, python-format
+msgid "The recognition model '%(name)s' has no file associated with it."
+msgstr ""
+
+#: apps/core/models.py
+#, python-format
 msgid "%(value)s is not a polygon - a 2 dimensional array."
 msgstr "%(value)s is not a polygon - a 2 dimensional array."
 
@@ -977,7 +991,8 @@ msgstr "Incluir modelos de OCR"
 
 #: apps/imports/forms.py
 msgid "Includes the OCR models used to produce the transcriptions."
-msgstr "Incluye los modelos de OCR utilizados para producir las transcripciones."
+msgstr ""
+"Incluye los modelos de OCR utilizados para producir las transcripciones."
 
 #: apps/imports/forms.py
 msgid "Include all transcriptions"
@@ -985,15 +1000,8 @@ msgstr "Incluir todas las transcripciones"
 
 #: apps/imports/forms.py
 msgid "Includes all transcriptions of the document, not only the one selected."
-msgstr "Incluye todas las transcripciones del documento, no solo la seleccionada."
-
-#: apps/imports/forms.py
-msgid "Include graph"
-msgstr "Incluir grafo"
-
-#: apps/imports/forms.py
-msgid "Includes the graph of the document with all its regions and lines."
-msgstr "Incluye el grafo del documento con todas sus regiones y líneas."
+msgstr ""
+"Incluye todas las transcripciones del documento, no solo la seleccionada."
 
 #: apps/imports/forms.py
 msgid "Include annotations"
@@ -1004,20 +1012,13 @@ msgid "Includes image and text annotations."
 msgstr "Incluye anotaciones de imagen y de texto."
 
 #: apps/imports/forms.py
-msgid "Include user comments"
-msgstr "Incluir comentarios de usuarios"
-
-#: apps/imports/forms.py
-msgid "Includes user comments on annotations."
-msgstr "Incluye comentarios de usuarios sobre anotaciones."
-
-#: apps/imports/forms.py
 msgid "Anonymize users"
 msgstr "Anonimizar usuarios"
 
 #: apps/imports/forms.py
 msgid "Replaces user identifiers in the export with opaque tokens."
-msgstr "Reemplaza los identificadores de usuario en la exportación con tokens opacos."
+msgstr ""
+"Reemplaza los identificadores de usuario en la exportación con tokens opacos."
 
 #: apps/imports/forms.py
 msgid "Archive format"
@@ -1027,7 +1028,9 @@ msgstr "Formato de archivo"
 msgid ""
 "Container format for the downloaded archive. Only applies to the JSON "
 "exporter."
-msgstr "Formato del contenedor del archivo descargado. Solo se aplica al exportador JSON."
+msgstr ""
+"Formato del contenedor del archivo descargado. Solo se aplica al exportador "
+"JSON."
 
 #: apps/imports/forms.py
 #, python-format
@@ -1041,7 +1044,8 @@ msgstr "exportar %(document_name)s"
 
 #: apps/imports/forms.py
 msgid "A file containing a document ontology in JSON or YAML format"
-msgstr "Un archivo que contiene una ontología de documento en formato JSON o YAML"
+msgstr ""
+"Un archivo que contiene una ontología de documento en formato JSON o YAML"
 
 #: apps/imports/parsers.py
 msgid "Invalid PDF file."
