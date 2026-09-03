@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import transaction
 from django.urls import reverse
 
 from core.models import Document, Line, OcrModel
@@ -77,6 +76,25 @@ class TasksTestCase(CoreFactoryTestCase):
         self.assertEqual(response.status_code, 200)
         part.refresh_from_db()
         self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
+
+    def test_segment_model_without_file(self):
+        self.part = self.factory.make_part()
+        model = OcrModel.objects.create(name='fileless', job=OcrModel.MODEL_JOB_SEGMENT, file_size=0)
+        with self.assertRaisesMessage(ValueError, "has no file"):
+            self.part.segment(model=model)
+        self.part.refresh_from_db()
+        self.assertEqual(self.part.workflow_state, self.part.WORKFLOW_STATE_CREATED)
+
+    def test_transcribe_model_without_file(self):
+        self.makeTranscriptionContent()
+        model = OcrModel.objects.create(name='fileless', job=OcrModel.MODEL_JOB_RECOGNIZE, file_size=0)
+        with self.assertRaisesMessage(ValueError, "has no file"):
+            self.part.transcribe(model, self.transcription)
+
+    def test_transcribe_without_model(self):
+        self.makeTranscriptionContent()
+        with self.assertRaisesMessage(ValueError, "No recognition model"):
+            self.part.transcribe(None, self.transcription)
 
     @unittest.skip
     def test_train_new_transcription_model(self):
