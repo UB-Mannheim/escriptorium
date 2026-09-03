@@ -31,7 +31,7 @@ from django.dispatch import receiver
 from django.forms import ValidationError
 from django.utils.functional import cached_property
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 from django_prometheus.models import ExportModelOperationsMixin
 from easy_thumbnails.files import get_thumbnailer
 
@@ -1510,6 +1510,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         """
         steps: lines regions masks
         """
+        if model and not model.file:
+            raise ValueError(gettext("The segmentation model '%(name)s' has no file associated with it.")
+                             % {'name': model.name})
         self.workflow_state = self.WORKFLOW_STATE_SEGMENTING
         self.save()
 
@@ -1595,6 +1598,11 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         self.recalculate_ordering(read_direction=read_direction)
 
     def transcribe(self, model, transcription, text_direction=None, user=None):
+        if model is None:
+            raise ValueError(gettext("No recognition model was provided."))
+        if not model.file:
+            raise ValueError(gettext("The recognition model '%(name)s' has no file associated with it.")
+                             % {'name': model.name})
         recognizer = RecognitionTaskModel.load_model(model.file.path)
 
         lines = self.lines.all()
