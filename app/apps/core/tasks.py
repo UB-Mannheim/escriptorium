@@ -535,7 +535,7 @@ def segment(self, instance_pks, user_pk=None, model_pk=None, steps=None, text_di
             # on failure, rollback state & notify
             if user:
                 user.notify(
-                    _("Something went wrong during the segmentation!"),
+                    _("Something went wrong during the segmentation!") + " " + str(e),
                     id="segmentation-error",
                     level='danger'
                 )
@@ -615,7 +615,7 @@ def transcribe(self, instance_pks, model_pk=None, user_pk=None, transcription_pk
             # on failure, rollback state & notify
             if user:
                 user.notify(
-                    _("Something went wrong during the transcription!"),
+                    _("Something went wrong during the transcription!") + " " + str(e),
                     id="transcription-error",
                     level='danger'
                 )
