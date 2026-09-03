@@ -39,7 +39,7 @@ EMAIL_HOST = 'localhost'
 
 TIME_ZONE = 'Europe/Berlin'
 USE_TZ = True
-VERSION_DATE = 'UBMA-2026-09-02'
+VERSION_DATE = 'UBMA-2026-09-03'
 
 ESC_LANGUAGES = 'de,en,fr,es'.split(',')
 LANGUAGES = [
