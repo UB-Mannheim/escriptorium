@@ -13,11 +13,12 @@ import documentslist from "./store/documentslist";
 import forms from "../../vue/store/modules/forms";
 import alerts from "../../vue/store/modules/alerts";
 import globalTools from "./store/globalTools";
+import { installGettext } from "../translations/index.js";
 
 Vue.use(Vuex);
 Vue.use(vueFilterPrettyBytes);
 
-export default new Vuex.Store({
+const store = new Vuex.Store({
     modules: {
         alerts,
         document,
@@ -33,3 +34,10 @@ export default new Vuex.Store({
         forms,
     },
 });
+
+// Install vue-gettext so this entry can use $gettext / v-translate too.
+// `installGettext` is idempotent thanks to the catalog memoisation in
+// `vue-gettext`, but we still guard against double registration.
+installGettext(store);
+
+export default store;

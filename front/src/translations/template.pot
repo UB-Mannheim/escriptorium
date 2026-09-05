@@ -1,0 +1,100 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: easygettext\n"
+"Project-Id-Version: \n"
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:99
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:9
+msgid "Change Password"
+msgstr ""
+
+#: vue/components/LanguageSwitcher/LanguageSwitcher.vue:19
+#: vue/components/LanguageSwitcher/LanguageSwitcher.vue:14
+msgid "Deutsch"
+msgstr ""
+
+#: vue/components/LanguageSwitcher/LanguageSwitcher.vue:9
+#: vue/components/LanguageSwitcher/LanguageSwitcher.vue:4
+msgid "English"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:26
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:9
+msgid "Find and Replace"
+msgstr ""
+
+#: vue/components/LanguageSwitcher/LanguageSwitcher.vue:14
+#: vue/components/LanguageSwitcher/LanguageSwitcher.vue:9
+msgid "Français"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:104
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:14
+msgid "Invite Users"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:109
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:19
+msgid "Leaderboard"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:119
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:29
+msgid "Logout"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:44
+msgid "Models"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:88
+msgid "Profile"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:94
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:4
+msgid "Profile Settings"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:37
+msgid "Projects"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:14
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:21
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:4
+msgid "Search"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:127
+msgid "Sign in"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:114
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:24
+msgid "Site Administration"
+msgstr ""
+
+#: vue/components/LanguageSwitcher/LanguageSwitcher.vue:57
+msgid "Switch language"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:67
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:4
+msgid "Task Monitoring"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:72
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:9
+msgid "Task Usage"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:61
+msgid "Tasks"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:51
+msgid "Training"
+msgstr ""
