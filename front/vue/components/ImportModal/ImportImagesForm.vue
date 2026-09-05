@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h3>Import images</h3>
+        <h3 v-translate>Import images</h3>
         <ImageDropzone
             id="escr-drop-zone"
             :options="{
@@ -13,12 +13,13 @@
             @vdropzone-queue-complete="() => queueComplete()"
         >
             <UploadIcon />
-            <h4>Drag and drop files here</h4>
-            <p>Files supported: JPG, PNG, TIFF</p>
-            <p>or</p>
+            <h4 v-translate>Drag and drop files here</h4>
+            <p v-translate>Files supported: JPG, PNG, TIFF</p>
+            <p v-translate>or</p>
             <button
                 type="button"
                 class="escr-button escr-button--large escr-button--primary"
+                v-translate
             >
                 Choose files
             </button>
