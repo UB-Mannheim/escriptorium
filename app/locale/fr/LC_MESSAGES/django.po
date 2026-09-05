@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-05 13:20+0000\n"
+"POT-Creation-Date: 2026-09-05 15:41+0000\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -569,8 +569,7 @@ msgstr "marge inférieure"
 
 #: apps/core/models.py
 msgid "in em, can be negative to take back the top padding"
-msgstr ""
-"en em, peut être négatif pour reprendre la marge intérieure supérieure"
+msgstr "en em, peut être négatif pour reprendre la marge intérieure supérieure"
 
 #: apps/core/models.py
 msgid "vertical align"
@@ -943,8 +942,7 @@ msgstr "Trop de redirections lors de la récupération du document."
 #: apps/imports/forms.py
 #, python-brace-format
 msgid "Failed to download the document pointed to by the given uri ({error})."
-msgstr ""
-"Échec du téléchargement du document pointé par l'URI donnée ({error})."
+msgstr "Échec du téléchargement du document pointé par l'URI donnée ({error})."
 
 #: apps/imports/forms.py
 msgid "The document cannot be downloaded, certificate verify failed."
@@ -954,8 +952,7 @@ msgstr ""
 
 #: apps/imports/forms.py
 msgid "The document pointed to by the given uri doesn't seem to be valid json."
-msgstr ""
-"Le document pointé par l'URI donnée ne semble pas être du JSON valide."
+msgstr "Le document pointé par l'URI donnée ne semble pas être du JSON valide."
 
 #: apps/imports/forms.py
 msgid "Couldn't parse the given file or its validation failed"
@@ -1395,8 +1392,8 @@ msgid ""
 "automatic cleanup. Set to 0 to disable auto-cleanup."
 msgstr ""
 "Nombre de jours pendant lesquels les téléchargements (exports, archives) "
-"sont conservés sur le serveur avant le nettoyage automatique. Définir 0 pour"
-" désactiver le nettoyage automatique."
+"sont conservés sur le serveur avant le nettoyage automatique. Définir 0 pour "
+"désactiver le nettoyage automatique."
 
 #: apps/users/models.py
 msgid "Error"
@@ -1483,8 +1480,7 @@ msgstr "Vous êtes maintenant membre de l'équipe {team_name} !"
 #: apps/users/views.py
 #, python-brace-format
 msgid "User {user} successfully removed from the team {team_name}."
-msgstr ""
-"L'utilisateur {user} a été retiré de l'équipe {team_name} avec succès."
+msgstr "L'utilisateur {user} a été retiré de l'équipe {team_name} avec succès."
 
 #: apps/users/views.py
 #, python-brace-format
@@ -1818,6 +1814,17 @@ msgstr "Déconnexion"
 #: escriptorium/templates/base.html
 msgid "Login"
 msgstr "Login"
+
+#: escriptorium/templates/base.html
+msgid ""
+"eScriptorium uses cookies to store the user session and local storage to "
+"save user interface preferences."
+msgstr "eScriptorium utilise des cookies pour stocker la session utilisateur et le stockage local pour enregistrer les préférences de l'interface."
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Accept"
+msgstr "Accepter"
 
 #: escriptorium/templates/core/contributors.html
 #: escriptorium/templates/core/home.html
@@ -2620,13 +2627,11 @@ msgstr "Filtrer les résultats par ce niveau de transcription"
 
 #: escriptorium/templates/core/search/base.html
 msgid "Full image cropped according to the transcription bounding box"
-msgstr ""
-"Image complète recadrée selon la boîte englobante de la transcription"
+msgstr "Image complète recadrée selon la boîte englobante de la transcription"
 
 #: escriptorium/templates/core/search/base.html
 msgid "Image preview is not available for this search result"
-msgstr ""
-"L'aperçu de l'image n'est pas disponible pour ce résultat de recherche"
+msgstr "L'aperçu de l'image n'est pas disponible pour ce résultat de recherche"
 
 #: escriptorium/templates/core/search/base.html
 msgid "Search score"
@@ -3322,8 +3327,7 @@ msgstr "Recharger le vocabulaire"
 
 #: escriptorium/templates/reporting/document_report.html
 msgid "No vocabulary found in the selected transcription(s)."
-msgstr ""
-"Aucun vocabulaire trouvé dans la(s) transcription(s) sélectionnée(s)."
+msgstr "Aucun vocabulaire trouvé dans la(s) transcription(s) sélectionnée(s)."
 
 #: escriptorium/templates/reporting/document_report.html
 #: escriptorium/templates/reporting/project_reports.html
@@ -3764,10 +3768,6 @@ msgstr ""
 "\n"
 "            Invité à %(team_name)s par %(sender)s\n"
 "            "
-
-#: escriptorium/templates/users/profile_group_list.html
-msgid "Accept"
-msgstr "Accepter"
 
 #: escriptorium/templates/users/profile_group_list.html
 msgid "My Teams"
