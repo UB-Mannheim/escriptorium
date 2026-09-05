@@ -122,11 +122,19 @@ msgstr "Abgleich %{scope}"
 msgid "AND"
 msgstr "UND"
 
+msgid "annotation component"
+msgid_plural "annotation components"
+msgstr[0] "Annotationselement"
+msgstr[1] "Annotationselemente"
+
 msgid "Apply Filter"
 msgstr "Filter anwenden"
 
 msgid "Are you sure you want to cancel this task?"
 msgstr "Möchten Sie diese Aufgabe wirklich abbrechen?"
+
+msgid "Are you sure you want to clear this project's default ontology?"
+msgstr "Möchten Sie die Standard-Ontologie dieses Projekts wirklich löschen?"
 
 msgid "Are you sure you want to continue? Re-segmenting will delete any existing transcriptions."
 msgstr "Möchten Sie fortfahren? Bei der erneuten Segmentierung werden vorhandene Transkriptionen gelöscht."
@@ -163,6 +171,12 @@ msgstr "Zentriert"
 msgid "Change Password"
 msgstr "Passwort ändern"
 
+msgid "Clear"
+msgstr "Löschen"
+
+msgid "Clear Default Ontology"
+msgstr "Standard-Ontologie löschen"
+
 msgid "Clear filter"
 msgstr "Filter löschen"
 
@@ -198,6 +212,9 @@ msgstr "Neu erstellen"
 
 msgid "Default"
 msgstr "Standard"
+
+msgid "Default Ontology"
+msgstr "Standard-Ontologie"
 
 msgid "Delete"
 msgstr "Löschen"
@@ -271,6 +288,9 @@ msgstr "Element #"
 msgid "Elements"
 msgstr "Elemente"
 
+msgid "Empty ontology config."
+msgstr "Leere Ontologie-Konfiguration."
+
 msgid "Enter project name"
 msgstr "Projektnamen eingeben"
 
@@ -285,6 +305,9 @@ msgstr "Menü für Aufgabenüberwachung und -nutzung erweitern"
 
 msgid "expand user profile menu"
 msgstr "Benutzermenü erweitern"
+
+msgid "Export"
+msgstr "Exportieren"
 
 msgid "Export %{scope}"
 msgstr "Export %{scope}"
@@ -346,6 +369,11 @@ msgstr "Links nach rechts"
 msgid "Line Position"
 msgstr "Zeilenposition"
 
+msgid "line type"
+msgid_plural "line types"
+msgstr[0] "Zeilentyp"
+msgstr[1] "Zeilentypen"
+
 msgid "Link to Project Guidelines"
 msgstr "Link zu den Projektrichtlinien"
 
@@ -385,6 +413,9 @@ msgstr "Name"
 msgid "No"
 msgstr "Nein"
 
+msgid "No default ontology set. New documents in this project will use the instance's default types instead."
+msgstr "Keine Standard-Ontologie festgelegt. Neue Dokumente in diesem Projekt verwenden stattdessen die Standard-Typen der Instanz."
+
 msgid "No matching tags. %{hidden}"
 msgstr "Keine passenden Tags. %{hidden}"
 
@@ -399,6 +430,11 @@ msgstr "Vorhandene Segmentierung und Transkriptionen überschreiben"
 
 msgid "Owner"
 msgstr "Eigentümer"
+
+msgid "part type"
+msgid_plural "part types"
+msgstr[0] "Teiltyp"
+msgstr[1] "Teiltypen"
 
 msgid "Profile"
 msgstr "Profil"
@@ -426,6 +462,11 @@ msgstr "Schnellaktionen"
 
 msgid "Read Direction"
 msgstr "Leserichtung"
+
+msgid "region type"
+msgid_plural "region types"
+msgstr[0] "Regionstyp"
+msgstr[1] "Regionstypen"
 
 msgid "Right to left"
 msgstr "Rechts nach links"
@@ -507,6 +548,11 @@ msgstr "Task-Nutzung"
 
 msgid "Tasks"
 msgstr "Tasks"
+
+msgid "taxonomy"
+msgid_plural "taxonomies"
+msgstr[0] "Taxonomie"
+msgstr[1] "Taxonomien"
 
 msgid "Text (Ctrl+5)"
 msgstr "Text (Strg+5)"
