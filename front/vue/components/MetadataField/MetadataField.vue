@@ -1,6 +1,6 @@
 <template>
     <fieldset class="escr-form-field escr-metadata-field">
-        <legend class="escr-field-label">
+        <legend class="escr-field-label" v-translate>
             Metadata
         </legend>
         <div
@@ -12,14 +12,14 @@
                 type="text"
                 :disabled="disabled"
                 :value="item.key && item.key.name"
-                placeholder="Key"
+                :placeholder="$gettext('Key')"
                 @input="(e) => onChange(item, 'key', e.target.value)"
             >
             <input
                 type="text"
                 :disabled="disabled"
                 :value="item.value"
-                placeholder="Value"
+                :placeholder="$gettext('Value')"
                 @input="(e) => onChange(item, 'value', e.target.value)"
             >
             <EscrButton
@@ -36,7 +36,7 @@
         <EscrButton
             :disabled="disabled"
             :on-click="handleAddMetadatum"
-            label="Add New"
+            :label="$gettext('Add New')"
             size="small"
         >
             <template #button-icon>
