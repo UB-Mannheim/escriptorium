@@ -25,6 +25,7 @@ export const availableLanguages = {
     en: "English",
     fr: "Français",
     de: "Deutsch",
+    es: "Español",
 };
 
 function readInitialLanguage() {
