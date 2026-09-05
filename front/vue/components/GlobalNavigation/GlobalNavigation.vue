@@ -16,7 +16,7 @@
                 <button
                     v-if="isAuthenticated && !searchDisabled"
                     :href="url('/search/')"
-                    aria-label="global search"
+                    :aria-label="$gettext('global search')"
                     class="escr-global-search"
                     :class="{
                         'escr-globalnav-icon': true,
@@ -47,7 +47,7 @@
             <a
                 v-if="isAuthenticated"
                 :href="url('/projects/')"
-                aria-label="projects list"
+                :aria-label="$gettext('projects list')"
                 :class="{
                     'escr-globalnav-icon': true,
                     'escr-globalnav-icon-active': location.href.endsWith('/projects/'),
@@ -59,7 +59,7 @@
             <a
                 v-if="isAuthenticated"
                 :href="url('/models/')"
-                aria-label="models list"
+                :aria-label="$gettext('models list')"
                 :class="{
                     'escr-globalnav-icon': true,
                     'escr-globalnav-icon-active': location.href.endsWith('/models/'),
@@ -71,7 +71,7 @@
             <a
                 v-if="isAuthenticated"
                 :href="url('/training/')"
-                aria-label="training page"
+                :aria-label="$gettext('training page')"
                 :class="{
                     'escr-globalnav-icon': true,
                     'escr-globalnav-icon-active': location.href.endsWith('/training/'),
@@ -87,7 +87,7 @@
                 :triggers="['click']"
             >
                 <button
-                    aria-label="expand task monitoring and usage menu"
+                    :aria-label="$gettext('expand task monitoring and usage menu')"
                     :class="{
                         'escr-globalnav-icon': true,
                         'escr-globalnav-icon-active': ['/tasks/', '/quotas/', '/downloads/'].some(
@@ -128,7 +128,7 @@
                 :triggers="['click']"
             >
                 <button
-                    aria-label="expand user profile menu"
+                    :aria-label="$gettext('expand user profile menu')"
                     :class="{
                         'escr-globalnav-icon': true,
                         'escr-globalnav-icon-active': profilePages.some(
@@ -181,7 +181,7 @@
             <a
                 v-else
                 :href="url('/login/')"
-                aria-label="sign in"
+                :aria-label="$gettext('sign in')"
                 class="escr-globalnav-icon"
             >
                 <ProfileIcon />
@@ -196,7 +196,7 @@
             <input
                 id="escr-lightdark-switcher"
                 type="checkbox"
-                aria-label="switch to light mode"
+                :aria-label="$gettext('switch to light mode')"
                 :checked="currentTheme === 'dark-mode'"
                 @change="toggleTheme"
             >
