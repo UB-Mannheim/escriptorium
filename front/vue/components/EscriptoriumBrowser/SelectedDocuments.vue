@@ -39,7 +39,7 @@
                     <span><strong>{{ doc.name }}</strong> ({{
                         doc.items.length
                     }}
-                        parts)</span>
+                        {{ $ngettext("part", "parts", doc.items.length) }})</span>
                     <XIcon />
                 </div>
 
@@ -52,7 +52,7 @@
                         >
                             <button
                                 class="escr-remove-part-btn"
-                                aria-label="Remove part"
+                                :aria-label="$gettext('Remove part')"
                                 @click="removeSelectedPart(part.document_part)"
                             >
                                 &times;
@@ -60,7 +60,7 @@
                             <div class="escr-part-thumbnail">
                                 <img
                                     :src="getThumbnailUrl(part)"
-                                    alt="thumbnail"
+                                    :alt="$gettext('thumbnail')"
                                     loading="lazy"
                                 >
                             </div>
@@ -74,10 +74,10 @@
                                 <span>
                                     {{ part.part_order + 1 }}
                                     &ndash;
-                                    {{ part.part_name || `Page ${part.document_part}` }}
+                                    {{ partLabel(part) }}
                                 </span>
                                 <template #popper>
-                                    {{ part.part_name || `Page ${part.document_part}` }}
+                                    {{ partLabel(part) }}
                                 </template>
                             </VDropdown>
                             <div class="escr-part-actions">
@@ -244,6 +244,15 @@ export default {
                 partPk: item.document_part,
                 transcriptionId: parseInt(newTranscriptionId),
             });
+        },
+
+        /**
+         * display label for a document part
+         */
+        partLabel(part) {
+            const label = this.$gettext("Page %{page}");
+            return part.part_name
+                || this.$gettextInterpolate(label, { page: part.document_part });
         },
 
         /**
