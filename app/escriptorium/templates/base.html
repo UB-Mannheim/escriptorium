@@ -211,6 +211,10 @@
       </script>
       {% include 'includes/messages.html' %}
       {% if ENABLE_COOKIE_CONSENT %}
+      <div id="cookie-consent-i18n" hidden>
+        <span class="message">{% translate "eScriptorium uses cookies to store the user session and local storage to save user interface preferences." %}</span>
+        <span class="accept">{% translate "Accept" %}</span>
+      </div>
       <script>
         userProfile.setUserId({{ request.user.id }});
         userProfile.getCookieConsent();
