@@ -26,19 +26,19 @@
                     }"
                 >
                     <SearchLargeIcon />
-                    <span>Search</span>
+                    <span v-translate>Search</span>
                 </button>
 
                 <template #popper>
                     <ul class="escr-vertical-menu escr-tasks-menu">
                         <li>
                             <a :href="url('/search/')">
-                                <span>Search</span>
+                                <span v-translate>Search</span>
                             </a>
                         </li>
                         <li>
                             <a :href="url('/find-replace/')">
-                                <span>Find and Replace</span>
+                                <span v-translate>Find and Replace</span>
                             </a>
                         </li>
                     </ul>
@@ -54,7 +54,7 @@
                 }"
             >
                 <HomeIcon />
-                <span>Projects</span>
+                <span v-translate>Projects</span>
             </a>
             <a
                 v-if="isAuthenticated"
@@ -66,7 +66,7 @@
                 }"
             >
                 <ModelsIcon />
-                <span>Models</span>
+                <span v-translate>Models</span>
             </a>
             <a
                 v-if="isAuthenticated"
@@ -78,7 +78,7 @@
                 }"
             >
                 <TrainIcon />
-                <span>Training</span>
+                <span v-translate>Training</span>
             </a>
             <VMenu
                 v-if="isAuthenticated"
@@ -97,18 +97,18 @@
                     type="button"
                 >
                     <TasksIcon />
-                    <span>Tasks</span>
+                    <span v-translate>Tasks</span>
                 </button>
                 <template #popper>
                     <ul class="escr-vertical-menu escr-tasks-menu">
                         <li>
                             <a :href="url('/documents/tasks/')">
-                                <span>Task Monitoring</span>
+                                <span v-translate>Task Monitoring</span>
                             </a>
                         </li>
                         <li>
                             <a :href="url('/quotas/')">
-                                <span>Task Usage</span>
+                                <span v-translate>Task Usage</span>
                             </a>
                         </li>
                         <li>
@@ -138,23 +138,23 @@
                     type="button"
                 >
                     <ProfileIcon />
-                    <span>Profile</span>
+                    <span v-translate>Profile</span>
                 </button>
                 <template #popper>
                     <ul class="escr-vertical-menu">
                         <li>
                             <a :href="url('/profile/')">
-                                <span>Profile Settings</span>
+                                <span v-translate>Profile Settings</span>
                             </a>
                         </li>
                         <li>
                             <a :href="url('/password_change/')">
-                                <span>Change Password</span>
+                                <span v-translate>Change Password</span>
                             </a>
                         </li>
                         <li v-if="canInvite">
                             <a :href="url('/invite/')">
-                                <span>Invite Users</span>
+                                <span v-translate>Invite Users</span>
                             </a>
                         </li>
                         <li
@@ -162,17 +162,17 @@
                             class="new-section"
                         >
                             <a :href="url('/quotas/instance/')">
-                                <span>Leaderboard</span>
+                                <span v-translate>Leaderboard</span>
                             </a>
                         </li>
                         <li v-if="isStaff">
                             <a :href="url('/admin/')">
-                                <span>Site Administration</span>
+                                <span v-translate>Site Administration</span>
                             </a>
                         </li>
                         <li class="new-section">
                             <a :href="url('/logout/')">
-                                <span>Logout</span>
+                                <span v-translate>Logout</span>
                             </a>
                         </li>
                     </ul>
@@ -185,7 +185,7 @@
                 class="escr-globalnav-icon"
             >
                 <ProfileIcon />
-                <span>Sign in</span>
+                <span v-translate>Sign in</span>
             </a>
             <LanguageSwitcher
                 v-if="languages && languages.length > 1"

@@ -9,9 +9,11 @@
     "url": "https://gitlab.com/scripta/escriptorium.git"
   },
   "scripts": {
-    "build": "webpack --config webpack.dev.js",
-    "start": "webpack --config webpack.dev.js --watch",
-    "production": "webpack --config webpack.prod.js",
+    "build": "npm run gettext:compile && webpack --config webpack.dev.js",
+    "start": "npm run gettext:compile && webpack --config webpack.dev.js --watch",
+    "production": "npm run gettext:compile && webpack --config webpack.prod.js",
+    "gettext:extract": "bash -c 'shopt -s globstar nullglob && gettext-extract --attribute v-translate --output src/translations/template.pot src/**/*.vue src/**/*.js vue/**/*.vue vue/**/*.js'",
+    "gettext:compile": "echo '{}' > src/translations/en.json; gettext-compile --output src/translations/fr.json src/translations/fr.po; gettext-compile --output src/translations/de.json src/translations/de.po; echo 'translation catalogs written to src/translations/{en,fr,de}.json'",
     "test": "jest",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook"
@@ -46,7 +48,7 @@
     "vue": "^2.7.16",
     "vue-demi": "^0.13.1",
     "vue-filter-pretty-bytes": "^0.1.6",
-    "vue-i18n": "^8.28.2",
+    "vue-gettext": "^2.1.12",
     "vue-loader": "^15.10.1",
     "vue2-dropzone": "^3.6.0",
     "vuex": "^3.6.0"
@@ -69,6 +71,7 @@
     "babel-jest": "^26.6.3",
     "babel-loader": "^8.3.0",
     "compression-webpack-plugin": "^7.1.1",
+    "easygettext": "^2.17.0",
     "eslint": "^8.47.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-storybook": "^0.6.10",
@@ -82,5 +85,10 @@
     "webpack": "^5.11.1",
     "webpack-cli": "^4.3.1",
     "webpack-merge": "^5.7.3"
+  },
+  "overrides": {
+    "easygettext": {
+      "cheerio": "0.22.0"
+    }
   }
 }
