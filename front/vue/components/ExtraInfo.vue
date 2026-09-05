@@ -8,7 +8,7 @@
             <span
                 v-if="$store.state.parts.loaded"
                 id="part-title"
-                title="Click to go to another Element (Alt+G)."
+                :title="$gettext('Click to go to another Element (Alt+G).')"
                 data-toggle="modal"
                 data-target="#gotoModal"
                 role="button"
@@ -16,7 +16,7 @@
             <span
                 v-if="!$store.state.parts.loaded"
                 class="loading"
-            >Loading&#8230;</span>
+            >{{ $gettext("Loading...") }}</span>
         </div>
 
         <div
@@ -31,7 +31,7 @@
                         class="modal-body"
                         style="line-height: 30px;"
                     >
-                        Element #
+                        {{ $gettext("Element #") }}
                         <input
                             v-if="$store.state.parts.loaded"
                             id="goto-modal-input"
@@ -47,7 +47,7 @@
                             class="btn btn-info float-right"
                             @click="goTo"
                         >
-                            Go to
+                            {{ $gettext("Go to") }}
                         </button>
                     </div>
                 </div>
