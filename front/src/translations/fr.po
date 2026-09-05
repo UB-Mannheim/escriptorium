@@ -98,6 +98,9 @@ msgstr ""
 msgid "0 images"
 msgstr "0 images"
 
+msgid "1-100, enables beam search; if this and max offset are left unset, beam search will be on and beam size set to 20. Higher beam size will result in slower computation but more accurate results."
+msgstr "1–100, active la recherche par faisceau ; si celui-ci et le décalage maximal sont laissés vides, la recherche par faisceau sera activée avec une taille de faisceau de 20. Une taille plus importante entraînera un calcul plus lent mais plus précis."
+
 msgid "A name is required unless overwriting"
 msgstr "Un nom est requis sauf en cas d'écrasement"
 
@@ -116,6 +119,9 @@ msgstr "Ajouter un groupe"
 msgid "Add Group or User"
 msgstr "Ajouter un groupe ou un utilisateur"
 
+msgid "Add hyphens to words broken across lines"
+msgstr "Ajouter des traits d'union aux mots coupés sur plusieurs lignes"
+
 msgid "Add New"
 msgstr "Ajouter"
 
@@ -127,6 +133,15 @@ msgstr "Ajouter un utilisateur"
 
 msgid "Add/search tags"
 msgstr "Ajouter/rechercher des tags"
+
+msgid "advanced settings"
+msgstr "paramètres avancés"
+
+msgid "Advanced Settings"
+msgstr "Paramètres avancés"
+
+msgid "After"
+msgstr "Après"
 
 msgid "Align"
 msgstr "Aligner"
@@ -153,6 +168,9 @@ msgstr "Appliquer le filtre"
 
 msgid "Apply to selected"
 msgstr "Appliquer à la sélection"
+
+msgid "Archive format"
+msgstr "Format d'archive"
 
 msgid "Are you sure you want to cancel this task?"
 msgstr "Voulez-vous vraiment annuler cette tâche ?"
@@ -191,6 +209,12 @@ msgstr "Modèle de base (facultatif)"
 
 msgid "Baseline"
 msgstr "Ligne de base"
+
+msgid "Beam size"
+msgstr "Taille du faisceau"
+
+msgid "Before"
+msgstr "Avant"
 
 msgid "Browse"
 msgstr "Parcourir"
@@ -291,6 +315,9 @@ msgstr "Défaut"
 msgid "Default Ontology"
 msgstr "Ontologie par défaut"
 
+msgid "Default Segmentation Model"
+msgstr "Modèle de segmentation par défaut"
+
 msgid "Default transcription layer:"
 msgstr "Calque de transcription par défaut :"
 
@@ -321,6 +348,9 @@ msgstr "Supprimer le projet"
 msgid "Delete Project \"%{name}\""
 msgstr "Supprimer le projet \"%{name}\""
 
+msgid "document"
+msgstr "document"
+
 msgid "Document"
 msgstr "Document"
 
@@ -344,6 +374,9 @@ msgstr "Tags du document"
 
 msgid "Documents"
 msgstr "Documents"
+
+msgid "Download"
+msgstr "Télécharger"
 
 msgid "Download Archive"
 msgstr "Télécharger l'archive"
@@ -387,6 +420,12 @@ msgstr "Éléments"
 msgid "Empty ontology config."
 msgstr "Configuration d'ontologie vide."
 
+msgid "Enables max-offset and disables beam search. Maximum number of characters (20–80) difference between the aligned witness text and the original transcription."
+msgstr "Active le décalage maximal et désactive la recherche par faisceau. Nombre maximal de caractères (20–80) de différence entre le texte témoin aligné et la transcription originale."
+
+msgid "Enter layer name"
+msgstr "Saisir le nom de la couche"
+
 msgid "Enter multiple numbers separated by a comma, and/or ranges separated by a dash, to select images"
 msgstr "Saisissez plusieurs nombres séparés par des virgules et/ou des plages séparées par un tiret pour sélectionner des images"
 
@@ -405,6 +444,9 @@ msgstr "Erreur"
 msgid "Error navigating to the images page."
 msgstr "Erreur lors de l'accès à la page des images."
 
+msgid "Existing Layers"
+msgstr "Couches existantes"
+
 msgid "expand task monitoring and usage menu"
 msgstr "Développer le menu de suivi des tâches et d'utilisation"
 
@@ -417,8 +459,14 @@ msgstr "Exporter"
 msgid "Export %{scope}"
 msgstr "Exporter %{scope}"
 
+msgid "Exports %{scope} as a full JSON archive."
+msgstr "Exporte %{scope} sous forme d'archive JSON complète."
+
 msgid "Failed to fetch additional images"
 msgstr "Échec de la récupération d'images supplémentaires"
+
+msgid "File Format"
+msgstr "Format de fichier"
 
 msgid "Filter by:"
 msgstr "Filtrer par :"
@@ -444,6 +492,9 @@ msgstr "Police utilisée pour afficher le texte de transcription de ce document 
 msgid "Font used to display transcription text for documents in this project, unless overridden at the document level. Leave as Default to inherit from the user or built-in font."
 msgstr "Police utilisée pour afficher le texte de transcription des documents de ce projet, sauf remplacement au niveau du document. Laissez « Défaut » pour hériter de la police de l'utilisateur ou d'une police intégrée."
 
+msgid "Gap"
+msgstr "Écart"
+
 msgid "global search"
 msgstr "Recherche globale"
 
@@ -459,13 +510,36 @@ msgstr "Groupes"
 msgid "Groups & Users"
 msgstr "Groupes et utilisateurs"
 
+msgid "Hide"
+msgstr "Masquer"
+
+msgid "Horizontal Left to Right"
+msgstr "Horizontal de gauche à droite"
+
+msgid "Horizontal Right to Left"
+msgstr "Horizontal de droite à gauche"
+
+msgid "If checked, all existing segmentation and bound transcriptions will be deleted."
+msgstr "Si coché, toutes les segmentations existantes et les transcriptions associées seront supprimées."
+
+msgid "If checked, the aligner will automatically insert hyphens when it detects a word was split across two lines in the ground truth."
+msgstr "Si coché, l'aligneur insérera automatiquement des traits d'union lorsqu'il détecte qu'un mot était coupé sur deux lignes dans la référence."
+
+msgid "If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank."
+msgstr "Si coché, l'aligneur réutilisera le texte de la transcription originale lorsque l'alignement n'a pas pu être effectué ; sinon, ces lignes seront vides."
+
+msgid "If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."
+msgstr "Si coché, l'aligneur utilisera toutes les pages transcrites du document pour trouver des correspondances. Sinon, chaque page sera comparée au texte séparément."
+
 msgid "image"
 msgid_plural "images"
 msgstr[0] "image"
 msgstr[1] "images"
 
 msgid "Image"
-msgstr "Image"
+msgid_plural "Images"
+msgstr[0] "Image"
+msgstr[1] "Images"
 
 msgid "image hidden by search filter"
 msgid_plural "images hidden by search filter"
@@ -483,6 +557,15 @@ msgstr "Importer des images ou du contenu de transcription."
 
 msgid "In Progress"
 msgstr "En cours"
+
+msgid "Include"
+msgstr "Inclure"
+
+msgid "Include Characters"
+msgstr "Inclure les données de caractères"
+
+msgid "Include images"
+msgstr "Inclure les images"
 
 msgid "including"
 msgstr "dont"
@@ -505,11 +588,20 @@ msgstr "Dernière tâche démarrée"
 msgid "Last Update"
 msgstr "Dernière mise à jour"
 
+msgid "Layer Name"
+msgstr "Nom de la couche"
+
 msgid "Leaderboard"
 msgstr "Classement"
 
 msgid "Left to right"
 msgstr "De gauche à droite"
+
+msgid "Length (2–25) of token sequences to compare; 25 should work well for at least moderately clean OCR. For very poor OCR, lower to 3 or 4."
+msgstr "Longueur (2–25) des séquences de jetons à comparer ; 25 devrait convenir à un OCR au moins modérément propre. Pour un OCR très médiocre, baisser à 3 ou 4."
+
+msgid "Line length threshold"
+msgstr "Seuil de longueur de ligne"
 
 msgid "Line Position"
 msgstr "Position de la ligne"
@@ -518,6 +610,9 @@ msgid "line type"
 msgid_plural "line types"
 msgstr[0] "type de ligne"
 msgstr[1] "types de ligne"
+
+msgid "Lines"
+msgstr "Lignes"
 
 msgid "Link to Project Guidelines"
 msgstr "Lien vers les directives du projet"
@@ -546,6 +641,9 @@ msgstr "Chargement en cours..."
 msgid "Loading..."
 msgstr "Chargement..."
 
+msgid "Location"
+msgstr "Emplacement"
+
 msgid "Logout"
 msgstr "Déconnexion"
 
@@ -555,11 +653,23 @@ msgstr "Script principal :"
 msgid "Manage Collection"
 msgstr "Gérer la collection"
 
+msgid "Max offset"
+msgstr "Décalage maximal"
+
+msgid "Merge aligned text with existing transcription"
+msgstr "Fusionner le texte aligné avec la transcription existante"
+
 msgid "Metadata"
 msgstr "Métadonnées"
 
 msgid "Metadata (Ctrl+1)"
 msgstr "Métadonnées (Ctrl+1)"
+
+msgid "Minimum proportion (0.0-1.0) of aligned line length to original transcription, below which matches are ignored. At 0.0, all matches are accepted."
+msgstr "Proportion minimale (0.0–1.0) de la longueur de ligne alignée par rapport à la transcription originale, en dessous de laquelle les correspondances sont ignorées. À 0.0, toutes les correspondances sont acceptées."
+
+msgid "Model"
+msgstr "Modèle"
 
 msgid "Model Name"
 msgstr "Nom du modèle"
@@ -576,6 +686,9 @@ msgstr "Modèles"
 msgid "models list"
 msgstr "Liste des modèles"
 
+msgid "Move"
+msgstr "Déplacer"
+
 msgid "Move to bottom"
 msgstr "Déplacer en bas"
 
@@ -591,8 +704,14 @@ msgstr "Doit être une URL valide commençant par http:// ou https://."
 msgid "My Projects"
 msgstr "Mes projets"
 
+msgid "N-gram"
+msgstr "N-gramme"
+
 msgid "Name"
 msgstr "Nom"
+
+msgid "Name for the new transcription layer produced by this alignment."
+msgstr "Nom de la nouvelle couche de transcription produite par cet alignement."
 
 msgid "Name your collection..."
 msgstr "Nommez votre collection..."
@@ -602,6 +721,9 @@ msgstr "Nommez votre nouveau modèle..."
 
 msgid "Name..."
 msgstr "Nom ..."
+
+msgid "New Position"
+msgstr "Nouvelle position"
 
 msgid "No"
 msgstr "Non"
@@ -632,6 +754,9 @@ msgstr "Non démarré"
 
 msgid "Number"
 msgstr "Numéro"
+
+msgid "of"
+msgstr "sur"
 
 msgid "Only the first %{count} images currently visible; click \"Load More\" below to load more images."
 msgstr "Seules les %{count} premières images sont actuellement visibles ; cliquez sur « Charger plus » ci-dessous pour charger plus d'images."
@@ -677,6 +802,9 @@ msgstr[1] "types de partie"
 
 msgid "Please confirm that you want to proceed."
 msgstr "Veuillez confirmer que vous souhaitez procéder."
+
+msgid "Position is required and must be between 1 and %{count}"
+msgstr "La position est obligatoire et doit être comprise entre 1 et %{count}"
 
 msgid "Profile"
 msgstr "Profil"
@@ -725,11 +853,20 @@ msgid_plural "region types"
 msgstr[0] "type de région"
 msgstr[1] "types de région"
 
+msgid "Region Types"
+msgstr "Types de régions"
+
+msgid "Regions"
+msgstr "Régions"
+
 msgid "Remove part"
 msgstr "Retirer la partie"
 
 msgid "Reorder"
 msgstr "Réorganiser"
+
+msgid "required"
+msgstr "requis"
 
 msgid "Right to left"
 msgstr "De droite à gauche"
@@ -791,6 +928,12 @@ msgstr "Segmentation"
 msgid "Segmentation (Ctrl+3)"
 msgstr "Segmentation (Ctrl+3)"
 
+msgid "Segmentation is already in progress for the selected image(s)."
+msgstr "Une segmentation est déjà en cours pour l'image(s) sélectionnée(s)."
+
+msgid "Segmenting…"
+msgstr "Segmentation en cours…"
+
 msgid "Select"
 msgstr "Sélectionner"
 
@@ -806,11 +949,29 @@ msgstr "Sélectionner tous les documents ayant des tâches en attente ou en cour
 msgid "Select all images in the document"
 msgstr "Sélectionner toutes les images du document"
 
+msgid "Select an existing layer or enter a new name."
+msgstr "Sélectionnez une couche existante ou saisissez un nouveau nom."
+
+msgid "Select Existing"
+msgstr "Sélectionner une existante"
+
 msgid "Select None"
 msgstr "Ne rien sélectionner"
 
 msgid "Select only the images currently loaded on screen"
 msgstr "Sélectionner uniquement les images actuellement chargées à l'écran"
+
+msgid "Select or enter layer name"
+msgstr "Sélectionner ou saisir le nom de la couche"
+
+msgid "Select region types to include in the alignment."
+msgstr "Sélectionnez les types de régions à inclure dans l'alignement."
+
+msgid "Select region types to include in the export."
+msgstr "Sélectionnez les types de régions à inclure dans l'export."
+
+msgid "Select region types..."
+msgstr "Sélectionner les types de régions…"
 
 msgid "Select Visible"
 msgstr "Sélectionner les visibles"
@@ -826,8 +987,14 @@ msgid_plural "selected images"
 msgstr[0] "image sélectionnée"
 msgstr[1] "images sélectionnées"
 
+msgid "selection"
+msgstr "sélection"
+
 msgid "Shared Models"
 msgstr "Modèles partagés"
+
+msgid "Show"
+msgstr "Afficher"
 
 msgid "sign in"
 msgstr "Se connecter"
@@ -879,11 +1046,26 @@ msgid_plural "taxonomies"
 msgstr[0] "taxonomie"
 msgstr[1] "taxonomies"
 
+msgid "Text"
+msgstr "Texte"
+
 msgid "Text (Ctrl+5)"
 msgstr "Texte (Ctrl+5)"
 
+msgid "Text Direction"
+msgstr "Direction du texte"
+
 msgid "Text to search"
 msgstr "Texte à rechercher"
+
+msgid "Textual witness"
+msgstr "Témoin textuel"
+
+msgid "Textual Witness"
+msgstr "Témoins textuels"
+
+msgid "The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000."
+msgstr "La distance entre les n-grammes uniques correspondants ; 600 devrait convenir à un OCR propre ou à des textes dont les passages s'alignent sur différentes parties du texte témoin. Pour forcer l'alignement de bout en bout de deux documents, porter à 1 000 000."
 
 msgid "The position of the line relative to the polygon."
 msgstr "La position de la ligne par rapport au polygone."
@@ -906,11 +1088,20 @@ msgstr "Aucun projet à afficher."
 msgid "There are no tasks to display."
 msgstr "Aucune tâche à afficher."
 
+msgid "This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition."
+msgstr "Ces données ne sont présentes que pour les transcriptions issues de la reconnaissance automatique et sont invalidées par l'édition manuelle."
+
 msgid "This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title)."
 msgstr "Ce document n'a aucun tag. Vous pouvez ajouter des tags à l'aide du formulaire d'édition, accessible depuis le menu déroulant du panneau ci-dessus (à droite du titre du document)."
 
+msgid "Threshold"
+msgstr "Seuil"
+
 msgid "thumbnail"
 msgstr "miniature"
+
+msgid "to the following position"
+msgstr "à la position suivante"
 
 msgid "Topline"
 msgstr "Topline"
@@ -966,8 +1157,14 @@ msgstr "Mis à jour le"
 msgid "Updating..."
 msgstr "Mise à jour..."
 
+msgid "Upload New"
+msgstr "Téléverser un nouveau"
+
 msgid "Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost."
 msgstr "Des téléversements sont encore en cours. Voulez-vous vraiment annuler ? Les téléversements inachevés peuvent être perdus."
+
+msgid "Use full transcribed document"
+msgstr "Utiliser le document transcrit complet"
 
 msgid "User"
 msgstr "Utilisateur"
@@ -978,6 +1175,12 @@ msgstr "Utilisateurs"
 msgid "Value"
 msgstr "Valeur"
 
+msgid "Vertical Left to Right"
+msgstr "Vertical de gauche à droite"
+
+msgid "Vertical Right to Left"
+msgstr "Vertical de droite à gauche"
+
 msgid "View All"
 msgstr "Tout afficher"
 
@@ -986,6 +1189,9 @@ msgstr "Affichage :"
 
 msgid "Welcome back, %{name}"
 msgstr "Bon retour, %{name}"
+
+msgid "Will significantly increase the time to produce and download the export."
+msgstr "Augmentera considérablement le temps de production et de téléchargement de l'export."
 
 msgid "Yes"
 msgstr "Oui"
