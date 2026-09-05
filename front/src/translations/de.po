@@ -1,8 +1,9 @@
+#
 msgid ""
 msgstr ""
+"Language: de\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "# of Documents"
@@ -32,6 +33,69 @@ msgid_plural "+ %{count} tags hidden, including %{selected} selected tags"
 msgstr[0] "+ %{count} Tag ausgeblendet, darunter %{selected} ausgewähltes Tag"
 msgstr[1] "+ %{count} Tags ausgeblendet, darunter %{selected} ausgewählte Tags"
 
+msgid ""
+"<b>Left click</b> on a line to select it, then you can drag its closest control point.\n"
+"<br><b>Double click</b> on the line will create a <u>new control point</u> at the mouse location.\n"
+"<br>You can reverse the order of the line's points by selecting a line (or multiple) and using reverse <i class=\"fas fa-arrow-alt-h\" /> (I key).\n"
+"<br>When in region mode, Regions can be edited the same way.\n"
+"<br>Selected lines can be linked or unlinked to regions with the corresponding buttons <i class=\"fas fa-link\" />(Y key) <i class=\"fas fa-unlink\"> (U key).</i>\n"
+"<br>By using the cut mode <i class=\"text-warning fas fa-cut\" /> (C key) you can cut through lines, splitting them in two or removing part of them.\n"
+"<br>If at least two lines are selected an option to join them becomes available <i class=\"fas fa-compress-arrows-alt\" /> (J key).\n"
+"<br>You can go through your changes <u>history</u> back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons <i class=\"fas fa-undo\" /><i class=\"fas fa-redo\" />."
+msgstr ""
+"Klicken Sie mit der <b>linken Maustaste</b> auf eine Zeile, um sie auszuwählen, und ziehen Sie dann ihren nächstgelegenen Kontrollpunkt.\n"
+"<br>Ein <b>Doppelklick</b> auf die Zeile erzeugt einen <u>neuen Kontrollpunkt</u> an der Mausposition.\n"
+"<br>Sie können die Reihenfolge der Punkte einer Zeile umkehren, indem Sie eine Zeile (oder mehrere) auswählen und die Umkehrfunktion <i class=\"fas fa-arrow-alt-h\" /> (I-Taste) verwenden.\n"
+"<br>Im Bereichsmodus können Bereiche auf dieselbe Weise bearbeitet werden.\n"
+"<br>Ausgewählte Zeilen können mit Bereichen über die entsprechenden Schaltflächen <i class=\"fas fa-link\" />(Y-Taste) <i class=\"fas fa-unlink\"> (U-Taste)</i> verknüpft oder davon gelöst werden.\n"
+"<br>Mit dem Ausschneide-Modus <i class=\"text-warning fas fa-cut\" /> (C-Taste) können Sie durch Zeilen schneiden, sie in zwei Teile teilen oder Teile davon entfernen.\n"
+"<br>Wenn mindestens zwei Zeilen ausgewählt sind, wird eine Option zum Verbinden verfügbar <i class=\"fas fa-compress-arrows-alt\" /> (J-Taste).\n"
+"<br>Sie können mit <b>Strg+Z</b> (Rückgängig) und <b>Strg+Y</b> (Wiederholen) oder über die entsprechenden Schaltflächen <i class=\"fas fa-undo\" /><i class=\"fas fa-redo\" /> durch den <u>Verlauf</u> Ihrer Änderungen vor- und zurückgehen."
+
+msgid ""
+"<b>Left click</b> on the image to <u>create</u> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> again to <u>finish</u> it.\n"
+"<br>You can keep the mouse button pressed for free drawing.\n"
+"<br>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.\n"
+"<br>If regions matter to you switch to region mode first <i class=\"fas fa-th-large\" /> (R key).\n"
+"<br>when in region mode <b>Left click</b> to create a new rectangular region, left click again to finish it.\n"
+"<br>lines drawn inside a region will automatically be bound to it.\n"
+"<br>When the quality of the segmentation is good, you can prompt the system to calculate masks <i class=\"text-success fas fa-thumbs-up\" />,\n"
+"<br>once a page already has masks new lines will automatically get a mask and updating a line will also recalculate its mask.\n"
+"<br><b>Note</b> that the quality of the masks is highly dependent on the quality of the whole segmentation, not only the corresponding line,\n"
+"<br>so make sure to draw all the lines before calculating the masks.\n"
+"<br>You can also have the option to calculate the masks <i>en masse</i> in the Images tab -> segment -> choose 'Only masks'."
+msgstr ""
+"Klicken Sie mit der <b>linken Maustaste</b> auf das Bild, um eine neue Zeile <u>zu erstellen</u>, mit der <b>rechten Maustaste</b>, um <b>Punkte hinzuzufügen</b>, und erneut mit der <b>linken Maustaste</b>, um sie <u>abzuschließen</u>.\n"
+"<br>Sie können die Maustaste für freies Zeichnen gedrückt halten.\n"
+"<br>Wenn Sie beim Zeichnen einer Zeile die <b>Escape-Taste</b> drücken, wird sie <u>abgebrochen</u>.\n"
+"<br>Falls Bereiche eine Rolle spielen, wechseln Sie zuerst in den Bereichsmodus <i class=\"fas fa-th-large\" /> (R-Taste).\n"
+"<br>Im Bereichsmodus klicken Sie mit der <b>linken Maustaste</b>, um einen neuen rechteckigen Bereich zu erstellen, und erneut mit der linken Maustaste, um ihn abzuschließen.\n"
+"<br>Zeilen, die innerhalb eines Bereichs gezeichnet werden, werden automatisch an diesen gebunden.\n"
+"<br>Wenn die Qualität der Segmentierung gut ist, können Sie das System veranlassen, Masken zu berechnen <i class=\"text-success fas fa-thumbs-up\" />,\n"
+"<br>sobald eine Seite bereits Masken hat, erhalten neue Zeilen automatisch eine Maske, und beim Aktualisieren einer Zeile wird auch deren Maske neu berechnet.\n"
+"<br><b>Hinweis:</b> Die Qualität der Masken hängt stark von der Qualität der gesamten Segmentierung ab, nicht nur von der entsprechenden Zeile,\n"
+"<br>stellen Sie daher sicher, dass Sie alle Zeilen zeichnen, bevor Sie die Masken berechnen lassen.\n"
+"<br>Sie können die Masken auch <i>in Massen</i> auf einmal berechnen lassen: Reiter Bilder -> Segmentieren -> Option „Nur Masken“."
+
+msgid ""
+"<b>Shift+click</b> allows to add or remove a line from the <u>selection</u>,\n"
+"<br>Clicking on an empty space clears the selection,\n"
+"<br><b>shift and drag</b> creates a <u>lasso</u> selection tool that allows to select control points (they then appear black).\n"
+"<br><b>Note:</b> If lines are already selected the lasso will only select points in those lines.\n"
+"<br><b>Ctrl+drag</b> allows to move all the selected control points at once (or the selected lines if no control points are selected).\n"
+"\n"
+"<br>The red trash <i class=\"text-danger fas fa-trash\" /> button <b>deletes</b> all selected <b>lines/regions</b>,\n"
+"<br>The yellow trash button <i class=\"text-warning fas fa-trash\" /> only <b>deletes</b> selected control <b>points</b>."
+msgstr ""
+"<b>Umschalt+Klick</b> fügt eine Zeile zur <u>Auswahl</u> hinzu oder entfernt sie daraus,\n"
+"<br>Ein Klick auf eine leere Stelle löscht die Auswahl,\n"
+"<br><b>Umschalt+Ziehen</b> erzeugt ein <u>Lasso</u>-Auswahlwerkzeug, mit dem Kontrollpunkte ausgewählt werden können (sie erscheinen dann schwarz).\n"
+"<br><b>Hinweis:</b> Wenn bereits Zeilen ausgewählt sind, wählt das Lasso nur Punkte in diesen Zeilen aus.\n"
+"<br><b>Strg+Ziehen</b> verschiebt alle ausgewählten Kontrollpunkte auf einmal (oder die ausgewählten Zeilen, wenn keine Kontrollpunkte ausgewählt sind).\n"
+"\n"
+"<br>Die rote Papierkorb-Schaltfläche <i class=\"text-danger fas fa-trash\" /> <b>löscht</b> alle ausgewählten <b>Zeilen/Bereiche</b>,\n"
+"<br>Die gelbe Papierkorb-Schaltfläche <i class=\"text-warning fas fa-trash\" /> <b>löscht</b> nur die ausgewählten <b>Kontrollpunkte</b>."
+
 msgid "Add group"
 msgstr "Gruppe hinzufügen"
 
@@ -52,6 +116,9 @@ msgstr "Benutzer hinzufügen"
 
 msgid "Add/search tags"
 msgstr "Tags hinzufügen/suchen"
+
+msgid "Align %{scope}"
+msgstr "Abgleich %{scope}"
 
 msgid "AND"
 msgstr "UND"
@@ -87,6 +154,9 @@ msgstr "Filter löschen"
 
 msgid "Clear search"
 msgstr "Suche löschen"
+
+msgid "Click to go to another Element (Alt+G)."
+msgstr "Klicken Sie, um zu einem anderen Element zu gelangen (Alt+G)."
 
 msgid "Close"
 msgstr "Schließen"
@@ -142,8 +212,38 @@ msgstr "Dokument-Tags"
 msgid "Documents"
 msgstr "Dokumente"
 
+msgid ""
+"Each line corresponds to an edition of the content, in inverse chronological order (Most recent at the top).\n"
+"<br>The colors represent the difference with the previous version,\n"
+"<br><font color=\"green\">green</font> are <b>additions</b> while <font color=\"red\">red</font> are <b>deletions</b>,\n"
+"<br>meaning red characters are not actually part of the line anymore, they are displayed to easily spot the differences.\n"
+"<br>You can mouse over the text to see the actual content.\n"
+"<br>The load state button <i class=\"fas fa-file-upload\" /> simply revert the content of the line to the corresponding text version."
+msgstr ""
+"Jede Zeile entspricht einer Ausgabe des Inhalts in umgekehrter chronologischer Reihenfolge (die neueste zuerst).\n"
+"<br>Die Farben zeigen den Unterschied zur vorherigen Version,\n"
+"<br><font color=\"green\">grün</font> sind <b>Hinzufügungen</b>, während <font color=\"red\">rot</font> <b>Löschungen</b> sind,\n"
+"<br>das heißt, rote Zeichen sind nicht mehr Teil der Zeile, sie werden angezeigt, um die Unterschiede leicht zu erkennen.\n"
+"<br>Sie können mit der Maus über den Text fahren, um den tatsächlichen Inhalt zu sehen.\n"
+"<br>Die Schaltfläche Laden <i class=\"fas fa-file-upload\" /> setzt den Inhalt der Zeile auf die entsprechende Textversion zurück."
+
+msgid ""
+"Each line is a different transcription as checked in the transcription management window <i class=\"fas fa-cog\" />\n"
+"<br>The colors represent the difference with the current transcription,\n"
+"<br><font color=\"green\">green</font> characters are not present in the current (editable) transcription while <font color=\"red\">red</font> characters are not present in the compared transcription."
+msgstr ""
+"Jede Zeile ist eine andere Transkription, wie im Fenster Transkriptionsverwaltung markiert <i class=\"fas fa-cog\" />\n"
+"<br>Die Farben zeigen den Unterschied zur aktuellen Transkription,\n"
+"<br><font color=\"green\">grüne</font> Zeichen sind in der aktuellen (bearbeitbaren) Transkription nicht vorhanden, während <font color=\"red\">rote</font> Zeichen in der verglichenen Transkription nicht vorhanden sind."
+
 msgid "Edit"
 msgstr "Bearbeiten"
+
+msgid "Element #"
+msgstr "Element #"
+
+msgid "Elements"
+msgstr "Elemente"
 
 msgid "English"
 msgstr "English"
@@ -156,6 +256,15 @@ msgstr "Benutzernamen eines registrierten Benutzers eingeben"
 
 msgid "Error navigating to the images page."
 msgstr "Fehler beim Aufrufen der Bilderseite."
+
+msgid "expand task monitoring and usage menu"
+msgstr "Menü für Aufgabenüberwachung und -nutzung erweitern"
+
+msgid "expand user profile menu"
+msgstr "Benutzermenü erweitern"
+
+msgid "Export %{scope}"
+msgstr "Export %{scope}"
 
 msgid "Filter by:"
 msgstr "Filtern nach:"
@@ -178,6 +287,12 @@ msgstr "Schriftart zur Anzeige des Transkriptionstexts für Dokumente in diesem 
 msgid "Français"
 msgstr "Français"
 
+msgid "global search"
+msgstr "Globale Suche"
+
+msgid "Go to"
+msgstr "Gehe zu"
+
 msgid "Groups"
 msgstr "Gruppen"
 
@@ -186,6 +301,12 @@ msgstr "Gruppen & Benutzer"
 
 msgid "Images"
 msgstr "Bilder"
+
+msgid "Import"
+msgstr "Import"
+
+msgid "Import images or transcription content."
+msgstr "Bilder oder Transkriptionsinhalte importieren."
 
 msgid "Invite Users"
 msgstr "Benutzer einladen"
@@ -220,8 +341,14 @@ msgstr "Abmelden"
 msgid "Metadata"
 msgstr "Metadaten"
 
+msgid "Metadata (Ctrl+1)"
+msgstr "Metadaten (Strg+1)"
+
 msgid "Models"
 msgstr "Modelle"
+
+msgid "models list"
+msgstr "Modellliste"
 
 msgid "Must be a valid URL starting with http:// or https://."
 msgstr "Muss eine gültige URL sein, die mit http:// oder https:// beginnt."
@@ -262,6 +389,9 @@ msgstr "Projekt-Schlagwörter"
 msgid "Projects"
 msgstr "Projekte"
 
+msgid "projects list"
+msgstr "Projektliste"
+
 msgid "Read Direction"
 msgstr "Leserichtung"
 
@@ -295,6 +425,12 @@ msgstr "Textsuche in %{scope}"
 msgid "Search..."
 msgstr "Suche..."
 
+msgid "Segment %{scope}"
+msgstr "Segmentieren %{scope}"
+
+msgid "Segmentation (Ctrl+3)"
+msgstr "Segmentierung (Strg+3)"
+
 msgid "Select"
 msgstr "Auswählen"
 
@@ -304,11 +440,17 @@ msgstr "Alle auswählen"
 msgid "Select None"
 msgstr "Keine auswählen"
 
+msgid "sign in"
+msgstr "Anmelden"
+
 msgid "Sign in"
 msgstr "Anmelden"
 
 msgid "Site Administration"
 msgstr "Site-Verwaltung"
+
+msgid "Source Image (Ctrl+2)"
+msgstr "Quellbild (Strg+2)"
 
 msgid "Submit"
 msgstr "Senden"
@@ -318,6 +460,9 @@ msgstr "Setzen Sie einen oder mehrere Begriffe in Anführungszeichen, um die Fuz
 
 msgid "Switch language"
 msgstr "Sprache wechseln"
+
+msgid "switch to light mode"
+msgstr "In den hellen Modus wechseln"
 
 msgid "Tags"
 msgstr "Tags"
@@ -330,6 +475,9 @@ msgstr "Task-Nutzung"
 
 msgid "Tasks"
 msgstr "Tasks"
+
+msgid "Text (Ctrl+5)"
+msgstr "Text (Strg+5)"
 
 msgid "Text to search"
 msgstr "Zu durchsuchender Text"
@@ -351,6 +499,15 @@ msgstr "Toplinie"
 
 msgid "Training"
 msgstr "Training"
+
+msgid "training page"
+msgstr "Trainingsseite"
+
+msgid "Transcribe %{scope}"
+msgstr "Transkribieren %{scope}"
+
+msgid "Transcription (Ctrl+4)"
+msgstr "Transkription (Strg+4)"
 
 msgid "Transcription Font"
 msgstr "Transkriptionsschriftart"
