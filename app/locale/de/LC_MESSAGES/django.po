@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-03 14:14+0000\n"
+"POT-Creation-Date: 2026-09-05 13:20+0000\n"
 "PO-Revision-Date: 2026-07-11 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -266,7 +266,8 @@ msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Max offset and beam size cannot both be non-zero."
-msgstr "Maximaler Offset und Beam-Größe können nicht beide ungleich Null sein."
+msgstr ""
+"Maximaler Offset und Beam-Größe können nicht beide ungleich Null sein."
 
 #: apps/api/serializers.py
 #, python-format
@@ -377,6 +378,11 @@ msgid "Model"
 msgstr "Modell"
 
 #: apps/core/forms.py
+#, python-brace-format
+msgid "default ({name})"
+msgstr "Standard ({name})"
+
+#: apps/core/forms.py
 msgid ""
 "If checked, deletes existing segmentation <b>and bound transcriptions</b> "
 "first!"
@@ -406,8 +412,16 @@ msgstr ""
 "Überschreiben aktiviert ist."
 
 #: apps/core/forms.py
+msgid "Overwrite existing model file"
+msgstr "Vorhandene Modelldatei überschreiben"
+
+#: apps/core/forms.py
 msgid "Empty Ground Truth data."
 msgstr "Leere Ground Truth Daten."
+
+#: apps/core/forms.py
+msgid "Migrate with associated tags"
+msgstr "Mit zugehörigen Tags migrieren"
 
 #: apps/core/models.py
 msgid "Comma separated list of possible value, leave it empty for free input."
@@ -736,6 +750,22 @@ msgstr "Segmentieren"
 msgid "Recognize"
 msgstr "Transkribieren"
 
+#: apps/core/models.py
+msgid "Pages per segmentation task"
+msgstr "Seiten pro Segmentierungsaufgabe"
+
+#: apps/core/models.py
+msgid "Pages per transcription task"
+msgstr "Seiten pro Transkriptionsaufgabe"
+
+#: apps/core/models.py
+msgid "Instance setting"
+msgstr "Instanzeinstellung"
+
+#: apps/core/models.py
+msgid "Instance settings"
+msgstr "Instanzeinstellungen"
+
 #: apps/core/tasks.py
 msgid "D-FINE model fine-tuning is not supported at the moment."
 msgstr "Feinabstimmung von D-FINE-Modellen wird derzeit nicht unterstützt."
@@ -910,7 +940,9 @@ msgstr ""
 
 #: apps/imports/forms.py
 msgid "The document cannot be downloaded, certificate verify failed."
-msgstr "Das Dokument kann nicht heruntergeladen werden, da die Zertifikatsprüfung fehlgeschlagen ist."
+msgstr ""
+"Das Dokument kann nicht heruntergeladen werden, da die Zertifikatsprüfung "
+"fehlgeschlagen ist."
 
 #: apps/imports/forms.py
 msgid "The document pointed to by the given uri doesn't seem to be valid json."
@@ -1020,7 +1052,8 @@ msgstr "Alle Transkriptionen einbeziehen"
 
 #: apps/imports/forms.py
 msgid "Includes all transcriptions of the document, not only the one selected."
-msgstr "Enthält alle Transkriptionen des Dokuments, nicht nur die ausgewählte."
+msgstr ""
+"Enthält alle Transkriptionen des Dokuments, nicht nur die ausgewählte."
 
 #: apps/imports/forms.py
 msgid "Include annotations"
@@ -1218,6 +1251,10 @@ msgid "Canceled"
 msgstr "Abgebrochen"
 
 #: apps/users/admin.py
+msgid "Optional: Set the user's account expiry date"
+msgstr "Optional: Ablaufdatum des Benutzerkontos festlegen"
+
+#: apps/users/admin.py
 #, python-format
 msgid "%d user disabled."
 msgid_plural "%d users disabled."
@@ -1251,6 +1288,10 @@ msgstr ""
 #: escriptorium/templates/admin/users/invitation/change_list.html
 msgid "Bulk Invite"
 msgstr "Masseneinladung"
+
+#: apps/users/forms.py
+msgid "Optional: set an expiry date for this user's account"
+msgstr "Optional: Setzen Sie ein Ablaufdatum für dieses Benutzerkonto"
 
 #: apps/users/forms.py
 msgid "CSV file with emails"
@@ -1311,6 +1352,10 @@ msgid "email address"
 msgstr "E-Mail-Adresse"
 
 #: apps/users/models.py
+msgid "Legacy mode"
+msgstr "Legacy-Modus"
+
+#: apps/users/models.py
 msgid ""
 "Use the legacy version of the user interface. If unchecked, features that "
 "have not yet been ported to the new interface may become unavailable. "
@@ -1334,6 +1379,19 @@ msgstr ""
 "wird,sofern sie nicht auf Dokument- oder Projektebene überschrieben wird."
 
 #: apps/users/models.py
+msgid "Download retention days"
+msgstr "Aufbewahrungsdauer für Downloads (Tage)"
+
+#: apps/users/models.py
+msgid ""
+"How many days downloads (exports, archives) are kept on the server before "
+"automatic cleanup. Set to 0 to disable auto-cleanup."
+msgstr ""
+"Wie viele Tage Downloads (Exporte, Archive) auf dem Server aufbewahrt werden, "
+"bevor sie automatisch bereinigt werden. Auf 0 setzen, um die automatische "
+"Bereinigung zu deaktivieren."
+
+#: apps/users/models.py
 msgid "Error"
 msgstr "Fehler"
 
@@ -1350,9 +1408,38 @@ msgid "Accepted"
 msgstr "Akzeptiert"
 
 #: apps/users/models.py
+msgid "Recipient first name"
+msgstr "Vorname des Empfängers"
+
+#: apps/users/models.py
+msgid "Recipient last name"
+msgstr "Nachname des Empfängers"
+
+#: apps/users/models.py
+msgid "Recipient email"
+msgstr "E-Mail-Adresse des Empfängers"
+
+#: apps/users/models.py
 #, python-brace-format
 msgid "{username} accepted your invitation!"
 msgstr "{username} hat Ihre Einladung angenommen!"
+
+#: apps/users/models.py escriptorium/templates/core/document_list.html
+#: escriptorium/templates/core/models_list/rights/main.html
+msgid "Name"
+msgstr "Name"
+
+#: apps/users/models.py
+msgid "Message"
+msgstr "Nachricht"
+
+#: apps/users/models.py
+msgid "Contact message"
+msgstr "Kontaktnachricht"
+
+#: apps/users/models.py
+msgid "Contact messages"
+msgstr "Kontaktnachrichten"
 
 #: apps/users/views.py
 msgid "Invitation sent successfully!"
@@ -1946,11 +2033,6 @@ msgstr "Auswählen"
 #: escriptorium/templates/core/document_list.html
 msgid "Preview"
 msgstr "Vorschau"
-
-#: escriptorium/templates/core/document_list.html
-#: escriptorium/templates/core/models_list/rights/main.html
-msgid "Name"
-msgstr "Name"
 
 #: escriptorium/templates/core/document_list.html
 #: escriptorium/templates/core/project_list.html
