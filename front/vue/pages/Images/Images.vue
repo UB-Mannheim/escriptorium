@@ -11,9 +11,9 @@
                 <div class="escr-images-header">
                     <div class="escr-images-title">
                         <h3 :title="documentName">
-                            {{ documentName || "Loading..." }}
+                            {{ documentName || $gettext("Loading...") }}
                         </h3>
-                        <h1>Images</h1>
+                        <h1 v-translate>Images</h1>
                     </div>
                     <VDropdown
                         placement="bottom-end"
@@ -24,14 +24,14 @@
                             color="primary"
                             :disabled="loading && loading.document"
                             :on-click="() => openModal('import')"
-                            label="Import"
+                            :label="$gettext('Import')"
                         >
                             <template #button-icon>
                                 <ImportIcon />
                             </template>
                         </EscrButton>
                         <template #popper>
-                            <span class="escr-tooltip-text">
+                            <span class="escr-tooltip-text" v-translate>
                                 Import images or transcription content.
                             </span>
                         </template>
@@ -47,7 +47,7 @@
                         >
                             {{
                                 (!loading.document && partsCount)
-                                    ? `${partsCount.toLocaleString()} images`
+                                    ? `${partsCount.toLocaleString()} ${$ngettext("image", "images", partsCount)}`
                                     : ''
                             }}
                         </span>
@@ -55,7 +55,7 @@
                             v-else
                             class="escr-parts-count"
                             :loading="loading && (loading.document || loading.images)"
-                            no-data-message="0 images"
+                            :no-data-message="$gettext('0 images')"
                         />
                         <TextField
                             :disabled="(loading && loading.images) || !parts.length"
@@ -64,12 +64,12 @@
                             :label-visible="false"
                             :value="textFilterValue"
                             class="search-text-field"
-                            label="Search to filter images by element name"
-                            placeholder="Search element name"
+                            :label="$gettext('Search to filter images by element name')"
+                            :placeholder="$gettext('Search element name')"
                         />
                         <EscrButton
                             color="secondary"
-                            label="Search"
+                            :label="$gettext('Search')"
                             size="small"
                             :disabled="(loading && loading.images) || !parts.length"
                             :on-click="onSubmitSearch"
@@ -104,13 +104,12 @@
                             :label-visible="false"
                             :value="rangeInputValue"
                             class="range-text-field"
-                            :label="'Enter multiple numbers separated by a comma, and/or ranges ' +
-                                'separated by a dash, to select images'"
-                            placeholder="Enter select range"
+                            :label="$gettext('Enter multiple numbers separated by a comma, and/or ranges separated by a dash, to select images')"
+                            :placeholder="$gettext('Enter select range')"
                         />
                         <EscrButton
                             color="text"
-                            label="Select All"
+                            :label="$gettext('Select All')"
                             size="small"
                             :disabled="(loading && loading.images) || selectedParts.length === parts.length"
                             :on-click="selectAll"
@@ -118,7 +117,7 @@
                         <div class="new-section">
                             <ToggleButton
                                 color="secondary"
-                                label="Reorder"
+                                :label="$gettext('Reorder')"
                                 :checked="isReorderMode"
                                 :disabled="(loading && loading.images) || !parts.length"
                                 :on-change="() => isReorderMode = !isReorderMode"
@@ -144,7 +143,7 @@
                     class="escr-image-selection-toolbar"
                 >
                     <span class="selected-count">
-                        {{ selectedParts.length }} selected
+                        {{ selectedParts.length }} {{ $gettext("selected") }}
                     </span>
                     <div
                         v-if="isReorderMode"
@@ -152,7 +151,7 @@
                     >
                         <EscrButton
                             color="secondary"
-                            label="Move to top"
+                            :label="$gettext('Move to top')"
                             size="small"
                             :on-click="() => moveSelectedParts({ index: 0 })"
                         >
@@ -162,7 +161,7 @@
                         </EscrButton>
                         <EscrButton
                             color="secondary"
-                            label="Move to bottom"
+                            :label="$gettext('Move to bottom')"
                             size="small"
                             :on-click="() => moveSelectedParts({ index: -1 })"
                         >
@@ -172,7 +171,7 @@
                         </EscrButton>
                         <EscrButton
                             color="secondary"
-                            label="Move to..."
+                            :label="$gettext('Move to...')"
                             size="small"
                             :on-click="openMoveModal"
                         >
@@ -187,7 +186,7 @@
                     >
                         <EscrButton
                             color="secondary"
-                            label="Segment"
+                            :label="$gettext('Segment')"
                             size="small"
                             :disabled="loading && loading.images"
                             :on-click="() => openModal('segment')"
@@ -198,7 +197,7 @@
                         </EscrButton>
                         <EscrButton
                             color="secondary"
-                            label="Transcribe"
+                            :label="$gettext('Transcribe')"
                             size="small"
                             :disabled="loading && loading.images"
                             :on-click="() => openModal('transcribe')"
@@ -209,7 +208,7 @@
                         </EscrButton>
                         <EscrButton
                             color="secondary"
-                            label="Align"
+                            :label="$gettext('Align')"
                             size="small"
                             :disabled="loading && loading.images"
                             :on-click="() => openModal('align')"
@@ -220,7 +219,7 @@
                         </EscrButton>
                         <EscrButton
                             color="secondary"
-                            label="Train Model"
+                            :label="$gettext('Train Model')"
                             size="small"
                             :disabled="loading && loading.images || selectedParts.length === 0"
                             :on-click="goToTraining"
@@ -231,7 +230,7 @@
                         </EscrButton>
                         <EscrButton
                             color="secondary"
-                            label="Redraw Masks"
+                            :label="$gettext('Redraw Masks')"
                             size="small"
                             :disabled="loading && loading.images"
                             :on-click="() => openRedrawModal()"
@@ -242,7 +241,7 @@
                         </EscrButton>
                         <EscrButton
                             color="secondary"
-                            label="Export"
+                            :label="$gettext('Export')"
                             size="small"
                             :disabled="loading && loading.images"
                             :on-click="() => openModal('export')"
@@ -275,7 +274,7 @@
                                             @mousedown="() => openModal('downloadArchive')"
                                         >
                                             <DownloadIcon class="escr-menuitem-icon" />
-                                            <span>Download Archive</span>
+                                            <span v-translate>Download Archive</span>
                                         </button>
                                     </li>
                                     <li>
@@ -283,7 +282,7 @@
                                             @mousedown="() => openDeleteModal()"
                                         >
                                             <TrashIcon class="escr-menuitem-icon" />
-                                            <span>Delete</span>
+                                            <span v-translate>Delete</span>
                                         </button>
                                     </li>
                                 </ul>
@@ -292,7 +291,7 @@
                     </div>
                     <EscrButton
                         color="secondary"
-                        label="Clear All"
+                        :label="$gettext('Clear All')"
                         size="small"
                         :disabled="loading && loading.images"
                         :on-click="selectNone"
@@ -334,7 +333,7 @@
                     </ul>
                     <EscrButton
                         v-if="nextPage"
-                        label="Load more"
+                        :label="$gettext('Load more')"
                         class="escr-load-more-btn"
                         color="outline-primary"
                         size="small"
@@ -349,7 +348,7 @@
                             class="escr-spinner"
                             role="status"
                         >
-                            <span class="sr-only">Loading...</span>
+                            <span class="sr-only" v-translate>Loading...</span>
                         </div>
                     </div>
                 </div>
@@ -381,7 +380,7 @@
                     />
                     <EscrButton
                         v-if="nextPage"
-                        label="Load more"
+                        :label="$gettext('Load more')"
                         class="escr-load-more-btn"
                         color="outline-primary"
                         size="small"
@@ -396,7 +395,7 @@
                             class="escr-spinner"
                             role="status"
                         >
-                            <span class="sr-only">Loading...</span>
+                            <span class="sr-only" v-translate>Loading...</span>
                         </div>
                     </div>
                 </div>
@@ -404,7 +403,7 @@
                     v-else
                     class="grid-spinner"
                     :loading="loading && loading.images"
-                    no-data-message="There are no images to display."
+                    :no-data-message="$gettext('There are no images to display.')"
                 />
 
                 <!-- import images modal -->
@@ -417,11 +416,10 @@
                 <!-- cancel image uploads modal -->
                 <ConfirmModal
                     v-if="taskModalOpen && taskModalOpen.imageCancelWarning"
-                    :body-text="'Uploads are still in progress. Are you sure you want ' +
-                        'to cancel? Incomplete uploads may be lost.'"
-                    title="Cancel Upload In Progress"
-                    cancel-verb="No"
-                    confirm-verb="Yes, cancel"
+                    :body-text="$gettext('Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost.')"
+                    :title="$gettext('Cancel Upload In Progress')"
+                    :cancel-verb="$gettext('No')"
+                    :confirm-verb="$gettext('Yes, cancel')"
                     :disabled="loading && (loading.images || loading.document)"
                     :on-cancel="() => closeTaskModal('imageCancelWarning')"
                     :on-confirm="confirmImageCancelWarning"
@@ -446,7 +444,7 @@
                         if (selectedParts.length === 1) setSelectedParts([]);
                     }"
                     :on-submit="handleSubmitSegmentation"
-                    :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
+                    :scope="imagesScope"
                 />
                 <!-- transcribe images modal -->
                 <TranscribeModal
@@ -459,7 +457,7 @@
                         if (selectedParts.length === 1) setSelectedParts([]);
                     }"
                     :on-submit="handleSubmitTranscribe"
-                    :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
+                    :scope="imagesScope"
                 />
                 <!-- overwrite segmentation modal -->
                 <ConfirmModal
@@ -485,7 +483,7 @@
                     }"
                     :on-submit="handleSubmitAlign"
                     :textual-witnesses="textualWitnesses"
-                    :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
+                    :scope="imagesScope"
                 />
                 <!-- export images modal -->
                 <ExportModal
@@ -500,7 +498,7 @@
                         if (selectedParts.length === 1) setSelectedParts([]);
                     }"
                     :on-submit="handleSubmitExport"
-                    :scope="selectedParts.length === 1 ? 'Image' : `${selectedParts.length} Images`"
+                    :scope="imagesScope"
                 />
                 <!-- download archive images modal -->
                 <DownloadArchiveModal
@@ -508,14 +506,14 @@
                     :disabled="loading && (loading.images || loading.document)"
                     :on-cancel="() => closeTaskModal('downloadArchive')"
                     :on-submit="handleSubmitDownloadArchive"
-                    scope="Document"
+                    :scope="$gettext('Document')"
                 />
                 <!-- redraw masks modal -->
                 <ConfirmModal
                     v-if="redrawModalOpen"
-                    body-text="Are you sure you want to redraw all masks on the selected image(s)?"
+                    :body-text="$gettext('Are you sure you want to redraw all masks on the selected image(s)?')"
                     color="primary"
-                    title="Redraw Masks"
+                    :title="$gettext('Redraw Masks')"
                     :cannot-undo="true"
                     :disabled="loading && loading.images"
                     :on-cancel="() => closeRedrawModal()"
@@ -524,11 +522,9 @@
                 <!-- delete images modal -->
                 <ConfirmModal
                     v-if="deleteModalOpen"
-                    :body-text="partTitleToDelete ?
-                        `Are you sure you want to delete ${partTitleToDelete}?` :
-                        'Are you sure you want to delete the selected image(s)?'"
-                    confirm-verb="Delete"
-                    :title="selectedParts.length === 1 ? 'Delete Image' : 'Delete Images'"
+                    :body-text="deleteBodyText"
+                    :confirm-verb="$gettext('Delete')"
+                    :title="selectedParts.length === 1 ? $gettext('Delete Image') : $gettext('Delete Images')"
                     :cannot-undo="true"
                     :disabled="loading && loading.images"
                     :on-cancel="() => closeDeleteModal(!!partTitleToDelete)"
@@ -713,10 +709,30 @@ export default {
             transcriptions: (state) => state.document.transcriptions,
         }),
         /**
+         * scope label for task modals: "Image" or "N Images"
+         */
+        imagesScope() {
+            const n = this.selectedParts.length;
+            return n === 1
+                ? this.$gettext("Image")
+                : `${n} ${this.$gettext("Images")}`;
+        },
+        /**
+         * body text for the delete images confirmation modal
+         */
+        deleteBodyText() {
+            return this.partTitleToDelete
+                ? this.$gettextInterpolate(
+                    this.$gettext("Are you sure you want to delete the image %{name}?"),
+                    { name: this.partTitleToDelete },
+                )
+                : this.$gettext("Are you sure you want to delete the selected image(s)?");
+        },
+        /**
          * Links and titles for the breadcrumbs above the page.
          */
         breadcrumbs() {
-            let docBreadcrumbs = [{ title: "Loading..." }, { title: "Loading..." }];
+            let docBreadcrumbs = [{ title: this.$gettext("Loading...") }, { title: this.$gettext("Loading...") }];
             if (this.projectName && this.projectSlug && this.documentName) {
                 docBreadcrumbs = [
                     {
@@ -730,9 +746,9 @@ export default {
                 ];
             }
             return [
-                { title: "My Projects", href: SCRIPT_NAME + "/projects/" },
+                { title: this.$gettext("My Projects"), href: SCRIPT_NAME + "/projects/" },
                 ...docBreadcrumbs,
-                { title: "Images" },
+                { title: this.$gettext("Images") },
             ];
         },
         /**
@@ -776,7 +792,7 @@ export default {
                     },
                     icon: PeopleIcon,
                     key: "share",
-                    label: "Groups & Users",
+                    label: this.$gettext("Groups & Users"),
                     panel: SharePanel,
                 },
                 {
@@ -786,7 +802,7 @@ export default {
                     },
                     icon: ModelsIcon,
                     key: "models",
-                    label: "Models",
+                    label: this.$gettext("Models"),
                     panel: ModelsPanel,
                 }
             ];
@@ -801,7 +817,7 @@ export default {
                     },
                     icon: SearchIcon,
                     key: "search",
-                    label: "Search Document",
+                    label: this.$gettext("Search Document"),
                     panel: SearchPanel,
                 });
             }
@@ -824,13 +840,13 @@ export default {
                     value: "grid",
                     label: GridIcon,
                     selected: this.displayMode === "grid",
-                    tooltip: "Grid view",
+                    tooltip: this.$gettext("Grid view"),
                 },
                 {
                     value: "list",
                     label: ListIcon,
                     selected: this.displayMode === "list",
-                    tooltip: "List view",
+                    tooltip: this.$gettext("List view"),
                 },
             ]
         },
@@ -840,35 +856,35 @@ export default {
         partsHeaders() {
             return [
                 {
-                    label: "Number",
+                    label: this.$gettext("Number"),
                     value: "order",
                     format: (val) => val + 1,
                     class: "number",
                 },
-                { label: "Name", value: "title", image: "thumbnail" },
+                { label: this.$gettext("Name"), value: "title", image: "thumbnail" },
                 {
-                    label: "Segment",
+                    label: this.$gettext("Segment"),
                     value: "segmentWorkflow",
                     key: "segment",
                     class: "workflow",
                     component: ImageWorkflowStatus,
                 },
                 {
-                    label: "Transcribe",
+                    label: this.$gettext("Transcribe"),
                     value: "transcribeWorkflow",
                     key: "transcribe",
                     class: "workflow",
                     component: ImageWorkflowStatus,
                 },
                 {
-                    label: "Align",
+                    label: this.$gettext("Align"),
                     value: "alignWorkflow",
                     key: "align",
                     class: "workflow",
                     component: ImageWorkflowStatus,
                 },
                 {
-                    label: "Last Edited",
+                    label: this.$gettext("Last Edited"),
                     value: "updated_at",
                     format: (val) => new Date(val).toLocaleDateString(
                         undefined,
@@ -1034,7 +1050,7 @@ export default {
                     );
                     this.setSelectedPartsByOrder(filteredSelected);
                 } else {
-                    this.addError({ message: "Failed to fetch additional images" });
+                    this.addError({ message: this.$gettext("Failed to fetch additional images") });
                 }
                 this.setLoading({ key: "images", loading: false });
             }
@@ -1131,7 +1147,7 @@ export default {
             if (failureCount < maxRetries) {
                 callback();
             } else {
-                this.addError({ message: "Failed to fetch additional images" });
+                this.addError({ message: this.$gettext("Failed to fetch additional images") });
             }
             this.setLoading({ key: "images", loading: false });
         },
