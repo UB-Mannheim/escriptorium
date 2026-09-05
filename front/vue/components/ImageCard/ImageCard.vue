@@ -25,7 +25,7 @@
                 class="img"
                 :href="part.href"
                 :disabled="loading && loading.images"
-                aria-label="edit image"
+                :aria-label="$gettext('edit image')"
             >
                 <img :src="part.thumbnail">
             </a>
@@ -82,7 +82,7 @@
                         }"
                         :disabled="loading && loading.images"
                         :href="part.href"
-                        aria-label="edit image"
+                        :aria-label="$gettext('edit image')"
                     >
                         <EditImageIcon />
                     </a>
@@ -116,7 +116,7 @@
                                     @mousedown="() => selectPartAndOpenModal(part.pk, 'segment')"
                                 >
                                     <SegmentIcon class="escr-menuitem-icon" />
-                                    <span>Segment</span>
+                                    <span v-translate>Segment</span>
                                 </button>
                             </li>
                             <li>
@@ -124,7 +124,7 @@
                                     @mousedown="() => selectPartAndOpenModal(part.pk, 'transcribe')"
                                 >
                                     <TranscribeIcon class="escr-menuitem-icon" />
-                                    <span>Transcribe</span>
+                                    <span v-translate>Transcribe</span>
                                 </button>
                             </li>
                             <li>
@@ -132,7 +132,7 @@
                                     @mousedown="() => selectPartAndOpenModal(part.pk, 'align')"
                                 >
                                     <AlignIcon class="escr-menuitem-icon" />
-                                    <span>Align</span>
+                                    <span v-translate>Align</span>
                                 </button>
                             </li>
                             <li>
@@ -140,7 +140,7 @@
                                     @mousedown="() => selectPartAndOpenModal(part.pk, 'export')"
                                 >
                                     <ExportIcon class="escr-menuitem-icon" />
-                                    <span>Export</span>
+                                    <span v-translate>Export</span>
                                 </button>
                             </li>
                             <li class="new-section">
@@ -148,7 +148,7 @@
                                     @mousedown="() => openDeleteModal(part)"
                                 >
                                     <TrashIcon class="escr-menuitem-icon" />
-                                    <span>Delete</span>
+                                    <span v-translate>Delete</span>
                                 </button>
                             </li>
                         </ul>
@@ -182,7 +182,7 @@
                     <template #popper>
                         <div>
                             <SegmentIcon />
-                            <span>Segmentation</span>
+                            <span v-translate>Segmentation</span>
                         </div>
                         <div class="task-metadata">
                             <span
@@ -192,11 +192,12 @@
                                     status: true,
                                 }"
                             >
-                                {{ part.workflow.segment|workflowString }}
+                                {{ workflowLabel(part.workflow.segment) }}
                             </span>
                             <span
                                 v-else
                                 class="status"
+                                v-translate
                             >
                                 Not initiated
                             </span>
@@ -218,7 +219,7 @@
                     <template #popper>
                         <div>
                             <TranscribeIcon />
-                            <span>Transcription</span>
+                            <span v-translate>Transcription</span>
                         </div>
                         <div class="task-metadata">
                             <span
@@ -228,11 +229,12 @@
                                     status: true,
                                 }"
                             >
-                                {{ part.workflow.transcribe|workflowString }}
+                                {{ workflowLabel(part.workflow.transcribe) }}
                             </span>
                             <span
                                 v-else
                                 class="status"
+                                v-translate
                             >
                                 Not initiated
                             </span>
@@ -253,7 +255,7 @@
                     <template #popper>
                         <div>
                             <AlignIcon />
-                            <span>Alignment</span>
+                            <span v-translate>Alignment</span>
                         </div>
                         <div class="task-metadata">
                             <span
@@ -263,11 +265,12 @@
                                     status: true,
                                 }"
                             >
-                                {{ part.workflow.align|workflowString }}
+                                {{ workflowLabel(part.workflow.align) }}
                             </span>
                             <span
                                 v-else
                                 class="status"
+                                v-translate
                             >
                                 Not initiated
                             </span>
@@ -345,23 +348,6 @@ export default {
                 },
             );
         },
-        /**
-         * Get the label for a workflow using the internal name as a key
-         */
-        workflowString(state) {
-            switch (state) {
-                case "pending":
-                    return "Initiated";
-                case "ongoing":
-                    return "In Progress";
-                case "error":
-                    return "Error";
-                case "done":
-                    return "Completed";
-                default:
-                    return "Not initiated";
-            }
-        }
     },
     props: {
         /**
@@ -422,6 +408,23 @@ export default {
         })
     },
     methods: {
+        /**
+         * Get the label for a workflow using the internal name as a key
+         */
+        workflowLabel(state) {
+            switch (state) {
+                case "pending":
+                    return this.$gettext("Initiated");
+                case "ongoing":
+                    return this.$gettext("In Progress");
+                case "error":
+                    return this.$gettext("Error");
+                case "done":
+                    return this.$gettext("Completed");
+                default:
+                    return this.$gettext("Not initiated");
+            }
+        },
         ...mapActions("alerts", ["addError"]),
         ...mapActions("tasks", ["openModal"]),
         ...mapActions("images", ["movePart", "moveSelectedParts", "openDeleteModal"]),
