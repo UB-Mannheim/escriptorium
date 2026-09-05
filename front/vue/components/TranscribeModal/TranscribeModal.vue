@@ -3,7 +3,7 @@
         class="escr-transcribe-modal"
     >
         <template #modal-header>
-            <h2>Transcribe {{ scope }}</h2>
+            <h2>{{ $gettext("Transcribe") }} {{ scope }}</h2>
             <EscrButton
                 color="text"
                 :on-click="onCancel"
@@ -20,33 +20,33 @@
                 message="Check accuracy of segmentation prior to transcribing."
             />
             <AutocompleteField
-                label="Model"
+                :label="$gettext('Model')"
                 :disabled="disabled || !models"
                 :option-groups="modelOptionGroups"
                 :on-change="handleModelChange"
                 required
             />
             <AutocompleteField
-                label="Layer Name"
+                :label="$gettext('Layer Name')"
                 :disabled="disabled"
-                help-text="Select an existing layer or enter a new name."
+                :help-text="$gettext('Select an existing layer or enter a new name.')"
                 :option-groups="transcriptionOptionGroups"
                 :on-change="handleLayerNameInput"
                 :allow-custom-value="true"
-                placeholder="Select or enter layer name"
+                :placeholder="$gettext('Select or enter layer name')"
                 required
             />
         </template>
         <template #modal-actions>
             <EscrButton
                 color="outline-primary"
-                label="Cancel"
+                :label="$gettext('Cancel')"
                 :on-click="onCancel"
                 :disabled="disabled"
             />
             <EscrButton
                 color="primary"
-                label="Transcribe"
+                :label="$gettext('Transcribe')"
                 :on-click="onSubmit"
                 :disabled="disabled || invalid"
             />
@@ -158,13 +158,13 @@ export default {
 
             const groups = [];
             if (yourModels.length > 0) {
-                groups.push({ label: "Your Models", options: yourModels });
+                groups.push({ label: this.$gettext("Your Models"), options: yourModels });
             }
             if (sharedModels.length > 0) {
-                groups.push({ label: "Shared Models", options: sharedModels });
+                groups.push({ label: this.$gettext("Shared Models"), options: sharedModels });
             }
             if (publicModels.length > 0) {
-                groups.push({ label: "Public Models", options: publicModels });
+                groups.push({ label: this.$gettext("Public Models"), options: publicModels });
             }
 
             return groups;
@@ -180,7 +180,7 @@ export default {
             }));
 
             return options.length > 0
-                ? [{ label: "Existing Layers", options }]
+                ? [{ label: this.$gettext("Existing Layers"), options }]
                 : [];
         },
     },
