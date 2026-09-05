@@ -5,33 +5,244 @@ msgstr ""
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: vue/components/GlobalNavigation/GlobalNavigation.vue
+msgid "# of Documents"
+msgstr "Anzahl der Dokumente"
+
+msgid "# of Images"
+msgstr "Anzahl Bilder"
+
+msgid "%{action} Document"
+msgstr "%{action} Dokument"
+
+msgid "%{action} Project"
+msgstr "%{action} Projekt"
+
+msgid "%{count} element"
+msgid_plural "%{count} elements"
+msgstr[0] "%{count} Element"
+msgstr[1] "%{count} Elemente"
+
+msgid "%{count} tag hidden, including %{selected} selected."
+msgid_plural "%{count} tags hidden, including %{selected} selected."
+msgstr[0] "%{count} Tag ausgeblendet, darunter %{selected} ausgewählt."
+msgstr[1] "%{count} Tags ausgeblendet, darunter %{selected} ausgewählt."
+
+msgid "+ %{count} tag hidden, including %{selected} selected tag"
+msgid_plural "+ %{count} tags hidden, including %{selected} selected tags"
+msgstr[0] "+ %{count} Tag ausgeblendet, darunter %{selected} ausgewähltes Tag"
+msgstr[1] "+ %{count} Tags ausgeblendet, darunter %{selected} ausgewählte Tags"
+
+msgid "Add group"
+msgstr "Gruppe hinzufügen"
+
+msgid "Add Group"
+msgstr "Gruppe hinzufügen"
+
+msgid "Add Group or User"
+msgstr "Gruppe oder Benutzer hinzufügen"
+
+msgid "Add New"
+msgstr "Neu hinzufügen"
+
+msgid "Add user"
+msgstr "Benutzer hinzufügen"
+
+msgid "Add User"
+msgstr "Benutzer hinzufügen"
+
+msgid "Add/search tags"
+msgstr "Tags hinzufügen/suchen"
+
+msgid "AND"
+msgstr "UND"
+
+msgid "Apply Filter"
+msgstr "Filter anwenden"
+
+msgid "Are you sure you want to delete the document %{name}?"
+msgstr "Möchten Sie das Dokument %{name} wirklich löschen?"
+
+msgid "Are you sure you want to delete this project?"
+msgstr "Möchten Sie dieses Projekt wirklich löschen?"
+
+msgid ""
+"Are you sure you want to delete this project?\n"
+"                            This action cannot be undone."
+msgstr "Möchten Sie dieses Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "Baseline"
+msgstr "Grundlinie"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Centered"
+msgstr "Zentriert"
+
 msgid "Change Password"
 msgstr "Passwort ändern"
+
+msgid "Clear filter"
+msgstr "Filter löschen"
+
+msgid "Clear search"
+msgstr "Suche löschen"
+
+msgid "Close"
+msgstr "Schließen"
+
+msgid "Close the %{label} panel"
+msgstr "Bedienfeld %{label} schließen"
+
+msgid "Create"
+msgstr "Erstellen"
+
+msgid "Create a tag"
+msgstr "Tag erstellen"
+
+msgid "Create a tag \"%{tagName}\""
+msgstr "Tag \"%{tagName}\" erstellen"
+
+msgid "Create New"
+msgstr "Neu erstellen"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "Delete %{name}"
+msgstr "%{name} löschen"
+
+msgid "Delete document"
+msgstr "Dokument löschen"
+
+msgid "Delete project"
+msgstr "Projekt löschen"
+
+msgid "Delete Project"
+msgstr "Projekt löschen"
+
+msgid "Delete Project \"%{name}\""
+msgstr "Projekt \"%{name}\" löschen"
 
 msgid "Deutsch"
 msgstr "Deutsch"
 
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document images"
+msgstr "Dokumentbilder"
+
+msgid "Document Tags"
+msgstr "Dokument-Tags"
+
+msgid "Documents"
+msgstr "Dokumente"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
 msgid "English"
 msgstr "English"
+
+msgid "Enter project name"
+msgstr "Projektnamen eingeben"
+
+msgid "Enter username of registered user"
+msgstr "Benutzernamen eines registrierten Benutzers eingeben"
+
+msgid "Error navigating to the images page."
+msgstr "Fehler beim Aufrufen der Bilderseite."
+
+msgid "Filter by:"
+msgstr "Filtern nach:"
+
+msgid "Filter Tags"
+msgstr "Tags filtern"
 
 msgid "Find and Replace"
 msgstr "Suchen und Ersetzen"
 
+msgid "Find tag"
+msgstr "Tag suchen"
+
+msgid "Font used to display this document's transcription text in the editor, overriding the project and user fonts. Leave as Default to inherit from the project, user, or built-in font."
+msgstr "Schriftart zur Anzeige des Transkriptionstexts dieses Dokuments im Editor, die die Schriftarten des Projekts und des Benutzers überschreibt. Als Standard belassen, um die Schriftart des Projekts, des Benutzers oder eine integrierte Schriftart zu übernehmen."
+
+msgid "Font used to display transcription text for documents in this project, unless overridden at the document level. Leave as Default to inherit from the user or built-in font."
+msgstr "Schriftart zur Anzeige des Transkriptionstexts für Dokumente in diesem Projekt, sofern nicht auf Dokumentebene überschrieben. Als Standard belassen, um die Schriftart des Benutzers oder eine integrierte Schriftart zu übernehmen."
+
 msgid "Français"
 msgstr "Français"
+
+msgid "Groups"
+msgstr "Gruppen"
+
+msgid "Groups & Users"
+msgstr "Gruppen & Benutzer"
+
+msgid "Images"
+msgstr "Bilder"
 
 msgid "Invite Users"
 msgstr "Benutzer einladen"
 
+msgid "Key"
+msgstr "Schlüssel"
+
+msgid "Last Update"
+msgstr "Letzte Aktualisierung"
+
 msgid "Leaderboard"
 msgstr "Bestenliste"
+
+msgid "Left to right"
+msgstr "Links nach rechts"
+
+msgid "Line Position"
+msgstr "Zeilenposition"
+
+msgid "Link to Project Guidelines"
+msgstr "Link zu den Projektrichtlinien"
+
+msgid "Load more"
+msgstr "Mehr laden"
+
+msgid "Loading..."
+msgstr "Lädt..."
 
 msgid "Logout"
 msgstr "Abmelden"
 
+msgid "Metadata"
+msgstr "Metadaten"
+
 msgid "Models"
 msgstr "Modelle"
+
+msgid "Must be a valid URL starting with http:// or https://."
+msgstr "Muss eine gültige URL sein, die mit http:// oder https:// beginnt."
+
+msgid "My Projects"
+msgstr "Meine Projekte"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "No matching tags. %{hidden}"
+msgstr "Keine passenden Tags. %{hidden}"
+
+msgid "Open the %{label} panel"
+msgstr "Bedienfeld %{label} öffnen"
+
+msgid "OR"
+msgstr "ODER"
+
+msgid "Owner"
+msgstr "Eigentümer"
 
 msgid "Profile"
 msgstr "Profil"
@@ -39,11 +250,59 @@ msgstr "Profil"
 msgid "Profile Settings"
 msgstr "Profileinstellungen"
 
+msgid "Project"
+msgstr "Projekt"
+
+msgid "Project Guidelines"
+msgstr "Projektrichtlinien"
+
+msgid "Project Tags"
+msgstr "Projekt-Schlagwörter"
+
 msgid "Projects"
 msgstr "Projekte"
 
+msgid "Read Direction"
+msgstr "Leserichtung"
+
+msgid "Right to left"
+msgstr "Rechts nach links"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Script"
+msgstr "Schriftart"
+
 msgid "Search"
 msgstr "Suche"
+
+msgid "Search by name..."
+msgstr "Nach Name suchen..."
+
+msgid "Search documents..."
+msgstr "Dokumente suchen..."
+
+msgid "Search Project"
+msgstr "Projekt durchsuchen"
+
+msgid "Search projects..."
+msgstr "Projekte suchen..."
+
+msgid "Search Text in %{scope}"
+msgstr "Textsuche in %{scope}"
+
+msgid "Search..."
+msgstr "Suche..."
+
+msgid "Select"
+msgstr "Auswählen"
+
+msgid "Select All"
+msgstr "Alle auswählen"
+
+msgid "Select None"
+msgstr "Keine auswählen"
 
 msgid "Sign in"
 msgstr "Anmelden"
@@ -51,8 +310,17 @@ msgstr "Anmelden"
 msgid "Site Administration"
 msgstr "Site-Verwaltung"
 
+msgid "Submit"
+msgstr "Senden"
+
+msgid "Surround one or more terms with quotation marks to deactivate fuzziness."
+msgstr "Setzen Sie einen oder mehrere Begriffe in Anführungszeichen, um die Fuzziness zu deaktivieren."
+
 msgid "Switch language"
 msgstr "Sprache wechseln"
+
+msgid "Tags"
+msgstr "Tags"
 
 msgid "Task Monitoring"
 msgstr "Tasküberwachung"
@@ -63,5 +331,41 @@ msgstr "Task-Nutzung"
 msgid "Tasks"
 msgstr "Tasks"
 
+msgid "Text to search"
+msgstr "Zu durchsuchender Text"
+
+msgid "The position of the line relative to the polygon."
+msgstr "Die Position der Zeile relativ zum Polygon."
+
+msgid "The read direction describes the overall order of elements/pages in the document; NOT the order of words in a line, which will be automatically determined by the script."
+msgstr "Die Leserichtung beschreibt die Gesamtreihenfolge der Elemente/Seiten im Dokument; NICHT die Reihenfolge der Wörter in einer Zeile, die automatisch anhand der Schrift bestimmt wird."
+
+msgid "There are no documents to display."
+msgstr "Es gibt keine anzuzeigenden Dokumente."
+
+msgid "There are no projects to display."
+msgstr "Es gibt keine anzuzeigenden Projekte."
+
+msgid "Topline"
+msgstr "Toplinie"
+
 msgid "Training"
 msgstr "Training"
+
+msgid "Transcription Font"
+msgstr "Transkriptionsschriftart"
+
+msgid "Untagged"
+msgstr "Ohne Tag"
+
+msgid "Users"
+msgstr "Benutzer"
+
+msgid "Value"
+msgstr "Wert"
+
+msgid "Welcome back, %{name}"
+msgstr "Willkommen zurück, %{name}"
+
+msgid "You cannot undo this action."
+msgstr "Diese Aktion kann nicht rückgängig gemacht werden."
