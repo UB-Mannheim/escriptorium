@@ -3,7 +3,7 @@
         <input
             type="text"
             :value="value"
-            :placeholder="placeholder"
+            :placeholder="placeholderText"
             :disabled="disabled"
             @input="handleInput"
             @keyup.enter="onEnter"
@@ -14,7 +14,7 @@
             @click="handleClear"
             :disabled="disabled"
             class="escr-search-input-clear"
-            aria-label="Clear search"
+            :aria-label="$gettext('Clear search')"
         >
             ×
         </button>
@@ -37,7 +37,7 @@ export default {
          */
         placeholder: {
             type: String,
-            default: "Search...",
+            default: "",
         },
         /**
          * Whether the input is disabled.
@@ -66,6 +66,15 @@ export default {
         onEnter: {
             type: Function,
             default: () => {},
+        },
+    },
+    computed: {
+        /**
+         * Placeholder text, falling back to a translatable default when the
+         * caller does not provide one.
+         */
+        placeholderText() {
+            return this.placeholder || this.$gettext("Search...");
         },
     },
     methods: {

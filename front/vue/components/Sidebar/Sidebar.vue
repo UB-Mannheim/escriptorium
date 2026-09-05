@@ -17,7 +17,7 @@
                 <h2>{{ selectedAction.label }}</h2>
                 <button
                     class="escr-close-action"
-                    :aria-label="`Close the ${selectedAction.label} panel`"
+                    :aria-label="closePanelLabel"
                     @click="() => toggleAction(selectedAction.key)"
                 >
                     <EscrXIcon />
@@ -39,7 +39,7 @@
                     <button
                         :class="classes(action.key)"
                         :disabled="loading"
-                        :aria-label="`Open the ${action.label} panel`"
+                        :aria-label="openPanelLabel(action)"
                         @click="() => toggleAction(action.key)"
                     >
                         <component
@@ -97,8 +97,28 @@ export default {
         selectedAction() {
             return this.actions.find((action) => action.key === this.selectedKey);
         },
+        /**
+         * Accessible label for the button that closes the currently-open panel.
+         */
+        closePanelLabel() {
+            return this.selectedAction
+                ? this.$gettextInterpolate(
+                    this.$gettext("Close the %{label} panel"),
+                    { label: this.selectedAction.label },
+                )
+                : "";
+        },
     },
     methods: {
+        /**
+         * Accessible label for the button that opens a sidebar panel.
+         */
+        openPanelLabel(action) {
+            return this.$gettextInterpolate(
+                this.$gettext("Open the %{label} panel"),
+                { label: action.label },
+            );
+        },
         ...mapActions("sidebar",
             [
                 "toggleAction",
