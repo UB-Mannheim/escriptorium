@@ -595,7 +595,14 @@ export default {
             // if more than one selected, add the elements count label
             if (this.selectedItems && this.selectedItems.length > 1) {
                 const elementsLabel = document.createElement("div");
-                elementsLabel.innerText = `${this.selectedItems.length} elements`;
+                elementsLabel.innerText = this.$gettextInterpolate(
+                    this.$ngettext(
+                        "%{count} element",
+                        "%{count} elements",
+                        this.selectedItems.length,
+                    ),
+                    { count: this.selectedItems.length },
+                );
                 elementsLabel.classList.add("elements-count");
                 clonedNode.prepend(elementsLabel);
             }
