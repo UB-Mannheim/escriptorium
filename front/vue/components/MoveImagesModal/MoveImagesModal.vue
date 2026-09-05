@@ -1,14 +1,14 @@
 <template>
     <EscrModal class="escr-moveimages-modal">
         <template #modal-header>
-            <h2>Move Image{{ selectedParts.length > 1 ? "s" : "" }}</h2>
+            <h2>{{ $gettext("Move") }} {{ $ngettext("Image", "Images", selectedParts.length) }}</h2>
         </template>
         <template #modal-content>
-            Move {{ selectedParts.length }} selected image{{ selectedParts.length > 1 ? "s" : "" }}
-            to the following position
+            {{ $gettext("Move") }} {{ selectedParts.length }} {{ $ngettext("selected image", "selected images", selectedParts.length) }}
+            {{ $gettext("to the following position") }}
             <h3>
-                Location<span
-                    aria-label="required"
+                {{ $gettext("Location") }}<span
+                    :aria-label="$gettext('required')"
                     class="escr-required"
                 >*</span>
             </h3>
@@ -22,8 +22,8 @@
                 />
             </div>
             <h3>
-                New Position<span
-                    aria-label="required"
+                {{ $gettext("New Position") }}<span
+                    :aria-label="$gettext('required')"
                     class="escr-required"
                 >*</span>
             </h3>
@@ -32,18 +32,18 @@
                     type="number"
                     min="1"
                     :max="partsCount"
-                    placeholder="Number"
+                    :placeholder="$gettext('Number')"
                     :disabled="disabled"
                     :value="index"
                     @input="(e) => handleChange('index', e.target.value)"
                 >
-                <span>of {{ partsCount }}</span>
+                <span>{{ $gettext("of") }} {{ partsCount }}</span>
             </label>
         </template>
         <template #modal-actions>
             <EscrButton
                 color="outline-primary"
-                label="Cancel"
+                :label="$gettext('Cancel')"
                 :on-click="onCancel"
                 :disabled="disabled"
             />
@@ -54,19 +54,18 @@
                 placement="bottom"
             >
                 <EscrButton
-                    label="Move"
+                    :label="$gettext('Move')"
                     :on-click="() => {}"
                     :disabled="true"
                 />
                 <template #popper>
-                    Position is required and must be between 1 and
-                    {{ partsCount.toString() }}
+                    {{ invalidMessage }}
                 </template>
             </VDropdown>
             <EscrButton
                 v-else
                 color="primary"
-                label="Move"
+                :label="$gettext('Move')"
                 :on-click="onSubmit"
                 :disabled="disabled || invalid"
             />
@@ -126,12 +125,12 @@ export default {
         locationOptions() {
             return [
                 {
-                    label: "Before",
+                    label: this.$gettext("Before"),
                     value: "before",
                     selected: this.location === "before",
                 },
                 {
-                    label: "After",
+                    label: this.$gettext("After"),
                     value: "after",
                     selected: this.location === "after",
                 },
@@ -143,6 +142,12 @@ export default {
         invalid() {
             const idx = parseInt(this.index);
             return !idx || idx > this.partsCount.length || idx < 1;
+        },
+        invalidMessage() {
+            return this.$gettextInterpolate(
+                this.$gettext("Position is required and must be between 1 and %{count}"),
+                { count: this.partsCount },
+            );
         },
     },
     methods: {
