@@ -21,11 +21,11 @@ import catalogs from "./catalogs.js";
 
 export const DEFAULT_LANGUAGE = "en";
 
-export const availableLanguages = [
-    { code: "en", label: "English" },
-    { code: "fr", label: "Français" },
-    { code: "de", label: "Deutsch" },
-];
+export const availableLanguages = {
+    en: "English",
+    fr: "Français",
+    de: "Deutsch",
+};
 
 function readInitialLanguage() {
     // 1. User's previous choice (localStorage).
@@ -44,12 +44,14 @@ function readInitialLanguage() {
 export function installGettext(store) {
     const language = readInitialLanguage();
     Vue.use(Gettext, {
-        availableLanguages: availableLanguages.map((l) => l.code),
+        availableLanguages,
         defaultLanguage: DEFAULT_LANGUAGE,
-        language,
         translations: catalogs,
         silent: true, // don't spam console with missing-translation warnings
     });
+    // The plugin has no option for the initial language; it always starts on
+    // defaultLanguage. Override it right after installation.
+    Vue.config.language = language;
 
     // Seed the locale store with the active language. The store may
     // be omitted (e.g. on pages that don't use the locale module).
@@ -61,7 +63,7 @@ export function installGettext(store) {
 }
 
 // Change the active UI language at runtime. vue-gettext keeps the active
-// language on Vue.prototype.$language and re-renders every component that
+// language on Vue.config.language and re-renders every component that
 // uses $gettext / v-translate when that value changes.
 export function setLanguage(code) {
     if (!catalogs[code]) {
@@ -74,5 +76,5 @@ export function setLanguage(code) {
     } catch (_) {
         // localStorage may be unavailable.
     }
-    Vue.prototype.$language = code;
+    Vue.config.language = code;
 }
