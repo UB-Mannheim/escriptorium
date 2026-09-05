@@ -6,11 +6,13 @@ So no need to test the content unless there is some magic in the serializer.
 
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from core.models import (
     Block,
@@ -586,6 +588,57 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
                 'last_started_task': other_doc.reports.latest('started_at').started_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             },
         ])
+
+    def test_list_document_with_tasks_ordering_name(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        self.doc.name = 'zebra doc'
+        self.doc.save()
+        other_doc = self.factory.make_document(name='alpha doc', project=self.factory.make_project(name="Test API"))
+        other_doc.reports.create(user=other_doc.owner, label="Fake report").start()
+        self.doc.reports.create(user=self.doc.owner, label="Fake report").start()
+
+        self.client.force_login(self.doc.owner)
+        resp = self.client.get(reverse('api:document-tasks') + '?ordering=name')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([doc['name'] for doc in resp.json()['results']], ['alpha doc', 'zebra doc'])
+
+        resp = self.client.get(reverse('api:document-tasks') + '?ordering=-name')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([doc['name'] for doc in resp.json()['results']], ['zebra doc', 'alpha doc'])
+
+    def test_list_document_with_tasks_ordering_last_started_task(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        now = datetime.now(timezone.utc)
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start()
+        report.started_at = now - timedelta(days=1)
+        report.save()
+        report2 = self.doc.reports.create(user=self.doc.owner, label="Fake report")
+        report2.start()
+        report2.started_at = now
+        report2.save()
+
+        self.client.force_login(self.doc.owner)
+        resp = self.client.get(reverse('api:document-tasks') + '?ordering=last_started_task')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([doc['pk'] for doc in resp.json()['results']], [other_doc.pk, self.doc.pk])
+
+        resp = self.client.get(reverse('api:document-tasks') + '?ordering=-last_started_task')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([doc['pk'] for doc in resp.json()['results']], [self.doc.pk, other_doc.pk])
+
+    def test_list_document_with_tasks_ordering_ignored_when_invalid(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        self.doc.reports.create(user=self.doc.owner, label="Fake report").start()
+
+        self.client.force_login(self.doc.owner)
+        resp = self.client.get(reverse('api:document-tasks') + '?ordering=bogus')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['count'], 1)
 
     def test_cancel_all_tasks_for_document_not_found(self):
         self.client.force_login(self.doc.owner)

@@ -11,6 +11,7 @@
                         <label
                             class="escr-select-checkbox"
                             :disabled="disabled"
+                            :title="selectAllTitle || undefined"
                             @click.prevent.stop="onSelectAll"
                         >
                             <input
@@ -67,6 +68,13 @@
                         </button>
                     </div>
                 </th>
+                <th
+                    v-if="actionsHeader && !!$scopedSlots['actions']"
+                >
+                    <div>
+                        <span>{{ actionsHeader }}</span>
+                    </div>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -121,6 +129,7 @@
                             </div>
                             <!-- select button -->
                             <label
+                                v-if="isItemSelectable(item)"
                                 :for="`select-${item[itemKey]}`"
                                 class="escr-select-checkbox"
                                 :disabled="disabled"
@@ -451,6 +460,29 @@ export default {
             type: Array,
             default: () => [],
         },
+        /**
+         * Label for the header cell of the row actions column (the column
+         * rendered for the `actions` scoped slot). Empty by default.
+         */
+        actionsHeader: {
+            type: String,
+            default: "",
+        },
+        /**
+         * List of item keys for which the selection checkbox is rendered.
+         * If not set, a checkbox is rendered for every item.
+         */
+        selectableItems: {
+            type: Array,
+            default: null,
+        },
+        /**
+         * Tooltip text for the select-all checkbox in the table head. Empty by default.
+         */
+        selectAllTitle: {
+            type: String,
+            default: "",
+        },
     },
     data() {
         return {
@@ -654,7 +686,7 @@ export default {
             return this.selectedItems.includes(parseInt(item[this.itemKey]));
         },
         /**
-         * Trrue if the passed item is partially selected
+         * True if the passed item is partially selected
          */
         isItemPartiallySelected(item) {
             if (!this.partiallySelectedItems || !item) {
@@ -663,6 +695,15 @@ export default {
             return this.partiallySelectedItems.includes(
                 parseInt(item[this.itemKey]),
             );
+        },
+        /**
+         * True if the passed item has a selection checkbox rendered
+         */
+        isItemSelectable(item) {
+            if (!item || this.selectableItems === null) {
+                return true;
+            }
+            return this.selectableItems.includes(parseInt(item[this.itemKey]));
         },
         /**
          * True if the passed item is checked (either fully or partially)
