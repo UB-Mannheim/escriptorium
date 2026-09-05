@@ -3,7 +3,7 @@
         class="escr-export-modal"
     >
         <template #modal-header>
-            <h2>Export {{ scope }}</h2>
+            <h2>{{ $gettext("Export") }} {{ scope }}</h2>
             <EscrButton
                 color="text"
                 :on-click="onCancel"
@@ -16,14 +16,14 @@
         </template>
         <template #modal-content>
             <DropdownField
-                label="Transcription"
+                :label="$gettext('Transcription')"
                 :disabled="disabled || !transcriptions"
                 :options="transcriptionOptions"
                 :on-change="handleTranscriptionChange"
                 required
             />
             <DropdownField
-                label="File Format"
+                :label="$gettext('File Format')"
                 :disabled="disabled"
                 :options="fileFormatOptions"
                 :on-change="handleFileFormatChange"
@@ -38,9 +38,9 @@
                         :disabled="fileFormat === 'text'"
                         @change="handleIncludeImagesChange"
                     >
-                    Include images
+                    {{ $gettext("Include images") }}
                 </label>
-                <span class="escr-help-text">
+                <span class="escr-help-text" v-translate>
                     Will significantly increase the time to produce and download the export.
                 </span>
             </div>
@@ -52,11 +52,10 @@
                         value="include-characters"
                         @change="handleIncludeCharactersChange"
                     >
-                    Include Characters
+                    {{ $gettext("Include Characters") }}
                 </label>
-                <span class="escr-help-text">
-                    This data is only present for transcriptions coming from automatic recognition
-                    and is invalidated by manual edition.
+                <span class="escr-help-text" v-translate>
+                    This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition.
                 </span>
             </div>
 
@@ -64,21 +63,21 @@
                 :on-change="handleRegionTypesChange"
                 :options="regionTypesOptions"
                 class="escr-region-types"
-                help-text="Select region types to include in the export."
-                label="Region Types"
-                placeholder="Select region types..."
+                :help-text="$gettext('Select region types to include in the export.')"
+                :label="$gettext('Region Types')"
+                :placeholder="$gettext('Select region types...')"
             />
         </template>
         <template #modal-actions>
             <EscrButton
                 color="outline-primary"
-                label="Cancel"
+                :label="$gettext('Cancel')"
                 :on-click="onCancel"
                 :disabled="disabled"
             />
             <EscrButton
                 color="primary"
-                label="Export"
+                :label="$gettext('Export')"
                 :on-click="onSubmit"
                 :disabled="disabled || invalid"
             />
@@ -204,7 +203,7 @@ export default {
         fileFormatOptions() {
             const formatOptions = [
                 {
-                    label: "Text",
+                    label: this.$gettext("Text"),
                     value: "text",
                     selected: this.fileFormat === "text",
                 },
