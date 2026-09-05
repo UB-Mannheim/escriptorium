@@ -5,12 +5,24 @@ msgstr ""
 "Generated-By: easygettext\n"
 "Project-Id-Version: \n"
 
+#: vue/pages/OntologyOverview/OntologyOverview.vue:201
+msgid "(space)"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:114
+msgid "# in Document"
+msgstr ""
+
 #: vue/pages/ProjectsList/ProjectsList.vue:47
 msgid "# of Documents"
 msgstr ""
 
 #: vue/pages/Project/Project.vue:109
 msgid "# of Images"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:120
+msgid "# on Part"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:104
@@ -322,6 +334,19 @@ msgstr ""
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:104
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:9
 msgid "Change Password"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:62
+msgid "Change the transcription used for character stats"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:110
+msgid "Character"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:66
+#: vue/pages/OntologyOverview/OntologyOverview.vue:103
+msgid "Characters"
 msgstr ""
 
 #: vue/components/ImportModal/ImportImagesForm.vue:12
@@ -770,6 +795,14 @@ msgid_plural "Images"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/pages/OntologyOverview/OntologyOverview.vue:102
+msgid "Image Annotation Types"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:65
+msgid "Image Annotations"
+msgstr ""
+
 #: vue/pages/Images/HiddenImagesIndicator.vue:14
 msgid "image hidden by search filter"
 msgid_plural "images hidden by search filter"
@@ -907,7 +940,12 @@ msgid_plural "line types"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/pages/OntologyOverview/OntologyOverview.vue:100
+msgid "Line Types"
+msgstr ""
+
 #: vue/components/SegmentModal/SegmentModal.vue:98
+#: vue/pages/OntologyOverview/OntologyOverview.vue:63
 msgid "Lines"
 msgstr ""
 
@@ -958,6 +996,8 @@ msgstr ""
 #: vue/pages/Images/Images.vue:172
 #: vue/pages/Images/Images.vue:197
 #: vue/pages/Images/Images.vue:111
+#: vue/pages/OntologyOverview/OntologyOverview.vue:47
+#: vue/pages/OntologyOverview/OntologyOverview.vue:39
 #: vue/pages/Project/Project.vue:99
 msgid "Loading..."
 msgstr ""
@@ -1056,6 +1096,7 @@ msgstr ""
 
 #: vue/pages/Document/Document.vue:172
 #: vue/pages/Images/Images.vue:211
+#: vue/pages/OntologyOverview/OntologyOverview.vue:55
 #: vue/pages/Project/Project.vue:98
 msgid "My Projects"
 msgstr ""
@@ -1157,6 +1198,12 @@ msgstr ""
 msgid "Only the first %{count} images currently visible; click \"Load More\" below to load more images."
 msgstr ""
 
+#: vue/pages/OntologyOverview/OntologyOverview.vue:8
+#: vue/pages/OntologyOverview/OntologyOverview.vue:6
+#: vue/pages/OntologyOverview/OntologyOverview.vue:57
+msgid "Ontology Overview"
+msgstr ""
+
 #: vue/components/Sidebar/Sidebar.vue:62
 msgid "Open the %{label} panel"
 msgstr ""
@@ -1207,6 +1254,10 @@ msgid_plural "parts"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/pages/OntologyOverview/OntologyOverview.vue:119
+msgid "Part"
+msgstr ""
+
 #: vue/components/ManageCollectionForm/ManageCollectionForm.vue:77
 msgid "part staged"
 msgid_plural "parts staged"
@@ -1218,6 +1269,10 @@ msgid "part type"
 msgid_plural "part types"
 msgstr[0] ""
 msgstr[1] ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:140
+msgid "Parts containing \"%{name}\""
+msgstr ""
 
 #: vue/components/DocumentsTasks/CancelModal.vue:19
 msgid "Please confirm that you want to proceed."
@@ -1302,10 +1357,12 @@ msgstr[1] ""
 
 #: vue/components/AlignModal/AlignModal.vue:123
 #: vue/components/ExportModal/ExportModal.vue:83
+#: vue/pages/OntologyOverview/OntologyOverview.vue:99
 msgid "Region Types"
 msgstr ""
 
 #: vue/components/SegmentModal/SegmentModal.vue:103
+#: vue/pages/OntologyOverview/OntologyOverview.vue:62
 msgid "Regions"
 msgstr ""
 
@@ -1439,6 +1496,11 @@ msgstr ""
 
 #: vue/components/TrainForm/TrainForm.vue:66
 msgid "Select a model to fine-tune, or leave blank to train from scratch."
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:36
+#: vue/pages/OntologyOverview/OntologyOverview.vue:34
+msgid "Select a type to see which parts contain it."
 msgstr ""
 
 #: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:49
@@ -1611,6 +1673,14 @@ msgstr ""
 msgid "Text (Ctrl+5)"
 msgstr ""
 
+#: vue/pages/OntologyOverview/OntologyOverview.vue:101
+msgid "Text Annotation Types"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:64
+msgid "Text Annotations"
+msgstr ""
+
 #: vue/components/SegmentModal/SegmentModal.vue:49
 msgid "Text Direction"
 msgstr ""
@@ -1665,6 +1735,10 @@ msgstr ""
 msgid "There are no tasks to display."
 msgstr ""
 
+#: vue/pages/OntologyOverview/OntologyOverview.vue:92
+msgid "There is no ontology to display."
+msgstr ""
+
 #: vue/components/ExportModal/ExportModal.vue:28
 #: vue/components/ExportModal/ExportModal.vue:18
 msgid "This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition."
@@ -1672,6 +1746,10 @@ msgstr ""
 
 #: vue/pages/Document/Document.vue:124
 msgid "This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title)."
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:112
+msgid "This type is not used in any part."
 msgstr ""
 
 #: vue/components/AlignModal/AlignAdvancedFieldset.vue:72
@@ -1763,8 +1841,25 @@ msgstr ""
 msgid "Transcription Status"
 msgstr ""
 
+#: vue/pages/OntologyOverview/OntologyOverview.vue:13
+#: vue/pages/OntologyOverview/OntologyOverview.vue:11
+msgid "Transcription:"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:110
+msgid "Type"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:105
+msgid "Types"
+msgstr ""
+
 #: vue/components/TagFilter/TagFilter.vue:377
 msgid "Untagged"
+msgstr ""
+
+#: vue/pages/OntologyOverview/OntologyOverview.vue:134
+msgid "Untitled"
 msgstr ""
 
 #: vue/components/ManageCollectionForm/ManageCollectionForm.vue:84
