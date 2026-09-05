@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-05 13:20+0000\n"
+"POT-Creation-Date: 2026-09-05 15:41+0000\n"
 "PO-Revision-Date: 2026-07-11 06:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -266,8 +266,7 @@ msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Max offset and beam size cannot both be non-zero."
-msgstr ""
-"Maximaler Offset und Beam-Größe können nicht beide ungleich Null sein."
+msgstr "Maximaler Offset und Beam-Größe können nicht beide ungleich Null sein."
 
 #: apps/api/serializers.py
 #, python-format
@@ -1052,8 +1051,7 @@ msgstr "Alle Transkriptionen einbeziehen"
 
 #: apps/imports/forms.py
 msgid "Includes all transcriptions of the document, not only the one selected."
-msgstr ""
-"Enthält alle Transkriptionen des Dokuments, nicht nur die ausgewählte."
+msgstr "Enthält alle Transkriptionen des Dokuments, nicht nur die ausgewählte."
 
 #: apps/imports/forms.py
 msgid "Include annotations"
@@ -1387,9 +1385,9 @@ msgid ""
 "How many days downloads (exports, archives) are kept on the server before "
 "automatic cleanup. Set to 0 to disable auto-cleanup."
 msgstr ""
-"Wie viele Tage Downloads (Exporte, Archive) auf dem Server aufbewahrt werden, "
-"bevor sie automatisch bereinigt werden. Auf 0 setzen, um die automatische "
-"Bereinigung zu deaktivieren."
+"Wie viele Tage Downloads (Exporte, Archive) auf dem Server aufbewahrt "
+"werden, bevor sie automatisch bereinigt werden. Auf 0 setzen, um die "
+"automatische Bereinigung zu deaktivieren."
 
 #: apps/users/models.py
 msgid "Error"
@@ -1808,6 +1806,17 @@ msgstr "Abmelden"
 #: escriptorium/templates/base.html
 msgid "Login"
 msgstr "Anmelden"
+
+#: escriptorium/templates/base.html
+msgid ""
+"eScriptorium uses cookies to store the user session and local storage to "
+"save user interface preferences."
+msgstr "eScriptorium verwendet Cookies, um die Sitzung zu speichern, und lokalen Speicher, um Benutzeroberflächen-Einstellungen zu speichern."
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Accept"
+msgstr "Akzeptieren"
 
 #: escriptorium/templates/core/contributors.html
 #: escriptorium/templates/core/home.html
@@ -3752,10 +3761,6 @@ msgstr ""
 "\n"
 "            Zu Team %(team_name)s von %(sender)s eingeladen\n"
 "            "
-
-#: escriptorium/templates/users/profile_group_list.html
-msgid "Accept"
-msgstr "Akzeptieren"
 
 #: escriptorium/templates/users/profile_group_list.html
 msgid "My Teams"
