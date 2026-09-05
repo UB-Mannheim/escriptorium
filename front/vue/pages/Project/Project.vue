@@ -34,9 +34,8 @@
                         v-if="guidelines"
                         :href="guidelines"
                         class="escr-project-guidelines"
-                    >
-                        Project Guidelines
-                    </a>
+                        v-translate
+                    >Project Guidelines</a>
                     <EscrTags
                         v-if="tags"
                         :tags="tags"
@@ -45,16 +44,16 @@
                 <!-- Documents list -->
                 <div class="escr-card escr-card-table escr-documents-list">
                     <div class="escr-card-header">
-                        <h2>Documents</h2>
+                        <h2 v-translate>Documents</h2>
                         <div class="escr-card-actions">
                             <FilterSet
                                 :disabled="loading"
                                 :tags="documentTags"
                                 :on-filter="onFilterDocuments"
-                                search-placeholder="Search documents..."
+                                :search-placeholder="$gettext('Search documents...')"
                             />
                             <EscrButton
-                                label="Create New"
+                                :label="$gettext('Create New')"
                                 :on-click="openCreateDocumentModal"
                                 :disabled="loading || createDocumentModalOpen"
                             >
@@ -89,24 +88,24 @@
                         >
                             <template #actions="{ item }">
                                 <EscrButton
-                                    v-tooltip.bottom="'Images'"
+                                    v-tooltip.bottom="$gettext('Images')"
                                     size="small"
                                     color="text"
                                     :on-click="() => navigateToImages(item)"
                                     :disabled="loading"
-                                    aria-label="Document images"
+                                    :aria-label="$gettext('Document images')"
                                 >
                                     <template #button-icon>
                                         <ImagesIcon />
                                     </template>
                                 </EscrButton>
                                 <EscrButton
-                                    v-tooltip.bottom="'Delete'"
+                                    v-tooltip.bottom="$gettext('Delete')"
                                     size="small"
                                     color="text"
                                     :on-click="() => openDeleteDocumentModal(item)"
                                     :disabled="loading"
-                                    aria-label="Delete document"
+                                    :aria-label="$gettext('Delete document')"
                                 >
                                     <template #button-icon>
                                         <TrashIcon />
@@ -116,7 +115,7 @@
                         </EscrTable>
                         <EscrButton
                             v-if="nextPage"
-                            label="Load more"
+                            :label="$gettext('Load more')"
                             class="escr-load-more-btn"
                             color="outline-primary"
                             size="small"
@@ -127,7 +126,7 @@
                     <EscrLoader
                         v-else
                         :loading="loading"
-                        no-data-message="There are no documents to display."
+                        :no-data-message="$gettext('There are no documents to display.')"
                     />
                 </div>
                 <!-- Default project ontology -->
@@ -135,9 +134,9 @@
                 <!-- delete project modal -->
                 <ConfirmModal
                     v-if="deleteModalOpen"
-                    body-text="Are you sure you want to delete this project?"
-                    confirm-verb="Delete"
-                    title="Delete Project"
+                    :body-text="$gettext('Are you sure you want to delete this project?')"
+                    :confirm-verb="$gettext('Delete')"
+                    :title="$gettext('Delete Project')"
                     :cannot-undo="true"
                     :disabled="loading"
                     :on-cancel="closeDeleteModal"
@@ -146,11 +145,9 @@
                 <!-- delete document modal -->
                 <ConfirmModal
                     v-if="deleteDocumentModalOpen"
-                    :body-text="`Are you sure you want to delete the document ${
-                        (documentToDelete && documentToDelete.name) || ''
-                    }?`"
-                    confirm-verb="Delete"
-                    :title="`Delete ${(documentToDelete && documentToDelete.name) || 'Document'}`"
+                    :body-text="deleteDocumentMessage"
+                    :confirm-verb="$gettext('Delete')"
+                    :title="deleteDocumentTitle"
                     :cannot-undo="true"
                     :disabled="loading"
                     :on-cancel="closeDeleteDocumentModal"
@@ -266,8 +263,8 @@ export default {
          */
         breadcrumbs() {
             return [
-                { title: "My Projects", href: SCRIPT_NAME + "/projects" },
-                { title: this.projectName || "Loading..." }
+                { title: this.$gettext("My Projects"), href: SCRIPT_NAME + "/projects" },
+                { title: this.projectName || this.$gettext("Loading...") }
             ];
         },
         /**
@@ -275,11 +272,11 @@ export default {
          */
         headers() {
             return [
-                { label: "Name", value: "name", sortable: true },
-                { label: "Document Tags", value: "tags", component: EscrTags },
-                { label: "# of Images", value: "parts_count", sortable: true  },
+                { label: this.$gettext("Name"), value: "name", sortable: true },
+                { label: this.$gettext("Document Tags"), value: "tags", component: EscrTags },
+                { label: this.$gettext("# of Images"), value: "parts_count", sortable: true  },
                 {
-                    label: "Last Update",
+                    label: this.$gettext("Last Update"),
                     value: "updated_at",
                     sortable: true,
                     format: (val) => new Date(val).toLocaleDateString(
@@ -298,7 +295,7 @@ export default {
                 {
                     icon: PencilIcon,
                     key: "edit",
-                    label: "Edit",
+                    label: this.$gettext("Edit"),
                     onClick: this.openEditModal,
                 },
                 {
@@ -306,10 +303,34 @@ export default {
                     // Add the "new-section" class if/when there is more than one item above this
                     // class: "new-section",
                     key: "delete",
-                    label: "Delete Project",
+                    label: this.$gettext("Delete Project"),
                     onClick: this.openDeleteModal,
                 }
             ]
+        },
+        /**
+         * Confirmation message for the "delete document" modal, with the
+         * document name interpolated at runtime.
+         */
+        deleteDocumentMessage() {
+            const name = (this.documentToDelete && this.documentToDelete.name)
+                || this.$gettext("Document");
+            return this.$gettextInterpolate(
+                this.$gettext("Are you sure you want to delete the document %{name}?"),
+                { name },
+            );
+        },
+        /**
+         * Title for the "delete document" modal, with the document name
+         * interpolated at runtime.
+         */
+        deleteDocumentTitle() {
+            const name = (this.documentToDelete && this.documentToDelete.name)
+                || this.$gettext("Document");
+            return this.$gettextInterpolate(
+                this.$gettext("Delete %{name}"),
+                { name },
+            );
         },
         /**
          * Sidebar quick actions for the project dashboard.
@@ -325,7 +346,7 @@ export default {
                     },
                     icon: PeopleIcon,
                     key: "share",
-                    label: "Groups & Users",
+                    label: this.$gettext("Groups & Users"),
                     panel: SharePanel,
                 },
             ];
@@ -335,11 +356,11 @@ export default {
                     data: {
                         disabled: this.loading,
                         projectId: this.projectId,
-                        searchScope: "Project",
+                        searchScope: this.$gettext("Project"),
                     },
                     icon: SearchIcon,
                     key: "search",
-                    label: "Search Project",
+                    label: this.$gettext("Search Project"),
                     panel: SearchPanel,
                 });
             }
@@ -406,7 +427,7 @@ export default {
             if (item?.pk) {
                 window.location = SCRIPT_NAME + `/document/${item.pk}/images`;
             } else {
-                this.addError({ message: "Error navigating to the images page." });
+                this.addError({ message: this.$gettext("Error navigating to the images page.") });
             }
         },
     },
