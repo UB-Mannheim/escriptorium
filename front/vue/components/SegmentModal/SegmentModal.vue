@@ -3,7 +3,7 @@
         class="escr-segment-modal"
     >
         <template #modal-header>
-            <h2>Segment {{ scope }}</h2>
+            <h2>{{ $gettext("Segment") }} {{ scope }}</h2>
             <EscrButton
                 color="text"
                 :on-click="onCancel"
@@ -16,7 +16,7 @@
         </template>
         <template #modal-content>
             <AutocompleteField
-                label="Model"
+                :label="$gettext('Model')"
                 :disabled="disabled || !models"
                 :option-groups="modelOptionGroups"
                 :on-change="handleModelChange"
@@ -25,11 +25,11 @@
             <ArrayField
                 :on-change="handleIncludeChange"
                 :options="includeOptions"
-                label="Include"
+                :label="$gettext('Include')"
                 required
             />
             <DropdownField
-                label="Text Direction"
+                :label="$gettext('Text Direction')"
                 :disabled="disabled"
                 :options="textDirectionOptions"
                 :on-change="handleTextDirectionChange"
@@ -43,9 +43,9 @@
                         :checked="overwrite === true"
                         @change="handleOverwriteChange"
                     >
-                    Overwrite Existing Segmentation and Transcriptions
+                    {{ $gettext("Overwrite Existing Segmentation and Transcriptions") }}
                 </label>
-                <span class="escr-help-text">
+                <span class="escr-help-text" v-translate>
                     If checked, all existing segmentation and bound transcriptions will be deleted.
                 </span>
             </div>
@@ -54,18 +54,19 @@
             <span
                 v-if="segmentationInFlight"
                 class="escr-cooldown-message"
+                v-translate
             >
                 Segmentation is already in progress for the selected image(s).
             </span>
             <EscrButton
                 color="outline-primary"
-                label="Cancel"
+                :label="$gettext('Cancel')"
                 :on-click="onCancel"
                 :disabled="disabled || submitting"
             />
             <EscrButton
                 color="primary"
-                :label="(submitting || segmentationInFlight) ? 'Segmenting\u2026' : 'Segment'"
+                :label="(submitting || segmentationInFlight) ? $gettext('Segmenting\u2026') : $gettext('Segment')"
                 :loading="submitting || segmentationInFlight"
                 :on-click="handleSubmit"
                 :disabled="disabled || invalid"
@@ -171,12 +172,12 @@ export default {
         includeOptions() {
             return [
                 {
-                    label: "Lines",
+                    label: this.$gettext("Lines"),
                     value: "lines",
                     selected: this.include.includes("lines"),
                 },
                 {
-                    label: "Regions",
+                    label: this.$gettext("Regions"),
                     value: "regions",
                     selected: this.include.includes("regions"),
                 },
@@ -187,7 +188,7 @@ export default {
          */
         modelOptionGroups() {
             const defaultModel = {
-                label: "Default Segmentation Model",
+                label: this.$gettext("Default Segmentation Model"),
                 value: null,
                 selected: !this.model && this.models.length === 0,
             };
@@ -217,13 +218,13 @@ export default {
                 { label: null, options: [defaultModel] },
             ];
             if (yourModels.length > 0) {
-                groups.push({ label: "Your Models", options: yourModels });
+                groups.push({ label: this.$gettext("Your Models"), options: yourModels });
             }
             if (sharedModels.length > 0) {
-                groups.push({ label: "Shared Models", options: sharedModels });
+                groups.push({ label: this.$gettext("Shared Models"), options: sharedModels });
             }
             if (publicModels.length > 0) {
-                groups.push({ label: "Public Models", options: publicModels });
+                groups.push({ label: this.$gettext("Public Models"), options: publicModels });
             }
 
             return groups;
@@ -234,22 +235,22 @@ export default {
         textDirectionOptions() {
             return [
                 {
-                    label: "Horizontal Left to Right",
+                    label: this.$gettext("Horizontal Left to Right"),
                     value: "horizontal-lr",
                     selected: this.textDirection === "horizontal-lr",
                 },
                 {
-                    label: "Horizontal Right to Left",
+                    label: this.$gettext("Horizontal Right to Left"),
                     value: "horizontal-rl",
                     selected: this.textDirection === "horizontal-rl",
                 },
                 {
-                    label: "Vertical Left to Right",
+                    label: this.$gettext("Vertical Left to Right"),
                     value: "vertical-lr",
                     selected: this.textDirection === "vertical-lr",
                 },
                 {
-                    label: "Vertical Right to Left",
+                    label: this.$gettext("Vertical Right to Left"),
                     value: "vertical-rl",
                     selected: this.textDirection === "vertical-rl",
                 },
