@@ -9,6 +9,12 @@
 </div>
 {% endblock %}
 
+{% block extrastyle %}
+    {% if not request.user.legacy_mode %}
+        <link href="{% static 'docstasks.css' %}" rel="stylesheet" type="text/css">
+    {% endif %}
+{% endblock %}
+
 {% block scripts %}
   {{ block.super }}
   <script src="{% static 'docstasks.js' %}"></script>
