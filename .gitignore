@@ -31,3 +31,4 @@ venv/
 schema.yaml
 .vscode
 *.mo
+/front/src/translations/*.json
