@@ -2439,11 +2439,11 @@ def delete_thumbnails(sender, instance, using, **kwargs):
 class InstanceSettings(SingletonModel):
     page_batch_segmentation = models.IntegerField(
         default=1,
-        help_text="Pages per segmentation task"
+        help_text=_("Pages per segmentation task")
     )
     page_batch_recognition = models.IntegerField(
         default=1,
-        help_text="Pages per transcription task"
+        help_text=_("Pages per transcription task")
     )
     default_user_permissions = models.ManyToManyField(
         "auth.Permission",
@@ -2453,8 +2453,8 @@ class InstanceSettings(SingletonModel):
     )
 
     class Meta:
-        verbose_name = "Instance setting"
-        verbose_name_plural = "Instance settings"
+        verbose_name = _("Instance setting")
+        verbose_name_plural = _("Instance settings")
 
     def __str__(self):
         return "Instance settings"
