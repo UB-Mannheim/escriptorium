@@ -2,6 +2,7 @@ import Vue from "vue";
 import Vuex from "vuex";
 import { assign } from "lodash";
 import * as api from "./api.js";
+import { installGettext } from "../translations/index.js";
 
 Vue.use(Vuex);
 
@@ -43,3 +44,5 @@ export default new Vuex.Store({
     mutations,
     actions,
 });
+
+installGettext(null); // null store – this page has no Vuex locale module.
