@@ -1,5 +1,5 @@
 {% load i18n language_flags_tags static %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}" data-bs-theme="dark">
+{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE in "he,ar,fa,ur" %}<html lang="{{ LANGUAGE_CODE }}" dir="rtl" data-bs-theme="dark">{% else %}<html lang="{{ LANGUAGE_CODE }}" data-bs-theme="dark">{% endif %}
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
