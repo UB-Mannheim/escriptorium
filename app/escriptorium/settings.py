@@ -196,6 +196,8 @@ if 'de' in ESC_LANGUAGES:
     LANGUAGES.append(('de', _('German')))
 if 'es' in ESC_LANGUAGES:
     LANGUAGES.append(('es', _('Spanish')))
+if 'he' in ESC_LANGUAGES:
+    LANGUAGES.append(('he', _('Hebrew')))
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),

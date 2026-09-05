@@ -32,6 +32,7 @@ const LANGUAGE_NAMES = {
     fr: "Français",
     de: "Deutsch",
     es: "Español",
+    he: "עברית",
 };
 
 export default {
