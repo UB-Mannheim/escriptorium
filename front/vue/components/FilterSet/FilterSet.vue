@@ -1,9 +1,9 @@
 <template>
     <div class="escr-filter-set">
-        <span>Filter by:</span>
+        <span v-translate>Filter by:</span>
         <SearchInput
             :value="nameFilter"
-            :placeholder="searchPlaceholder"
+            :placeholder="placeholder"
             :on-input="handleNameInput"
             :on-clear="clearNameFilter"
             :on-enter="onFilter"
@@ -19,7 +19,7 @@
             <FilterButton
                 :active="tagFilterActive"
                 :count="tagCount"
-                label="Tags"
+                :label="$gettext('Tags')"
                 :on-click="() => toggleOpen('tags')"
                 :on-clear="() => clearFilter('tags')"
                 :disabled="disabled"
@@ -88,7 +88,7 @@ export default {
          */
         searchPlaceholder: {
             type: String,
-            default: "Search by name...",
+            default: "",
         },
     },
     data() {
@@ -110,6 +110,13 @@ export default {
             "tagFilterSelectedTags",
             "untaggedSelected",
         ]),
+        /**
+         * Placeholder text, falling back to a translatable default when the
+         * caller does not provide one.
+         */
+        placeholder() {
+            return this.searchPlaceholder || this.$gettext("Search by name...");
+        },
     },
     beforeUnmount() {
         if (this.debounceTimer) {

@@ -20,26 +20,25 @@
         <div
             class="escr-search-form"
         >
-            <h3>Search Text in {{ data && data.searchScope }}</h3>
+            <h3>{{ heading }}</h3>
             <label class="escr-text-field escr-form-field">
                 <input
                     type="text"
-                    placeholder="Text to search"
-                    aria-label="Search"
+                    :placeholder="$gettext('Text to search')"
+                    :aria-label="$gettext('Search')"
                     :disabled="data && data.disabled"
                     name="query"
                 >
                 <span
                     class="escr-help-text"
-                >
-                    Surround one or more terms with quotation marks to deactivate fuzziness.
-                </span>
+                    v-translate
+                >Surround one or more terms with quotation marks to deactivate fuzziness.</span>
             </label>
         </div>
         <EscrButton
             :disabled="data && data.disabled"
             :on-click="(data && data.onSearch) || (() => {})"
-            label="Search"
+            :label="$gettext('Search')"
             color="primary"
             type="submit"
         />
@@ -66,6 +65,18 @@ export default {
         data: {
             type: Object,
             required: true,
+        },
+    },
+    computed: {
+        /**
+         * Panel heading, with the scope (e.g. "Project" or "Document")
+         * interpolated at runtime.
+         */
+        heading() {
+            return this.$gettextInterpolate(
+                this.$gettext("Search Text in %{scope}"),
+                { scope: (this.data && this.data.searchScope) || "" },
+            );
         },
     },
 }

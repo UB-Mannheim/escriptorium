@@ -4,7 +4,7 @@
             v-if="data && data.groups && data.groups.length"
             class="escr-share-list"
         >
-            <h3>Groups</h3>
+            <h3 v-translate>Groups</h3>
             <ul>
                 <li
                     v-for="group in data.groups"
@@ -18,7 +18,7 @@
             v-if="data && data.users && data.users.length"
             class="escr-share-list"
         >
-            <h3>Users</h3>
+            <h3 v-translate>Users</h3>
             <ul>
                 <li
                     v-for="user in data.users"
@@ -31,7 +31,7 @@
         <EscrButton
             :on-click="(data && data.openShareModal) || (() => {})"
             :disabled="data && data.disabled"
-            label="Add Group or User"
+            :label="$gettext('Add Group or User')"
             size="small"
             color="outline-primary"
         >
