@@ -36,14 +36,14 @@
                             </div>
                         </div>
                         <span class="escr-document-metadata">
-                            Main script: {{ mainScript }}
+                            {{ $gettext("Main script:") }} {{ mainScript }}
                         </span>
                     </div>
 
                     <!-- Document tags card -->
                     <div class="escr-card escr-card-padding escr-document-tags">
                         <div class="escr-card-header">
-                            <h2>Tags</h2>
+                            <h2 v-translate>Tags</h2>
                         </div>
                         <EscrTags
                             v-if="tags && tags.length"
@@ -53,19 +53,17 @@
                         <EscrLoader
                             v-else
                             :loading="loading && loading.document"
-                            no-data-message="This document does not have any tags. You can add tags
-                                using the Edit form, accessible from the dropdown menu in the above
-                                panel (to the right of the document title)."
+                            :no-data-message="$gettext('This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title).')"
                         />
                     </div>
 
                     <!-- Document tasks card -->
                     <div class="escr-card escr-card-table escr-document-tasks">
                         <div class="escr-card-header">
-                            <h2>Tasks</h2>
+                            <h2 v-translate>Tasks</h2>
                             <div class="escr-card-actions">
                                 <EscrButton
-                                    label="View All"
+                                    :label="$gettext('View All')"
                                     size="small"
                                     :on-click="() => navigateToTasks()"
                                     :disabled="loading && loading.tasks"
@@ -85,17 +83,17 @@
                         <EscrLoader
                             v-else
                             :loading="loading && loading.tasks"
-                            no-data-message="There are no tasks to display."
+                            :no-data-message="$gettext('There are no tasks to display.')"
                         />
                     </div>
 
                     <!-- Document images list -->
                     <div class="escr-card escr-card-table escr-document-images">
                         <div class="escr-card-header">
-                            <h2>Your Recent Images</h2>
+                            <h2 v-translate>Your Recent Images</h2>
                             <div class="escr-card-actions">
                                 <EscrButton
-                                    label="View All"
+                                    :label="$gettext('View All')"
                                     size="small"
                                     :on-click="() => navigateToImages()"
                                     :disabled="loading && loading.parts"
@@ -120,16 +118,16 @@
                         <EscrLoader
                             v-else
                             :loading="loading && loading.parts"
-                            no-data-message="There are no images to display"
+                            :no-data-message="$gettext('There are no images to display')"
                         />
                     </div>
                 </div>
                 <div class="escr-doc-right-grid">
                     <!-- transcription picker -->
                     <div class="doc-stats-header">
-                        <h2>Document Statistics</h2>
+                        <h2 v-translate>Document Statistics</h2>
                         <div>
-                            <h3>View:</h3>
+                            <h3 v-translate>View:</h3>
                             <EscrDropdown
                                 :options="transcriptionLevels"
                                 :on-change="selectTranscription"
@@ -140,7 +138,7 @@
                     <!-- Document total images card -->
                     <div class="escr-card escr-card-padding images-stats">
                         <div class="escr-card-header">
-                            <h2>Total Images</h2>
+                            <h2 v-translate>Total Images</h2>
                         </div>
                         <span class="escr-stat">
                             {{
@@ -153,7 +151,7 @@
                     <!-- Document total lines card -->
                     <div class="escr-card escr-card-padding lines-stats">
                         <div class="escr-card-header">
-                            <h2>Total Lines</h2>
+                            <h2 v-translate>Total Lines</h2>
                         </div>
                         <EscrLoader
                             v-if="!lineCount ||
@@ -173,7 +171,7 @@
                     <!-- Document total characters card -->
                     <div class="escr-card escr-card-padding chars-stats">
                         <div class="escr-card-header">
-                            <h2>Total Characters</h2>
+                            <h2 v-translate>Total Characters</h2>
                         </div>
                         <EscrLoader
                             v-if="!charCount ||
@@ -192,9 +190,9 @@
                     </div>
                     <!-- Document transcription status card -->
                     <div class="escr-card escr-card-padding transcription-status">
-                        <h2>Transcription Status</h2>
+                        <h2 v-translate>Transcription Status</h2>
                         <dl>
-                            <dt>Confidence</dt>
+                            <dt v-translate>Confidence</dt>
                             <dd>{{ transcriptionConfidence }}</dd>
                         </dl>
                     </div>
@@ -219,9 +217,9 @@
                 <!-- delete document modal -->
                 <ConfirmModal
                     v-if="deleteModalOpen"
-                    body-text="Are you sure you want to delete this document?"
-                    confirm-verb="Delete"
-                    title="Delete Document"
+                    :body-text="$gettext('Are you sure you want to delete this document?')"
+                    :confirm-verb="$gettext('Delete')"
+                    :title="$gettext('Delete Document')"
                     :cannot-undo="true"
                     :disabled="loading && loading.document"
                     :on-cancel="closeDeleteModal"
@@ -245,11 +243,10 @@
                 <!-- cancel image uploads modal -->
                 <ConfirmModal
                     v-if="taskModalOpen && taskModalOpen.imageCancelWarning"
-                    :body-text="'Uploads are still in progress. Are you sure you want ' +
-                        'to cancel? Incomplete uploads may be lost.'"
-                    title="Cancel Upload In Progress"
-                    cancel-verb="No"
-                    confirm-verb="Yes, cancel"
+                    :body-text="$gettext('Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost.')"
+                    :title="$gettext('Cancel Upload In Progress')"
+                    :cancel-verb="$gettext('No')"
+                    :confirm-verb="$gettext('Yes, cancel')"
                     :disabled="loading && loading.document"
                     :on-cancel="() => closeTaskModal('imageCancelWarning')"
                     :on-confirm="confirmImageCancelWarning"
@@ -277,10 +274,9 @@
                 <!-- overwrite segmentation modal -->
                 <ConfirmModal
                     v-if="taskModalOpen && taskModalOpen.overwriteWarning"
-                    :body-text="'Are you sure you want to continue? Re-segmenting will delete ' +
-                        'any existing transcriptions.'"
-                    title="Overwrite Existing Segmentation and Transcriptions"
-                    confirm-verb="Continue"
+                    :body-text="$gettext('Are you sure you want to continue? Re-segmenting will delete any existing transcriptions.')"
+                    :title="$gettext('Overwrite Existing Segmentation and Transcriptions')"
+                    :confirm-verb="$gettext('Continue')"
                     :disabled="loading && loading.document"
                     :cannot-undo="true"
                     :on-cancel="() => closeTaskModal('overwriteWarning')"
@@ -320,10 +316,10 @@
                 <!-- cancel task modal -->
                 <ConfirmModal
                     v-if="taskModalOpen && taskModalOpen.cancelWarning"
-                    :body-text="'Are you sure you want to cancel this task?'"
-                    title="Cancel Task"
-                    confirm-verb="Yes"
-                    cancel-verb="No"
+                    :body-text="$gettext('Are you sure you want to cancel this task?')"
+                    :title="$gettext('Cancel Task')"
+                    :confirm-verb="$gettext('Yes')"
+                    :cancel-verb="$gettext('No')"
                     :cannot-undo="false"
                     :disabled="loading && loading.tasks"
                     :on-cancel="() => closeTaskModal('cancelWarning')"
@@ -494,7 +490,7 @@ export default {
          * Links and titles for the breadcrumbs above the page.
          */
         breadcrumbs() {
-            let docBreadcrumbs = [{ title: "Loading..." }];
+            let docBreadcrumbs = [{ title: this.$gettext("Loading...") }];
             if (this.projectName && this.projectSlug && this.documentName) {
                 docBreadcrumbs = [
                     {
@@ -505,7 +501,7 @@ export default {
                 ];
             }
             return [
-                { title: "My Projects", href: SCRIPT_NAME + "/projects" },
+                { title: this.$gettext("My Projects"), href: SCRIPT_NAME + "/projects" },
                 ...docBreadcrumbs,
             ];
         },
@@ -517,13 +513,13 @@ export default {
                 {
                     icon: PencilIcon,
                     key: "edit",
-                    label: "Edit",
+                    label: this.$gettext("Edit"),
                     onClick: this.openEditModal,
                 },
                 {
                     icon: TrashIcon,
                     key: "delete",
-                    label: "Delete Document",
+                    label: this.$gettext("Delete Document"),
                     onClick: this.openDeleteModal,
                 }
             ]
@@ -533,9 +529,9 @@ export default {
          */
         partsHeaders() {
             return [
-                { label: "Name", value: "title", image: "thumbnail" },
+                { label: this.$gettext("Name"), value: "title", image: "thumbnail" },
                 {
-                    label: "Last Update",
+                    label: this.$gettext("Last Update"),
                     value: "updated_at",
                     format: (val) => new Date(val).toLocaleDateString(
                         undefined,
@@ -556,7 +552,7 @@ export default {
                     },
                     icon: ToolsIcon,
                     key: "tasks",
-                    label: "Quick Actions",
+                    label: this.$gettext("Quick Actions"),
                     panel: QuickActionsPanel,
                 },
                 {
@@ -568,7 +564,7 @@ export default {
                     },
                     icon: PeopleIcon,
                     key: "share",
-                    label: "Groups & Users",
+                    label: this.$gettext("Groups & Users"),
                     panel: SharePanel,
                 },
                 {
@@ -578,7 +574,7 @@ export default {
                     },
                     icon: ModelsIcon,
                     key: "models",
-                    label: "Document Models",
+                    label: this.$gettext("Document Models"),
                     panel: ModelsPanel,
                 }
             ];
@@ -593,7 +589,7 @@ export default {
                     },
                     icon: SearchIcon,
                     key: "search",
-                    label: "Search Document",
+                    label: this.$gettext("Search Document"),
                     panel: SearchPanel,
                 });
             }
