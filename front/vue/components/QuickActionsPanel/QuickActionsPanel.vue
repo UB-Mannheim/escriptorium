@@ -10,14 +10,17 @@
                     color="text"
                     :disabled="!data || data.disabled"
                     :on-click="() => openModal('import')"
-                    label="Import"
+                    :label="$gettext('Import')"
                 >
                     <template #button-icon>
                         <ImportIcon />
                     </template>
                 </EscrButton>
                 <template #popper>
-                    <span class="escr-tooltip-text">
+                    <span
+                        v-translate
+                        class="escr-tooltip-text"
+                    >
                         Import images or transcription content.
                     </span>
                 </template>
@@ -28,7 +31,7 @@
                 color="text"
                 :disabled="!data || data.disabled"
                 :on-click="() => openModal('segment')"
-                :label="`Segment ${data && data.scope}`"
+                :label="$gettextInterpolate($gettext('Segment %{scope}'), { scope: scopeLabel })"
             >
                 <template #button-icon>
                     <SegmentIcon />
@@ -40,7 +43,7 @@
                 color="text"
                 :disabled="!data || data.disabled"
                 :on-click="() => openModal('transcribe')"
-                :label="`Transcribe ${data && data.scope}`"
+                :label="$gettextInterpolate($gettext('Transcribe %{scope}'), { scope: scopeLabel })"
             >
                 <template #button-icon>
                     <TranscribeIcon />
@@ -52,7 +55,7 @@
                 color="text"
                 :disabled="!data || data.disabled"
                 :on-click="() => openModal('align')"
-                :label="`Align ${data && data.scope}`"
+                :label="$gettextInterpolate($gettext('Align %{scope}'), { scope: scopeLabel })"
             >
                 <template #button-icon>
                     <AlignIcon />
@@ -64,7 +67,7 @@
                 color="text"
                 :disabled="!data || data.disabled"
                 :on-click="() => openModal('export')"
-                :label="`Export ${data && data.scope}`"
+                :label="$gettextInterpolate($gettext('Export %{scope}'), { scope: scopeLabel })"
             >
                 <template #button-icon>
                     <ExportIcon />
@@ -121,6 +124,13 @@ export default {
         data: {
             type: Object,
             required: true,
+        },
+    },
+    computed: {
+        scopeLabel() {
+            return this.data && this.data.scope === "Elements"
+                ? this.$gettext("Elements")
+                : this.$gettext("Document");
         },
     },
     methods: {
