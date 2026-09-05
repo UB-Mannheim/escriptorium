@@ -2,10 +2,11 @@
     <div class="escr-browser escr-card">
         <div class="escr-card-header">
             <h3 class="escr-browser-breadcrumbs">
-                <span v-if="!currentProject">Projects</span>
+                <span v-if="!currentProject" v-translate>Projects</span>
                 <template v-else>
                     <a
                         href="#"
+                        v-translate
                         @click.prevent="fetchProjects"
                     > Projects </a>
                     <span class="separator italic">></span>
@@ -33,9 +34,9 @@
                     :disabled="loading"
                     :on-filter="handleFilter"
                     :search-placeholder="
-                        currentDocument ? 'Search images...' :
-                        currentProject ? 'Search documents...' :
-                        'Search projects...'
+                        currentDocument ? $gettext('Search images...') :
+                        currentProject ? $gettext('Search documents...') :
+                        $gettext('Search projects...')
                     "
                     :tags="currentTags"
                     :hide-tags="!!currentDocument"
@@ -51,7 +52,7 @@
                 <EscrLoader
                     v-if="!projects || projects.length === 0"
                     :loading="loading"
-                    no-data-message="No projects to display."
+                    :no-data-message="$gettext('No projects to display.')"
                 />
                 <template v-else>
                     <EscrTable
@@ -70,7 +71,7 @@
                             class="escr-spinner escr-spinner--secondary"
                             role="status"
                         >
-                            <span class="sr-only">Loading more...</span>
+                            <span class="sr-only">{{ $gettext("Loading more...") }}</span>
                         </div>
                     </div>
                 </template>
@@ -83,7 +84,7 @@
                 <EscrLoader
                     v-if="!storeDocuments || storeDocuments.length === 0"
                     :loading="isFetchingContent"
-                    no-data-message="No documents to display."
+                    :no-data-message="$gettext('No documents to display.')"
                 />
                 <template v-else>
                     <EscrTable
@@ -107,7 +108,7 @@
                             class="escr-spinner escr-spinner--secondary"
                             role="status"
                         >
-                            <span class="sr-only">Loading more...</span>
+                            <span class="sr-only">{{ $gettext("Loading more...") }}</span>
                         </div>
                     </div>
                 </template>
@@ -119,7 +120,7 @@
                         class="escr-spinner"
                         role="status"
                     >
-                        <span class="sr-only">Updating...</span>
+                        <span class="sr-only">{{ $gettext("Updating...") }}</span>
                     </div>
                 </div>
             </div>
@@ -218,16 +219,16 @@ export default {
         ...mapState("images", ["nextPage"]),
         projectHeaders() {
             return [
-                { label: "Project Name", value: "name", sortable: true, class: "col-title" },
-                { label: "Tags", value: "tags", component: EscrTags, class: "col-tags" },
+                { label: this.$gettext("Project Name"), value: "name", sortable: true, class: "col-title" },
+                { label: this.$gettext("Tags"), value: "tags", component: EscrTags, class: "col-tags" },
                 {
-                    label: "Documents",
+                    label: this.$gettext("Documents"),
                     value: "documents_count",
                     sortable: true,
                     class: "col-small",
                 },
                 {
-                    label: "Updated At",
+                    label: this.$gettext("Updated At"),
                     value: "updated_at",
                     format: this.formatDate,
                     sortable: true,
@@ -237,11 +238,11 @@ export default {
         },
         documentHeaders() {
             return [
-                { label: "Document Name", value: "name", sortable: true, class: "col-title" },
-                { label: "Tags", value: "tags", component: EscrTags, class: "col-tags" },
-                { label: "Pages", value: "parts_count", sortable: true, class: "col-small" },
+                { label: this.$gettext("Document Name"), value: "name", sortable: true, class: "col-title" },
+                { label: this.$gettext("Tags"), value: "tags", component: EscrTags, class: "col-tags" },
+                { label: this.$gettext("Pages"), value: "parts_count", sortable: true, class: "col-small" },
                 {
-                    label: "Updated At",
+                    label: this.$gettext("Updated At"),
                     value: "updated_at",
                     format: this.formatDate,
                     class: "col-date",
