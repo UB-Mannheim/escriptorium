@@ -12,7 +12,7 @@ if [ "$HOSTNAME" = "ocr-01" ]; then
   if [ "$basedir" != "/opt/es_next" ]; then
     # https://ocr-bw.bib.uni-mannheim.de/escriptorium
 
-    source $basedir/venv3.12/bin/activate
+    source $basedir/venv3.13/bin/activate
     export OMP_NUM_THREADS=2
 
     # Configuration for passim (alignment). Use 4 threads and 8 GiB RAM.
