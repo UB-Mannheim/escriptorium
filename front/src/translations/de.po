@@ -315,6 +315,9 @@ msgstr "Konfidenz"
 msgid "Continue"
 msgstr "Fortfahren"
 
+msgid "Could not load downloads"
+msgstr "Downloads konnten nicht geladen werden"
+
 msgid "Crashed"
 msgstr "Abgestürzt"
 
@@ -330,6 +333,9 @@ msgstr "Tag \"%{tagName}\" erstellen"
 msgid "Create New"
 msgstr "Neu erstellen"
 
+msgid "Created"
+msgstr "Erstellt"
+
 msgid "Default"
 msgstr "Standard"
 
@@ -344,6 +350,9 @@ msgstr "Standard-Transkriptionsebene:"
 
 msgid "Delete"
 msgstr "Löschen"
+
+msgid "Delete \"%{label}\"? This cannot be undone."
+msgstr "„%{label}\" löschen? Das kann nicht rückgängig gemacht werden."
 
 msgid "Delete %{name}"
 msgstr "%{name} löschen"
@@ -401,6 +410,9 @@ msgstr "Herunterladen"
 
 msgid "Download Archive"
 msgstr "Archiv herunterladen"
+
+msgid "Downloads"
+msgstr "Downloads"
 
 msgid "Drag and drop files here"
 msgstr "Dateien hierher ziehen und ablegen"
@@ -482,6 +494,9 @@ msgstr "Menü für Aufgabenüberwachung und -nutzung erweitern"
 
 msgid "expand user profile menu"
 msgstr "Benutzermenü erweitern"
+
+msgid "Expires"
+msgstr "Läuft ab"
 
 msgid "Export"
 msgstr "Exportieren"
@@ -639,6 +654,9 @@ msgstr "Benutzer einladen"
 msgid "Key"
 msgstr "Schlüssel"
 
+msgid "Label"
+msgstr "Bezeichnung"
+
 msgid "Last Edited"
 msgstr "Zuletzt bearbeitet"
 
@@ -785,6 +803,9 @@ msgstr "Benennen Sie Ihr neues Modell ..."
 msgid "Name..."
 msgstr "Name ..."
 
+msgid "Never"
+msgstr "Nie"
+
 msgid "New Position"
 msgstr "Neue Position"
 
@@ -799,6 +820,9 @@ msgstr "Keine Dokument-Tasks vorhanden."
 
 msgid "No documents to display."
 msgstr "Keine Dokumente vorhanden."
+
+msgid "No downloads yet. Exports and archives you queue will show up here."
+msgstr "Noch keine Downloads. Exports und Archive, die Sie in die Warteschlange stellen, erscheinen hier."
 
 msgid "No images to display."
 msgstr "Keine Bilder vorhanden."
@@ -1088,6 +1112,9 @@ msgstr "Anmelden"
 
 msgid "Site Administration"
 msgstr "Site-Verwaltung"
+
+msgid "Size"
+msgstr "Größe"
 
 msgid "Source Image (Ctrl+2)"
 msgstr "Quellbild (Strg+2)"

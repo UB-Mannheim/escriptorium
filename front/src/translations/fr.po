@@ -315,6 +315,9 @@ msgstr "Fiabilité"
 msgid "Continue"
 msgstr "Continuer"
 
+msgid "Could not load downloads"
+msgstr "Impossible de charger les téléchargements"
+
 msgid "Crashed"
 msgstr "Échoué"
 
@@ -330,6 +333,9 @@ msgstr "Créer le tag \"%{tagName}\""
 msgid "Create New"
 msgstr "Créer un nouveau"
 
+msgid "Created"
+msgstr "Créé"
+
 msgid "Default"
 msgstr "Défaut"
 
@@ -344,6 +350,9 @@ msgstr "Calque de transcription par défaut :"
 
 msgid "Delete"
 msgstr "Supprimer"
+
+msgid "Delete \"%{label}\"? This cannot be undone."
+msgstr "Supprimer « %{label} » ? Cette action est irréversible."
 
 msgid "Delete %{name}"
 msgstr "Supprimer %{name}"
@@ -401,6 +410,9 @@ msgstr "Télécharger"
 
 msgid "Download Archive"
 msgstr "Télécharger l'archive"
+
+msgid "Downloads"
+msgstr "Téléchargements"
 
 msgid "Drag and drop files here"
 msgstr "Glissez-déposez des fichiers ici"
@@ -482,6 +494,9 @@ msgstr "Développer le menu de suivi des tâches et d'utilisation"
 
 msgid "expand user profile menu"
 msgstr "Développer le menu du profil utilisateur"
+
+msgid "Expires"
+msgstr "Expire"
 
 msgid "Export"
 msgstr "Exporter"
@@ -639,6 +654,9 @@ msgstr "Inviter des utilisateurs"
 msgid "Key"
 msgstr "Clé"
 
+msgid "Label"
+msgstr "Libellé"
+
 msgid "Last Edited"
 msgstr "Dernière modification"
 
@@ -785,6 +803,9 @@ msgstr "Nommez votre nouveau modèle..."
 msgid "Name..."
 msgstr "Nom ..."
 
+msgid "Never"
+msgstr "Jamais"
+
 msgid "New Position"
 msgstr "Nouvelle position"
 
@@ -799,6 +820,9 @@ msgstr "Aucune tâche de document à afficher."
 
 msgid "No documents to display."
 msgstr "Aucun document à afficher."
+
+msgid "No downloads yet. Exports and archives you queue will show up here."
+msgstr "Aucun téléchargement pour le moment. Les exports et archives mis en file d'attente s'afficheront ici."
 
 msgid "No images to display."
 msgstr "Aucune image à afficher."
@@ -1088,6 +1112,9 @@ msgstr "Se connecter"
 
 msgid "Site Administration"
 msgstr "Administration du site"
+
+msgid "Size"
+msgstr "Taille"
 
 msgid "Source Image (Ctrl+2)"
 msgstr "Image source (Ctrl+2)"
