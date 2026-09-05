@@ -1,7 +1,7 @@
 <template>
     <EscrModal class="escr-download-archive-modal">
         <template #modal-header>
-            <h2>Download Archive {{ scope }}</h2>
+            <h2>{{ $gettext("Download Archive") }} {{ scope }}</h2>
             <EscrButton
                 color="text"
                 :on-click="onCancel"
@@ -14,11 +14,10 @@
         </template>
         <template #modal-content>
             <p class="escr-archive-intro">
-                Exports {{ scopeNoun }} as a full JSON
-                archive.
+                {{ introText }}
             </p>
             <div class="escr-form-field">
-                <label>Archive format</label>
+                <label v-translate>Archive format</label>
                 <select
                     :value="archiveFormat"
                     @change="handleArchiveFormatChange"
@@ -38,20 +37,20 @@
                         :checked="includeImages"
                         @change="handleIncludeImagesChange"
                     >
-                    Include images
+                    {{ $gettext("Include images") }}
                 </label>
             </div>
         </template>
         <template #modal-actions>
             <EscrButton
                 color="outline-primary"
-                label="Cancel"
+                :label="$gettext('Cancel')"
                 :on-click="onCancel"
                 :disabled="disabled"
             />
             <EscrButton
                 color="primary"
-                label="Download"
+                :label="$gettext('Download')"
                 :on-click="onSubmit"
                 :disabled="disabled"
             />
@@ -85,8 +84,14 @@ export default {
         }),
         scopeNoun() {
             // "Document" -> "document", "Elements" -> "selection"
-            if (this.scope === "Elements") return "selection";
-            return this.scope.toLowerCase() || "document";
+            if (this.scope === "Elements") return this.$gettext("selection");
+            return this.scope.toLowerCase() || this.$gettext("document");
+        },
+        introText() {
+            return this.$gettextInterpolate(
+                this.$gettext("Exports %{scope} as a full JSON archive."),
+                { scope: this.scopeNoun },
+            );
         },
     },
     methods: {
