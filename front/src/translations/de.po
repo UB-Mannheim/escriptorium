@@ -1,4 +1,3 @@
-#
 msgid ""
 msgstr ""
 "Language: de\n"
@@ -126,8 +125,17 @@ msgstr "UND"
 msgid "Apply Filter"
 msgstr "Filter anwenden"
 
+msgid "Are you sure you want to cancel this task?"
+msgstr "Möchten Sie diese Aufgabe wirklich abbrechen?"
+
+msgid "Are you sure you want to continue? Re-segmenting will delete any existing transcriptions."
+msgstr "Möchten Sie fortfahren? Bei der erneuten Segmentierung werden vorhandene Transkriptionen gelöscht."
+
 msgid "Are you sure you want to delete the document %{name}?"
 msgstr "Möchten Sie das Dokument %{name} wirklich löschen?"
+
+msgid "Are you sure you want to delete this document?"
+msgstr "Möchten Sie dieses Dokument wirklich löschen?"
 
 msgid "Are you sure you want to delete this project?"
 msgstr "Möchten Sie dieses Projekt wirklich löschen?"
@@ -142,6 +150,12 @@ msgstr "Grundlinie"
 
 msgid "Cancel"
 msgstr "Abbrechen"
+
+msgid "Cancel Task"
+msgstr "Aufgabe abbrechen"
+
+msgid "Cancel Upload In Progress"
+msgstr "Laufenden Upload abbrechen"
 
 msgid "Centered"
 msgstr "Zentriert"
@@ -163,6 +177,12 @@ msgstr "Schließen"
 
 msgid "Close the %{label} panel"
 msgstr "Bedienfeld %{label} schließen"
+
+msgid "Confidence"
+msgstr "Konfidenz"
+
+msgid "Continue"
+msgstr "Fortfahren"
 
 msgid "Create"
 msgstr "Erstellen"
@@ -188,6 +208,9 @@ msgstr "%{name} löschen"
 msgid "Delete document"
 msgstr "Dokument löschen"
 
+msgid "Delete Document"
+msgstr "Dokument löschen"
+
 msgid "Delete project"
 msgstr "Projekt löschen"
 
@@ -197,14 +220,17 @@ msgstr "Projekt löschen"
 msgid "Delete Project \"%{name}\""
 msgstr "Projekt \"%{name}\" löschen"
 
-msgid "Deutsch"
-msgstr "Deutsch"
-
 msgid "Document"
 msgstr "Dokument"
 
 msgid "Document images"
 msgstr "Dokumentbilder"
+
+msgid "Document Models"
+msgstr "Dokumentmodelle"
+
+msgid "Document Statistics"
+msgstr "Dokumentstatistiken"
 
 msgid "Document Tags"
 msgstr "Dokument-Tags"
@@ -245,9 +271,6 @@ msgstr "Element #"
 msgid "Elements"
 msgstr "Elemente"
 
-msgid "English"
-msgstr "English"
-
 msgid "Enter project name"
 msgstr "Projektnamen eingeben"
 
@@ -283,9 +306,6 @@ msgstr "Schriftart zur Anzeige des Transkriptionstexts dieses Dokuments im Edito
 
 msgid "Font used to display transcription text for documents in this project, unless overridden at the document level. Leave as Default to inherit from the user or built-in font."
 msgstr "Schriftart zur Anzeige des Transkriptionstexts für Dokumente in diesem Projekt, sofern nicht auf Dokumentebene überschrieben. Als Standard belassen, um die Schriftart des Benutzers oder eine integrierte Schriftart zu übernehmen."
-
-msgid "Français"
-msgstr "Français"
 
 msgid "global search"
 msgstr "Globale Suche"
@@ -338,6 +358,9 @@ msgstr "Lädt..."
 msgid "Logout"
 msgstr "Abmelden"
 
+msgid "Main script:"
+msgstr "Hauptschriftart:"
+
 msgid "Metadata"
 msgstr "Metadaten"
 
@@ -359,6 +382,9 @@ msgstr "Meine Projekte"
 msgid "Name"
 msgstr "Name"
 
+msgid "No"
+msgstr "Nein"
+
 msgid "No matching tags. %{hidden}"
 msgstr "Keine passenden Tags. %{hidden}"
 
@@ -367,6 +393,9 @@ msgstr "Bedienfeld %{label} öffnen"
 
 msgid "OR"
 msgstr "ODER"
+
+msgid "Overwrite Existing Segmentation and Transcriptions"
+msgstr "Vorhandene Segmentierung und Transkriptionen überschreiben"
 
 msgid "Owner"
 msgstr "Eigentümer"
@@ -392,6 +421,9 @@ msgstr "Projekte"
 msgid "projects list"
 msgstr "Projektliste"
 
+msgid "Quick Actions"
+msgstr "Schnellaktionen"
+
 msgid "Read Direction"
 msgstr "Leserichtung"
 
@@ -409,6 +441,9 @@ msgstr "Suche"
 
 msgid "Search by name..."
 msgstr "Nach Name suchen..."
+
+msgid "Search Document"
+msgstr "Dokument durchsuchen"
 
 msgid "Search documents..."
 msgstr "Dokumente suchen..."
@@ -458,9 +493,6 @@ msgstr "Senden"
 msgid "Surround one or more terms with quotation marks to deactivate fuzziness."
 msgstr "Setzen Sie einen oder mehrere Begriffe in Anführungszeichen, um die Fuzziness zu deaktivieren."
 
-msgid "Switch language"
-msgstr "Sprache wechseln"
-
 msgid "switch to light mode"
 msgstr "In den hellen Modus wechseln"
 
@@ -491,11 +523,29 @@ msgstr "Die Leserichtung beschreibt die Gesamtreihenfolge der Elemente/Seiten im
 msgid "There are no documents to display."
 msgstr "Es gibt keine anzuzeigenden Dokumente."
 
+msgid "There are no images to display"
+msgstr "Es gibt keine Bilder anzuzeigen"
+
 msgid "There are no projects to display."
 msgstr "Es gibt keine anzuzeigenden Projekte."
 
+msgid "There are no tasks to display."
+msgstr "Es gibt keine Aufgaben anzuzeigen."
+
+msgid "This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title)."
+msgstr "Dieses Dokument hat keine Tags. Sie können Tags über das Bearbeitungsformular hinzufügen, das im oberen Panel im Dropdown-Menü (rechts neben dem Dokumenttitel) erreichbar ist."
+
 msgid "Topline"
 msgstr "Toplinie"
+
+msgid "Total Characters"
+msgstr "Zeichen insgesamt"
+
+msgid "Total Images"
+msgstr "Bilder insgesamt"
+
+msgid "Total Lines"
+msgstr "Zeilen insgesamt"
 
 msgid "Training"
 msgstr "Training"
@@ -512,8 +562,14 @@ msgstr "Transkription (Strg+4)"
 msgid "Transcription Font"
 msgstr "Transkriptionsschriftart"
 
+msgid "Transcription Status"
+msgstr "Transkriptionsstatus"
+
 msgid "Untagged"
 msgstr "Ohne Tag"
+
+msgid "Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost."
+msgstr "Uploads sind noch im Gange. Möchten Sie wirklich abbrechen? Unvollständige Uploads können verloren gehen."
 
 msgid "Users"
 msgstr "Benutzer"
@@ -521,8 +577,23 @@ msgstr "Benutzer"
 msgid "Value"
 msgstr "Wert"
 
+msgid "View All"
+msgstr "Alle anzeigen"
+
+msgid "View:"
+msgstr "Ansicht:"
+
 msgid "Welcome back, %{name}"
 msgstr "Willkommen zurück, %{name}"
 
+msgid "Yes"
+msgstr "Ja"
+
+msgid "Yes, cancel"
+msgstr "Ja, abbrechen"
+
 msgid "You cannot undo this action."
 msgstr "Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "Your Recent Images"
+msgstr "Ihre letzten Bilder"
