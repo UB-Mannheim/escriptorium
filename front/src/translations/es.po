@@ -259,6 +259,9 @@ msgstr "Centrado"
 msgid "Change Password"
 msgstr "Cambiar contraseña"
 
+msgid "Choose files"
+msgstr "Elegir archivos"
+
 msgid "Clear"
 msgstr "Borrar"
 
@@ -388,6 +391,9 @@ msgstr "Descargar"
 msgid "Download Archive"
 msgstr "Descargar archivo"
 
+msgid "Drag and drop files here"
+msgstr "Arrastre y suelte archivos aquí"
+
 msgid ""
 "Each line corresponds to an edition of the content, in inverse chronological order (Most recent at the top).\n"
 "<br>The colors represent the difference with the previous version,\n"
@@ -433,6 +439,9 @@ msgstr "Habilita el desplazamiento máximo y deshabilita la búsqueda por haces.
 msgid "Enter layer name"
 msgstr "Introducir nombre de capa"
 
+msgid "Enter METS file URI"
+msgstr "Introducir URI del archivo METS"
+
 msgid "Enter multiple numbers separated by a comma, and/or ranges separated by a dash, to select images"
 msgstr "Introduzca varios números separados por comas y/o intervalos separados por un guion para seleccionar imágenes"
 
@@ -441,6 +450,9 @@ msgstr "Introduzca el nombre del proyecto"
 
 msgid "Enter select range"
 msgstr "Introducir rango de selección"
+
+msgid "Enter URL"
+msgstr "Introducir URL"
 
 msgid "Enter username of registered user"
 msgstr "Introduzca el nombre de usuario de un usuario registrado"
@@ -474,6 +486,9 @@ msgstr "No se pudieron obtener más imágenes"
 
 msgid "File Format"
 msgstr "Formato de archivo"
+
+msgid "Files supported: JPG, PNG, TIFF"
+msgstr "Archivos compatibles: JPG, PNG, TIFF"
 
 msgid "Filter by:"
 msgstr "Filtrar por:"
@@ -538,6 +553,9 @@ msgstr "Si está marcado, el alineador reutilizará el texto de la transcripció
 msgid "If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."
 msgstr "Si está marcado, el alineador usará todas las páginas transcritas del documento para encontrar coincidencias. Si no, comparará cada página con el texto por separado."
 
+msgid "IIIF Manifest URI"
+msgstr "URI del manifiesto IIIF"
+
 msgid "image"
 msgid_plural "images"
 msgstr[0] "imagen"
@@ -559,8 +577,26 @@ msgstr "Imágenes"
 msgid "Import"
 msgstr "Importar"
 
+msgid "Import Elements"
+msgstr "Importar elementos"
+
+msgid "Import images"
+msgstr "Importar imágenes"
+
+msgid "Import images from a PDF document"
+msgstr "Importar imágenes desde un documento PDF"
+
+msgid "Import images from IIIF"
+msgstr "Importar imágenes desde IIIF"
+
 msgid "Import images or transcription content."
 msgstr "Importe imágenes o contenido de transcripción."
+
+msgid "Import images, segmentation and transcriptions described by METS"
+msgstr "Importar imágenes, segmentación y transcripciones descritas por METS"
+
+msgid "Import segmentation and transcriptions from XML"
+msgstr "Importar segmentación y transcripciones desde XML"
 
 msgid "In Progress"
 msgstr "En curso"
@@ -771,6 +807,9 @@ msgstr "Actualmente solo se muestran las %{count} primeras imágenes; haga clic 
 msgid "Open the %{label} panel"
 msgstr "Abrir el panel %{label}"
 
+msgid "or"
+msgstr "o"
+
 msgid "OR"
 msgstr "O"
 
@@ -779,6 +818,9 @@ msgstr "Sobrescribir existentes"
 
 msgid "Overwrite Existing Segmentation and Transcriptions"
 msgstr "Sobrescribir segmentación y transcripciones existentes"
+
+msgid "Overwriting destroys existing regions, lines and any bound transcriptions before importing."
+msgstr "Al sobrescribir se destruyen las regiones y líneas existentes y las transcripciones vinculadas antes de importar."
 
 msgid "owned by"
 msgstr "Propietario:"
@@ -865,6 +907,9 @@ msgstr "Tipos de región"
 
 msgid "Regions"
 msgstr "Regiones"
+
+msgid "Remote METS URI"
+msgstr "URI METS remota"
 
 msgid "Remove part"
 msgstr "Quitar parte"
@@ -1074,6 +1119,9 @@ msgstr "Testigos textuales"
 msgid "The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000."
 msgstr "La distancia entre n-gramas únicos coincidentes; 600 debería funcionar bien para OCR limpio o textos donde los pasajes se alinean con distintas partes del texto testigo. Para forzar el alineamiento de principio a fin de dos documentos, aumente a 1.000.000."
 
+msgid "The name of the resulting transcription layer."
+msgstr "El nombre de la capa de transcripción resultante."
+
 msgid "The position of the line relative to the polygon."
 msgstr "La posición de la línea relativa al polígono."
 
@@ -1149,6 +1197,9 @@ msgstr "Transcripción (Ctrl+4)"
 msgid "Transcription Font"
 msgstr "Fuente de transcripción"
 
+msgid "Transcription Name"
+msgstr "Nombre de la transcripción"
+
 msgid "Transcription Status"
 msgstr "Estado de transcripción"
 
@@ -1163,6 +1214,12 @@ msgstr "Actualizado el"
 
 msgid "Updating..."
 msgstr "Actualizando..."
+
+msgid "Upload"
+msgstr "Subir"
+
+msgid "Upload file"
+msgstr "Subir archivo"
 
 msgid "Upload New"
 msgstr "Subir nuevo"
@@ -1199,6 +1256,9 @@ msgstr "Bienvenido de nuevo, %{name}"
 
 msgid "Will significantly increase the time to produce and download the export."
 msgstr "Aumentará significativamente el tiempo de producción y descarga de la exportación."
+
+msgid "XML / ZIP"
+msgstr "XML / ZIP"
 
 msgid "Yes"
 msgstr "Sí"
