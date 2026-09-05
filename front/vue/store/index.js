@@ -8,6 +8,7 @@ import document from "./modules/document";
 import filter from "./modules/filter";
 import forms from "./modules/forms";
 import images from "./modules/images";
+import locale from "./modules/locale";
 import ontology from "./modules/ontology";
 import project from "./modules/project";
 import projects from "./modules/projects";
@@ -16,6 +17,7 @@ import tasks from "./modules/tasks";
 import transcription from "./modules/transcription";
 import user from "./modules/user";
 import "floating-vue/dist/style.css";
+import { installGettext } from "../../src/translations/index.js";
 
 Vue.use(Vuex);
 
@@ -53,6 +55,7 @@ const store = new Store({
         filter,
         forms,
         images,
+        locale,
         ontology,
         project,
         projects,
@@ -76,5 +79,10 @@ Object.defineProperty(store, "dispatch", {
         return initialDispatch(...arguments);
     },
 });
+
+// Install vue-gettext and seed the locale store with the active language.
+// We do this *after* the store exists so that installGettext can commit
+// the initial language into `state.locale.current`.
+installGettext(store);
 
 export default store;
