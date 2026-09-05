@@ -10,13 +10,13 @@
                         :triggers="['hover']"
                     >
                         <EscrButton
-                            label="Select All"
+                            :label="$gettext('Select All')"
                             size="small"
                             :disabled="allSelected || isUpdating"
                             :on-click="() => $emit('toggle-all')"
                         />
                         <template #popper>
-                            Select all images in the document
+                            {{ $gettext("Select all images in the document") }}
                         </template>
                     </VDropdown>
                     <VDropdown
@@ -26,18 +26,18 @@
                         :triggers="['hover']"
                     >
                         <EscrButton
-                            label="Select Visible"
+                            :label="$gettext('Select Visible')"
                             size="small"
                             color="outline-primary"
                             :disabled="allVisibleSelected || pages.length === 0 || isUpdating"
                             :on-click="() => $emit('select-visible')"
                         />
                         <template #popper>
-                            Select only the images currently loaded on screen
+                            {{ $gettext("Select only the images currently loaded on screen") }}
                         </template>
                     </VDropdown>
                     <EscrButton
-                        label="Select None"
+                        :label="$gettext('Select None')"
                         color="outline-primary"
                         size="small"
                         :disabled="!hasSelections || isUpdating"
@@ -52,14 +52,14 @@
                     "
                     class="escr-default-transcription"
                 >
-                    <label>Default transcription layer:</label>
+                    <label v-translate>Default transcription layer:</label>
                     <EscrDropdown
                         :options="transcriptionOptions"
                         :disabled="isUpdating"
                         :on-change="(e) => $emit('change-default', e)"
                     />
                     <EscrButton
-                        label="Apply to selected"
+                        :label="$gettext('Apply to selected')"
                         size="small"
                         color="outline-primary"
                         :disabled="!hasSelections"
@@ -71,7 +71,7 @@
             <EscrLoader
                 v-if="isFetching || !pages || pages.length === 0"
                 :loading="isFetching"
-                no-data-message="No images to display."
+                :no-data-message="$gettext('No images to display.')"
             />
             <ul v-else>
                 <ImageSelectCard
@@ -91,7 +91,7 @@
                     class="escr-load-more-container"
                 >
                     <EscrButton
-                        label="Load more"
+                        :label="$gettext('Load more')"
                         class="escr-load-more-btn"
                         color="outline-primary"
                         size="small"
@@ -110,7 +110,7 @@
                 class="escr-spinner"
                 role="status"
             >
-                <span class="sr-only">Updating...</span>
+                <span class="sr-only">{{ $gettext("Updating...") }}</span>
             </div>
         </div>
     </div>
