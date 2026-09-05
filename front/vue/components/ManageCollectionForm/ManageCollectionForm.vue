@@ -3,14 +3,14 @@
         <!-- collection select dropdown -->
         <div class="escr-collection-dropdown">
             <EscrDropdownField
-                label="Load Collection:"
+                :label="$gettext('Load Collection:')"
                 :label-visible="true"
                 :options="collectionsOptions"
                 :on-change="handleLoadCollection"
             />
             <EscrButton
                 :disabled="!collectionId"
-                label="Start New"
+                :label="$gettext('Start New')"
                 color="outline-primary"
                 :on-click="handleNewCollection"
                 size="small"
@@ -23,7 +23,7 @@
                 @click="startEditingName"
             >
                 <span>
-                    {{ collectionName || "Untitled Collection" }}
+                    {{ collectionName || $gettext("Untitled Collection") }}
                     {{ isDirty ? "*" : "" }}
                 </span>
                 <PencilIcon />
@@ -36,9 +36,9 @@
                     ref="nameInput"
                     class="escr-collection-name-input"
                     name="virtual-collection-name"
-                    label="Collection Name"
+                    :label="$gettext('Collection Name')"
                     :label-visible="false"
-                    placeholder="Name your collection..."
+                    :placeholder="$gettext('Name your collection...')"
                     :value="collectionName"
                     :on-input="handleNameChange"
                     :on-blur="() => { isEditingName = false; }"
@@ -59,10 +59,10 @@
         <!-- images count and save -->
         <div class="escr-save-collection">
             <span class="collection-stats">
-                <strong>{{ collectionItems.length }}</strong> parts staged
+                <strong>{{ collectionItems.length }}</strong> {{ $ngettext("part staged", "parts staged", collectionItems.length) }}
             </span>
             <EscrButton
-                label="Save Collection"
+                :label="$gettext('Save Collection')"
                 color="primary"
                 :disabled="
                     isLoadingCollection ||
@@ -160,14 +160,14 @@ export default {
             if (!this.collectionName || this.collectionName.trim() === "") {
                 this.$store.commit(
                     "collection/setCollectionName",
-                    "Untitled Collection",
+                    this.$gettext("Untitled Collection"),
                 );
             }
             try {
                 await this.saveCollection();
                 this.$store.dispatch("alerts/add", {
                     color: "success",
-                    message: "Collection saved successfully!",
+                    message: this.$gettext("Collection saved successfully!"),
                 });
             } catch (error) {
                 this.$store.dispatch("alerts/addError", error);
@@ -180,8 +180,7 @@ export default {
         handleLoadCollection(event) {
             if (this.isDirty) {
                 const confirmDiscard = window.confirm(
-                    "You have unsaved changes in your current collection. " +
-                    "Are you sure you want to load a new one and discard these changes?"
+                    this.$gettext("You have unsaved changes in your current collection. Are you sure you want to load a new one and discard these changes?")
                 );
                 if (!confirmDiscard) {
                     return;
@@ -199,8 +198,7 @@ export default {
         handleNewCollection() {
             if (this.isDirty) {
                 const confirmDiscard = window.confirm(
-                    "You have unsaved changes in your current collection. " +
-                    "Are you sure you want to start a new one and discard these changes?"
+                    this.$gettext("You have unsaved changes in your current collection. Are you sure you want to start a new one and discard these changes?")
                 );
                 if (!confirmDiscard) {
                     return;
