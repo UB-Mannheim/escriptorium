@@ -80,6 +80,14 @@ msgid ""
 "<br>The yellow trash button <i class=\"text-warning fas fa-trash\" /> only <b>deletes</b> selected control <b>points</b>."
 msgstr ""
 
+#: vue/components/DocumentsTasks/CancelModal.vue:22
+msgid "Abort"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:110
+msgid "Actions"
+msgstr ""
+
 #: vue/components/SharePanel/ShareModal.vue:36
 msgid "Add group"
 msgstr ""
@@ -115,6 +123,11 @@ msgstr ""
 
 #: vue/components/QuickActionsPanel/QuickActionsPanel.vue:78
 msgid "Align %{scope}"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:43
+#: vue/components/DocumentsTasks/List.vue:67
+msgid "All"
 msgstr ""
 
 #: vue/components/TagFilter/TagFilter.vue:297
@@ -168,6 +181,7 @@ msgid "Baseline"
 msgstr ""
 
 #: vue/components/ConfirmModal/ConfirmModal.vue:99
+#: vue/components/DocumentsTasks/List.vue:125
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:87
 #: vue/components/EditProjectModal/EditProjectModal.vue:77
 #: vue/components/SharePanel/ShareModal.vue:59
@@ -176,12 +190,37 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
+#: vue/components/DocumentsTasks/List.vue:178
+msgid "Cancel all selected"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:181
+msgid "Cancel pending/running tasks for the selected documents"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:128
+msgid "Cancel pending/running tasks for this document"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:432
 msgid "Cancel Task"
 msgstr ""
 
+#: vue/components/DocumentsTasks/CancelModal.vue:5
+#: vue/components/DocumentsTasks/CancelModal.vue:91
+msgid "Cancel tasks"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:345
 msgid "Cancel Upload In Progress"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:104
+msgid "Canceled"
+msgstr ""
+
+#: vue/components/DocumentsTasks/CancelModal.vue:91
+msgid "Canceling tasks..."
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:116
@@ -229,6 +268,10 @@ msgstr ""
 
 #: vue/pages/Document/Document.vue:383
 msgid "Continue"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:102
+msgid "Crashed"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:93
@@ -307,6 +350,10 @@ msgstr ""
 
 #: vue/pages/Document/Document.vue:245
 msgid "Document Models"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:33
+msgid "Document name"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:69
@@ -391,6 +438,10 @@ msgstr ""
 msgid "Filter by:"
 msgstr ""
 
+#: vue/components/DocumentsTasks/List.vue:39
+msgid "Filter results"
+msgstr ""
+
 #: vue/components/TagFilter/TagFilter.vue:288
 msgid "Filter Tags"
 msgstr ""
@@ -403,6 +454,10 @@ msgstr ""
 #: vue/components/TagFilter/TagFilter.vue:338
 #: vue/components/TagFilter/TagFilter.vue:341
 msgid "Find tag"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:103
+msgid "Finished"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:61
@@ -451,6 +506,10 @@ msgstr ""
 
 #: vue/components/MetadataField/MetadataField.vue:29
 msgid "Key"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:67
+msgid "Last task started"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:202
@@ -529,6 +588,7 @@ msgstr ""
 msgid "My Projects"
 msgstr ""
 
+#: vue/components/DocumentsTasks/List.vue:63
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:28
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:29
 #: vue/components/EditProjectModal/EditProjectModal.vue:33
@@ -538,6 +598,10 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
+#: vue/components/DocumentsTasks/List.vue:91
+msgid "Name..."
+msgstr ""
+
 #: vue/pages/Document/Document.vue:346
 #: vue/pages/Document/Document.vue:434
 msgid "No"
@@ -545,6 +609,10 @@ msgstr ""
 
 #: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:83
 msgid "No default ontology set. New documents in this project will use the instance's default types instead."
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:138
+msgid "No document tasks to display."
 msgstr ""
 
 #: vue/components/TagFilter/TagFilter.vue:244
@@ -564,6 +632,10 @@ msgstr ""
 msgid "Overwrite Existing Segmentation and Transcriptions"
 msgstr ""
 
+#: vue/components/DocumentsTasks/CancelModal.vue:16
+msgid "owned by"
+msgstr ""
+
 #: vue/pages/ProjectsList/ProjectsList.vue:48
 msgid "Owner"
 msgstr ""
@@ -573,6 +645,10 @@ msgid "part type"
 msgid_plural "part types"
 msgstr[0] ""
 msgstr[1] ""
+
+#: vue/components/DocumentsTasks/CancelModal.vue:19
+msgid "Please confirm that you want to proceed."
+msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:93
 msgid "Profile"
@@ -607,6 +683,10 @@ msgstr ""
 msgid "projects list"
 msgstr ""
 
+#: vue/components/DocumentsTasks/List.vue:100
+msgid "Queued"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:223
 msgid "Quick Actions"
 msgstr ""
@@ -623,6 +703,10 @@ msgstr[1] ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:131
 msgid "Right to left"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:101
+msgid "Running"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:93
@@ -686,6 +770,10 @@ msgstr ""
 msgid "Select All"
 msgstr ""
 
+#: vue/components/DocumentsTasks/List.vue:111
+msgid "Select all documents with pending or running tasks"
+msgstr ""
+
 #: vue/components/TagFilter/TagFilter.vue:324
 msgid "Select None"
 msgstr ""
@@ -705,6 +793,10 @@ msgstr ""
 
 #: vue/components/ExtraNav.vue:30
 msgid "Source Image (Ctrl+2)"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:65
+msgid "Statistics"
 msgstr ""
 
 #: vue/components/ConfirmModal/ConfirmModal.vue:105
@@ -733,6 +825,10 @@ msgstr ""
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:67
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:4
 msgid "Task Monitoring"
+msgstr ""
+
+#: vue/components/DocumentsTasks/List.vue:5
+msgid "Task state"
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:72
@@ -841,6 +937,11 @@ msgstr ""
 msgid "Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost."
 msgstr ""
 
+#: vue/components/DocumentsTasks/List.vue:19
+#: vue/components/DocumentsTasks/List.vue:64
+msgid "User"
+msgstr ""
+
 #: vue/components/SharePanel/SharePanel.vue:11
 msgid "Users"
 msgstr ""
@@ -874,6 +975,10 @@ msgstr ""
 #: vue/components/ConfirmModal/ConfirmModal.vue:9
 #: vue/components/ConfirmModal/ConfirmModal.vue:2
 msgid "You cannot undo this action."
+msgstr ""
+
+#: vue/components/DocumentsTasks/CancelModal.vue:13
+msgid "You're about to cancel all pending/running tasks for documents:"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:51
