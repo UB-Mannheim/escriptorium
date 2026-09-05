@@ -713,9 +713,8 @@ export default {
          */
         imagesScope() {
             const n = this.selectedParts.length;
-            return n === 1
-                ? this.$gettext("Image")
-                : `${n} ${this.$gettext("Images")}`;
+            const label = this.$ngettext("Image", "Images", n);
+            return n === 1 ? label : `${n} ${label}`;
         },
         /**
          * body text for the delete images confirmation modal
