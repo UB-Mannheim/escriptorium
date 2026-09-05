@@ -1,7 +1,7 @@
 <template>
     <div class="escr-card escr-card-padding escr-project-ontology escr-project-ontology-card">
         <div class="escr-card-header">
-            <h2>Default Ontology</h2>
+            <h2 v-translate>Default Ontology</h2>
             <div class="escr-card-actions">
                 <input
                     ref="importInput"
@@ -13,7 +13,7 @@
                 <EscrButton
                     color="text"
                     size="small"
-                    label="Import"
+                    :label="$gettext('Import')"
                     :disabled="disabled"
                     :on-click="onClickImport"
                 >
@@ -25,7 +25,7 @@
                     v-if="ontologyConfig"
                     color="text"
                     size="small"
-                    label="Export"
+                    :label="$gettext('Export')"
                     :disabled="disabled"
                     :on-click="exportOntology"
                 >
@@ -37,7 +37,7 @@
                     v-if="ontologyConfig"
                     color="text"
                     size="small"
-                    label="Clear"
+                    :label="$gettext('Clear')"
                     :disabled="disabled"
                     :on-click="onClickClear"
                 >
@@ -48,17 +48,20 @@
             </div>
         </div>
         <p v-if="!ontologyConfig" class="escr-project-ontology-empty">
-            No default ontology set. New documents in this project will use the
-            instance's default types instead.
+            {{
+                $gettext(
+                    "No default ontology set. New documents in this project will use the instance's default types instead.",
+                )
+            }}
         </p>
         <p v-else class="escr-project-ontology-summary">
             {{ summary }}
         </p>
         <ConfirmModal
             v-if="clearModalOpen"
-            body-text="Are you sure you want to clear this project's default ontology?"
-            confirm-verb="Clear"
-            title="Clear Default Ontology"
+            :body-text="$gettext('Are you sure you want to clear this project\'s default ontology?')"
+            :confirm-verb="$gettext('Clear')"
+            :title="$gettext('Clear Default Ontology')"
             :cannot-undo="true"
             :disabled="disabled"
             :on-cancel="closeClearModal"
@@ -101,18 +104,31 @@ export default {
          */
         summary() {
             if (!this.ontologyConfig) return "";
-            const counts = [
-                ["region type", this.ontologyConfig.region_types],
-                ["line type", this.ontologyConfig.line_types],
-                ["part type", this.ontologyConfig.part_types],
-                ["annotation component", this.ontologyConfig.annotation_components],
-                ["taxonomy", this.ontologyConfig.taxonomy],
-            ]
-                .filter(([, list]) => list && list.length)
-                .map(([label, list]) => `${list.length} ${label}${list.length === 1 ? "" : "s"}`);
+            const c = this.ontologyConfig;
+            const counts = [];
+            if (c.region_types && c.region_types.length)
+                counts.push(
+                    `${c.region_types.length} ${this.$ngettext("region type", "region types", c.region_types.length)}`,
+                );
+            if (c.line_types && c.line_types.length)
+                counts.push(
+                    `${c.line_types.length} ${this.$ngettext("line type", "line types", c.line_types.length)}`,
+                );
+            if (c.part_types && c.part_types.length)
+                counts.push(
+                    `${c.part_types.length} ${this.$ngettext("part type", "part types", c.part_types.length)}`,
+                );
+            if (c.annotation_components && c.annotation_components.length)
+                counts.push(
+                    `${c.annotation_components.length} ${this.$ngettext("annotation component", "annotation components", c.annotation_components.length)}`,
+                );
+            if (c.taxonomy && c.taxonomy.length)
+                counts.push(
+                    `${c.taxonomy.length} ${this.$ngettext("taxonomy", "taxonomies", c.taxonomy.length)}`,
+                );
             return counts.length
                 ? `${counts.join(", ")}.`
-                : "Empty ontology config.";
+                : this.$gettext("Empty ontology config.");
         },
     },
     methods: {
