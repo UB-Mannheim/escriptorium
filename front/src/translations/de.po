@@ -5,11 +5,20 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "(space)"
+msgstr "(Leerzeichen)"
+
+msgid "# in Document"
+msgstr "# im Dokument"
+
 msgid "# of Documents"
 msgstr "Anzahl der Dokumente"
 
 msgid "# of Images"
 msgstr "Anzahl Bilder"
+
+msgid "# on Part"
+msgstr "# im Teil"
 
 msgid "%{action} Document"
 msgstr "%{action} Dokument"
@@ -251,6 +260,15 @@ msgstr "Zentriert"
 
 msgid "Change Password"
 msgstr "Passwort ändern"
+
+msgid "Change the transcription used for character stats"
+msgstr "Transkription ändern, die für die Zeichenstatistik verwendet wird"
+
+msgid "Character"
+msgstr "Zeichen"
+
+msgid "Characters"
+msgstr "Zeichen"
 
 msgid "Choose files"
 msgstr "Dateien auswählen"
@@ -559,6 +577,12 @@ msgid_plural "Images"
 msgstr[0] "Bild"
 msgstr[1] "Bilder"
 
+msgid "Image Annotation Types"
+msgstr "Bildannotations-Typen"
+
+msgid "Image Annotations"
+msgstr "Bildannotationen"
+
 msgid "image hidden by search filter"
 msgid_plural "images hidden by search filter"
 msgstr[0] "vom Suchfilter ausgeblendetes Bild"
@@ -646,6 +670,9 @@ msgid "line type"
 msgid_plural "line types"
 msgstr[0] "Zeilentyp"
 msgstr[1] "Zeilentypen"
+
+msgid "Line Types"
+msgstr "Zeilentypen"
 
 msgid "Lines"
 msgstr "Zeilen"
@@ -797,6 +824,9 @@ msgstr "von"
 msgid "Only the first %{count} images currently visible; click \"Load More\" below to load more images."
 msgstr "Aktuell sind nur die ersten %{count} Bilder sichtbar; klicken Sie unten auf „Mehr laden“, um weitere Bilder zu laden."
 
+msgid "Ontology Overview"
+msgstr "Ontologieübersicht"
+
 msgid "Open the %{label} panel"
 msgstr "Bedienfeld %{label} öffnen"
 
@@ -832,6 +862,9 @@ msgid_plural "parts"
 msgstr[0] "Teil"
 msgstr[1] "Teile"
 
+msgid "Part"
+msgstr "Teil"
+
 msgid "part staged"
 msgid_plural "parts staged"
 msgstr[0] "bereitgestellter Teil"
@@ -841,6 +874,9 @@ msgid "part type"
 msgid_plural "part types"
 msgstr[0] "Teiltyp"
 msgstr[1] "Teiltypen"
+
+msgid "Parts containing \"%{name}\""
+msgstr "Teile, die \"%{name}\" enthalten"
 
 msgid "Please confirm that you want to proceed."
 msgstr "Bitte bestätigen Sie, dass Sie fortfahren möchten."
@@ -985,6 +1021,9 @@ msgstr "Auswählen"
 msgid "Select a model to fine-tune, or leave blank to train from scratch."
 msgstr "Wählen Sie ein Modell zum Feintuning aus, oder lassen Sie das Feld leer, um von Grund auf zu trainieren."
 
+msgid "Select a type to see which parts contain it."
+msgstr "Wählen Sie einen Typ aus, um zu sehen, in welchen Teilen er vorkommt."
+
 msgid "Select All"
 msgstr "Alle auswählen"
 
@@ -1097,6 +1136,12 @@ msgstr "Text"
 msgid "Text (Ctrl+5)"
 msgstr "Text (Strg+5)"
 
+msgid "Text Annotation Types"
+msgstr "Textannotationstypen"
+
+msgid "Text Annotations"
+msgstr "Textannotationen"
+
 msgid "Text Direction"
 msgstr "Textrichtung"
 
@@ -1136,11 +1181,17 @@ msgstr "Es gibt keine anzuzeigenden Projekte."
 msgid "There are no tasks to display."
 msgstr "Es gibt keine Aufgaben anzuzeigen."
 
+msgid "There is no ontology to display."
+msgstr "Keine Ontologie vorhanden."
+
 msgid "This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition."
 msgstr "Diese Daten sind nur für Transkriptionen vorhanden, die aus automatischer Erkennung stammen, und werden durch manuelle Bearbeitung ungültig."
 
 msgid "This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title)."
 msgstr "Dieses Dokument hat keine Tags. Sie können Tags über das Bearbeitungsformular hinzufügen, das im oberen Panel im Dropdown-Menü (rechts neben dem Dokumenttitel) erreichbar ist."
+
+msgid "This type is not used in any part."
+msgstr "Dieser Typ wird in keinem Teil verwendet."
 
 msgid "Threshold"
 msgstr "Schwellwert"
@@ -1196,8 +1247,20 @@ msgstr "Name der Transkription"
 msgid "Transcription Status"
 msgstr "Transkriptionsstatus"
 
+msgid "Transcription:"
+msgstr "Transkription:"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Types"
+msgstr "Typen"
+
 msgid "Untagged"
 msgstr "Ohne Tag"
+
+msgid "Untitled"
+msgstr "Ohne Titel"
 
 msgid "Untitled Collection"
 msgstr "Unbenannte Sammlung"
