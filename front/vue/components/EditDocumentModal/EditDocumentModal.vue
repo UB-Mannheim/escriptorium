@@ -1,7 +1,7 @@
 <template>
     <EscrModal class="escr-edit-document">
         <template #modal-header>
-            <h2>{{ newDocument ? "Create New" : "Edit" }} Document</h2>
+            <h2>{{ headerText }}</h2>
             <EscrButton
                 color="text"
                 :on-click="onCancel"
@@ -14,8 +14,8 @@
         </template>
         <template #modal-content>
             <TextField
-                label="Name"
-                placeholder="Name"
+                :label="$gettext('Name')"
+                :placeholder="$gettext('Name')"
                 :disabled="disabled"
                 :max-length="512"
                 :on-input="(e) => handleTextFieldInput('name', e.target.value)"
@@ -23,37 +23,31 @@
                 required
             />
             <DropdownField
-                label="Script"
+                :label="$gettext('Script')"
                 :disabled="disabled"
                 :on-change="handleMainScriptChange"
                 :options="scriptOptions"
                 required
             />
             <DropdownField
-                label="Read Direction"
+                :label="$gettext('Read Direction')"
                 :disabled="disabled"
-                :help-text="(
-                    'The read direction describes the overall order of elements/pages in the ' +
-                    'document; NOT the order of words in a line, which will be automatically ' +
-                    'determined by the script.'
-                )"
+                :help-text="$gettext('The read direction describes the overall order of elements/pages in the document; NOT the order of words in a line, which will be automatically determined by the script.')"
                 :on-change="(e) => handleTextFieldInput('readDirection', e.target.value)"
                 :options="readDirectionOptions"
                 required
             />
             <DropdownField
-                label="Line Position"
-                help-text="The position of the line relative to the polygon."
+                :label="$gettext('Line Position')"
+                :help-text="$gettext('The position of the line relative to the polygon.')"
                 :disabled="disabled"
                 :on-change="(e) => handleTextFieldInput('linePosition', e.target.value)"
                 :options="linePositionOptions"
                 required
             />
             <DropdownField
-                label="Transcription Font"
-                help-text="Font used to display this document's transcription text in the
-                    editor, overriding the project and user fonts. Leave as Default to
-                    inherit from the project, user, or built-in font."
+                :label="$gettext('Transcription Font')"
+                :help-text="$gettext('Font used to display this document\'s transcription text in the editor, overriding the project and user fonts. Leave as Default to inherit from the project, user, or built-in font.')"
                 :disabled="disabled"
                 :on-change="(e) => handleTextFieldInput('transcriptionFont', e.target.value)"
                 :options="fontOptions"
@@ -66,7 +60,7 @@
                 :on-remove="handleRemoveMetadatum"
             />
             <TagsField
-                label="Tags"
+                :label="$gettext('Tags')"
                 :disabled="disabled"
                 :on-change="handleTagsFieldInput"
                 :on-change-tag-name="(e) => handleTextFieldInput('tagName', e.target.value)"
@@ -79,13 +73,13 @@
         <template #modal-actions>
             <EscrButton
                 color="outline-primary"
-                label="Cancel"
+                :label="$gettext('Cancel')"
                 :on-click="onCancel"
                 :disabled="disabled"
             />
             <EscrButton
                 color="primary"
-                :label="newDocument ? 'Create' : 'Save'"
+                :label="newDocument ? $gettext('Create') : $gettext('Save')"
                 :on-click="onSave"
                 :disabled="disabled || invalid"
             />
@@ -192,14 +186,24 @@ export default {
                 this.metadata.some((meta) => !meta.key?.name || !meta.value);
         },
         /**
+         * Title of the modal header, e.g. "Create New Document" or "Edit Document".
+         */
+        headerText() {
+            return this.$gettextInterpolate(
+                this.$gettext("%{action} Document"),
+                { action: this.newDocument ? this.$gettext("Create New") : this.$gettext("Edit") },
+            );
+        },
+        /**
          * Populate dropdown options for line position.
          */
         linePositionOptions() {
-            return ["Baseline", "Topline", "Centered"].map((linePos, idx) => ({
-                value: idx.toString(),
-                label: linePos,
-                selected: idx.toString() === this.linePosition.toString(),
-            }));
+            const current = this.linePosition.toString();
+            return [
+                { value: "0", label: this.$gettext("Baseline"), selected: current === "0" },
+                { value: "1", label: this.$gettext("Topline"), selected: current === "1" },
+                { value: "2", label: this.$gettext("Centered"), selected: current === "2" },
+            ];
         },
         /**
          * Populate dropdown options for read direction.
@@ -208,12 +212,12 @@ export default {
             return [
                 {
                     value: "ltr",
-                    label: "Left to right",
+                    label: this.$gettext("Left to right"),
                     selected: this.readDirection === "ltr",
                 },
                 {
                     value: "rtl",
-                    label: "Right to left",
+                    label: this.$gettext("Right to left"),
                     selected: this.readDirection === "rtl",
                 }
             ];
@@ -236,7 +240,7 @@ export default {
             return [
                 {
                     value: "",
-                    label: "Default",
+                    label: this.$gettext("Default"),
                     selected: !selectedFont,
                 },
                 ...this.fonts.map((font) => ({
