@@ -49,7 +49,6 @@ body {
 /* alerts */
 
 #alerts-container {
-    width: 400px;
     position: fixed;
     right: 10px;
     top: 60px;
