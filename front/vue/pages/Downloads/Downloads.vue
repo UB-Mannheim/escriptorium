@@ -3,6 +3,7 @@
         <p
             v-if="loading"
             class="text-muted"
+            v-translate
         >
             Loading...
         </p>
@@ -10,11 +11,12 @@
             v-else-if="error"
             class="text-danger"
         >
-            Could not load downloads: {{ error }}
+            {{ $gettext("Could not load downloads") }}: {{ error }}
         </p>
         <p
             v-else-if="!items.length"
             class="text-muted"
+            v-translate
         >
             No downloads yet. Exports and archives you queue will show up here.
         </p>
@@ -24,14 +26,14 @@
         >
             <thead>
                 <tr>
-                    <th>Label</th>
-                    <th>Type</th>
-                    <th class="text-right">
+                    <th v-translate>Label</th>
+                    <th v-translate>Type</th>
+                    <th class="text-right" v-translate>
                         Size
                     </th>
-                    <th>Created</th>
-                    <th>Expires</th>
-                    <th class="text-right">
+                    <th v-translate>Created</th>
+                    <th v-translate>Expires</th>
+                    <th class="text-right" v-translate>
                         Downloads
                     </th>
                     <th />
@@ -60,7 +62,7 @@
                     </td>
                     <td>
                         <small>
-                            <span v-if="!item.expires_at">Never</span>
+                            <span v-if="!item.expires_at" v-translate>Never</span>
                             <span
                                 v-else
                                 :class="{ 'text-danger': item.is_expired }"
@@ -78,6 +80,7 @@
                             :href="item.file_url"
                             class="btn btn-sm btn-primary mr-1"
                             download
+                            v-translate
                         >
                             Download
                         </a>
@@ -85,6 +88,7 @@
                             type="button"
                             class="btn btn-sm btn-outline-danger"
                             @click="onDelete(item)"
+                            v-translate
                         >
                             Delete
                         </button>
@@ -131,7 +135,8 @@ export default {
             }
         },
         async onDelete(item) {
-            if (!confirm(`Delete "${item.label}"? This cannot be undone.`)) {
+            const label = this.$gettext('Delete "%{label}"? This cannot be undone.');
+            if (!confirm(this.$gettextInterpolate(label, { label: item.label }))) {
                 return;
             }
             try {
