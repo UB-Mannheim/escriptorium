@@ -3,13 +3,13 @@
         <div class="row">
             <div class="col">
                 <div class="form-group">
-                    <label>Task state</label>
+                    <label v-translate>Task state</label>
                     <select
                         v-model="selectedState"
                         class="form-control"
                     >
                         <option value="">
-                            All
+                            {{ $gettext("All") }}
                         </option>
                         <option
                             v-for="[key, label] in Object.entries(taskStates)"
@@ -27,13 +27,13 @@
                 class="col"
             >
                 <div class="form-group">
-                    <label>User</label>
+                    <label v-translate>User</label>
                     <select
                         v-model="selectedUser"
                         class="form-control"
                     >
                         <option value="">
-                            All
+                            {{ $gettext("All") }}
                         </option>
                         <option
                             v-for="[id, name] in sortedUsersEntries"
@@ -48,12 +48,12 @@
 
             <div class="col">
                 <div class="form-group">
-                    <label>Document name</label>
+                    <label v-translate>Document name</label>
                     <input
                         v-model="documentName"
                         type="text"
                         class="form-control"
-                        placeholder="Name..."
+                        :placeholder="$gettext('Name...')"
                     >
                 </div>
             </div>
@@ -61,6 +61,7 @@
 
         <button
             class="btn btn-primary mb-4"
+            v-translate
             @click="getDocumentTasks"
         >
             Filter results
@@ -69,8 +70,8 @@
         <EscrTable
             v-if="results.length"
             item-key="pk"
-            actions-header="Actions"
-            select-all-title="Select all documents with pending or running tasks"
+            :actions-header="$gettext('Actions')"
+            :select-all-title="$gettext('Select all documents with pending or running tasks')"
             :headers="headers"
             :items="results"
             :selectable="true"
@@ -83,10 +84,10 @@
             <template #actions="{ item }">
                 <EscrButton
                     v-if="hasActiveTasks(item)"
-                    label="Cancel"
+                    :label="$gettext('Cancel')"
                     size="small"
                     color="danger"
-                    title="Cancel pending/running tasks for this document"
+                    :title="$gettext('Cancel pending/running tasks for this document')"
                     :on-click="() => openCancelModal(item)"
                 />
             </template>
@@ -94,7 +95,7 @@
         <EscrLoader
             v-else
             :loading="false"
-            no-data-message="No document tasks to display."
+            :no-data-message="$gettext('No document tasks to display.')"
         />
 
         <template v-for="item in results">
@@ -126,10 +127,10 @@
         </ul>
 
         <EscrButton
-            label="Cancel all selected"
+            :label="$gettext('Cancel all selected')"
             size="small"
             color="danger"
-            title="Cancel pending/running tasks for the selected documents"
+            :title="$gettext('Cancel pending/running tasks for the selected documents')"
             :disabled="!Object.values(selectedList).length"
             :on-click="() => openCancelAllModal()"
         />
@@ -206,11 +207,11 @@ export default {
         },
         headers() {
             return [
-                { label: "Name", value: "name", sortable: true },
-                { label: "User", value: "owner", sortable: true },
-                { label: "Statistics", value: "tasks_stats", format: this.formatStats },
+                { label: this.$gettext("Name"), value: "name", sortable: true },
+                { label: this.$gettext("User"), value: "owner", sortable: true },
+                { label: this.$gettext("Statistics"), value: "tasks_stats", format: this.formatStats },
                 {
-                    label: "Last task started",
+                    label: this.$gettext("Last task started"),
                     value: "last_started_task",
                     format: this.formatDate,
                     sortable: true,
@@ -242,7 +243,14 @@ export default {
         },
         formatStats(rawStats) {
             if (!rawStats) return "/";
-            const allStrings = Object.entries(rawStats).map((stat) => stat[1] !== 0 ? `${stat[1]} ${stat[0].toLowerCase()}` : null)
+            const stateNames = {
+                Queued: this.$gettext("Queued"),
+                Running: this.$gettext("Running"),
+                Crashed: this.$gettext("Crashed"),
+                Finished: this.$gettext("Finished"),
+                Canceled: this.$gettext("Canceled"),
+            };
+            const allStrings = Object.entries(rawStats).map((stat) => stat[1] !== 0 ? `${stat[1]} ${(stateNames[stat[0]] || stat[0]).toLowerCase()}` : null)
             const filteredStrings = allStrings.filter((val) => val)
             return filteredStrings.join(", ")
         },

@@ -95,6 +95,12 @@ msgstr ""
 "<br>Le bouton corbeille rouge <i class=\"text-danger fas fa-trash\" /> <b>supprime</b> toutes les <b>lignes/régions</b> sélectionnées,\n"
 "<br>Le bouton corbeille jaune <i class=\"text-warning fas fa-trash\" /> ne <b>supprime</b> que les <b>points</b> de contrôle sélectionnés."
 
+msgid "Abort"
+msgstr "Abandonner"
+
+msgid "Actions"
+msgstr "Actions"
+
 msgid "Add group"
 msgstr "Ajouter un groupe"
 
@@ -118,6 +124,9 @@ msgstr "Ajouter/rechercher des tags"
 
 msgid "Align %{scope}"
 msgstr "Aligner %{scope}"
+
+msgid "All"
+msgstr "Tous"
 
 msgid "AND"
 msgstr "ET"
@@ -159,11 +168,29 @@ msgstr "Ligne de base"
 msgid "Cancel"
 msgstr "Annuler"
 
+msgid "Cancel all selected"
+msgstr "Tout annuler"
+
+msgid "Cancel pending/running tasks for the selected documents"
+msgstr "Annuler les tâches en attente ou en cours des documents sélectionnés"
+
+msgid "Cancel pending/running tasks for this document"
+msgstr "Annuler les tâches en attente ou en cours de ce document"
+
 msgid "Cancel Task"
 msgstr "Annuler la tâche"
 
+msgid "Cancel tasks"
+msgstr "Annuler les tâches"
+
 msgid "Cancel Upload In Progress"
 msgstr "Annuler le téléversement en cours"
+
+msgid "Canceled"
+msgstr "Annulé"
+
+msgid "Canceling tasks..."
+msgstr "Annulation des tâches ..."
 
 msgid "Centered"
 msgstr "Ligne centrale"
@@ -197,6 +224,9 @@ msgstr "Fiabilité"
 
 msgid "Continue"
 msgstr "Continuer"
+
+msgid "Crashed"
+msgstr "Échoué"
 
 msgid "Create"
 msgstr "Créer"
@@ -245,6 +275,9 @@ msgstr "Images du document"
 
 msgid "Document Models"
 msgstr "Modèles du document"
+
+msgid "Document name"
+msgstr "Nom du document"
 
 msgid "Document Statistics"
 msgstr "Statistiques du document"
@@ -315,6 +348,9 @@ msgstr "Exporter %{scope}"
 msgid "Filter by:"
 msgstr "Filtrer par :"
 
+msgid "Filter results"
+msgstr "Filtrer les résultats"
+
 msgid "Filter Tags"
 msgstr "Filtrer les tags"
 
@@ -323,6 +359,9 @@ msgstr "Rechercher et remplacer"
 
 msgid "Find tag"
 msgstr "Rechercher un tag"
+
+msgid "Finished"
+msgstr "Terminé"
 
 msgid "Font used to display this document's transcription text in the editor, overriding the project and user fonts. Leave as Default to inherit from the project, user, or built-in font."
 msgstr "Police utilisée pour afficher le texte de transcription de ce document dans l'éditeur, remplaçant les polices du projet et de l'utilisateur. Laissez « Défaut » pour hériter de la police du projet, de l'utilisateur ou d'une police intégrée."
@@ -356,6 +395,9 @@ msgstr "Inviter des utilisateurs"
 
 msgid "Key"
 msgstr "Clé"
+
+msgid "Last task started"
+msgstr "Dernière tâche démarrée"
 
 msgid "Last Update"
 msgstr "Dernière mise à jour"
@@ -410,11 +452,17 @@ msgstr "Mes projets"
 msgid "Name"
 msgstr "Nom"
 
+msgid "Name..."
+msgstr "Nom ..."
+
 msgid "No"
 msgstr "Non"
 
 msgid "No default ontology set. New documents in this project will use the instance's default types instead."
 msgstr "Aucune ontologie par défaut définie. Les nouveaux documents de ce projet utiliseront à la place les types par défaut de l'instance."
+
+msgid "No document tasks to display."
+msgstr "Aucune tâche de document à afficher."
 
 msgid "No matching tags. %{hidden}"
 msgstr "Aucun tag correspondant. %{hidden}"
@@ -428,6 +476,9 @@ msgstr "OU"
 msgid "Overwrite Existing Segmentation and Transcriptions"
 msgstr "Écraser la segmentation et les transcriptions existantes"
 
+msgid "owned by"
+msgstr "Propriétaire :"
+
 msgid "Owner"
 msgstr "Propriétaire"
 
@@ -435,6 +486,9 @@ msgid "part type"
 msgid_plural "part types"
 msgstr[0] "type de partie"
 msgstr[1] "types de partie"
+
+msgid "Please confirm that you want to proceed."
+msgstr "Veuillez confirmer que vous souhaitez procéder."
 
 msgid "Profile"
 msgstr "Profil"
@@ -457,6 +511,9 @@ msgstr "Projets"
 msgid "projects list"
 msgstr "Liste des projets"
 
+msgid "Queued"
+msgstr "En file d'attente"
+
 msgid "Quick Actions"
 msgstr "Actions rapides"
 
@@ -470,6 +527,9 @@ msgstr[1] "types de région"
 
 msgid "Right to left"
 msgstr "De droite à gauche"
+
+msgid "Running"
+msgstr "En cours"
 
 msgid "Save"
 msgstr "Enregistrer"
@@ -513,6 +573,9 @@ msgstr "Sélectionner"
 msgid "Select All"
 msgstr "Tout sélectionner"
 
+msgid "Select all documents with pending or running tasks"
+msgstr "Sélectionner tous les documents ayant des tâches en attente ou en cours"
+
 msgid "Select None"
 msgstr "Tout désélectionner"
 
@@ -528,6 +591,9 @@ msgstr "Administration du site"
 msgid "Source Image (Ctrl+2)"
 msgstr "Image source (Ctrl+2)"
 
+msgid "Statistics"
+msgstr "Statistiques"
+
 msgid "Submit"
 msgstr "Soumettre"
 
@@ -542,6 +608,9 @@ msgstr "Tags"
 
 msgid "Task Monitoring"
 msgstr "Surveillance des tâches"
+
+msgid "Task state"
+msgstr "État de la tâche"
 
 msgid "Task Usage"
 msgstr "Utilisation des tâches"
@@ -617,6 +686,9 @@ msgstr "Sans tag"
 msgid "Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost."
 msgstr "Des téléversements sont encore en cours. Voulez-vous vraiment annuler ? Les téléversements inachevés peuvent être perdus."
 
+msgid "User"
+msgstr "Utilisateur"
+
 msgid "Users"
 msgstr "Utilisateurs"
 
@@ -640,6 +712,9 @@ msgstr "Oui, annuler"
 
 msgid "You cannot undo this action."
 msgstr "Vous ne pouvez pas annuler cette action."
+
+msgid "You're about to cancel all pending/running tasks for documents:"
+msgstr "Vous êtes sur le point d'annuler toutes les tâches en attente ou en cours des documents suivants :"
 
 msgid "Your Recent Images"
 msgstr "Vos images récentes"
