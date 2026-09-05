@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h3>Import images from a PDF document</h3>
+        <h3 v-translate>Import images from a PDF document</h3>
         <span>Import images by uploading a single PDF with one image per page.</span>
         <fieldset class="pdf-import">
             <input
