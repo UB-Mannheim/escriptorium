@@ -100,6 +100,9 @@ msgstr ""
 "<br>El botón de la papelera roja <i class=\"text-danger fas fa-trash\" /> <b>elimina</b> todas las <b>líneas/regiones</b> seleccionadas,\n"
 "<br>el botón de la papelera amarilla <i class=\"text-warning fas fa-trash\" /> solo <b>elimina</b> los puntos de <b>control</b> seleccionados."
 
+msgid "0 images"
+msgstr "0 imágenes"
+
 msgid "A name is required unless overwriting"
 msgstr "Se requiere un nombre, a no ser que se sobrescriba"
 
@@ -130,8 +133,14 @@ msgstr "Añadir usuario"
 msgid "Add/search tags"
 msgstr "Añadir/búsqueda de etiquetas"
 
+msgid "Align"
+msgstr "Alinear"
+
 msgid "Align %{scope}"
 msgstr "Alinear %{scope}"
+
+msgid "Alignment"
+msgstr "Alineación"
 
 msgid "All"
 msgstr "Todos"
@@ -162,6 +171,12 @@ msgstr "¿Está seguro de que desea continuar? La resegmentación eliminará las
 msgid "Are you sure you want to delete the document %{name}?"
 msgstr "¿Está seguro de que desea eliminar el documento %{name}?"
 
+msgid "Are you sure you want to delete the image %{name}?"
+msgstr "¿Está seguro de que desea eliminar la imagen %{name}?"
+
+msgid "Are you sure you want to delete the selected image(s)?"
+msgstr "¿Está seguro de que desea eliminar la(s) imagen(es) seleccionada(s)?"
+
 msgid "Are you sure you want to delete this document?"
 msgstr "¿Está seguro de que desea eliminar este documento?"
 
@@ -174,6 +189,9 @@ msgid ""
 msgstr ""
 "¿Está seguro de que desea eliminar este proyecto?\n"
 "                            Esta acción no se puede deshacer."
+
+msgid "Are you sure you want to redraw all masks on the selected image(s)?"
+msgstr "¿Está seguro de que desea redibujar todas las máscaras de la(s) imagen(es) seleccionada(s)?"
 
 msgid "Base Model (optional)"
 msgstr "Modelo base (opcional)"
@@ -220,6 +238,9 @@ msgstr "Cambiar contraseña"
 msgid "Clear"
 msgstr "Borrar"
 
+msgid "Clear All"
+msgstr "Limpiar todo"
+
 msgid "Clear Default Ontology"
 msgstr "Borrar ontología predeterminada"
 
@@ -228,6 +249,9 @@ msgstr "Limpiar filtro"
 
 msgid "Clear search"
 msgstr "Limpiar búsqueda"
+
+msgid "Clear search filter"
+msgstr "Limpiar filtro de búsqueda"
 
 msgid "Click to go to another Element (Alt+G)."
 msgstr "Haga clic para ir a otro elemento (Alt+G)."
@@ -243,6 +267,9 @@ msgstr "Nombre de la colección"
 
 msgid "Collection saved successfully!"
 msgstr "¡Colección guardada con éxito!"
+
+msgid "Completed"
+msgstr "Completado"
 
 msgid "Confidence"
 msgstr "Confianza"
@@ -286,6 +313,12 @@ msgstr "Eliminar documento"
 msgid "Delete Document"
 msgstr "Eliminar documento"
 
+msgid "Delete Image"
+msgstr "Eliminar imagen"
+
+msgid "Delete Images"
+msgstr "Eliminar imágenes"
+
 msgid "Delete project"
 msgstr "Eliminar proyecto"
 
@@ -319,6 +352,9 @@ msgstr "Etiquetas del documento"
 msgid "Documents"
 msgstr "Documentos"
 
+msgid "Download Archive"
+msgstr "Descargar archivo"
+
 msgid ""
 "Each line corresponds to an edition of the content, in inverse chronological order (Most recent at the top).\n"
 "<br>The colors represent the difference with the previous version,\n"
@@ -346,6 +382,9 @@ msgstr ""
 msgid "Edit"
 msgstr "Editar"
 
+msgid "edit image"
+msgstr "editar imagen"
+
 msgid "Element #"
 msgstr "Elemento n.º"
 
@@ -355,11 +394,20 @@ msgstr "Elementos"
 msgid "Empty ontology config."
 msgstr "Configuración de ontología vacía."
 
+msgid "Enter multiple numbers separated by a comma, and/or ranges separated by a dash, to select images"
+msgstr "Introduzca varios números separados por comas y/o intervalos separados por un guion para seleccionar imágenes"
+
 msgid "Enter project name"
 msgstr "Introduzca el nombre del proyecto"
 
+msgid "Enter select range"
+msgstr "Introducir rango de selección"
+
 msgid "Enter username of registered user"
 msgstr "Introduzca el nombre de usuario de un usuario registrado"
+
+msgid "Error"
+msgstr "Error"
 
 msgid "Error navigating to the images page."
 msgstr "Error al navegar a la página de imágenes."
@@ -375,6 +423,9 @@ msgstr "Exportar"
 
 msgid "Export %{scope}"
 msgstr "Exportar %{scope}"
+
+msgid "Failed to fetch additional images"
+msgstr "No se pudieron obtener más imágenes"
 
 msgid "Filter by:"
 msgstr "Filtrar por:"
@@ -406,11 +457,27 @@ msgstr "búsqueda global"
 msgid "Go to"
 msgstr "Ir a"
 
+msgid "Grid view"
+msgstr "Vista de cuadrícula"
+
 msgid "Groups"
 msgstr "Grupos"
 
 msgid "Groups & Users"
 msgstr "Grupos y usuarios"
+
+msgid "image"
+msgid_plural "images"
+msgstr[0] "imagen"
+msgstr[1] "imágenes"
+
+msgid "Image"
+msgstr "Imagen"
+
+msgid "image hidden by search filter"
+msgid_plural "images hidden by search filter"
+msgstr[0] "imagen oculta por el filtro de búsqueda"
+msgstr[1] "imágenes ocultas por el filtro de búsqueda"
 
 msgid "Images"
 msgstr "Imágenes"
@@ -421,11 +488,23 @@ msgstr "Importar"
 msgid "Import images or transcription content."
 msgstr "Importe imágenes o contenido de transcripción."
 
+msgid "In Progress"
+msgstr "En curso"
+
+msgid "including"
+msgstr "incluye"
+
+msgid "Initiated"
+msgstr "Iniciado"
+
 msgid "Invite Users"
 msgstr "Invitar usuarios"
 
 msgid "Key"
 msgstr "Clave"
+
+msgid "Last Edited"
+msgstr "Última edición"
 
 msgid "Last task started"
 msgstr "Última tarea iniciada"
@@ -449,6 +528,9 @@ msgstr[1] "tipos de línea"
 
 msgid "Link to Project Guidelines"
 msgstr "Enlace a las pautas del proyecto"
+
+msgid "List view"
+msgstr "Vista de lista"
 
 msgid "Load a saved collection, or navigate to the Browse tab."
 msgstr "Cargue una colección guardada o vaya a la pestaña Explorar."
@@ -501,6 +583,15 @@ msgstr "Modelos"
 msgid "models list"
 msgstr "lista de modelos"
 
+msgid "Move to bottom"
+msgstr "Mover al final"
+
+msgid "Move to top"
+msgstr "Mover al principio"
+
+msgid "Move to..."
+msgstr "Mover a..."
+
 msgid "Must be a valid URL starting with http:// or https://."
 msgstr "Debe ser una URL válida que comience por http:// o https://."
 
@@ -542,6 +633,15 @@ msgstr "No hay partes seleccionadas actualmente."
 
 msgid "No projects to display."
 msgstr "No hay proyectos que mostrar."
+
+msgid "Not initiated"
+msgstr "No iniciado"
+
+msgid "Number"
+msgstr "Número"
+
+msgid "Only the first %{count} images currently visible; click \"Load More\" below to load more images."
+msgstr "Actualmente solo se muestran las %{count} primeras imágenes; haga clic en «Cargar más» a continuación para cargar más imágenes."
 
 msgid "Open the %{label} panel"
 msgstr "Abrir el panel %{label}"
@@ -624,6 +724,9 @@ msgstr "Dirección de lectura"
 msgid "Recognition"
 msgstr "Reconocimiento"
 
+msgid "Redraw Masks"
+msgstr "Redibujar máscaras"
+
 msgid "region type"
 msgid_plural "region types"
 msgstr[0] "tipo de región"
@@ -631,6 +734,9 @@ msgstr[1] "tipos de región"
 
 msgid "Remove part"
 msgstr "Quitar parte"
+
+msgid "Reorder"
+msgstr "Reordenar"
 
 msgid "Right to left"
 msgstr "De derecha a izquierda"
@@ -659,6 +765,9 @@ msgstr "Buscar documento"
 msgid "Search documents..."
 msgstr "Buscar documentos..."
 
+msgid "Search element name"
+msgstr "Buscar nombre de elemento"
+
 msgid "Search images..."
 msgstr "Buscar imágenes..."
 
@@ -671,8 +780,14 @@ msgstr "Buscar proyectos..."
 msgid "Search Text in %{scope}"
 msgstr "Buscar texto en %{scope}"
 
+msgid "Search to filter images by element name"
+msgstr "Buscar para filtrar imágenes por nombre de elemento"
+
 msgid "Search..."
 msgstr "Buscar..."
+
+msgid "Segment"
+msgstr "Segmentar"
 
 msgid "Segment %{scope}"
 msgstr "Segmentar %{scope}"
@@ -707,8 +822,16 @@ msgstr "Seleccionar solo las imágenes cargadas actualmente en pantalla"
 msgid "Select Visible"
 msgstr "Seleccionar visibles"
 
+msgid "selected"
+msgstr "seleccionadas"
+
 msgid "Selected Documents and Parts"
 msgstr "Documentos y partes seleccionados"
+
+msgid "selected image"
+msgid_plural "selected images"
+msgstr[0] "imagen seleccionada"
+msgstr[1] "imágenes seleccionadas"
 
 msgid "Shared Models"
 msgstr "Modelos compartidos"
@@ -781,6 +904,9 @@ msgstr "No hay documentos que mostrar."
 msgid "There are no images to display"
 msgstr "No hay imágenes que mostrar"
 
+msgid "There are no images to display."
+msgstr "No hay imágenes que mostrar."
+
 msgid "There are no projects to display."
 msgstr "No hay proyectos que mostrar."
 
@@ -817,8 +943,14 @@ msgstr "¡Tarea de entrenamiento añadida a la cola con éxito!"
 msgid "training page"
 msgstr "página de entrenamiento"
 
+msgid "Transcribe"
+msgstr "Transcribir"
+
 msgid "Transcribe %{scope}"
 msgstr "Transcribir %{scope}"
+
+msgid "Transcription"
+msgstr "Transcripción"
 
 msgid "Transcription (Ctrl+4)"
 msgstr "Transcripción (Ctrl+4)"
