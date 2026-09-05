@@ -95,6 +95,9 @@ msgstr ""
 "<br>Le bouton corbeille rouge <i class=\"text-danger fas fa-trash\" /> <b>supprime</b> toutes les <b>lignes/régions</b> sélectionnées,\n"
 "<br>Le bouton corbeille jaune <i class=\"text-warning fas fa-trash\" /> ne <b>supprime</b> que les <b>points</b> de contrôle sélectionnés."
 
+msgid "A name is required unless overwriting"
+msgstr "Un nom est requis sauf en cas d'écrasement"
+
 msgid "Abort"
 msgstr "Abandonner"
 
@@ -139,6 +142,9 @@ msgstr[1] "composants d'annotation"
 msgid "Apply Filter"
 msgstr "Appliquer le filtre"
 
+msgid "Apply to selected"
+msgstr "Appliquer à la sélection"
+
 msgid "Are you sure you want to cancel this task?"
 msgstr "Voulez-vous vraiment annuler cette tâche ?"
 
@@ -162,8 +168,14 @@ msgid ""
 "                            This action cannot be undone."
 msgstr "Voulez-vous vraiment supprimer ce projet ? Cette action ne peut pas être annulée."
 
+msgid "Base Model (optional)"
+msgstr "Modèle de base (facultatif)"
+
 msgid "Baseline"
 msgstr "Ligne de base"
+
+msgid "Browse"
+msgstr "Parcourir"
 
 msgid "Cancel"
 msgstr "Annuler"
@@ -219,6 +231,12 @@ msgstr "Fermer"
 msgid "Close the %{label} panel"
 msgstr "Fermer le panneau %{label}"
 
+msgid "Collection Name"
+msgstr "Nom de la collection"
+
+msgid "Collection saved successfully!"
+msgstr "Collection enregistrée avec succès !"
+
 msgid "Confidence"
 msgstr "Fiabilité"
 
@@ -245,6 +263,9 @@ msgstr "Défaut"
 
 msgid "Default Ontology"
 msgstr "Ontologie par défaut"
+
+msgid "Default transcription layer:"
+msgstr "Calque de transcription par défaut :"
 
 msgid "Delete"
 msgstr "Supprimer"
@@ -277,6 +298,9 @@ msgid "Document Models"
 msgstr "Modèles du document"
 
 msgid "Document name"
+msgstr "Nom du document"
+
+msgid "Document Name"
 msgstr "Nom du document"
 
 msgid "Document Statistics"
@@ -419,8 +443,23 @@ msgstr[1] "types de ligne"
 msgid "Link to Project Guidelines"
 msgstr "Lien vers les directives du projet"
 
+msgid "Load a saved collection, or navigate to the Browse tab."
+msgstr "Charger une collection enregistrée ou accéder à l'onglet Parcourir."
+
+msgid "Load Collection:"
+msgstr "Charger une collection :"
+
 msgid "Load more"
 msgstr "Charger plus"
+
+msgid "Loading browser..."
+msgstr "Chargement du navigateur..."
+
+msgid "Loading collection..."
+msgstr "Chargement de la collection..."
+
+msgid "Loading more..."
+msgstr "Chargement en cours..."
 
 msgid "Loading..."
 msgstr "Chargement..."
@@ -431,11 +470,23 @@ msgstr "Déconnexion"
 msgid "Main script:"
 msgstr "Script principal :"
 
+msgid "Manage Collection"
+msgstr "Gérer la collection"
+
 msgid "Metadata"
 msgstr "Métadonnées"
 
 msgid "Metadata (Ctrl+1)"
 msgstr "Métadonnées (Ctrl+1)"
+
+msgid "Model Name"
+msgstr "Nom du modèle"
+
+msgid "Model Training"
+msgstr "Entraînement du modèle"
+
+msgid "Model Type"
+msgstr "Type de modèle"
 
 msgid "Models"
 msgstr "Modèles"
@@ -452,6 +503,12 @@ msgstr "Mes projets"
 msgid "Name"
 msgstr "Nom"
 
+msgid "Name your collection..."
+msgstr "Nommez votre collection..."
+
+msgid "Name your new model..."
+msgstr "Nommez votre nouveau modèle..."
+
 msgid "Name..."
 msgstr "Nom ..."
 
@@ -464,14 +521,29 @@ msgstr "Aucune ontologie par défaut définie. Les nouveaux documents de ce proj
 msgid "No document tasks to display."
 msgstr "Aucune tâche de document à afficher."
 
+msgid "No documents to display."
+msgstr "Aucun document à afficher."
+
+msgid "No images to display."
+msgstr "Aucune image à afficher."
+
 msgid "No matching tags. %{hidden}"
 msgstr "Aucun tag correspondant. %{hidden}"
+
+msgid "No parts currently selected."
+msgstr "Aucune partie sélectionnée pour le moment."
+
+msgid "No projects to display."
+msgstr "Aucun projet à afficher."
 
 msgid "Open the %{label} panel"
 msgstr "Ouvrir le panneau %{label}"
 
 msgid "OR"
 msgstr "OU"
+
+msgid "Overwrite existing"
+msgstr "Écraser l'existant"
 
 msgid "Overwrite Existing Segmentation and Transcriptions"
 msgstr "Écraser la segmentation et les transcriptions existantes"
@@ -481,6 +553,22 @@ msgstr "Propriétaire :"
 
 msgid "Owner"
 msgstr "Propriétaire"
+
+msgid "Page %{page}"
+msgstr "Page %{page}"
+
+msgid "Pages"
+msgstr "Pages"
+
+msgid "part"
+msgid_plural "parts"
+msgstr[0] "partie"
+msgstr[1] "parties"
+
+msgid "part staged"
+msgid_plural "parts staged"
+msgstr[0] "partie prête"
+msgstr[1] "parties prêtes"
 
 msgid "part type"
 msgid_plural "part types"
@@ -502,6 +590,9 @@ msgstr "Projet"
 msgid "Project Guidelines"
 msgstr "Directives du projet"
 
+msgid "Project Name"
+msgstr "Nom du projet"
+
 msgid "Project Tags"
 msgstr "Tags du projet"
 
@@ -510,6 +601,9 @@ msgstr "Projets"
 
 msgid "projects list"
 msgstr "Liste des projets"
+
+msgid "Public Models"
+msgstr "Modèles publics"
 
 msgid "Queued"
 msgstr "En file d'attente"
@@ -520,10 +614,16 @@ msgstr "Actions rapides"
 msgid "Read Direction"
 msgstr "Sens de lecture"
 
+msgid "Recognition"
+msgstr "Reconnaissance"
+
 msgid "region type"
 msgid_plural "region types"
 msgstr[0] "type de région"
 msgstr[1] "types de région"
+
+msgid "Remove part"
+msgstr "Retirer la partie"
 
 msgid "Right to left"
 msgstr "De droite à gauche"
@@ -533,6 +633,9 @@ msgstr "En cours"
 
 msgid "Save"
 msgstr "Enregistrer"
+
+msgid "Save Collection"
+msgstr "Enregistrer la collection"
 
 msgid "Script"
 msgstr "Script"
@@ -549,6 +652,9 @@ msgstr "Rechercher dans le document"
 msgid "Search documents..."
 msgstr "Rechercher des documents..."
 
+msgid "Search images..."
+msgstr "Rechercher des images..."
+
 msgid "Search Project"
 msgstr "Rechercher dans le projet"
 
@@ -564,11 +670,17 @@ msgstr "Rechercher..."
 msgid "Segment %{scope}"
 msgstr "Segmenter %{scope}"
 
+msgid "Segmentation"
+msgstr "Segmentation"
+
 msgid "Segmentation (Ctrl+3)"
 msgstr "Segmentation (Ctrl+3)"
 
 msgid "Select"
 msgstr "Sélectionner"
+
+msgid "Select a model to fine-tune, or leave blank to train from scratch."
+msgstr "Sélectionnez un modèle à affiner, ou laissez le champ vide pour entraîner de toutes pièces."
 
 msgid "Select All"
 msgstr "Tout sélectionner"
@@ -576,8 +688,23 @@ msgstr "Tout sélectionner"
 msgid "Select all documents with pending or running tasks"
 msgstr "Sélectionner tous les documents ayant des tâches en attente ou en cours"
 
+msgid "Select all images in the document"
+msgstr "Sélectionner toutes les images du document"
+
 msgid "Select None"
-msgstr "Tout désélectionner"
+msgstr "Ne rien sélectionner"
+
+msgid "Select only the images currently loaded on screen"
+msgstr "Sélectionner uniquement les images actuellement chargées à l'écran"
+
+msgid "Select Visible"
+msgstr "Sélectionner les visibles"
+
+msgid "Selected Documents and Parts"
+msgstr "Documents et parties sélectionnés"
+
+msgid "Shared Models"
+msgstr "Modèles partagés"
 
 msgid "sign in"
 msgstr "Se connecter"
@@ -590,6 +717,12 @@ msgstr "Administration du site"
 
 msgid "Source Image (Ctrl+2)"
 msgstr "Image source (Ctrl+2)"
+
+msgid "Start New"
+msgstr "Nouveau"
+
+msgid "Start Training"
+msgstr "Démarrer l'entraînement"
 
 msgid "Statistics"
 msgstr "Statistiques"
@@ -604,7 +737,7 @@ msgid "switch to light mode"
 msgstr "Passer en mode clair"
 
 msgid "Tags"
-msgstr "Tags"
+msgstr "Étiquettes"
 
 msgid "Task Monitoring"
 msgstr "Surveillance des tâches"
@@ -650,6 +783,9 @@ msgstr "Aucune tâche à afficher."
 msgid "This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title)."
 msgstr "Ce document n'a aucun tag. Vous pouvez ajouter des tags à l'aide du formulaire d'édition, accessible depuis le menu déroulant du panneau ci-dessus (à droite du titre du document)."
 
+msgid "thumbnail"
+msgstr "miniature"
+
 msgid "Topline"
 msgstr "Topline"
 
@@ -662,8 +798,14 @@ msgstr "Images au total"
 msgid "Total Lines"
 msgstr "Lignes au total"
 
+msgid "Train Model"
+msgstr "Entraîner un modèle"
+
 msgid "Training"
 msgstr "Entraînement"
+
+msgid "Training job successfully queued!"
+msgstr "Tâche d'entraînement ajoutée à la file d'attente !"
 
 msgid "training page"
 msgstr "Page de formation"
@@ -682,6 +824,15 @@ msgstr "État de la transcription"
 
 msgid "Untagged"
 msgstr "Sans tag"
+
+msgid "Untitled Collection"
+msgstr "Collection sans titre"
+
+msgid "Updated At"
+msgstr "Mis à jour le"
+
+msgid "Updating..."
+msgstr "Mise à jour..."
 
 msgid "Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost."
 msgstr "Des téléversements sont encore en cours. Voulez-vous vraiment annuler ? Les téléversements inachevés peuvent être perdus."
@@ -713,8 +864,32 @@ msgstr "Oui, annuler"
 msgid "You cannot undo this action."
 msgstr "Vous ne pouvez pas annuler cette action."
 
+msgid "You have unsaved changes in your collection. If you start training now, these changes will not be reflected in the training data. Are you sure you want to proceed without saving?"
+msgstr "Vous avez des modifications non enregistrées dans votre collection. Si vous démarrez l'entraînement maintenant, ces modifications ne seront pas prises en compte dans les données d'entraînement. Voulez-vous vraiment continuer sans enregistrer ?"
+
+msgid "You have unsaved changes in your current collection. Are you sure you want to load a new one and discard these changes?"
+msgstr "Vous avez des modifications non enregistrées dans votre collection actuelle. Voulez-vous vraiment charger une nouvelle collection et abandonner ces modifications ?"
+
+msgid "You have unsaved changes in your current collection. Are you sure you want to start a new one and discard these changes?"
+msgstr "Vous avez des modifications non enregistrées dans votre collection actuelle. Voulez-vous vraiment en démarrer une nouvelle et abandonner ces modifications ?"
+
+msgid "You must be the owner of the base model to overwrite its file."
+msgstr "Vous devez être le propriétaire du modèle de base pour écraser son fichier."
+
+msgid "You must be the owner of the model to overwrite its file."
+msgstr "Vous devez être le propriétaire du modèle pour écraser son fichier."
+
+msgid "You must save this selection as a collection before you can train a model."
+msgstr "Vous devez enregistrer cette sélection en collection avant de pouvoir entraîner un modèle."
+
+msgid "You must select a collection of document parts in order to train a model."
+msgstr "Vous devez sélectionner une collection de parties de document pour entraîner un modèle."
+
 msgid "You're about to cancel all pending/running tasks for documents:"
 msgstr "Vous êtes sur le point d'annuler toutes les tâches en attente ou en cours des documents suivants :"
+
+msgid "Your Models"
+msgstr "Vos modèles"
 
 msgid "Your Recent Images"
 msgstr "Vos images récentes"

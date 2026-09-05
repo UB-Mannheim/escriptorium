@@ -3,11 +3,12 @@
         <div
             class="escr-form-field escr-model-type"
             role="group"
-            aria-label="Model Type"
+            :aria-label="$gettext('Model Type')"
         >
             <span
                 class="escr-field-label"
                 aria-hidden="true"
+                v-translate
             >
                 Model Type
             </span>
@@ -20,30 +21,30 @@
         </div>
         <EscrTextField
             class="escr-model-name"
-            label="Model Name"
-            placeholder="Name your new model..."
+            :label="$gettext('Model Name')"
+            :placeholder="$gettext('Name your new model...')"
             :disabled="form.override || isSubmitting"
             :value="form.model_name"
             :on-input="onInputName"
             :invalid="dirty && !isValid"
             :errors="
                 dirty && !isValid
-                    ? ['A name is required unless overwriting']
+                    ? [this.$gettext('A name is required unless overwriting')]
                     : []
             "
             required
         />
         <EscrAutocompleteField
             class="escr-base-model"
-            label="Base Model (optional)"
-            help-text="Select a model to fine-tune, or leave blank to train from scratch."
+            :label="$gettext('Base Model (optional)')"
+            :help-text="$gettext('Select a model to fine-tune, or leave blank to train from scratch.')"
             :disabled="isSubmitting"
             :option-groups="modelOptionGroups"
             :on-change="onChangeBaseModel"
         />
         <label
             class="escr-form-field escr-overwrite"
-            title="You must be the owner of the model to overwrite its file."
+            :title="$gettext('You must be the owner of the model to overwrite its file.')"
         >
             <input
                 type="checkbox"
@@ -52,18 +53,19 @@
                 aria-describedby="overwrite-help"
                 @change="onChangeOverride"
             >
-            <span>Overwrite existing</span>
+            <span v-translate>Overwrite existing</span>
         </label>
         <span
             id="overwrite-help"
             class="sr-only"
+            v-translate
         >
             You must be the owner of the base model to overwrite its file.
         </span>
         <EscrButton
             class="escr-train-btn"
             color="primary"
-            label="Start Training"
+            :label="$gettext('Start Training')"
             :disabled="
                 !isValid ||
                     isSubmitting ||
@@ -84,9 +86,9 @@
                         currentCollection.items &&
                         currentCollection.items.length > 0
                 "
+                v-translate
             >
-                You must save this selection as a collection before you can
-                train a model.
+                You must save this selection as a collection before you can train a model.
             </span>
             <span
                 v-else-if="
@@ -94,9 +96,9 @@
                         (!currentCollection.items ||
                             currentCollection.items.length === 0)
                 "
+                v-translate
             >
-                You must select a collection of document parts in order to train
-                a model.
+                You must select a collection of document parts in order to train a model.
             </span>
         </div>
     </div>
@@ -171,25 +173,25 @@ export default {
 
             const groups = [];
             if (yourModels.length > 0) {
-                groups.push({ label: "Your Models", options: yourModels });
+                groups.push({ label: this.$gettext("Your Models"), options: yourModels });
             }
             if (sharedModels.length > 0) {
-                groups.push({ label: "Shared Models", options: sharedModels });
+                groups.push({ label: this.$gettext("Shared Models"), options: sharedModels });
             }
             if (publicModels.length > 0) {
-                groups.push({ label: "Public Models", options: publicModels });
+                groups.push({ label: this.$gettext("Public Models"), options: publicModels });
             }
             return groups;
         },
         modelTypeOptions() {
             return [
                 {
-                    label: "Recognition",
+                    label: this.$gettext("Recognition"),
                     value: "recognizer",
                     selected: this.modelType === "recognizer",
                 },
                 {
-                    label: "Segmentation",
+                    label: this.$gettext("Segmentation"),
                     value: "segmenter",
                     selected: this.modelType === "segmenter",
                 },
@@ -208,9 +210,7 @@ export default {
         async submitTraining() {
             if (this.isCollectionDirty) {
                 const confirmProceed = window.confirm(
-                    "You have unsaved changes in your collection. " +
-                        "If you start training now, these changes will not be reflected " +
-                        "in the training data. Are you sure you want to proceed without saving?",
+                    this.$gettext("You have unsaved changes in your collection. If you start training now, these changes will not be reflected in the training data. Are you sure you want to proceed without saving?"),
                 );
                 if (!confirmProceed) {
                     return;
@@ -237,7 +237,7 @@ export default {
 
                 this.$store.dispatch("alerts/add", {
                     color: "success",
-                    message: "Training job successfully queued!",
+                    message: this.$gettext("Training job successfully queued!"),
                 });
             } catch (error) {
                 this.$store.dispatch("alerts/addError", error);

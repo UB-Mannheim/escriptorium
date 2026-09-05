@@ -80,6 +80,10 @@ msgid ""
 "<br>The yellow trash button <i class=\"text-warning fas fa-trash\" /> only <b>deletes</b> selected control <b>points</b>."
 msgstr ""
 
+#: vue/components/TrainForm/TrainForm.vue:58
+msgid "A name is required unless overwriting"
+msgstr ""
+
 #: vue/components/DocumentsTasks/CancelModal.vue:22
 msgid "Abort"
 msgstr ""
@@ -144,6 +148,10 @@ msgstr[1] ""
 msgid "Apply Filter"
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:102
+msgid "Apply to selected"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:431
 msgid "Are you sure you want to cancel this task?"
 msgstr ""
@@ -176,8 +184,19 @@ msgid ""
 "                            This action cannot be undone."
 msgstr ""
 
+#: vue/components/TrainForm/TrainForm.vue:65
+msgid "Base Model (optional)"
+msgstr ""
+
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:114
 msgid "Baseline"
+msgstr ""
+
+#: vue/pages/ModelTraining/ModelTraining.vue:11
+#: vue/pages/ModelTraining/ModelTraining.vue:9
+#: vue/pages/ModelTraining/ModelTraining.vue:51
+#: vue/pages/ModelTraining/ModelTraining.vue:113
+msgid "Browse"
 msgstr ""
 
 #: vue/components/ConfirmModal/ConfirmModal.vue:99
@@ -261,6 +280,14 @@ msgstr ""
 msgid "Close the %{label} panel"
 msgstr ""
 
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:52
+msgid "Collection Name"
+msgstr ""
+
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:91
+msgid "Collection saved successfully!"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:117
 #: vue/pages/Document/Document.vue:115
 msgid "Confidence"
@@ -301,6 +328,10 @@ msgstr ""
 
 #: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:3
 msgid "Default Ontology"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:24
+msgid "Default transcription layer:"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:313
@@ -356,6 +387,10 @@ msgstr ""
 msgid "Document name"
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:87
+msgid "Document Name"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:69
 #: vue/pages/Document/Document.vue:67
 msgid "Document Statistics"
@@ -365,6 +400,7 @@ msgstr ""
 msgid "Document Tags"
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:71
 #: vue/pages/Project/Project.vue:19
 #: vue/pages/Project/Project.vue:17
 msgid "Documents"
@@ -541,9 +577,32 @@ msgstr[1] ""
 msgid "Link to Project Guidelines"
 msgstr ""
 
+#: vue/pages/ModelTraining/ModelTraining.vue:30
+#: vue/pages/ModelTraining/ModelTraining.vue:28
+msgid "Load a saved collection, or navigate to the Browse tab."
+msgstr ""
+
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:24
+msgid "Load Collection:"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:134
 #: vue/pages/Project/Project.vue:181
 #: vue/pages/ProjectsList/ProjectsList.vue:131
 msgid "Load more"
+msgstr ""
+
+#: vue/pages/ModelTraining/ModelTraining.vue:83
+msgid "Loading browser..."
+msgstr ""
+
+#: vue/pages/ModelTraining/ModelTraining.vue:97
+msgid "Loading collection..."
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:123
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:156
+msgid "Loading more..."
 msgstr ""
 
 #: vue/components/ExtraInfo.vue:44
@@ -562,12 +621,31 @@ msgstr ""
 msgid "Main script:"
 msgstr ""
 
+#: vue/pages/ModelTraining/ModelTraining.vue:39
+#: vue/pages/ModelTraining/ModelTraining.vue:37
+msgid "Manage Collection"
+msgstr ""
+
 #: vue/components/MetadataField/MetadataField.vue:2
 msgid "Metadata"
 msgstr ""
 
 #: vue/components/ExtraNav.vue:20
 msgid "Metadata (Ctrl+1)"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:50
+msgid "Model Name"
+msgstr ""
+
+#: vue/pages/ModelTraining/ModelTraining.vue:3
+#: vue/pages/ModelTraining/ModelTraining.vue:1
+msgid "Model Training"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:3
+#: vue/components/TrainForm/TrainForm.vue:34
+msgid "Model Type"
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:44
@@ -598,6 +676,14 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:54
+msgid "Name your collection..."
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:51
+msgid "Name your new model..."
+msgstr ""
+
 #: vue/components/DocumentsTasks/List.vue:91
 msgid "Name..."
 msgstr ""
@@ -615,9 +701,26 @@ msgstr ""
 msgid "No document tasks to display."
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:137
+msgid "No documents to display."
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:115
+msgid "No images to display."
+msgstr ""
+
 #: vue/components/TagFilter/TagFilter.vue:244
 #: vue/components/TagsField/TagsField.vue:175
 msgid "No matching tags. %{hidden}"
+msgstr ""
+
+#: vue/pages/ModelTraining/ModelTraining.vue:29
+#: vue/pages/ModelTraining/ModelTraining.vue:27
+msgid "No parts currently selected."
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:109
+msgid "No projects to display."
 msgstr ""
 
 #: vue/components/Sidebar/Sidebar.vue:62
@@ -626,6 +729,10 @@ msgstr ""
 
 #: vue/components/TagFilter/TagFilter.vue:301
 msgid "OR"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:16
+msgid "Overwrite existing"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:382
@@ -639,6 +746,26 @@ msgstr ""
 #: vue/pages/ProjectsList/ProjectsList.vue:48
 msgid "Owner"
 msgstr ""
+
+#: vue/components/EscriptoriumBrowser/SelectedDocuments.vue:147
+msgid "Page %{page}"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:89
+msgid "Pages"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/SelectedDocuments.vue:65
+msgid "part"
+msgid_plural "parts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:77
+msgid "part staged"
+msgid_plural "parts staged"
+msgstr[0] ""
+msgstr[1] ""
 
 #: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:47
 msgid "part type"
@@ -669,10 +796,17 @@ msgstr ""
 msgid "Project Guidelines"
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:68
+msgid "Project Name"
+msgstr ""
+
 #: vue/pages/ProjectsList/ProjectsList.vue:46
 msgid "Project Tags"
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:4
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:6
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:1
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:37
 #: vue/pages/ProjectsList/ProjectsList.vue:6
 #: vue/pages/ProjectsList/ProjectsList.vue:4
@@ -681,6 +815,10 @@ msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:122
 msgid "projects list"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:75
+msgid "Public Models"
 msgstr ""
 
 #: vue/components/DocumentsTasks/List.vue:100
@@ -695,11 +833,19 @@ msgstr ""
 msgid "Read Direction"
 msgstr ""
 
+#: vue/components/TrainForm/TrainForm.vue:82
+msgid "Recognition"
+msgstr ""
+
 #: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:39
 msgid "region type"
 msgid_plural "region types"
 msgstr[0] ""
 msgstr[1] ""
+
+#: vue/components/EscriptoriumBrowser/SelectedDocuments.vue:78
+msgid "Remove part"
+msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:131
 msgid "Right to left"
@@ -712,6 +858,10 @@ msgstr ""
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:93
 #: vue/components/EditProjectModal/EditProjectModal.vue:83
 msgid "Save"
+msgstr ""
+
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:80
+msgid "Save Collection"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:37
@@ -734,14 +884,20 @@ msgstr ""
 msgid "Search Document"
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:90
 #: vue/pages/Project/Project.vue:99
 msgid "Search documents..."
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:89
+msgid "Search images..."
 msgstr ""
 
 #: vue/pages/Project/Project.vue:195
 msgid "Search Project"
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:91
 #: vue/pages/ProjectsList/ProjectsList.vue:39
 msgid "Search projects..."
 msgstr ""
@@ -758,6 +914,10 @@ msgstr ""
 msgid "Segment %{scope}"
 msgstr ""
 
+#: vue/components/TrainForm/TrainForm.vue:87
+msgid "Segmentation"
+msgstr ""
+
 #: vue/components/ExtraNav.vue:40
 msgid "Segmentation (Ctrl+3)"
 msgstr ""
@@ -766,6 +926,11 @@ msgstr ""
 msgid "Select"
 msgstr ""
 
+#: vue/components/TrainForm/TrainForm.vue:66
+msgid "Select a model to fine-tune, or leave blank to train from scratch."
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:49
 #: vue/components/TagFilter/TagFilter.vue:315
 msgid "Select All"
 msgstr ""
@@ -774,8 +939,31 @@ msgstr ""
 msgid "Select all documents with pending or running tasks"
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:45
+msgid "Select all images in the document"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:78
 #: vue/components/TagFilter/TagFilter.vue:324
 msgid "Select None"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:64
+msgid "Select only the images currently loaded on screen"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:68
+msgid "Select Visible"
+msgstr ""
+
+#: vue/pages/ModelTraining/ModelTraining.vue:21
+#: vue/pages/ModelTraining/ModelTraining.vue:19
+#: vue/pages/ModelTraining/ModelTraining.vue:53
+msgid "Selected Documents and Parts"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:72
+msgid "Shared Models"
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:343
@@ -793,6 +981,14 @@ msgstr ""
 
 #: vue/components/ExtraNav.vue:30
 msgid "Source Image (Ctrl+2)"
+msgstr ""
+
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:31
+msgid "Start New"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:96
+msgid "Start Training"
 msgstr ""
 
 #: vue/components/DocumentsTasks/List.vue:65
@@ -814,6 +1010,8 @@ msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:74
 #: vue/components/EditProjectModal/EditProjectModal.vue:64
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:69
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:88
 #: vue/components/FilterSet/FilterSet.vue:52
 #: vue/components/TagFilter/TagFilter.vue:311
 #: vue/components/TagsField/TagsField.vue:240
@@ -884,6 +1082,10 @@ msgstr ""
 msgid "This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title)."
 msgstr ""
 
+#: vue/components/EscriptoriumBrowser/SelectedDocuments.vue:84
+msgid "thumbnail"
+msgstr ""
+
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:115
 msgid "Topline"
 msgstr ""
@@ -903,8 +1105,17 @@ msgstr ""
 msgid "Total Lines"
 msgstr ""
 
+#: vue/pages/ModelTraining/ModelTraining.vue:46
+#: vue/pages/ModelTraining/ModelTraining.vue:44
+msgid "Train Model"
+msgstr ""
+
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:51
 msgid "Training"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:133
+msgid "Training job successfully queued!"
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:158
@@ -931,6 +1142,21 @@ msgstr ""
 
 #: vue/components/TagFilter/TagFilter.vue:377
 msgid "Untagged"
+msgstr ""
+
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:84
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:44
+msgid "Untitled Collection"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:77
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:91
+msgid "Updated At"
+msgstr ""
+
+#: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:148
+#: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:164
+msgid "Updating..."
 msgstr ""
 
 #: vue/pages/Document/Document.vue:344
@@ -977,8 +1203,40 @@ msgstr ""
 msgid "You cannot undo this action."
 msgstr ""
 
+#: vue/components/TrainForm/TrainForm.vue:106
+msgid "You have unsaved changes in your collection. If you start training now, these changes will not be reflected in the training data. Are you sure you want to proceed without saving?"
+msgstr ""
+
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:104
+msgid "You have unsaved changes in your current collection. Are you sure you want to load a new one and discard these changes?"
+msgstr ""
+
+#: vue/components/ManageCollectionForm/ManageCollectionForm.vue:122
+msgid "You have unsaved changes in your current collection. Are you sure you want to start a new one and discard these changes?"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:18
+msgid "You must be the owner of the base model to overwrite its file."
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:73
+msgid "You must be the owner of the model to overwrite its file."
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:29
+msgid "You must save this selection as a collection before you can train a model."
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:36
+msgid "You must select a collection of document parts in order to train a model."
+msgstr ""
+
 #: vue/components/DocumentsTasks/CancelModal.vue:13
 msgid "You're about to cancel all pending/running tasks for documents:"
+msgstr ""
+
+#: vue/components/TrainForm/TrainForm.vue:69
+msgid "Your Models"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:51
