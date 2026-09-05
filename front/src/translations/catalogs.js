@@ -11,6 +11,7 @@ import enRaw from "./en.json";
 import frRaw from "./fr.json";
 import deRaw from "./de.json";
 import esRaw from "./es.json";
+import heRaw from "./he.json";
 
 function unwrap(raw) {
     // `en.json` may legitimately be an empty object during early
@@ -26,6 +27,7 @@ const catalogs = {
     fr: unwrap(frRaw),
     de: unwrap(deRaw),
     es: unwrap(esRaw),
+    he: unwrap(heRaw),
 };
 
 export default catalogs;
