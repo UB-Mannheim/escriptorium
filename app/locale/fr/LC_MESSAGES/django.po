@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-05 15:41+0000\n"
+"POT-Creation-Date: 2026-09-05 20:07+0000\n"
 "PO-Revision-Date: 2022-04-07 20:09+0000\n"
 "Last-Translator: Stefan Weil <sw@weilnetz.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/escriptorium/web-"
@@ -1713,6 +1713,10 @@ msgstr "Espagnol"
 msgid "French"
 msgstr "Français"
 
+#: escriptorium/settings.py
+msgid "Hebrew"
+msgstr "Hébreu"
+
 #: escriptorium/templates/403.html
 msgid "You don't have permission to view or edit this document."
 msgstr "Vous n'avez pas la permission de consulter ou de modifier ce document."
@@ -1819,7 +1823,9 @@ msgstr "Login"
 msgid ""
 "eScriptorium uses cookies to store the user session and local storage to "
 "save user interface preferences."
-msgstr "eScriptorium utilise des cookies pour stocker la session utilisateur et le stockage local pour enregistrer les préférences de l'interface."
+msgstr ""
+"eScriptorium utilise des cookies pour stocker la session utilisateur et le "
+"stockage local pour enregistrer les préférences de l'interface."
 
 #: escriptorium/templates/base.html
 #: escriptorium/templates/users/profile_group_list.html
