@@ -1,0 +1,1386 @@
+msgid ""
+msgstr ""
+"Language: he\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "(space)"
+msgstr "(רוחב)"
+
+msgid "# in Document"
+msgstr "# במסמך"
+
+msgid "# of Documents"
+msgstr "# מסמכים"
+
+msgid "# of Images"
+msgstr "# תמונות"
+
+msgid "# on Part"
+msgstr "# בחלק"
+
+msgid "%{action} Document"
+msgstr "%{action} מסמך"
+
+msgid "%{action} Project"
+msgstr "%{action} פרויקט"
+
+msgid "%{count} element"
+msgid_plural "%{count} elements"
+msgstr[0] "%{count} רכיב"
+msgstr[1] "%{count} רכיבים"
+
+msgid "%{count} tag hidden, including %{selected} selected."
+msgid_plural "%{count} tags hidden, including %{selected} selected."
+msgstr[0] "%{count} תג מוסתר, כולל %{selected} נבחר."
+msgstr[1] "%{count} תגים מוסתרים, כולל %{selected} נבחרים."
+
+msgid "+ %{count} tag hidden, including %{selected} selected tag"
+msgid_plural "+ %{count} tags hidden, including %{selected} selected tags"
+msgstr[0] "+ %{count} תג מוסתר, כולל %{selected} תג נבחר"
+msgstr[1] "+ %{count} תגים מוסתרים, כולל %{selected} תגים נבחרים"
+
+msgid ""
+"<b>Left click</b> on a line to select it, then you can drag its closest control point.\n"
+"<br><b>Double click</b> on the line will create a <u>new control point</u> at the mouse location.\n"
+"<br>You can reverse the order of the line's points by selecting a line (or multiple) and using reverse <i class=\"fas fa-arrow-alt-h\" /> (I key).\n"
+"<br>When in region mode, Regions can be edited the same way.\n"
+"<br>Selected lines can be linked or unlinked to regions with the corresponding buttons <i class=\"fas fa-link\" />(Y key) <i class=\"fas fa-unlink\"> (U key).</i>\n"
+"<br>By using the cut mode <i class=\"text-warning fas fa-cut\" /> (C key) you can cut through lines, splitting them in two or removing part of them.\n"
+"<br>If at least two lines are selected an option to join them becomes available <i class=\"fas fa-compress-arrows-alt\" /> (J key).\n"
+"<br>You can go through your changes <u>history</u> back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons <i class=\"fas fa-undo\" /><i class=\"fas fa-redo\" />."
+msgstr ""
+"<b>לחיצה ימנית</b> על שורה כדי לבחור אותה, ואז ניתן לגרור את נקודת השליטה הקרובה ביותר.\n"
+"<br><b>לחיצה כפולה</b> על השורה תצור <u>נקודת שליטה חדשה</u> במיקום העכבר.\n"
+"<br>ניתן להפוך את סדר הנקודות של השורה על ידי בחירת שורה (או מספר שורות) והפעלת <i class=\"fas fa-arrow-alt-h\" /> (מקש I).\n"
+"<br>כשמצב האזורים פעיל, אפשר לערוך אזורים באותו אופן.\n"
+"<br>שורות נבחרות יכולות להיות מחוברות או מנותקות מאזורים באמצעות הכפתורים המתאימים <i class=\"fas fa-link\" />(מקש Y) <i class=\"fas fa-unlink\"> (מקש U).</i>\n"
+"<br>במצב החיתוך <i class=\"text-warning fas fa-cut\" /> (מקש C) ניתן לחתוך שורות, להפריד אותן לשתיים או להסיר חלק מהן.\n"
+"<br>כאשר נבחרות לפחות שתי שורות, זמינה אפשרות לחבר אותן <i class=\"fas fa-compress-arrows-alt\" /> (מקש J).\n"
+"<br>ניתן לנווט ב<u>היסטוריה</u> של השינויים קדימה ואחורה עם <b>Ctrl+Z</b>(ביטול) ו-<b>Ctrl+Y</b>(ביצוע מחדש) או באמצעות הכפתורים המתאימים <i class=\"fas fa-undo\" /><i class=\"fas fa-redo\" />."
+
+msgid ""
+"<b>Left click</b> on the image to <u>create</u> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> again to <u>finish</u> it.\n"
+"<br>You can keep the mouse button pressed for free drawing.\n"
+"<br>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.\n"
+"<br>If regions matter to you switch to region mode first <i class=\"fas fa-th-large\" /> (R key).\n"
+"<br>when in region mode <b>Left click</b> to create a new rectangular region, left click again to finish it.\n"
+"<br>lines drawn inside a region will automatically be bound to it.\n"
+"<br>When the quality of the segmentation is good, you can prompt the system to calculate masks <i class=\"text-success fas fa-thumbs-up\" />,\n"
+"<br>once a page already has masks new lines will automatically get a mask and updating a line will also recalculate its mask.\n"
+"<br><b>Note</b> that the quality of the masks is highly dependent on the quality of the whole segmentation, not only the corresponding line,\n"
+"<br>so make sure to draw all the lines before calculating the masks.\n"
+"<br>You can also have the option to calculate the masks <i>en masse</i> in the Images tab -> segment -> choose 'Only masks'."
+msgstr ""
+"<b>לחיצה ימנית</b> על התמונה כדי <u>ליצור</u> שורה חדשה, <b>לחיצה שמאלית</b> כדי <b>להוסיף נקודות</b> ו-<b>לחיצה שמאלית</b> שוב כדי <u>לסיים</u> אותה.\n"
+"<br>ניתן להחזיק את כפתור העכבר לציור חופשי.\n"
+"<br>לחיצה על <b>escape</b> תוך ציור שורה <u>מבטלת</u> אותה.\n"
+"<br>אם אזורים חשובים לך, עבור קודם למצב האזורים <i class=\"fas fa-th-large\" /> (מקש R).\n"
+"<br>כשמצב האזורים פעיל, <b>לחיצה שמאלית</b> יוצרת אזור מלבני חדש, ולחיצה שנייה מסיימת אותו.\n"
+"<br>שורות שנצרות בתוך אזור מתחברות אליו אוטומטית.\n"
+"<br>כשהאיכות של הסגמנטציה טובה, ניתן לפקוד את המערכת לחשב מסיכות <i class=\"text-success fas fa-thumbs-up\" />,\n"
+"<br>כשלתמונה כבר יש מסיכות, שורות חדשות תקבלن מסיכה אוטומטית ועדכון שורה יחשב מחדש את המסיכה שלה.\n"
+"<br><b>הערה</b> שהאיכות של המסיכות תלויה באיכות הסגמנטציה כולה, לא רק בשורה המתאימה,\n"
+"<br>ולכן ודאו שציירתם את כל השורות לפני חישוב המסיכות.\n"
+"<br>ניתן גם לחשב את המסיכות <i>בבת אחת</i> בלייח \"תמונות\" -> סגמנטציה -> בחירת \"מסיכות בלבד\"."
+
+msgid ""
+"<b>Shift+click</b> allows to add or remove a line from the <u>selection</u>,\n"
+"<br>Clicking on an empty space clears the selection,\n"
+"<br><b>shift and drag</b> creates a <u>lasso</u> selection tool that allows to select control points (they then appear black).\n"
+"<br><b>Note:</b> If lines are already selected the lasso will only select points in those lines.\n"
+"<br><b>Ctrl+drag</b> allows to move all the selected control points at once (or the selected lines if no control points are selected).\n"
+"\n"
+"<br>The red trash <i class=\"text-danger fas fa-trash\" /> button <b>deletes</b> all selected <b>lines/regions</b>,\n"
+"<br>The yellow trash button <i class=\"text-warning fas fa-trash\" /> only <b>deletes</b> selected control <b>points</b>."
+msgstr ""
+"<b>Shift+לחיצה</b> מאפשרת להוסיף או להסיר שורה מה<u>בחירה</u>,\n"
+"<br>לחיצה על שטח ריק מאפסת את הבחירה,\n"
+"<br><b>shift וגרירה</b> יוצרת כלי בחירת <u>חזירה</u> שמאפשר לבחור נקודות שליטה (אז הן מופיעות בשחור).\n"
+"<br><b>הערה:</b> אם כבר נבחרו שורות, החזירה תבחר רק נקודות בשורות אלו.\n"
+"<br><b>Ctrl+גרירה</b> מאפשרת להזיז את כל נקודות השליטה שנבחרו בבת אחת (או את השורות שנבחרו אם לא נבחרו נקודות שליטה).\n"
+"\n"
+"<br>כפתור הפח האדום <i class=\"text-danger fas fa-trash\" /> <b>מחק</b> את כל ה<b>שורות/האזורים</b> שנבחרו,\n"
+"<br>כפתור הפח הצהוב <i class=\"text-warning fas fa-trash\" /> <b>מוחק</b> רק נקודות שליטה שנבחרו."
+
+msgid "0 images"
+msgstr "0 תמונות"
+
+msgid "1-100, enables beam search; if this and max offset are left unset, beam search will be on and beam size set to 20. Higher beam size will result in slower computation but more accurate results."
+msgstr "1–100, מאפשר חיפוש בימים (beam search); אם ערך זה וההזזה המרבית נשארים ריקים, חיפוש הבימים יהיה פעיל בגודל 20. גודל בימים גבוה יותר מוביל לחישוב איטי יותר אך לתוצאות מדויקות יותר."
+
+msgid "A name is required unless overwriting"
+msgstr "נדרש שם אלא אם מתבצע השחלה"
+
+msgid "Abort"
+msgstr "הפסקה"
+
+msgid "Actions"
+msgstr "פעולות"
+
+msgid "Add group"
+msgstr "הוספת קבוצה"
+
+msgid "Add Group"
+msgstr "הוספת קבוצה"
+
+msgid "Add Group or User"
+msgstr "הוספת קבוצה או משתמש"
+
+msgid "Add hyphens to words broken across lines"
+msgstr "הוספת מקפים למילים שנספרו על פני שורות"
+
+msgid "Add New"
+msgstr "הוספת חדש"
+
+msgid "Add user"
+msgstr "הוספת משתמש"
+
+msgid "Add User"
+msgstr "הוספת משתמש"
+
+msgid "Add/search tags"
+msgstr "הוספה/חיפוש תגים"
+
+msgid "advanced settings"
+msgstr "הגדרות מתקדמות"
+
+msgid "Advanced Settings"
+msgstr "הגדרות מתקדמות"
+
+msgid "After"
+msgstr "אחרי"
+
+msgid "Align"
+msgstr "מישור"
+
+msgid "Align %{scope}"
+msgstr "מישור %{scope}"
+
+msgid "Alignment"
+msgstr "מישור"
+
+msgid "All"
+msgstr "הכל"
+
+msgid "AND"
+msgstr "וגם"
+
+msgid "annotation component"
+msgid_plural "annotation components"
+msgstr[0] "רכיב הערה"
+msgstr[1] "רכיבי הערה"
+
+msgid "Apply Filter"
+msgstr "יישום מסנן"
+
+msgid "Apply to selected"
+msgstr "יישום על הנבחר"
+
+msgid "Archive format"
+msgstr "פורמט ארכיון"
+
+msgid "Are you sure you want to cancel this task?"
+msgstr "האם אתה בטוח שברצונך לבטל משימה זו?"
+
+msgid "Are you sure you want to clear this project's default ontology?"
+msgstr "האם אתה בטוח שברצונך לנקות את האונטולוגיה כברירת המחדל של הפרויקט?"
+
+msgid "Are you sure you want to continue? Re-segmenting will delete any existing transcriptions."
+msgstr "האם אתה בטוח שברצונך להמשיך? סגמנטציה מחדש תמחק תעתוקים קיימים."
+
+msgid "Are you sure you want to delete the document %{name}?"
+msgstr "האם אתה בטוח שברצונך למחוק את המסמך %{name}?"
+
+msgid "Are you sure you want to delete the image %{name}?"
+msgstr "האם אתה בטוח שברצונך למחוק את התמונה %{name}?"
+
+msgid "Are you sure you want to delete the selected image(s)?"
+msgstr "האם אתה בטוח שברצונך למחוק את התמונה/התמונות שנבחרו?"
+
+msgid "Are you sure you want to delete this document?"
+msgstr "האם אתה בטוח שברצונך למחוק מסמך זה?"
+
+msgid "Are you sure you want to delete this project?"
+msgstr "האם אתה בטוח שברצונך למחוק פרויקט זה?"
+
+msgid ""
+"Are you sure you want to delete this project?\n"
+"                            This action cannot be undone."
+msgstr ""
+"האם אתה בטוח שברצונך למחוק פרויקט זה?\n"
+"                            פעולה זו אינה ניתנת לביטול."
+
+msgid "Are you sure you want to redraw all masks on the selected image(s)?"
+msgstr "האם אתה בטוח שברצונך לצייר מחדש את כל המסיכות בתמונה/בתמונות שנבחרו?"
+
+msgid "Base Model (optional)"
+msgstr "מודל בסיס (רשות)"
+
+msgid "Baseline"
+msgstr "קו בסיס"
+
+msgid "Beam size"
+msgstr "גודל בימים"
+
+msgid "Before"
+msgstr "לפני"
+
+msgid "Browse"
+msgstr "עיון"
+
+msgid "Cancel"
+msgstr "ביטול"
+
+msgid "Cancel all selected"
+msgstr "ביטול כל הנבחר"
+
+msgid "Cancel pending/running tasks for the selected documents"
+msgstr "ביטול משימות ממתינות/פעילות עבור המסמכים שנבחרו"
+
+msgid "Cancel pending/running tasks for this document"
+msgstr "ביטול משימות ממתינות/פעילות עבור מסמך זה"
+
+msgid "Cancel Task"
+msgstr "ביטול משימה"
+
+msgid "Cancel tasks"
+msgstr "ביטול משימות"
+
+msgid "Cancel Upload In Progress"
+msgstr "ביטול העלאה בדרך"
+
+msgid "Canceled"
+msgstr "בוטל"
+
+msgid "Canceling tasks..."
+msgstr "מבטל משימות..."
+
+msgid "Centered"
+msgstr "ממוקם במרכז"
+
+msgid "Change Password"
+msgstr "שינוי סיסמה"
+
+msgid "Change the transcription used for character stats"
+msgstr "שינוי התעתוק המשמש לסטטיסטיקות תווים"
+
+msgid "Character"
+msgstr "תו"
+
+msgid "Characters"
+msgstr "תווים"
+
+msgid "Choose files"
+msgstr "בחירת קבצים"
+
+msgid "Clear"
+msgstr "ניקוי"
+
+msgid "Clear All"
+msgstr "ניקוי הכל"
+
+msgid "Clear Default Ontology"
+msgstr "ניקוי אונטולוגיית ברירת מחדל"
+
+msgid "Clear filter"
+msgstr "ניקוי מסנן"
+
+msgid "Clear search"
+msgstr "ניקוי חיפוש"
+
+msgid "Clear search filter"
+msgstr "ניקוי מסנן החיפוש"
+
+msgid "Click to go to another Element (Alt+G)."
+msgstr "לחץ כדי לעבור לרכיב אחר (Alt+G)."
+
+msgid "Close"
+msgstr "סגירה"
+
+msgid "Close the %{label} panel"
+msgstr "סגירת הפאנל %{label}"
+
+msgid "Collection Name"
+msgstr "שם האוסף"
+
+msgid "Collection saved successfully!"
+msgstr "האוסף נשמר בהצלחה!"
+
+msgid "Completed"
+msgstr "הושלם"
+
+msgid "Confidence"
+msgstr "ביטחון"
+
+msgid "Continue"
+msgstr "המשך"
+
+msgid "Could not load downloads"
+msgstr "לא ניתן היה לטעון הורדות"
+
+msgid "Crashed"
+msgstr "נפגע"
+
+msgid "Create"
+msgstr "יצירה"
+
+msgid "Create a tag"
+msgstr "יצירת תג"
+
+msgid "Create a tag \"%{tagName}\""
+msgstr "יצירת תג \"%{tagName}\""
+
+msgid "Create New"
+msgstr "יצירה חדשה"
+
+msgid "Created"
+msgstr "נוצר"
+
+msgid "Default"
+msgstr "ברירת מחדל"
+
+msgid "Default Ontology"
+msgstr "אונטולוגיית ברירת מחדל"
+
+msgid "Default Segmentation Model"
+msgstr "מודל סגמנטציה כברירת מחדל"
+
+msgid "Default transcription layer:"
+msgstr "שכבת תעתוק כברירת מחדל:"
+
+msgid "Delete"
+msgstr "מחיקה"
+
+msgid "Delete \"%{label}\"? This cannot be undone."
+msgstr "למחוק את \"%{label}\"? פעולה זו לא ניתנת לשכתוב."
+
+msgid "Delete %{name}"
+msgstr "מחיקת %{name}"
+
+msgid "Delete document"
+msgstr "מחיקת מסמך"
+
+msgid "Delete Document"
+msgstr "מחיקת מסמך"
+
+msgid "Delete Image"
+msgstr "מחיקת תמונה"
+
+msgid "Delete Images"
+msgstr "מחיקת תמונות"
+
+msgid "Delete project"
+msgstr "מחיקת פרויקט"
+
+msgid "Delete Project"
+msgstr "מחיקת פרויקט"
+
+msgid "Delete Project \"%{name}\""
+msgstr "מחיקת פרויקט \"%{name}\""
+
+msgid "document"
+msgstr "מסמך"
+
+msgid "Document"
+msgstr "מסמך"
+
+msgid "Document images"
+msgstr "תמונות המסמך"
+
+msgid "Document Models"
+msgstr "מודלי המסמך"
+
+msgid "Document name"
+msgstr "שם המסמך"
+
+msgid "Document Name"
+msgstr "שם המסמך"
+
+msgid "Document Statistics"
+msgstr "סטטיסטיקת המסמך"
+
+msgid "Document Tags"
+msgstr "תגי המסמך"
+
+msgid "Documents"
+msgstr "מסמכים"
+
+msgid "Download"
+msgstr "הורדה"
+
+msgid "Download Archive"
+msgstr "הורדת ארכיון"
+
+msgid "Downloads"
+msgstr "הורדות"
+
+msgid "Drag and drop files here"
+msgstr "גרור ושחרר קבצים לכאן"
+
+msgid ""
+"Each line corresponds to an edition of the content, in inverse chronological order (Most recent at the top).\n"
+"<br>The colors represent the difference with the previous version,\n"
+"<br><font color=\"green\">green</font> are <b>additions</b> while <font color=\"red\">red</font> are <b>deletions</b>,\n"
+"<br>meaning red characters are not actually part of the line anymore, they are displayed to easily spot the differences.\n"
+"<br>You can mouse over the text to see the actual content.\n"
+"<br>The load state button <i class=\"fas fa-file-upload\" /> simply revert the content of the line to the corresponding text version."
+msgstr ""
+"<b>כל שורה</b> מתאימה לעריכה של התוכן, בסדר כרונולוגי הפוך (האחרונה למעלה).\n"
+"<br>הצבעים מייצגים את ההבדל מהגרסה הקודמת,\n"
+"<br><font color=\"green\">ירוק</font> הוא <b>הוספות</b> ו-<font color=\"red\">אדום</font> הוא <b>מחיקות</b>,\n"
+"<br>כלומר התווים האדומים אינם חלק מהשורה בפועל, הם מוצגים כדי לאתר בקלות את ההבדלים.\n"
+"<br>ניתן לרוחץ מעל הטקסט כדי לראות את התוכן האמיתי.\n"
+"<br>כפתור מצב הטעינה <i class=\"fas fa-file-upload\" /> פשוט מחזיר את תוכן השורה לגרסת הטקסט המתאימה."
+
+msgid ""
+"Each line is a different transcription as checked in the transcription management window <i class=\"fas fa-cog\" />\n"
+"<br>The colors represent the difference with the current transcription,\n"
+"<br><font color=\"green\">green</font> characters are not present in the current (editable) transcription while <font color=\"red\">red</font> characters are not present in the compared transcription."
+msgstr ""
+"<b>כל שורה</b> היא תעתוק שונה כפי שנבדק בחלון ניהול התעתוק <i class=\"fas fa-cog\" />\n"
+"<br>הצבעים מייצגים את ההבדל מהתעתוק הנוכחי,\n"
+"<br>תווים ב-<font color=\"green\">ירוק</font> אינם נמצאים בתעתוק הנוכחי (הניתן לעריכה) ותווים ב-<font color=\"red\">אדום</font> אינם נמצאים בתעתוק המשולם,\n"
+"<br>כלומר התווים האדומים אינם חלק מהשורה בפועל, הם מוצגים כדי לאתר בקלות את ההבדלים."
+
+msgid "Edit"
+msgstr "עריכה"
+
+msgid "edit image"
+msgstr "עריכת תמונה"
+
+msgid "Element #"
+msgstr "רכיב #"
+
+msgid "Elements"
+msgstr "רכיבים"
+
+msgid "Empty ontology config."
+msgstr "הגדרות אונטולוגיה ריקות."
+
+msgid "Enables max-offset and disables beam search. Maximum number of characters (20–80) difference between the aligned witness text and the original transcription."
+msgstr "מפעיל הזזה מרבית ומכבה חיפוש בימים. מספר התווים (20–80) המקסימלי כהפרש בין טקסט העדה שמשור לטקסט התעתוק המקורי."
+
+msgid "Enter layer name"
+msgstr "הזנת שם שכבה"
+
+msgid "Enter METS file URI"
+msgstr "הזנת URI של קובץ METS"
+
+msgid "Enter multiple numbers separated by a comma, and/or ranges separated by a dash, to select images"
+msgstr "הזן מספרים רבים מופרדים בפסיק ו/או טווחים מופרדים באופקית לבחירת תמונות"
+
+msgid "Enter project name"
+msgstr "הזנת שם פרויקט"
+
+msgid "Enter select range"
+msgstr "הזנת טווח בחירה"
+
+msgid "Enter URL"
+msgstr "הזנת כתובת URL"
+
+msgid "Enter username of registered user"
+msgstr "הזנת שם משתמש של משתמש רשום"
+
+msgid "Error"
+msgstr "שגיאה"
+
+msgid "Error navigating to the images page."
+msgstr "שגיאה בניווט לדף התמונות."
+
+msgid "Existing Layers"
+msgstr "שכבות קיימות"
+
+msgid "expand task monitoring and usage menu"
+msgstr "הרחבת תפריט ניטור והשתמשות במשימות"
+
+msgid "expand user profile menu"
+msgstr "הרחבת תפריט הפרופיל"
+
+msgid "Expires"
+msgstr "פג תוקפו"
+
+msgid "Export"
+msgstr "ייצוא"
+
+msgid "Export %{scope}"
+msgstr "ייצוא %{scope}"
+
+msgid "Exports %{scope} as a full JSON archive."
+msgstr "יוצא את %{scope} כארכיון JSON מלא."
+
+msgid "Failed to fetch additional images"
+msgstr "לא ניתן היה לטעון תמונות נוספות"
+
+msgid "File Format"
+msgstr "פורמט קובץ"
+
+msgid "Files supported: JPG, PNG, TIFF"
+msgstr "קבצים נתמכים: JPG, PNG, TIFF"
+
+msgid "Filter by:"
+msgstr "סינון לפי:"
+
+msgid "Filter results"
+msgstr "סינון תוצאות"
+
+msgid "Filter Tags"
+msgstr "סינון תגים"
+
+msgid "Find and Replace"
+msgstr "חיפוש והחלפה"
+
+msgid "Find tag"
+msgstr "חיפוש תג"
+
+msgid "Finished"
+msgstr "הסתיים"
+
+msgid "Font used to display this document's transcription text in the editor, overriding the project and user fonts. Leave as Default to inherit from the project, user, or built-in font."
+msgstr "גופן המציג את טקסט התעתוק של מסמך זה בעורך, עם עדיפות על גופני הפרויקט והמשתמש. השאר ברירת מחדל כדי לרשת מהפרויקט, מהמשתמש או מגופן המובנה."
+
+msgid "Font used to display transcription text for documents in this project, unless overridden at the document level. Leave as Default to inherit from the user or built-in font."
+msgstr "גופן המציג את טקסט התעתוק של מסמכים בפרויקט זה, אלא אם נעשה עידון ברמת המסמך. השאר ברירת מחדל כדי לרשת מהמשתמש או מגופן המובנה."
+
+msgid "Gap"
+msgstr "מרווח"
+
+msgid "global search"
+msgstr "חיפוש גלובלי"
+
+msgid "Go to"
+msgstr "מעבר ל"
+
+msgid "Grid view"
+msgstr "תצוגת סריג"
+
+msgid "Groups"
+msgstr "קבוצות"
+
+msgid "Groups & Users"
+msgstr "קבוצות ומשתמשים"
+
+msgid "Hide"
+msgstr "הסתרה"
+
+msgid "Horizontal Left to Right"
+msgstr "אופקי משמאל לימין"
+
+msgid "Horizontal Right to Left"
+msgstr "אופקי מימין לשמאל"
+
+msgid "If checked, all existing segmentation and bound transcriptions will be deleted."
+msgstr "אם מסומן, כל הסגמנטציה הקיימת וכל התעתוקים הקשורים יימחקו."
+
+msgid "If checked, the aligner will automatically insert hyphens when it detects a word was split across two lines in the ground truth."
+msgstr "אם מסומן, המיישר יוסיף מקפים אוטומטית כאשר יזהה שהמילה נחלקה לשתי שורות בתעתוק המקורי."
+
+msgid "If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank."
+msgstr "אם מסומן, המיישר יחזור וישתמש בטקסט של התעתוק המקורי כאשר לא ניתן לבצע מישור; אם לא מסומן, שורות אלו יהיו ריקות."
+
+msgid "If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."
+msgstr "אם מסומן, המיישר ישתמש בכל העמודים שעובדו בתעתוק של המסמך למציאת התאמות. אם לא מסומן, כל עמוד יישוור בטקסט בנפרד."
+
+msgid "IIIF Manifest URI"
+msgstr "URI של רשימת IIIF"
+
+msgid "image"
+msgid_plural "images"
+msgstr[0] "תמונה"
+msgstr[1] "תמונות"
+
+msgid "Image"
+msgid_plural "Images"
+msgstr[0] "תמונה"
+msgstr[1] "תמונות"
+
+msgid "Image Annotation Types"
+msgstr "סוגי הערות תמונה"
+
+msgid "Image Annotations"
+msgstr "הערות תמונה"
+
+msgid "image hidden by search filter"
+msgid_plural "images hidden by search filter"
+msgstr[0] "תמונה מוסתרת ע\"י מסנן החיפוש"
+msgstr[1] "תמונות מוסתרות ע\"י מסנן החיפוש"
+
+msgid "Images"
+msgstr "תמונות"
+
+msgid "Import"
+msgstr "ייבוא"
+
+msgid "Import Elements"
+msgstr "ייבוא רכיבים"
+
+msgid "Import images"
+msgstr "ייבוא תמונות"
+
+msgid "Import images from a PDF document"
+msgstr "ייבוא תמונות ממסמך PDF"
+
+msgid "Import images from IIIF"
+msgstr "ייבוא תמונות מ-IIIF"
+
+msgid "Import images or transcription content."
+msgstr "ייבוא תמונות או תוכן תעתוק."
+
+msgid "Import images, segmentation and transcriptions described by METS"
+msgstr "ייבוא תמונות, סגמנטציה ותעתוקים המתוארים ב-METS"
+
+msgid "Import segmentation and transcriptions from XML"
+msgstr "ייבוא סגמנטציה ותעתוקים מ-XML"
+
+msgid "In Progress"
+msgstr "בדרך"
+
+msgid "Include"
+msgstr "כולל"
+
+msgid "Include Characters"
+msgstr "כלול תווים"
+
+msgid "Include images"
+msgstr "כלול תמונות"
+
+msgid "including"
+msgstr "כולל"
+
+msgid "Initiated"
+msgstr "הופעל"
+
+msgid "Invite Users"
+msgstr "הזמנת משתמשים"
+
+msgid "Key"
+msgstr "מפתח"
+
+msgid "Label"
+msgstr "תווית"
+
+msgid "Last Edited"
+msgstr "נערך לאחרונה"
+
+msgid "Last task started"
+msgstr "המשימה האחרונה שהופעלה"
+
+msgid "Last Update"
+msgstr "עדכון אחרון"
+
+msgid "Layer Name"
+msgstr "שם שכבה"
+
+msgid "Leaderboard"
+msgstr "לוח דירוג"
+
+msgid "Left to right"
+msgstr "משמאל לימין"
+
+msgid "Length (2–25) of token sequences to compare; 25 should work well for at least moderately clean OCR. For very poor OCR, lower to 3 or 4."
+msgstr "אורך (2–25) של רצפי טוקנים להשוואה; 25 אמור לעבוד טוב ל-OCR נקי יחסית. עבור OCR ירוד מאוד, הורדו ל-3 או 4."
+
+msgid "Line length threshold"
+msgstr "סף אורך שורה"
+
+msgid "Line Position"
+msgstr "מיקום שורה"
+
+msgid "line type"
+msgid_plural "line types"
+msgstr[0] "סוג שורה"
+msgstr[1] "סוגי שורות"
+
+msgid "Line Types"
+msgstr "סוגי שורות"
+
+msgid "Lines"
+msgstr "שורות"
+
+msgid "Link to Project Guidelines"
+msgstr "קישור להנחיות הפרויקט"
+
+msgid "List view"
+msgstr "תצוגת רשימה"
+
+msgid "Load a saved collection, or navigate to the Browse tab."
+msgstr "טעינת אוסף ששמרת, או עבור לדף העיון."
+
+msgid "Load Collection:"
+msgstr "טעינת אוסף:"
+
+msgid "Load more"
+msgstr "טעינה נוספת"
+
+msgid "Loading browser..."
+msgstr "טוען דפדפן..."
+
+msgid "Loading collection..."
+msgstr "טוען אוסף..."
+
+msgid "Loading more..."
+msgstr "טוען עוד..."
+
+msgid "Loading..."
+msgstr "טוען..."
+
+msgid "Location"
+msgstr "מיקום"
+
+msgid "Logout"
+msgstr "התנתקות"
+
+msgid "Main script:"
+msgstr "כתיב ראשי:"
+
+msgid "Manage Collection"
+msgstr "ניהול אוסף"
+
+msgid "Max offset"
+msgstr "הזזה מרבית"
+
+msgid "Merge aligned text with existing transcription"
+msgstr "מזיג את הטקסט המשור עם התעתוק הקיים"
+
+msgid "Metadata"
+msgstr "מטא-מידע"
+
+msgid "Metadata (Ctrl+1)"
+msgstr "מטא-מידע (Ctrl+1)"
+
+msgid "Minimum proportion (0.0-1.0) of aligned line length to original transcription, below which matches are ignored. At 0.0, all matches are accepted."
+msgstr "יחס המינימום (0.0-1.0) בין אורך השורה המשור לתעתוק המקורי, מתחת לו התאמות מתעלמות. ב-0.0 כל ההתאמות נקלטות."
+
+msgid "Model"
+msgstr "מודל"
+
+msgid "Model Name"
+msgstr "שם מודל"
+
+msgid "Model Training"
+msgstr "אימון מודל"
+
+msgid "Model Type"
+msgstr "סוג מודל"
+
+msgid "Models"
+msgstr "מודלים"
+
+msgid "models list"
+msgstr "רשימת מודלים"
+
+msgid "Move"
+msgstr "הזזה"
+
+msgid "Move to bottom"
+msgstr "הזזה לתחתית"
+
+msgid "Move to top"
+msgstr "הזזה לראש"
+
+msgid "Move to..."
+msgstr "הזזה אל..."
+
+msgid "Must be a valid URL starting with http:// or https://."
+msgstr "חייב להיות כתובת URL תקינה המתחילה ב-http:// או https://."
+
+msgid "My Projects"
+msgstr "הפרויקטים שלי"
+
+msgid "N-gram"
+msgstr "N-גרם"
+
+msgid "Name"
+msgstr "שם"
+
+msgid "Name for the new transcription layer produced by this alignment."
+msgstr "שם לשכבת התעתוק החדשה שנוצרה עקב מישור זה."
+
+msgid "Name your collection..."
+msgstr "שם האוסף שלך..."
+
+msgid "Name your new model..."
+msgstr "שם המודל החדש שלך..."
+
+msgid "Name..."
+msgstr "שם..."
+
+msgid "Never"
+msgstr "מעולם"
+
+msgid "New Position"
+msgstr "מיקום חדש"
+
+msgid "No"
+msgstr "לא"
+
+msgid "No default ontology set. New documents in this project will use the instance's default types instead."
+msgstr "לא נקבעה אונטולוגיית ברירת מחדל. מסמכים חדשים בפרויקט זה ישתמשו בסוגים כברירת מחדל של המערכת."
+
+msgid "No document tasks to display."
+msgstr "אין משימות מסמך להצגה."
+
+msgid "No documents to display."
+msgstr "אין מסמכים להצגה."
+
+msgid "No downloads yet. Exports and archives you queue will show up here."
+msgstr "עדיין אין הורדות. ייצואים וארכיונים שתוסיף לרשימת ההמתנה יופיעו כאן."
+
+msgid "No images to display."
+msgstr "אין תמונות להצגה."
+
+msgid "No matching tags. %{hidden}"
+msgstr "אין תגים תואמים. %{hidden}"
+
+msgid "No parts currently selected."
+msgstr "לא נבחרו חלקים כרגע."
+
+msgid "No projects to display."
+msgstr "אין פרויקטים להצגה."
+
+msgid "Not initiated"
+msgstr "לא הופעל"
+
+msgid "Number"
+msgstr "מספר"
+
+msgid "of"
+msgstr "מתוך"
+
+msgid "Only the first %{count} images currently visible; click \"Load More\" below to load more images."
+msgstr "רק %{count} התמונות הראשונות נראות כרגע; לחץ על \"טעינה נוספת\" להלן כדי לטעון עוד תמונות."
+
+msgid "Ontology Overview"
+msgstr "סקירת אונטולוגיה"
+
+msgid "Open the %{label} panel"
+msgstr "פתיחת הפאנל %{label}"
+
+msgid "or"
+msgstr "או"
+
+msgid "OR"
+msgstr "או"
+
+msgid "Overwrite existing"
+msgstr "החלפת קיים"
+
+msgid "Overwrite Existing Segmentation and Transcriptions"
+msgstr "החלפת סגמנטציה ותעתוקים קיימים"
+
+msgid "Overwriting destroys existing regions, lines and any bound transcriptions before importing."
+msgstr "השחלה משמידה אזורים, שורות ותעתוקים קיימים לפני הייבוא."
+
+msgid "owned by"
+msgstr "בבעלות של"
+
+msgid "Owner"
+msgstr "בעלים"
+
+msgid "Page %{page}"
+msgstr "עמוד %{page}"
+
+msgid "Pages"
+msgstr "עמודים"
+
+msgid "part"
+msgid_plural "parts"
+msgstr[0] "חלק"
+msgstr[1] "חלקים"
+
+msgid "Part"
+msgstr "חלק"
+
+msgid "part staged"
+msgid_plural "parts staged"
+msgstr[0] "חלק מוכן"
+msgstr[1] "חלקים מוכנים"
+
+msgid "part type"
+msgid_plural "part types"
+msgstr[0] "סוג חלק"
+msgstr[1] "סוגי חלקים"
+
+msgid "Parts containing \"%{name}\""
+msgstr "חלקים הכוללים \"%{name}\""
+
+msgid "Please confirm that you want to proceed."
+msgstr "אנא אשר שברצונך להמשיך."
+
+msgid "Position is required and must be between 1 and %{count}"
+msgstr "המיקום נדרש ועליו להיות בין 1 ל-%{count}"
+
+msgid "Profile"
+msgstr "פרופיל"
+
+msgid "Profile Settings"
+msgstr "הגדרות פרופיל"
+
+msgid "Project"
+msgstr "פרויקט"
+
+msgid "Project Guidelines"
+msgstr "הנחיות הפרויקט"
+
+msgid "Project Name"
+msgstr "שם פרויקט"
+
+msgid "Project Tags"
+msgstr "תגי הפרויקט"
+
+msgid "Projects"
+msgstr "פרויקטים"
+
+msgid "projects list"
+msgstr "רשימת פרויקטים"
+
+msgid "Public Models"
+msgstr "מודלים פומביים"
+
+msgid "Queued"
+msgstr "בתור"
+
+msgid "Quick Actions"
+msgstr "פעולות מהירות"
+
+msgid "Read Direction"
+msgstr "כיוון קריאה"
+
+msgid "Recognition"
+msgstr "זיהוי"
+
+msgid "Redraw Masks"
+msgstr "ציור מחדש של מסיכות"
+
+msgid "region type"
+msgid_plural "region types"
+msgstr[0] "סוג אזור"
+msgstr[1] "סוגי אזורים"
+
+msgid "Region Types"
+msgstr "סוגי אזורים"
+
+msgid "Regions"
+msgstr "אזורים"
+
+msgid "Remote METS URI"
+msgstr "URI של METS מרוחק"
+
+msgid "Remove part"
+msgstr "הסרת חלק"
+
+msgid "Reorder"
+msgstr "סידור מחדש"
+
+msgid "required"
+msgstr "נדרש"
+
+msgid "Right to left"
+msgstr "מימין לשמאל"
+
+msgid "Running"
+msgstr "רץ"
+
+msgid "Save"
+msgstr "שמירה"
+
+msgid "Save Collection"
+msgstr "שמירת אוסף"
+
+msgid "Script"
+msgstr "כתיב"
+
+msgid "Search"
+msgstr "חיפוש"
+
+msgid "Search by name..."
+msgstr "חיפוש לפי שם..."
+
+msgid "Search Document"
+msgstr "חיפוש במסמך"
+
+msgid "Search documents..."
+msgstr "חיפוש מסמכים..."
+
+msgid "Search element name"
+msgstr "חיפוש שם רכיב"
+
+msgid "Search images..."
+msgstr "חיפוש תמונות..."
+
+msgid "Search Project"
+msgstr "חיפוש בפרויקט"
+
+msgid "Search projects..."
+msgstr "חיפוש פרויקטים..."
+
+msgid "Search Text in %{scope}"
+msgstr "חיפוש טקסט ב-%{scope}"
+
+msgid "Search to filter images by element name"
+msgstr "חיפוש לסינון תמונות לפי שם רכיב"
+
+msgid "Search..."
+msgstr "חיפוש..."
+
+msgid "Segment"
+msgstr "סגמנטציה"
+
+msgid "Segment %{scope}"
+msgstr "סגמנטציה %{scope}"
+
+msgid "Segmentation"
+msgstr "סגמנטציה"
+
+msgid "Segmentation (Ctrl+3)"
+msgstr "סגמנטציה (Ctrl+3)"
+
+msgid "Segmentation is already in progress for the selected image(s)."
+msgstr "סגמנטציה כבר בדרך עבור התמונה/התמונות שנבחרו."
+
+msgid "Segmenting…"
+msgstr "מתבצע סריקת סגמנטים…"
+
+msgid "Select"
+msgstr "בחירה"
+
+msgid "Select a model to fine-tune, or leave blank to train from scratch."
+msgstr "בחר מודל לכיוון מחדש, או השאר ריק כדי לאמן מאפס."
+
+msgid "Select a type to see which parts contain it."
+msgstr "בחר סוג כדי לראות אילו חלקים מכילים אותו."
+
+msgid "Select All"
+msgstr "בחר הכל"
+
+msgid "Select all documents with pending or running tasks"
+msgstr "בחר את כל המסמכים עם משימות ממתינות או פעילות"
+
+msgid "Select all images in the document"
+msgstr "בחר את כל התמונות במסמך"
+
+msgid "Select an existing layer or enter a new name."
+msgstr "בחר שכבה קיימת או הזן שם חדש."
+
+msgid "Select Existing"
+msgstr "בחירת קיים"
+
+msgid "Select None"
+msgstr "ביטול בחירה"
+
+msgid "Select only the images currently loaded on screen"
+msgstr "בחר רק את התמונות הטעונות כרגע על המסך"
+
+msgid "Select or enter layer name"
+msgstr "בחירה או הזנת שם שכבה"
+
+msgid "Select region types to include in the alignment."
+msgstr "בחר סוגי אזורים לכלול במישור."
+
+msgid "Select region types to include in the export."
+msgstr "בחר סוגי אזורים לכלול בייצוא."
+
+msgid "Select region types..."
+msgstr "בחירת סוגי אזורים..."
+
+msgid "Select Visible"
+msgstr "בחירה של הנראה"
+
+msgid "selected"
+msgstr "נבחר"
+
+msgid "Selected Documents and Parts"
+msgstr "מסמכים וחלקים שנבחרו"
+
+msgid "selected image"
+msgid_plural "selected images"
+msgstr[0] "תמונה שנבחרה"
+msgstr[1] "תמונות שנבחרו"
+
+msgid "selection"
+msgstr "בחירה"
+
+msgid "Shared Models"
+msgstr "מודלים משותפים"
+
+msgid "Show"
+msgstr "הצגה"
+
+msgid "sign in"
+msgstr "כניסה"
+
+msgid "Sign in"
+msgstr "כניסה"
+
+msgid "Site Administration"
+msgstr "ניהול האתר"
+
+msgid "Size"
+msgstr "גודל"
+
+msgid "Source Image (Ctrl+2)"
+msgstr "תמונת מקור (Ctrl+2)"
+
+msgid "Start New"
+msgstr "התחלת חדש"
+
+msgid "Start Training"
+msgstr "התחלת אימון"
+
+msgid "Statistics"
+msgstr "סטטיסטיקה"
+
+msgid "Submit"
+msgstr "שליחה"
+
+msgid "Surround one or more terms with quotation marks to deactivate fuzziness."
+msgstr "הכתוב מושג אחד או יותר בתוך גרשי ציון כדי לכבות את ה\"עמימות\"."
+
+msgid "switch to light mode"
+msgstr "מעבר למצב בהיר"
+
+msgid "Tags"
+msgstr "תגים"
+
+msgid "Task Monitoring"
+msgstr "ניטור משימות"
+
+msgid "Task state"
+msgstr "מצב משימה"
+
+msgid "Task Usage"
+msgstr "השתמשות במשימות"
+
+msgid "Tasks"
+msgstr "משימות"
+
+msgid "taxonomy"
+msgid_plural "taxonomies"
+msgstr[0] "תקסונומיה"
+msgstr[1] "תקסונומיות"
+
+msgid "Text"
+msgstr "טקסט"
+
+msgid "Text (Ctrl+5)"
+msgstr "טקסט (Ctrl+5)"
+
+msgid "Text Annotation Types"
+msgstr "סוגי הערות טקסט"
+
+msgid "Text Annotations"
+msgstr "הערות טקסט"
+
+msgid "Text Direction"
+msgstr "כיוון כתיבה"
+
+msgid "Text to search"
+msgstr "טקסט לחיפוש"
+
+msgid "Textual witness"
+msgstr "עדה טקסטואלי"
+
+msgid "Textual Witness"
+msgstr "עדה טקסטואלי"
+
+msgid "The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000."
+msgstr "המרחק בין N-גרמים יחודיים תואמים; 600 אמור לעבוד טוב ל-OCR נקי או לטקסטים שבהם קטעים מתאימים לחלקים שונים של טקסט העדה. כדי לאפשר מישור מלא בין שני מסמכים, הגדל ל-1,000,000."
+
+msgid "The name of the resulting transcription layer."
+msgstr "שם שכבת התעתוק שנוצרה."
+
+msgid "The position of the line relative to the polygon."
+msgstr "מיקום השורה ביחס לפוליגון."
+
+msgid "The read direction describes the overall order of elements/pages in the document; NOT the order of words in a line, which will be automatically determined by the script."
+msgstr "כיוון הקריאה מתאר את סדר הרכיבים/העמודים במסמך; לא את סדר המילים בשורה, שיקבע אוטומטית לפי הכתיב."
+
+msgid "There are no documents to display."
+msgstr "אין מסמכים להצגה."
+
+msgid "There are no images to display"
+msgstr "אין תמונות להצגה"
+
+msgid "There are no images to display."
+msgstr "אין תמונות להצגה."
+
+msgid "There are no projects to display."
+msgstr "אין פרויקטים להצגה."
+
+msgid "There are no tasks to display."
+msgstr "אין משימות להצגה."
+
+msgid "There is no ontology to display."
+msgstr "אין אונטולוגיה להצגה."
+
+msgid "This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition."
+msgstr "מידע זה קיים רק לתעתוקים המתקבלים מזיהוי אוטומטי והופך לחסר תוקף בעריכה ידנית."
+
+msgid "This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title)."
+msgstr "למסמך זה אין תגים. ניתן להוסיף תגים באמצעות טופס העריכה, הזמין מתפריט התפריט בצד פאנל (לימין משם המסמך)."
+
+msgid "This type is not used in any part."
+msgstr "סוג זה לא בשימוש באף חלק."
+
+msgid "Threshold"
+msgstr "סף"
+
+msgid "thumbnail"
+msgstr "ממוזער"
+
+msgid "to the following position"
+msgstr "אל המיקום הבא"
+
+msgid "Topline"
+msgstr "שורה עליונה"
+
+msgid "Total Characters"
+msgstr "סה\"כ תווים"
+
+msgid "Total Images"
+msgstr "סה\"כ תמונות"
+
+msgid "Total Lines"
+msgstr "סה\"כ שורות"
+
+msgid "Train Model"
+msgstr "אימון מודל"
+
+msgid "Training"
+msgstr "אימון"
+
+msgid "Training job successfully queued!"
+msgstr "משימת האימון נוספה לתור בהצלחה!"
+
+msgid "training page"
+msgstr "עמוד האימון"
+
+msgid "Transcribe"
+msgstr "תעתוק"
+
+msgid "Transcribe %{scope}"
+msgstr "תעתוק %{scope}"
+
+msgid "Transcription"
+msgstr "תעתוק"
+
+msgid "Transcription (Ctrl+4)"
+msgstr "תעתוק (Ctrl+4)"
+
+msgid "Transcription Font"
+msgstr "גופן תעתוק"
+
+msgid "Transcription Name"
+msgstr "שם תעתוק"
+
+msgid "Transcription Status"
+msgstr "סטטוס תעתוק"
+
+msgid "Transcription:"
+msgstr "תעתוק:"
+
+msgid "Type"
+msgstr "סוג"
+
+msgid "Types"
+msgstr "סוגים"
+
+msgid "Untagged"
+msgstr "ללא תג"
+
+msgid "Untitled"
+msgstr "ללא שם"
+
+msgid "Untitled Collection"
+msgstr "אוסף ללא שם"
+
+msgid "Updated At"
+msgstr "עודכן בתאריך"
+
+msgid "Updating..."
+msgstr "מעדכן..."
+
+msgid "Upload"
+msgstr "העלאה"
+
+msgid "Upload file"
+msgstr "העלאת קובץ"
+
+msgid "Upload New"
+msgstr "העלאת חדש"
+
+msgid "Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost."
+msgstr "ההעלאות עדיין בדרך. האם אתה בטוח שברצונך לבטל? העלאות שלא הושלמו עלולות להימחק."
+
+msgid "Use full transcribed document"
+msgstr "שימוש במסמך התעתוק המלא"
+
+msgid "User"
+msgstr "משתמש"
+
+msgid "Users"
+msgstr "משתמשים"
+
+msgid "Value"
+msgstr "ערך"
+
+msgid "Vertical Left to Right"
+msgstr "אנכי משמאל לימין"
+
+msgid "Vertical Right to Left"
+msgstr "אנכי מימין לשמאל"
+
+msgid "View All"
+msgstr "הצגת הכל"
+
+msgid "View:"
+msgstr "תצוגה:"
+
+msgid "Welcome back, %{name}"
+msgstr "ברוך השוב, %{name}"
+
+msgid "Will significantly increase the time to produce and download the export."
+msgstr "יגדיל משמעותית את זמן ההפקה וההורדה של הייצוא."
+
+msgid "XML / ZIP"
+msgstr "XML / ZIP"
+
+msgid "Yes"
+msgstr "כן"
+
+msgid "Yes, cancel"
+msgstr "כן, ביטול"
+
+msgid "You cannot undo this action."
+msgstr "לא ניתן לשכתב פעולה זו."
+
+msgid "You have unsaved changes in your collection. If you start training now, these changes will not be reflected in the training data. Are you sure you want to proceed without saving?"
+msgstr "יש לך שינויות שלא נשמרו באוסף שלך. אם תתחיל אימון כעת, שינויים אלו לא יחלפו בנתוני האימון. האם אתה בטוח שברצונך להמשיך בלי לשמור?"
+
+msgid "You have unsaved changes in your current collection. Are you sure you want to load a new one and discard these changes?"
+msgstr "יש לך שינויות שלא נשמרו באוסף הנוכחי. האם אתה בטוח שברצונך לטעון אוסף חדש ולזרוק את השינויים האלה?"
+
+msgid "You have unsaved changes in your current collection. Are you sure you want to start a new one and discard these changes?"
+msgstr "יש לך שינויות שלא נשמרו באוסף הנוכחי. האם אתה בטוח שברצונך להתחיל אוסף חדש ולזרוק את השינויים האלה?"
+
+msgid "You must be the owner of the base model to overwrite its file."
+msgstr "עליך להיות בעלים של מודל הבסיס כדי להחליף את הקובץ שלו."
+
+msgid "You must be the owner of the model to overwrite its file."
+msgstr "עליך להיות בעלים של המודל כדי להחליף את הקובץ שלו."
+
+msgid "You must save this selection as a collection before you can train a model."
+msgstr "עליך לשמור את הבחירה הזו כאוסף לפני שתוכל לאמן מודל."
+
+msgid "You must select a collection of document parts in order to train a model."
+msgstr "עליך לבחור אוסף של חלקי מסמך כדי לאמן מודל."
+
+msgid "You're about to cancel all pending/running tasks for documents:"
+msgstr "אתה עומד לבטל את כל המשימות הממתינות/פעילות עבור המסמכים:"
+
+msgid "Your Models"
+msgstr "המודלים שלך"
+
+msgid "Your Recent Images"
+msgstr "התמונות האחרונות שלך"
