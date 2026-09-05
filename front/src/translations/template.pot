@@ -41,6 +41,45 @@ msgid_plural "+ %{count} tags hidden, including %{selected} selected tags"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/components/Help.vue:17
+msgid ""
+"<b>Left click</b> on a line to select it, then you can drag its closest control point.\n"
+"<br><b>Double click</b> on the line will create a <u>new control point</u> at the mouse location.\n"
+"<br>You can reverse the order of the line's points by selecting a line (or multiple) and using reverse <i class=\"fas fa-arrow-alt-h\" /> (I key).\n"
+"<br>When in region mode, Regions can be edited the same way.\n"
+"<br>Selected lines can be linked or unlinked to regions with the corresponding buttons <i class=\"fas fa-link\" />(Y key) <i class=\"fas fa-unlink\"> (U key).</i>\n"
+"<br>By using the cut mode <i class=\"text-warning fas fa-cut\" /> (C key) you can cut through lines, splitting them in two or removing part of them.\n"
+"<br>If at least two lines are selected an option to join them becomes available <i class=\"fas fa-compress-arrows-alt\" /> (J key).\n"
+"<br>You can go through your changes <u>history</u> back and forth with <b>Ctrl+Z</b>(undo) and <b>Ctrl+Y</b>(redo) or by using the corresponding buttons <i class=\"fas fa-undo\" /><i class=\"fas fa-redo\" />."
+msgstr ""
+
+#: vue/components/Help.vue:4
+msgid ""
+"<b>Left click</b> on the image to <u>create</u> new line, <b>Right click</b> to <b>add points</b> and <b>Left click</b> again to <u>finish</u> it.\n"
+"<br>You can keep the mouse button pressed for free drawing.\n"
+"<br>Hitting <b>escape</b> while drawing a line <u>cancels</u> it.\n"
+"<br>If regions matter to you switch to region mode first <i class=\"fas fa-th-large\" /> (R key).\n"
+"<br>when in region mode <b>Left click</b> to create a new rectangular region, left click again to finish it.\n"
+"<br>lines drawn inside a region will automatically be bound to it.\n"
+"<br>When the quality of the segmentation is good, you can prompt the system to calculate masks <i class=\"text-success fas fa-thumbs-up\" />,\n"
+"<br>once a page already has masks new lines will automatically get a mask and updating a line will also recalculate its mask.\n"
+"<br><b>Note</b> that the quality of the masks is highly dependent on the quality of the whole segmentation, not only the corresponding line,\n"
+"<br>so make sure to draw all the lines before calculating the masks.\n"
+"<br>You can also have the option to calculate the masks <i>en masse</i> in the Images tab -> segment -> choose 'Only masks'."
+msgstr ""
+
+#: vue/components/Help.vue:27
+msgid ""
+"<b>Shift+click</b> allows to add or remove a line from the <u>selection</u>,\n"
+"<br>Clicking on an empty space clears the selection,\n"
+"<br><b>shift and drag</b> creates a <u>lasso</u> selection tool that allows to select control points (they then appear black).\n"
+"<br><b>Note:</b> If lines are already selected the lasso will only select points in those lines.\n"
+"<br><b>Ctrl+drag</b> allows to move all the selected control points at once (or the selected lines if no control points are selected).\n"
+"\n"
+"<br>The red trash <i class=\"text-danger fas fa-trash\" /> button <b>deletes</b> all selected <b>lines/regions</b>,\n"
+"<br>The yellow trash button <i class=\"text-warning fas fa-trash\" /> only <b>deletes</b> selected control <b>points</b>."
+msgstr ""
+
 #: vue/components/SharePanel/ShareModal.vue:36
 msgid "Add group"
 msgstr ""
@@ -72,6 +111,10 @@ msgstr ""
 #: vue/components/TagsField/TagsField.vue:246
 #: vue/components/TagsField/TagsField.vue:249
 msgid "Add/search tags"
+msgstr ""
+
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:77
+msgid "Align %{scope}"
 msgstr ""
 
 #: vue/components/TagFilter/TagFilter.vue:297
@@ -126,6 +169,10 @@ msgstr ""
 
 #: vue/components/SearchInput/SearchInput.vue:24
 msgid "Clear search"
+msgstr ""
+
+#: vue/components/ExtraInfo.vue:37
+msgid "Click to go to another Element (Alt+G)."
 msgstr ""
 
 #: vue/components/Toast/Toast.vue:34
@@ -195,6 +242,7 @@ msgstr ""
 msgid "Deutsch"
 msgstr ""
 
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:39
 #: vue/pages/Project/Project.vue:146
 #: vue/pages/Project/Project.vue:158
 msgid "Document"
@@ -213,10 +261,35 @@ msgstr ""
 msgid "Documents"
 msgstr ""
 
+#: vue/components/HelpVersions.vue:4
+msgid ""
+"Each line corresponds to an edition of the content, in inverse chronological order (Most recent at the top).\n"
+"<br>The colors represent the difference with the previous version,\n"
+"<br><font color=\"green\">green</font> are <b>additions</b> while <font color=\"red\">red</font> are <b>deletions</b>,\n"
+"<br>meaning red characters are not actually part of the line anymore, they are displayed to easily spot the differences.\n"
+"<br>You can mouse over the text to see the actual content.\n"
+"<br>The load state button <i class=\"fas fa-file-upload\" /> simply revert the content of the line to the corresponding text version."
+msgstr ""
+
+#: vue/components/HelpCompareTranscriptions.vue:4
+msgid ""
+"Each line is a different transcription as checked in the transcription management window <i class=\"fas fa-cog\" />\n"
+"<br>The colors represent the difference with the current transcription,\n"
+"<br><font color=\"green\">green</font> characters are not present in the current (editable) transcription while <font color=\"red\">red</font> characters are not present in the compared transcription."
+msgstr ""
+
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:105
 #: vue/components/EditProjectModal/EditProjectModal.vue:86
 #: vue/pages/Project/Project.vue:127
 msgid "Edit"
+msgstr ""
+
+#: vue/components/ExtraInfo.vue:51
+msgid "Element #"
+msgstr ""
+
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:38
+msgid "Elements"
 msgstr ""
 
 #: vue/components/LanguageSwitcher/LanguageSwitcher.vue:10
@@ -234,6 +307,18 @@ msgstr ""
 
 #: vue/pages/Project/Project.vue:259
 msgid "Error navigating to the images page."
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:198
+msgid "expand task monitoring and usage menu"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:293
+msgid "expand user profile menu"
+msgstr ""
+
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:90
+msgid "Export %{scope}"
 msgstr ""
 
 #: vue/components/FilterSet/FilterSet.vue:2
@@ -267,6 +352,14 @@ msgstr ""
 msgid "Français"
 msgstr ""
 
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:93
+msgid "global search"
+msgstr ""
+
+#: vue/components/ExtraInfo.vue:68
+msgid "Go to"
+msgstr ""
+
 #: vue/components/SharePanel/SharePanel.vue:3
 msgid "Groups"
 msgstr ""
@@ -277,6 +370,15 @@ msgstr ""
 
 #: vue/pages/Project/Project.vue:150
 msgid "Images"
+msgstr ""
+
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:35
+msgid "Import"
+msgstr ""
+
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:10
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:1
+msgid "Import images or transcription content."
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:104
@@ -315,6 +417,7 @@ msgstr ""
 msgid "Load more"
 msgstr ""
 
+#: vue/components/ExtraInfo.vue:44
 #: vue/components/Loader/Loader.vue:3
 #: vue/pages/Project/Project.vue:96
 msgid "Loading..."
@@ -329,8 +432,16 @@ msgstr ""
 msgid "Metadata"
 msgstr ""
 
+#: vue/components/ExtraNav.vue:40
+msgid "Metadata (Ctrl+1)"
+msgstr ""
+
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:44
 msgid "Models"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:135
+msgid "models list"
 msgstr ""
 
 #: vue/components/EditProjectModal/EditProjectModal.vue:13
@@ -396,6 +507,10 @@ msgstr ""
 msgid "Projects"
 msgstr ""
 
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:117
+msgid "projects list"
+msgstr ""
+
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:44
 msgid "Read Direction"
 msgstr ""
@@ -445,6 +560,14 @@ msgstr ""
 msgid "Search..."
 msgstr ""
 
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:51
+msgid "Segment %{scope}"
+msgstr ""
+
+#: vue/components/ExtraNav.vue:56
+msgid "Segmentation (Ctrl+3)"
+msgstr ""
+
 #: vue/components/Dropdown/Dropdown.vue:22
 msgid "Select"
 msgstr ""
@@ -457,6 +580,10 @@ msgstr ""
 msgid "Select None"
 msgstr ""
 
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:315
+msgid "sign in"
+msgstr ""
+
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:127
 msgid "Sign in"
 msgstr ""
@@ -464,6 +591,10 @@ msgstr ""
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:114
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:24
 msgid "Site Administration"
+msgstr ""
+
+#: vue/components/ExtraNav.vue:48
+msgid "Source Image (Ctrl+2)"
 msgstr ""
 
 #: vue/components/ConfirmModal/ConfirmModal.vue:105
@@ -477,6 +608,10 @@ msgstr ""
 
 #: vue/components/LanguageSwitcher/LanguageSwitcher.vue:58
 msgid "Switch language"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:332
+msgid "switch to light mode"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:74
@@ -499,6 +634,10 @@ msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:61
 msgid "Tasks"
+msgstr ""
+
+#: vue/components/ExtraNav.vue:72
+msgid "Text (Ctrl+5)"
 msgstr ""
 
 #: vue/components/SearchPanel/SearchPanel.vue:42
@@ -527,6 +666,18 @@ msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:51
 msgid "Training"
+msgstr ""
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue:153
+msgid "training page"
+msgstr ""
+
+#: vue/components/QuickActionsPanel/QuickActionsPanel.vue:64
+msgid "Transcribe %{scope}"
+msgstr ""
+
+#: vue/components/ExtraNav.vue:64
+msgid "Transcription (Ctrl+4)"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:60

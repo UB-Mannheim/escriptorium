@@ -9,7 +9,7 @@
             data-target="metadata"
             class="open-panel nav-item btn"
             :class="[ visible_panels.metadata ? 'btn-primary' : 'btn-secondary' ]"
-            title="Metadata (Ctrl+1)"
+            :title="$gettext('Metadata (Ctrl+1)')"
             @click="onPushPanelBtn"
         >
             <i class="click-through fas fa-table" />
@@ -21,7 +21,7 @@
             data-target="source"
             class="open-panel nav-item btn"
             :class="[ visible_panels.source ? 'btn-primary' : 'btn-secondary' ]"
-            title="Source Image (Ctrl+2)"
+            :title="$gettext('Source Image (Ctrl+2)')"
             @click="onPushPanelBtn"
         >
             <i class="click-through fas fa-eye" />
@@ -32,7 +32,7 @@
             data-target="segmentation"
             class="open-panel nav-item btn"
             :class="[ visible_panels.segmentation ? 'btn-primary' : 'btn-secondary' ]"
-            title="Segmentation (Ctrl+3)"
+            :title="$gettext('Segmentation (Ctrl+3)')"
             @click="onPushPanelBtn"
         >
             <i class="click-through fas fa-align-left" />
@@ -43,7 +43,7 @@
             data-target="visualisation"
             class="open-panel nav-item btn"
             :class="[ visible_panels.visualisation ? 'btn-primary' : 'btn-secondary' ]"
-            title="Transcription (Ctrl+4)"
+            :title="$gettext('Transcription (Ctrl+4)')"
             @click="onPushPanelBtn"
         >
             <i class="click-through fas fa-language" />
@@ -54,7 +54,7 @@
             data-target="diplomatic"
             class="open-panel nav-item btn"
             :class="[ visible_panels.diplomatic ? 'btn-primary' : 'btn-secondary' ]"
-            title="Text (Ctrl+5)"
+            :title="$gettext('Text (Ctrl+5)')"
 
             @click="onPushPanelBtn"
         >
