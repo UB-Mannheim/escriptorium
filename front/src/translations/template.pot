@@ -84,6 +84,11 @@ msgstr ""
 msgid "0 images"
 msgstr ""
 
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:52
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:1
+msgid "1-100, enables beam search; if this and max offset are left unset, beam search will be on and beam size set to 20. Higher beam size will result in slower computation but more accurate results."
+msgstr ""
+
 #: vue/components/TrainForm/TrainForm.vue:58
 msgid "A name is required unless overwriting"
 msgstr ""
@@ -111,6 +116,10 @@ msgstr ""
 msgid "Add Group or User"
 msgstr ""
 
+#: vue/components/AlignModal/AlignModal.vue:165
+msgid "Add hyphens to words broken across lines"
+msgstr ""
+
 #: vue/components/MetadataField/MetadataField.vue:55
 msgid "Add New"
 msgstr ""
@@ -129,9 +138,23 @@ msgstr ""
 msgid "Add/search tags"
 msgstr ""
 
+#: vue/components/AlignModal/AlignModal.vue:97
+msgid "advanced settings"
+msgstr ""
+
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:2
+msgid "Advanced Settings"
+msgstr ""
+
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:58
+msgid "After"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:32
+#: vue/components/AlignModal/AlignModal.vue:192
 #: vue/components/ImageCard/ImageCard.vue:71
 #: vue/components/ImageCard/ImageCard.vue:17
-#: vue/pages/Images/Images.vue:343
+#: vue/pages/Images/Images.vue:342
 #: vue/pages/Images/Images.vue:305
 msgid "Align"
 msgstr ""
@@ -168,6 +191,11 @@ msgstr ""
 msgid "Apply to selected"
 msgstr ""
 
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:15
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:5
+msgid "Archive format"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:431
 msgid "Are you sure you want to cancel this task?"
 msgstr ""
@@ -184,11 +212,11 @@ msgstr ""
 msgid "Are you sure you want to delete the document %{name}?"
 msgstr ""
 
-#: vue/pages/Images/Images.vue:189
+#: vue/pages/Images/Images.vue:188
 msgid "Are you sure you want to delete the image %{name}?"
 msgstr ""
 
-#: vue/pages/Images/Images.vue:192
+#: vue/pages/Images/Images.vue:191
 msgid "Are you sure you want to delete the selected image(s)?"
 msgstr ""
 
@@ -220,6 +248,15 @@ msgstr ""
 msgid "Baseline"
 msgstr ""
 
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:43
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:166
+msgid "Beam size"
+msgstr ""
+
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:53
+msgid "Before"
+msgstr ""
+
 #: vue/pages/ModelTraining/ModelTraining.vue:11
 #: vue/pages/ModelTraining/ModelTraining.vue:9
 #: vue/pages/ModelTraining/ModelTraining.vue:51
@@ -227,12 +264,18 @@ msgstr ""
 msgid "Browse"
 msgstr ""
 
+#: vue/components/AlignModal/AlignModal.vue:186
 #: vue/components/ConfirmModal/ConfirmModal.vue:99
 #: vue/components/DocumentsTasks/List.vue:125
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:59
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:87
 #: vue/components/EditProjectModal/EditProjectModal.vue:77
+#: vue/components/ExportModal/ExportModal.vue:90
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:60
+#: vue/components/SegmentModal/SegmentModal.vue:82
 #: vue/components/SharePanel/ShareModal.vue:59
 #: vue/components/TagFilter/TagFilter.vue:207
+#: vue/components/TranscribeModal/TranscribeModal.vue:50
 #: vue/pages/ProjectsList/ProjectsList.vue:81
 msgid "Cancel"
 msgstr ""
@@ -372,6 +415,10 @@ msgstr ""
 msgid "Default Ontology"
 msgstr ""
 
+#: vue/components/SegmentModal/SegmentModal.vue:114
+msgid "Default Segmentation Model"
+msgstr ""
+
 #: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:24
 msgid "Default transcription layer:"
 msgstr ""
@@ -425,6 +472,10 @@ msgstr ""
 msgid "Delete Project \"%{name}\""
 msgstr ""
 
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:28
+msgid "document"
+msgstr ""
+
 #: vue/components/QuickActionsPanel/QuickActionsPanel.vue:41
 #: vue/pages/Images/Images.vue:639
 #: vue/pages/Project/Project.vue:149
@@ -463,6 +514,11 @@ msgstr ""
 msgid "Documents"
 msgstr ""
 
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:65
+msgid "Download"
+msgstr ""
+
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:17
 #: vue/pages/Images/Images.vue:132
 #: vue/pages/Images/Images.vue:130
 #: vue/pages/Images/Images.vue:5
@@ -510,6 +566,15 @@ msgstr ""
 msgid "Empty ontology config."
 msgstr ""
 
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:71
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:1
+msgid "Enables max-offset and disables beam search. Maximum number of characters (20–80) difference between the aligned witness text and the original transcription."
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:107
+msgid "Enter layer name"
+msgstr ""
+
 #: vue/pages/Images/Images.vue:195
 msgid "Enter multiple numbers separated by a comma, and/or ranges separated by a dash, to select images"
 msgstr ""
@@ -535,6 +600,10 @@ msgstr ""
 msgid "Error navigating to the images page."
 msgstr ""
 
+#: vue/components/TranscribeModal/TranscribeModal.vue:127
+msgid "Existing Layers"
+msgstr ""
+
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:214
 msgid "expand task monitoring and usage menu"
 msgstr ""
@@ -543,6 +612,8 @@ msgstr ""
 msgid "expand user profile menu"
 msgstr ""
 
+#: vue/components/ExportModal/ExportModal.vue:19
+#: vue/components/ExportModal/ExportModal.vue:96
 #: vue/components/ImageCard/ImageCard.vue:77
 #: vue/components/ImageCard/ImageCard.vue:23
 #: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:55
@@ -554,9 +625,17 @@ msgstr ""
 msgid "Export %{scope}"
 msgstr ""
 
-#: vue/pages/Images/Images.vue:516
-#: vue/pages/Images/Images.vue:613
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:32
+msgid "Exports %{scope} as a full JSON archive."
+msgstr ""
+
+#: vue/pages/Images/Images.vue:515
+#: vue/pages/Images/Images.vue:612
 msgid "Failed to fetch additional images"
+msgstr ""
+
+#: vue/components/ExportModal/ExportModal.vue:40
+msgid "File Format"
 msgstr ""
 
 #: vue/components/FilterSet/FilterSet.vue:2
@@ -593,6 +672,11 @@ msgstr ""
 msgid "Font used to display transcription text for documents in this project, unless overridden at the document level. Leave as Default to inherit from the user or built-in font."
 msgstr ""
 
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:81
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:260
+msgid "Gap"
+msgstr ""
+
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:98
 msgid "global search"
 msgstr ""
@@ -601,7 +685,7 @@ msgstr ""
 msgid "Go to"
 msgstr ""
 
-#: vue/pages/Images/Images.vue:306
+#: vue/pages/Images/Images.vue:305
 msgid "Grid view"
 msgstr ""
 
@@ -610,9 +694,41 @@ msgid "Groups"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:235
-#: vue/pages/Images/Images.vue:258
+#: vue/pages/Images/Images.vue:257
 #: vue/pages/Project/Project.vue:181
 msgid "Groups & Users"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:97
+msgid "Hide"
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:161
+msgid "Horizontal Left to Right"
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:166
+msgid "Horizontal Right to Left"
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:19
+#: vue/components/SegmentModal/SegmentModal.vue:9
+msgid "If checked, all existing segmentation and bound transcriptions will be deleted."
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:54
+#: vue/components/AlignModal/AlignModal.vue:44
+msgid "If checked, the aligner will automatically insert hyphens when it detects a word was split across two lines in the ground truth."
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:45
+#: vue/components/AlignModal/AlignModal.vue:35
+msgid "If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank."
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:36
+#: vue/components/AlignModal/AlignModal.vue:26
+msgid "If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."
 msgstr ""
 
 #: vue/pages/Images/Images.vue:151
@@ -621,9 +737,12 @@ msgid_plural "images"
 msgstr[0] ""
 msgstr[1] ""
 
-#: vue/pages/Images/Images.vue:180
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:17
+#: vue/pages/Images/Images.vue:179
 msgid "Image"
-msgstr ""
+msgid_plural "Images"
+msgstr[0] ""
+msgstr[1] ""
 
 #: vue/pages/Images/HiddenImagesIndicator.vue:14
 msgid "image hidden by search filter"
@@ -633,8 +752,7 @@ msgstr[1] ""
 
 #: vue/pages/Images/Images.vue:10
 #: vue/pages/Images/Images.vue:8
-#: vue/pages/Images/Images.vue:181
-#: vue/pages/Images/Images.vue:214
+#: vue/pages/Images/Images.vue:213
 #: vue/pages/Project/Project.vue:151
 msgid "Images"
 msgstr ""
@@ -658,6 +776,19 @@ msgstr ""
 msgid "In Progress"
 msgstr ""
 
+#: vue/components/SegmentModal/SegmentModal.vue:45
+msgid "Include"
+msgstr ""
+
+#: vue/components/ExportModal/ExportModal.vue:70
+msgid "Include Characters"
+msgstr ""
+
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:52
+#: vue/components/ExportModal/ExportModal.vue:55
+msgid "Include images"
+msgstr ""
+
 #: vue/pages/Images/HiddenImagesIndicator.vue:17
 msgid "including"
 msgstr ""
@@ -676,7 +807,7 @@ msgstr ""
 msgid "Key"
 msgstr ""
 
-#: vue/pages/Images/Images.vue:350
+#: vue/pages/Images/Images.vue:349
 msgid "Last Edited"
 msgstr ""
 
@@ -690,6 +821,11 @@ msgstr ""
 msgid "Last Update"
 msgstr ""
 
+#: vue/components/AlignModal/AlignModal.vue:108
+#: vue/components/TranscribeModal/TranscribeModal.vue:37
+msgid "Layer Name"
+msgstr ""
+
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:114
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:19
 msgid "Leaderboard"
@@ -697,6 +833,15 @@ msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:126
 msgid "Left to right"
+msgstr ""
+
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:33
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:1
+msgid "Length (2–25) of token sequences to compare; 25 should work well for at least moderately clean OCR. For very poor OCR, lower to 3 or 4."
+msgstr ""
+
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:5
+msgid "Line length threshold"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:52
@@ -709,11 +854,15 @@ msgid_plural "line types"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/components/SegmentModal/SegmentModal.vue:98
+msgid "Lines"
+msgstr ""
+
 #: vue/components/EditProjectModal/EditProjectModal.vue:42
 msgid "Link to Project Guidelines"
 msgstr ""
 
-#: vue/pages/Images/Images.vue:312
+#: vue/pages/Images/Images.vue:311
 msgid "List view"
 msgstr ""
 
@@ -754,10 +903,14 @@ msgstr ""
 #: vue/pages/Images/Images.vue:174
 #: vue/pages/Images/Images.vue:162
 #: vue/pages/Images/Images.vue:172
-#: vue/pages/Images/Images.vue:198
+#: vue/pages/Images/Images.vue:197
 #: vue/pages/Images/Images.vue:111
 #: vue/pages/Project/Project.vue:99
 msgid "Loading..."
+msgstr ""
+
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:22
+msgid "Location"
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:124
@@ -774,12 +927,31 @@ msgstr ""
 msgid "Manage Collection"
 msgstr ""
 
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:62
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:213
+msgid "Max offset"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:149
+msgid "Merge aligned text with existing transcription"
+msgstr ""
+
 #: vue/components/MetadataField/MetadataField.vue:2
 msgid "Metadata"
 msgstr ""
 
 #: vue/components/ExtraNav.vue:20
 msgid "Metadata (Ctrl+1)"
+msgstr ""
+
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:14
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:1
+msgid "Minimum proportion (0.0-1.0) of aligned line length to original transcription, below which matches are ignored. At 0.0, all matches are accepted."
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:36
+#: vue/components/TranscribeModal/TranscribeModal.vue:30
+msgid "Model"
 msgstr ""
 
 #: vue/components/TrainForm/TrainForm.vue:50
@@ -797,12 +969,19 @@ msgid "Model Type"
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:44
-#: vue/pages/Images/Images.vue:268
+#: vue/pages/Images/Images.vue:267
 msgid "Models"
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:140
 msgid "models list"
+msgstr ""
+
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:17
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:20
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:76
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:86
+msgid "Move"
 msgstr ""
 
 #: vue/pages/Images/Images.vue:257
@@ -823,9 +1002,14 @@ msgid "Must be a valid URL starting with http:// or https://."
 msgstr ""
 
 #: vue/pages/Document/Document.vue:172
-#: vue/pages/Images/Images.vue:212
+#: vue/pages/Images/Images.vue:211
 #: vue/pages/Project/Project.vue:98
 msgid "My Projects"
+msgstr ""
+
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:24
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:119
+msgid "N-gram"
 msgstr ""
 
 #: vue/components/DocumentsTasks/List.vue:63
@@ -833,10 +1017,14 @@ msgstr ""
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:29
 #: vue/components/EditProjectModal/EditProjectModal.vue:33
 #: vue/pages/Document/Document.vue:200
-#: vue/pages/Images/Images.vue:327
+#: vue/pages/Images/Images.vue:326
 #: vue/pages/Project/Project.vue:107
 #: vue/pages/ProjectsList/ProjectsList.vue:45
 msgid "Name"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:103
+msgid "Name for the new transcription layer produced by this alignment."
 msgstr ""
 
 #: vue/components/ManageCollectionForm/ManageCollectionForm.vue:54
@@ -849,6 +1037,10 @@ msgstr ""
 
 #: vue/components/DocumentsTasks/List.vue:91
 msgid "Name..."
+msgstr ""
+
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:38
+msgid "New Position"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:346
@@ -897,8 +1089,13 @@ msgstr ""
 msgid "Not initiated"
 msgstr ""
 
-#: vue/pages/Images/Images.vue:322
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:49
+#: vue/pages/Images/Images.vue:321
 msgid "Number"
+msgstr ""
+
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:54
+msgid "of"
 msgstr ""
 
 #: vue/pages/Images/HiddenImagesIndicator.vue:12
@@ -917,6 +1114,7 @@ msgstr ""
 msgid "Overwrite existing"
 msgstr ""
 
+#: vue/components/SegmentModal/SegmentModal.vue:63
 #: vue/pages/Document/Document.vue:382
 msgid "Overwrite Existing Segmentation and Transcriptions"
 msgstr ""
@@ -959,6 +1157,10 @@ msgstr[1] ""
 msgid "Please confirm that you want to proceed."
 msgstr ""
 
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:73
+msgid "Position is required and must be between 1 and %{count}"
+msgstr ""
+
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:93
 msgid "Profile"
 msgstr ""
@@ -999,7 +1201,9 @@ msgstr ""
 msgid "projects list"
 msgstr ""
 
+#: vue/components/SegmentModal/SegmentModal.vue:150
 #: vue/components/TrainForm/TrainForm.vue:75
+#: vue/components/TranscribeModal/TranscribeModal.vue:111
 msgid "Public Models"
 msgstr ""
 
@@ -1030,12 +1234,28 @@ msgid_plural "region types"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/components/AlignModal/AlignModal.vue:123
+#: vue/components/ExportModal/ExportModal.vue:83
+msgid "Region Types"
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:103
+msgid "Regions"
+msgstr ""
+
 #: vue/components/EscriptoriumBrowser/SelectedDocuments.vue:78
 msgid "Remove part"
 msgstr ""
 
 #: vue/pages/Images/Images.vue:218
 msgid "Reorder"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:48
+#: vue/components/AlignModal/AlignModal.vue:64
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:24
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:40
+msgid "required"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:131
@@ -1073,7 +1293,7 @@ msgid "Search by name..."
 msgstr ""
 
 #: vue/pages/Document/Document.vue:260
-#: vue/pages/Images/Images.vue:283
+#: vue/pages/Images/Images.vue:282
 msgid "Search Document"
 msgstr ""
 
@@ -1113,7 +1333,9 @@ msgstr ""
 
 #: vue/components/ImageCard/ImageCard.vue:59
 #: vue/components/ImageCard/ImageCard.vue:5
-#: vue/pages/Images/Images.vue:329
+#: vue/components/SegmentModal/SegmentModal.vue:22
+#: vue/components/SegmentModal/SegmentModal.vue:88
+#: vue/pages/Images/Images.vue:328
 #: vue/pages/Images/Images.vue:281
 msgid "Segment"
 msgstr ""
@@ -1130,6 +1352,15 @@ msgstr ""
 
 #: vue/components/ExtraNav.vue:40
 msgid "Segmentation (Ctrl+3)"
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:25
+#: vue/components/SegmentModal/SegmentModal.vue:1
+msgid "Segmentation is already in progress for the selected image(s)."
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:88
+msgid "Segmenting…"
 msgstr ""
 
 #: vue/components/Dropdown/Dropdown.vue:22
@@ -1154,6 +1385,14 @@ msgstr ""
 msgid "Select all images in the document"
 msgstr ""
 
+#: vue/components/TranscribeModal/TranscribeModal.vue:39
+msgid "Select an existing layer or enter a new name."
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:130
+msgid "Select Existing"
+msgstr ""
+
 #: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:78
 #: vue/components/TagFilter/TagFilter.vue:324
 msgid "Select None"
@@ -1161,6 +1400,22 @@ msgstr ""
 
 #: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:64
 msgid "Select only the images currently loaded on screen"
+msgstr ""
+
+#: vue/components/TranscribeModal/TranscribeModal.vue:43
+msgid "Select or enter layer name"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:122
+msgid "Select region types to include in the alignment."
+msgstr ""
+
+#: vue/components/ExportModal/ExportModal.vue:82
+msgid "Select region types to include in the export."
+msgstr ""
+
+#: vue/components/ExportModal/ExportModal.vue:84
+msgid "Select region types..."
 msgstr ""
 
 #: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:68
@@ -1177,14 +1432,25 @@ msgstr ""
 msgid "Selected Documents and Parts"
 msgstr ""
 
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:20
 #: vue/pages/Images/HiddenImagesIndicator.vue:17
 msgid "selected image"
 msgid_plural "selected images"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:27
+msgid "selection"
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:147
 #: vue/components/TrainForm/TrainForm.vue:72
+#: vue/components/TranscribeModal/TranscribeModal.vue:108
 msgid "Shared Models"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:97
+msgid "Show"
 msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:343
@@ -1267,12 +1533,33 @@ msgid_plural "taxonomies"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/components/ExportModal/ExportModal.vue:119
+msgid "Text"
+msgstr ""
+
 #: vue/components/ExtraNav.vue:60
 msgid "Text (Ctrl+5)"
 msgstr ""
 
+#: vue/components/SegmentModal/SegmentModal.vue:49
+msgid "Text Direction"
+msgstr ""
+
 #: vue/components/SearchPanel/SearchPanel.vue:42
 msgid "Text to search"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:79
+msgid "Textual witness"
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:62
+msgid "Textual Witness"
+msgstr ""
+
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:90
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:1
+msgid "The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000."
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:53
@@ -1303,12 +1590,25 @@ msgstr ""
 msgid "There are no tasks to display."
 msgstr ""
 
+#: vue/components/ExportModal/ExportModal.vue:28
+#: vue/components/ExportModal/ExportModal.vue:18
+msgid "This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition."
+msgstr ""
+
 #: vue/pages/Document/Document.vue:124
 msgid "This document does not have any tags. You can add tags using the Edit form, accessible from the dropdown menu in the above panel (to the right of the document title)."
 msgstr ""
 
+#: vue/components/AlignModal/AlignAdvancedFieldset.vue:72
+msgid "Threshold"
+msgstr ""
+
 #: vue/components/EscriptoriumBrowser/SelectedDocuments.vue:84
 msgid "thumbnail"
+msgstr ""
+
+#: vue/components/MoveImagesModal/MoveImagesModal.vue:20
+msgid "to the following position"
 msgstr ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:115
@@ -1350,7 +1650,9 @@ msgstr ""
 
 #: vue/components/ImageCard/ImageCard.vue:65
 #: vue/components/ImageCard/ImageCard.vue:11
-#: vue/pages/Images/Images.vue:336
+#: vue/components/TranscribeModal/TranscribeModal.vue:12
+#: vue/components/TranscribeModal/TranscribeModal.vue:56
+#: vue/pages/Images/Images.vue:335
 #: vue/pages/Images/Images.vue:293
 msgid "Transcribe"
 msgstr ""
@@ -1359,6 +1661,9 @@ msgstr ""
 msgid "Transcribe %{scope}"
 msgstr ""
 
+#: vue/components/AlignModal/AlignModal.vue:46
+#: vue/components/AlignModal/AlignModal.vue:53
+#: vue/components/ExportModal/ExportModal.vue:33
 #: vue/components/ImageCard/ImageCard.vue:130
 #: vue/components/ImageCard/ImageCard.vue:3
 msgid "Transcription"
@@ -1397,9 +1702,17 @@ msgstr ""
 msgid "Updating..."
 msgstr ""
 
+#: vue/components/AlignModal/AlignModal.vue:135
+msgid "Upload New"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:344
 #: vue/pages/Images/Images.vue:537
 msgid "Uploads are still in progress. Are you sure you want to cancel? Incomplete uploads may be lost."
+msgstr ""
+
+#: vue/components/AlignModal/AlignModal.vue:133
+msgid "Use full transcribed document"
 msgstr ""
 
 #: vue/components/DocumentsTasks/List.vue:19
@@ -1415,6 +1728,14 @@ msgstr ""
 msgid "Value"
 msgstr ""
 
+#: vue/components/SegmentModal/SegmentModal.vue:171
+msgid "Vertical Left to Right"
+msgstr ""
+
+#: vue/components/SegmentModal/SegmentModal.vue:176
+msgid "Vertical Right to Left"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:137
 #: vue/pages/Document/Document.vue:169
 msgid "View All"
@@ -1427,6 +1748,11 @@ msgstr ""
 
 #: vue/pages/ProjectsList/ProjectsList.vue:62
 msgid "Welcome back, %{name}"
+msgstr ""
+
+#: vue/components/ExportModal/ExportModal.vue:18
+#: vue/components/ExportModal/ExportModal.vue:8
+msgid "Will significantly increase the time to produce and download the export."
 msgstr ""
 
 #: vue/pages/Document/Document.vue:433
@@ -1475,7 +1801,9 @@ msgstr ""
 msgid "You're about to cancel all pending/running tasks for documents:"
 msgstr ""
 
+#: vue/components/SegmentModal/SegmentModal.vue:144
 #: vue/components/TrainForm/TrainForm.vue:69
+#: vue/components/TranscribeModal/TranscribeModal.vue:105
 msgid "Your Models"
 msgstr ""
 
