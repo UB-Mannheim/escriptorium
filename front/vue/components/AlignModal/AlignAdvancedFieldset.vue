@@ -1,9 +1,9 @@
 <template>
     <fieldset class="escr-align-advanced">
-        <legend><h3>Advanced Settings</h3></legend>
+        <legend><h3 v-translate>Advanced Settings</h3></legend>
         <label class="escr-text-field">
             <div>
-                <span>Line length threshold</span>
+                <span v-translate>Line length threshold</span>
                 <VDropdown
                     theme="escr-tooltip"
                     @apply-show="showTooltip({ form: 'align', tooltip: 'threshold' })"
@@ -21,10 +21,8 @@
                         </template>
                     </EscrButton>
                     <template #popper>
-                        <span>
-                            Minimum proportion (0.0-1.0) of aligned line length to original
-                            transcription, below which matches are ignored. At 0.0, all matches
-                            are accepted.
+                        <span v-translate>
+                            Minimum proportion (0.0-1.0) of aligned line length to original transcription, below which matches are ignored. At 0.0, all matches are accepted.
                         </span>
                     </template>
                 </VDropdown>
@@ -34,7 +32,7 @@
                 step="0.1"
                 min="0.0"
                 max="1.0"
-                placeholder="Threshold"
+                :placeholder="$gettext('Threshold')"
                 :disabled="disabled"
                 :value="threshold"
                 @change="(e) => handleChange('threshold', e.target.value)"
@@ -42,7 +40,7 @@
         </label>
         <label class="escr-text-field">
             <div>
-                <span>N-gram</span>
+                <span v-translate>N-gram</span>
                 <VDropdown
                     theme="escr-tooltip"
                     @apply-show="showTooltip({ form: 'align', tooltip: 'ngram' })"
@@ -60,9 +58,8 @@
                         </template>
                     </EscrButton>
                     <template #popper>
-                        <span>
-                            Length (2–25) of token sequences to compare; 25 should work well for
-                            at least moderately clean OCR. For very poor OCR, lower to 3 or 4.
+                        <span v-translate>
+                            Length (2–25) of token sequences to compare; 25 should work well for at least moderately clean OCR. For very poor OCR, lower to 3 or 4.
                         </span>
                     </template>
                 </VDropdown>
@@ -71,7 +68,7 @@
                 type="number"
                 min="2"
                 max="25"
-                placeholder="N-gram"
+                :placeholder="$gettext('N-gram')"
                 :disabled="disabled"
                 :value="ngram"
                 @change="(e) => handleChange('ngram', e.target.value)"
@@ -79,7 +76,7 @@
         </label>
         <label class="escr-text-field">
             <div>
-                <span>Beam size</span>
+                <span v-translate>Beam size</span>
                 <VDropdown
                     theme="escr-tooltip"
                     @apply-show="showTooltip({ form: 'align', tooltip: 'beamSize' })"
@@ -97,10 +94,8 @@
                         </template>
                     </EscrButton>
                     <template #popper>
-                        <span>
-                            1-100, enables beam search; if this and max offset are left unset, beam
-                            search will be on and beam size set to 20. Higher beam size
-                            will result in slower computation but more accurate results.
+                        <span v-translate>
+                            1-100, enables beam search; if this and max offset are left unset, beam search will be on and beam size set to 20. Higher beam size will result in slower computation but more accurate results.
                         </span>
                     </template>
                 </VDropdown>
@@ -109,7 +104,7 @@
                 type="number"
                 min="0"
                 max="100"
-                placeholder="Beam size"
+                :placeholder="$gettext('Beam size')"
                 :disabled="disabled || maxOffset !== ''"
                 :value="beamSize"
                 @change="(e) => handleChange('beamSize', e.target.value)"
@@ -117,7 +112,7 @@
         </label>
         <label class="escr-text-field">
             <div>
-                <span>Max offset</span>
+                <span v-translate>Max offset</span>
                 <VDropdown
                     theme="escr-tooltip"
                     @apply-show="showTooltip({ form: 'align', tooltip: 'maxOffset' })"
@@ -135,10 +130,8 @@
                         </template>
                     </EscrButton>
                     <template #popper>
-                        <span>
-                            Enables max-offset and disables beam search. Maximum number of
-                            characters (20–80) difference between the aligned witness text
-                            and the original transcription.
+                        <span v-translate>
+                            Enables max-offset and disables beam search. Maximum number of characters (20–80) difference between the aligned witness text and the original transcription.
                         </span>
                     </template>
                 </VDropdown>
@@ -147,7 +140,7 @@
                 type="number"
                 min="0"
                 max="80"
-                placeholder="Max offset"
+                :placeholder="$gettext('Max offset')"
                 :disabled="disabled || beamSize !== ''"
                 :value="maxOffset"
                 @change="(e) => handleChange('maxOffset', e.target.value)"
@@ -155,7 +148,7 @@
         </label>
         <label class="escr-text-field">
             <div>
-                <span>Gap</span>
+                <span v-translate>Gap</span>
                 <VDropdown
                     theme="escr-tooltip"
                     @apply-show="showTooltip({ form: 'align', tooltip: 'gap' })"
@@ -173,11 +166,8 @@
                         </template>
                     </EscrButton>
                     <template #popper>
-                        <span>
-                            The distance between matching unique n-grams; 600 should work well for
-                            clean OCR or texts where passages align to different portions of the
-                            witness text. To force end-to-end alignment of two documents, increase
-                            to 1,000,000.
+                        <span v-translate>
+                            The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000.
                         </span>
                     </template>
                 </VDropdown>
@@ -186,7 +176,7 @@
                 type="number"
                 min="1"
                 max="1000000"
-                placeholder="Gap"
+                :placeholder="$gettext('Gap')"
                 :disabled="disabled"
                 :value="gap"
                 @change="(e) => handleChange('gap', e.target.value)"
