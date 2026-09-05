@@ -1088,7 +1088,7 @@ msgstr "ייבוא PAGE כברירת מחדל"
 msgid ""
 "Line without baseline in {filen} line #{linen}, very likely that it will not "
 "be usable!"
-msgstr "שורה ללא קו בסיס בשורה #{linen} של {filen; ככל הנראה לא ניתן יהיה להשתמש בה!"
+msgstr "שורה ללא קו בסיס בשורה #{linen} של {filen}; ככל הנראה לא ניתן יהיה להשתמש בה!"
 
 #: apps/imports/parsers.py
 #, python-brace-format
