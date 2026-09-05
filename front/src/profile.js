@@ -39,14 +39,20 @@ class Profile {
     getCookieConsent() {
         // get cookie consent.
         if (!this.get("cookie-consent")) {
+            const i18n = document.getElementById("cookie-consent-i18n");
+            const message =
+                i18n?.querySelector(".message")?.textContent.trim() ||
+                "eScriptorium uses cookies to store the user session and local storage to save user interface preferences.";
+            const accept =
+                i18n?.querySelector(".accept")?.textContent.trim() || "Accept";
             let alert = Alert.add(
                 "cookie-consent",
-                "eScriptorium uses cookies to store the user session and local storage to save user interface preferences.",
+                message,
                 "warning",
                 [
                     {
                         src: "",
-                        text: "Accept",
+                        text: accept,
                         cssClass: "btn btn-outline-dark btn-sm mt-2",
                         targetBlank: false,
                     },
