@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
-from django.db.models import Count, F, Prefetch, Q
+from django.db.models import Count, F, Max, OuterRef, Prefetch, Q, Subquery
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -494,6 +494,23 @@ class DocumentViewSet(ModelViewSet):
             extra["reports__workflow_state__in"] = [mapped_labels[state_filter]]
 
         documents = Document.objects.filter(reports__isnull=False, **extra).select_related('owner').distinct()
+
+        # Order results (DRF filter backends don't run in @action methods, so
+        # handle the ordering parameter manually).
+        ordering = request.GET.get('ordering', '')
+        order_field = ordering.lstrip('-')
+        if order_field == 'last_started_task':
+            last_started_task = (
+                TaskReport.objects
+                .filter(document=OuterRef('pk'))
+                .order_by()
+                .values('document')
+                .annotate(last_started_task=Max('started_at'))
+                .values('last_started_task')
+            )
+            documents = documents.annotate(last_started_task=Subquery(last_started_task)).order_by(ordering)
+        elif order_field in ('name', 'owner__username'):
+            documents = documents.order_by(ordering)
 
         page = self.paginate_queryset(documents)
         if page is not None:
