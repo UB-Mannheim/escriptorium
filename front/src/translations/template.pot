@@ -121,12 +121,22 @@ msgstr ""
 msgid "AND"
 msgstr ""
 
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:51
+msgid "annotation component"
+msgid_plural "annotation components"
+msgstr[0] ""
+msgstr[1] ""
+
 #: vue/components/TagFilter/TagFilter.vue:217
 msgid "Apply Filter"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:431
 msgid "Are you sure you want to cancel this task?"
+msgstr ""
+
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:90
+msgid "Are you sure you want to clear this project's default ontology?"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:381
@@ -183,6 +193,15 @@ msgstr ""
 msgid "Change Password"
 msgstr ""
 
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:70
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:91
+msgid "Clear"
+msgstr ""
+
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:92
+msgid "Clear Default Ontology"
+msgstr ""
+
 #: vue/components/FilterButton/FilterButton.vue:12
 msgid "Clear filter"
 msgstr ""
@@ -235,6 +254,10 @@ msgstr ""
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:154
 #: vue/components/EditProjectModal/EditProjectModal.vue:97
 msgid "Default"
+msgstr ""
+
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:3
+msgid "Default Ontology"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:313
@@ -332,6 +355,10 @@ msgstr ""
 msgid "Elements"
 msgstr ""
 
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:59
+msgid "Empty ontology config."
+msgstr ""
+
 #: vue/components/EditProjectModal/EditProjectModal.vue:34
 msgid "Enter project name"
 msgstr ""
@@ -350,6 +377,10 @@ msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:321
 msgid "expand user profile menu"
+msgstr ""
+
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:55
+msgid "Export"
 msgstr ""
 
 #: vue/components/QuickActionsPanel/QuickActionsPanel.vue:91
@@ -403,6 +434,7 @@ msgstr ""
 msgid "Images"
 msgstr ""
 
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:41
 #: vue/components/QuickActionsPanel/QuickActionsPanel.vue:36
 msgid "Import"
 msgstr ""
@@ -439,6 +471,12 @@ msgstr ""
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:52
 msgid "Line Position"
 msgstr ""
+
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:43
+msgid "line type"
+msgid_plural "line types"
+msgstr[0] ""
+msgstr[1] ""
 
 #: vue/components/EditProjectModal/EditProjectModal.vue:42
 msgid "Link to Project Guidelines"
@@ -505,6 +543,10 @@ msgstr ""
 msgid "No"
 msgstr ""
 
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:83
+msgid "No default ontology set. New documents in this project will use the instance's default types instead."
+msgstr ""
+
 #: vue/components/TagFilter/TagFilter.vue:244
 #: vue/components/TagsField/TagsField.vue:175
 msgid "No matching tags. %{hidden}"
@@ -525,6 +567,12 @@ msgstr ""
 #: vue/pages/ProjectsList/ProjectsList.vue:48
 msgid "Owner"
 msgstr ""
+
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:47
+msgid "part type"
+msgid_plural "part types"
+msgstr[0] ""
+msgstr[1] ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:93
 msgid "Profile"
@@ -566,6 +614,12 @@ msgstr ""
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:44
 msgid "Read Direction"
 msgstr ""
+
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:39
+msgid "region type"
+msgid_plural "region types"
+msgstr[0] ""
+msgstr[1] ""
 
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:131
 msgid "Right to left"
@@ -691,6 +745,12 @@ msgstr ""
 #: vue/pages/Document/Document.vue:31
 msgid "Tasks"
 msgstr ""
+
+#: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:55
+msgid "taxonomy"
+msgid_plural "taxonomies"
+msgstr[0] ""
+msgstr[1] ""
 
 #: vue/components/ExtraNav.vue:60
 msgid "Text (Ctrl+5)"
