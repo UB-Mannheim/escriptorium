@@ -1,5 +1,6 @@
 import Vue from "vue";
 import axios from "axios";
+import store from "../store";
 import Downloads from "../pages/Downloads/Downloads.vue";
 
 // Match the auth / CSRF defaults the rest of the app uses. Without these,
@@ -10,6 +11,7 @@ axios.defaults.withCredentials = true;
 
 new Vue({
     el: "#vue-downloads",
+    store,
     components: { Downloads },
     render: (h) => h(Downloads),
 });
