@@ -13,7 +13,7 @@
     "start": "npm run gettext:compile && webpack --config webpack.dev.js --watch",
     "production": "npm run gettext:compile && webpack --config webpack.prod.js",
     "gettext:extract": "bash -c 'shopt -s globstar nullglob && gettext-extract --attribute v-translate --output src/translations/template.pot src/**/*.vue src/**/*.js vue/**/*.vue vue/**/*.js'",
-    "gettext:compile": "echo '{}' > src/translations/en.json; gettext-compile --output src/translations/fr.json src/translations/fr.po; gettext-compile --output src/translations/de.json src/translations/de.po; echo 'translation catalogs written to src/translations/{en,fr,de}.json'",
+    "gettext:compile": "echo '{}' > src/translations/en.json; gettext-compile --output src/translations/fr.json src/translations/fr.po; gettext-compile --output src/translations/de.json src/translations/de.po; gettext-compile --output src/translations/es.json src/translations/es.po; echo 'translation catalogs written to src/translations/{en,fr,de,es}.json'",
     "test": "jest",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook"
