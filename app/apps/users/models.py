@@ -28,6 +28,7 @@ class User(AbstractUser):
     fields = models.ManyToManyField('ResearchField', blank=True)
     legacy_mode = models.BooleanField(
         default=False,
+        verbose_name=_('Legacy mode'),
         help_text=_("Use the legacy version of the user interface. If unchecked, features that have not yet been ported to the new interface may become unavailable. Likewise, if checked, newer features may become unavailable."),
     )
     preferred_transcription_font = models.ForeignKey(
@@ -131,7 +132,8 @@ class User(AbstractUser):
     # command removes it. 0 disables auto-cleanup for this user.
     download_retention_days = models.PositiveIntegerField(
         default=30,
-        help_text=(
+        verbose_name=_("Download retention days"),
+        help_text=_(
             "How many days downloads (exports, archives) are kept on the "
             "server before automatic cleanup. Set to 0 to disable auto-cleanup."
         ),
@@ -170,9 +172,9 @@ class Invitation(models.Model):
 
     sender = models.ForeignKey(User, on_delete=models.PROTECT,
                                related_name='invitations_sent', editable=False)
-    recipient_first_name = models.CharField(max_length=256, null=True, blank=True)
-    recipient_last_name = models.CharField(max_length=256, null=True, blank=True)
-    recipient_email = models.EmailField()
+    recipient_first_name = models.CharField(max_length=256, null=True, blank=True, verbose_name=_("Recipient first name"))
+    recipient_last_name = models.CharField(max_length=256, null=True, blank=True, verbose_name=_("Recipient last name"))
+    recipient_email = models.EmailField(verbose_name=_("Recipient email"))
     # once accepted we link the invitation to the created User
     recipient = models.ForeignKey(User, null=True, blank=True, editable=False,
                                   on_delete=models.SET_NULL,
@@ -272,17 +274,17 @@ class ContactUs(models.Model):
     """
     Represents Contact Us form
     """
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, verbose_name=_("Name"))
     email = models.EmailField(
         verbose_name=_('email address'),
         max_length=255,
     )
-    message = models.TextField()
+    message = models.TextField(verbose_name=_("Message"))
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
-        verbose_name = "Contact message"
-        verbose_name_plural = "Contact messages"
+        verbose_name = _("Contact message")
+        verbose_name_plural = _("Contact messages")
 
     def __str__(self):
         return "from {}({})".format(self.name, self.email)
