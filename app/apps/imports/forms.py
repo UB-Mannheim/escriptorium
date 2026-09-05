@@ -8,7 +8,7 @@ from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import FileExtensionValidator
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from core.forms import RegionTypesFormMixin
 from core.models import DocumentPart, Transcription
