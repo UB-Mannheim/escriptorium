@@ -1,11 +1,11 @@
 <template>
     <div>
-        <h3>Import images from IIIF</h3>
+        <h3 v-translate>Import images from IIIF</h3>
         Input a valid IIIF manifest URI to import all of its images in full resolution
         along with its metadata.
         <fieldset>
             <TextField
-                label="IIIF Manifest URI"
+                :label="$gettext('IIIF Manifest URI')"
                 placeholder="https://gallica.bnf.fr/iiif/ark:/12148/btv1b10224708f/manifest.json"
                 :invalid="invalid['iiifUri']"
                 :on-input="handleIIIFInput"

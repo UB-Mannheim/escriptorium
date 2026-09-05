@@ -3,7 +3,7 @@
         class="escr-import-modal"
     >
         <template #modal-header>
-            <h2>Import Elements</h2>
+            <h2 v-translate>Import Elements</h2>
             <EscrButton
                 color="text"
                 :on-click="imagesLoading ? () => openModal('imageCancelWarning') : onCancel"
@@ -19,7 +19,7 @@
                 <li :class="importMode === 'images' ? 'selected' : ''">
                     <button @click="() => setImportMode('images')">
                         <ImagesIcon />
-                        <span>Images</span>
+                        <span v-translate>Images</span>
                     </button>
                 </li>
                 <li :class="importMode === 'pdf' ? 'selected' : ''">
@@ -43,7 +43,7 @@
                 <li :class="importMode === 'xml' ? 'selected' : ''">
                     <button @click="() => setImportMode('xml')">
                         <XMLIcon />
-                        <span>XML / ZIP</span>
+                        <span v-translate>XML / ZIP</span>
                     </button>
                 </li>
             </ul>
@@ -58,14 +58,14 @@
             it is disabled. -->
             <EscrButton
                 color="outline-primary"
-                :label="(importMode !== 'images' || imagesLoading) ? 'Cancel' : 'Close'"
+                :label="(importMode !== 'images' || imagesLoading) ? $gettext('Cancel') : $gettext('Close')"
                 :on-click="() => clickCancelButton()"
                 :disabled="disabled || imagesLoading"
             />
             <EscrButton
                 v-if="importMode !== 'images'"
                 color="primary"
-                label="Upload"
+                :label="$gettext('Upload')"
                 :on-click="handleSubmit"
                 :disabled="disabled"
             />

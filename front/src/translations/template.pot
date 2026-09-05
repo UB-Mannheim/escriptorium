@@ -271,6 +271,7 @@ msgstr ""
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:87
 #: vue/components/EditProjectModal/EditProjectModal.vue:77
 #: vue/components/ExportModal/ExportModal.vue:90
+#: vue/components/ImportModal/ImportModal.vue:104
 #: vue/components/MoveImagesModal/MoveImagesModal.vue:60
 #: vue/components/SegmentModal/SegmentModal.vue:82
 #: vue/components/SharePanel/ShareModal.vue:59
@@ -323,6 +324,10 @@ msgstr ""
 msgid "Change Password"
 msgstr ""
 
+#: vue/components/ImportModal/ImportImagesForm.vue:12
+msgid "Choose files"
+msgstr ""
+
 #: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:70
 #: vue/components/ProjectOntologyCard/ProjectOntologyCard.vue:91
 msgid "Clear"
@@ -352,6 +357,7 @@ msgstr ""
 msgid "Click to go to another Element (Alt+G)."
 msgstr ""
 
+#: vue/components/ImportModal/ImportModal.vue:104
 #: vue/components/Toast/Toast.vue:34
 msgid "Close"
 msgstr ""
@@ -525,6 +531,10 @@ msgstr ""
 msgid "Download Archive"
 msgstr ""
 
+#: vue/components/ImportModal/ImportImagesForm.vue:9
+msgid "Drag and drop files here"
+msgstr ""
+
 #: vue/components/HelpVersions.vue:4
 msgid ""
 "Each line corresponds to an edition of the content, in inverse chronological order (Most recent at the top).\n"
@@ -575,6 +585,10 @@ msgstr ""
 msgid "Enter layer name"
 msgstr ""
 
+#: vue/components/ImportModal/ImportMETSForm.vue:40
+msgid "Enter METS file URI"
+msgstr ""
+
 #: vue/pages/Images/Images.vue:195
 msgid "Enter multiple numbers separated by a comma, and/or ranges separated by a dash, to select images"
 msgstr ""
@@ -585,6 +599,10 @@ msgstr ""
 
 #: vue/pages/Images/Images.vue:196
 msgid "Enter select range"
+msgstr ""
+
+#: vue/components/ImportModal/ImportMETSForm.vue:26
+msgid "Enter URL"
 msgstr ""
 
 #: vue/components/SharePanel/ShareModal.vue:47
@@ -636,6 +654,10 @@ msgstr ""
 
 #: vue/components/ExportModal/ExportModal.vue:40
 msgid "File Format"
+msgstr ""
+
+#: vue/components/ImportModal/ImportImagesForm.vue:10
+msgid "Files supported: JPG, PNG, TIFF"
 msgstr ""
 
 #: vue/components/FilterSet/FilterSet.vue:2
@@ -731,6 +753,10 @@ msgstr ""
 msgid "If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."
 msgstr ""
 
+#: vue/components/ImportModal/ImportIIIFForm.vue:16
+msgid "IIIF Manifest URI"
+msgstr ""
+
 #: vue/pages/Images/Images.vue:151
 msgid "image"
 msgid_plural "images"
@@ -750,6 +776,8 @@ msgid_plural "images hidden by search filter"
 msgstr[0] ""
 msgstr[1] ""
 
+#: vue/components/ImportModal/ImportModal.vue:15
+#: vue/components/ImportModal/ImportModal.vue:5
 #: vue/pages/Images/Images.vue:10
 #: vue/pages/Images/Images.vue:8
 #: vue/pages/Images/Images.vue:213
@@ -763,12 +791,37 @@ msgstr ""
 msgid "Import"
 msgstr ""
 
+#: vue/components/ImportModal/ImportModal.vue:3
+#: vue/components/ImportModal/ImportModal.vue:1
+msgid "Import Elements"
+msgstr ""
+
+#: vue/components/ImportModal/ImportImagesForm.vue:2
+msgid "Import images"
+msgstr ""
+
+#: vue/components/ImportModal/ImportPDFForm.vue:2
+msgid "Import images from a PDF document"
+msgstr ""
+
+#: vue/components/ImportModal/ImportIIIFForm.vue:2
+msgid "Import images from IIIF"
+msgstr ""
+
 #: vue/components/QuickActionsPanel/QuickActionsPanel.vue:10
 #: vue/components/QuickActionsPanel/QuickActionsPanel.vue:1
 #: vue/pages/Images/Images.vue:19
 #: vue/pages/Images/Images.vue:17
 #: vue/pages/Images/Images.vue:1
 msgid "Import images or transcription content."
+msgstr ""
+
+#: vue/components/ImportModal/ImportMETSForm.vue:2
+msgid "Import images, segmentation and transcriptions described by METS"
+msgstr ""
+
+#: vue/components/ImportModal/ImportXMLForm.vue:2
+msgid "Import segmentation and transcriptions from XML"
 msgstr ""
 
 #: vue/components/ImageCard/ImageCard.vue:119
@@ -1016,6 +1069,8 @@ msgstr ""
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:28
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:29
 #: vue/components/EditProjectModal/EditProjectModal.vue:33
+#: vue/components/ImportModal/ImportMETSForm.vue:50
+#: vue/components/ImportModal/ImportXMLForm.vue:29
 #: vue/pages/Document/Document.vue:200
 #: vue/pages/Images/Images.vue:326
 #: vue/pages/Project/Project.vue:107
@@ -1106,6 +1161,10 @@ msgstr ""
 msgid "Open the %{label} panel"
 msgstr ""
 
+#: vue/components/ImportModal/ImportImagesForm.vue:11
+msgid "or"
+msgstr ""
+
 #: vue/components/TagFilter/TagFilter.vue:301
 msgid "OR"
 msgstr ""
@@ -1114,9 +1173,16 @@ msgstr ""
 msgid "Overwrite existing"
 msgstr ""
 
+#: vue/components/ImportModal/ImportMETSForm.vue:63
+#: vue/components/ImportModal/ImportXMLForm.vue:42
 #: vue/components/SegmentModal/SegmentModal.vue:63
 #: vue/pages/Document/Document.vue:382
 msgid "Overwrite Existing Segmentation and Transcriptions"
+msgstr ""
+
+#: vue/components/ImportModal/ImportMETSForm.vue:20
+#: vue/components/ImportModal/ImportXMLForm.vue:15
+msgid "Overwriting destroys existing regions, lines and any bound transcriptions before importing."
 msgstr ""
 
 #: vue/components/DocumentsTasks/CancelModal.vue:16
@@ -1241,6 +1307,10 @@ msgstr ""
 
 #: vue/components/SegmentModal/SegmentModal.vue:103
 msgid "Regions"
+msgstr ""
+
+#: vue/components/ImportModal/ImportMETSForm.vue:39
+msgid "Remote METS URI"
 msgstr ""
 
 #: vue/components/EscriptoriumBrowser/SelectedDocuments.vue:78
@@ -1562,6 +1632,11 @@ msgstr ""
 msgid "The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000."
 msgstr ""
 
+#: vue/components/ImportModal/ImportMETSForm.vue:49
+#: vue/components/ImportModal/ImportXMLForm.vue:28
+msgid "The name of the resulting transcription layer."
+msgstr ""
+
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:53
 msgid "The position of the line relative to the polygon."
 msgstr ""
@@ -1678,6 +1753,11 @@ msgstr ""
 msgid "Transcription Font"
 msgstr ""
 
+#: vue/components/ImportModal/ImportMETSForm.vue:48
+#: vue/components/ImportModal/ImportXMLForm.vue:27
+msgid "Transcription Name"
+msgstr ""
+
 #: vue/pages/Document/Document.vue:115
 #: vue/pages/Document/Document.vue:113
 msgid "Transcription Status"
@@ -1700,6 +1780,14 @@ msgstr ""
 #: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:148
 #: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:164
 msgid "Updating..."
+msgstr ""
+
+#: vue/components/ImportModal/ImportModal.vue:112
+msgid "Upload"
+msgstr ""
+
+#: vue/components/ImportModal/ImportMETSForm.vue:27
+msgid "Upload file"
 msgstr ""
 
 #: vue/components/AlignModal/AlignModal.vue:135
@@ -1753,6 +1841,11 @@ msgstr ""
 #: vue/components/ExportModal/ExportModal.vue:18
 #: vue/components/ExportModal/ExportModal.vue:8
 msgid "Will significantly increase the time to produce and download the export."
+msgstr ""
+
+#: vue/components/ImportModal/ImportModal.vue:39
+#: vue/components/ImportModal/ImportModal.vue:29
+msgid "XML / ZIP"
 msgstr ""
 
 #: vue/pages/Document/Document.vue:433

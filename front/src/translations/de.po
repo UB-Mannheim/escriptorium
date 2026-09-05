@@ -252,6 +252,9 @@ msgstr "Zentriert"
 msgid "Change Password"
 msgstr "Passwort ändern"
 
+msgid "Choose files"
+msgstr "Dateien auswählen"
+
 msgid "Clear"
 msgstr "Löschen"
 
@@ -381,6 +384,9 @@ msgstr "Herunterladen"
 msgid "Download Archive"
 msgstr "Archiv herunterladen"
 
+msgid "Drag and drop files here"
+msgstr "Dateien hierher ziehen und ablegen"
+
 msgid ""
 "Each line corresponds to an edition of the content, in inverse chronological order (Most recent at the top).\n"
 "<br>The colors represent the difference with the previous version,\n"
@@ -426,6 +432,9 @@ msgstr "Aktiviert die maximale Verschiebung und deaktiviert die Beam-Suche. Maxi
 msgid "Enter layer name"
 msgstr "Layername eingeben"
 
+msgid "Enter METS file URI"
+msgstr "URI der METS-Datei eingeben"
+
 msgid "Enter multiple numbers separated by a comma, and/or ranges separated by a dash, to select images"
 msgstr "Geben Sie mehrere durch Kommas getrennte Zahlen und/oder durch Bindestriche getrennte Bereiche ein, um Bilder auszuwählen"
 
@@ -434,6 +443,9 @@ msgstr "Projektnamen eingeben"
 
 msgid "Enter select range"
 msgstr "Auswahlbereich eingeben"
+
+msgid "Enter URL"
+msgstr "URL eingeben"
 
 msgid "Enter username of registered user"
 msgstr "Benutzernamen eines registrierten Benutzers eingeben"
@@ -467,6 +479,9 @@ msgstr "Zusätzliche Bilder konnten nicht geladen werden"
 
 msgid "File Format"
 msgstr "Dateiformat"
+
+msgid "Files supported: JPG, PNG, TIFF"
+msgstr "Unterstützte Dateien: JPG, PNG, TIFF"
 
 msgid "Filter by:"
 msgstr "Filtern nach:"
@@ -531,6 +546,9 @@ msgstr "Wenn ausgewählt, verwendet der Aligner den Text der ursprünglichen Tra
 msgid "If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately."
 msgstr "Wenn ausgewählt, verwendet der Aligner alle transkribierten Seiten des Dokuments, um Übereinstimmungen zu finden. Wenn nicht ausgewählt, vergleicht er jede Seite einzeln mit dem Text."
 
+msgid "IIIF Manifest URI"
+msgstr "IIIF-Manifest-URI"
+
 msgid "image"
 msgid_plural "images"
 msgstr[0] "Bild"
@@ -552,8 +570,26 @@ msgstr "Bilder"
 msgid "Import"
 msgstr "Import"
 
+msgid "Import Elements"
+msgstr "Elemente importieren"
+
+msgid "Import images"
+msgstr "Bilder importieren"
+
+msgid "Import images from a PDF document"
+msgstr "Bilder aus einem PDF-Dokument importieren"
+
+msgid "Import images from IIIF"
+msgstr "Bilder aus IIIF importieren"
+
 msgid "Import images or transcription content."
 msgstr "Bilder oder Transkriptionsinhalte importieren."
+
+msgid "Import images, segmentation and transcriptions described by METS"
+msgstr "Bilder, Segmentierung und Transkriptionen importieren, die durch METS beschrieben werden"
+
+msgid "Import segmentation and transcriptions from XML"
+msgstr "Segmentierung und Transkriptionen aus XML importieren"
 
 msgid "In Progress"
 msgstr "Läuft"
@@ -764,6 +800,9 @@ msgstr "Aktuell sind nur die ersten %{count} Bilder sichtbar; klicken Sie unten 
 msgid "Open the %{label} panel"
 msgstr "Bedienfeld %{label} öffnen"
 
+msgid "or"
+msgstr "oder"
+
 msgid "OR"
 msgstr "ODER"
 
@@ -772,6 +811,9 @@ msgstr "Bestehende überschreiben"
 
 msgid "Overwrite Existing Segmentation and Transcriptions"
 msgstr "Vorhandene Segmentierung und Transkriptionen überschreiben"
+
+msgid "Overwriting destroys existing regions, lines and any bound transcriptions before importing."
+msgstr "Beim Überschreiben werden vorhandene Regionen, Zeilen und verknüpfte Transkriptionen vor dem Import gelöscht."
 
 msgid "owned by"
 msgstr "Besitzer:"
@@ -858,6 +900,9 @@ msgstr "Regionstypen"
 
 msgid "Regions"
 msgstr "Regionen"
+
+msgid "Remote METS URI"
+msgstr "Fern-METS-URI"
 
 msgid "Remove part"
 msgstr "Teil entfernen"
@@ -1067,6 +1112,9 @@ msgstr "Textzeugen"
 msgid "The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000."
 msgstr "Der Abstand zwischen übereinstimmenden eindeutigen N-Grammen; 600 sollte für sauberes OCR oder Texte, bei denen Abschnitte zu verschiedenen Teilen des Textzeugentexts ausgerichtet werden, gut funktionieren. Um die Ausrichtung von zwei Dokumenten von Anfang bis Ende zu erzwingen, auf 1.000.000 erhöhen."
 
+msgid "The name of the resulting transcription layer."
+msgstr "Der Name der entstehenden Transkriptionsebene."
+
 msgid "The position of the line relative to the polygon."
 msgstr "Die Position der Zeile relativ zum Polygon."
 
@@ -1142,6 +1190,9 @@ msgstr "Transkription (Strg+4)"
 msgid "Transcription Font"
 msgstr "Transkriptionsschriftart"
 
+msgid "Transcription Name"
+msgstr "Name der Transkription"
+
 msgid "Transcription Status"
 msgstr "Transkriptionsstatus"
 
@@ -1156,6 +1207,12 @@ msgstr "Aktualisiert am"
 
 msgid "Updating..."
 msgstr "Wird aktualisiert ..."
+
+msgid "Upload"
+msgstr "Hochladen"
+
+msgid "Upload file"
+msgstr "Datei hochladen"
 
 msgid "Upload New"
 msgstr "Neu hochladen"
@@ -1192,6 +1249,9 @@ msgstr "Willkommen zurück, %{name}"
 
 msgid "Will significantly increase the time to produce and download the export."
 msgstr "Erhöht die Zeit für die Erstellung und den Download des Exports erheblich."
+
+msgid "XML / ZIP"
+msgstr "XML / ZIP"
 
 msgid "Yes"
 msgstr "Ja"

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h3>Import segmentation and transcriptions from XML</h3>
+        <h3 v-translate>Import segmentation and transcriptions from XML</h3>
         <span>
             Upload a single ALTO or PageXML file; alternatively, upload multiple files by
             compressing them into a ZIP file where all the XML files are at the root.
@@ -13,9 +13,9 @@
                 @change="handleFileChange"
             >
             <TextField
-                label="Transcription Name"
-                help-text="The name of the resulting transcription layer."
-                placeholder="Name"
+                :label="$gettext('Transcription Name')"
+                :help-text="$gettext('The name of the resulting transcription layer.')"
+                :placeholder="$gettext('Name')"
                 :invalid="invalid['layerName']"
                 :value="layerName"
                 :on-input="handleLayerNameInput"
@@ -28,11 +28,10 @@
                         :checked="overwrite === true"
                         @change="handleOverwriteChange"
                     >
-                    Overwrite Existing Segmentation and Transcriptions
+                    {{ $gettext("Overwrite Existing Segmentation and Transcriptions") }}
                 </label>
-                <span class="escr-help-text">
-                    Overwriting destroys existing regions, lines and any bound transcriptions
-                    before importing.
+                <span class="escr-help-text" v-translate>
+                    Overwriting destroys existing regions, lines and any bound transcriptions before importing.
                 </span>
             </div>
         </fieldset>
