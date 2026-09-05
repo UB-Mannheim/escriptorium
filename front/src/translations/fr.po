@@ -1,0 +1,67 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: vue/components/GlobalNavigation/GlobalNavigation.vue
+msgid "Change Password"
+msgstr "Changer le mot de passe"
+
+msgid "Deutsch"
+msgstr "Deutsch"
+
+msgid "English"
+msgstr "English"
+
+msgid "Find and Replace"
+msgstr "Rechercher et remplacer"
+
+msgid "Français"
+msgstr "Français"
+
+msgid "Invite Users"
+msgstr "Inviter des utilisateurs"
+
+msgid "Leaderboard"
+msgstr "Classement"
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Models"
+msgstr "Modèles"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Profile Settings"
+msgstr "Paramètres du profil"
+
+msgid "Projects"
+msgstr "Projets"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Sign in"
+msgstr "Se connecter"
+
+msgid "Site Administration"
+msgstr "Administration du site"
+
+msgid "Switch language"
+msgstr "Changer de langue"
+
+msgid "Task Monitoring"
+msgstr "Surveillance des tâches"
+
+msgid "Task Usage"
+msgstr "Utilisation des tâches"
+
+msgid "Tasks"
+msgstr "Tâches"
+
+msgid "Training"
+msgstr "Entraînement"
