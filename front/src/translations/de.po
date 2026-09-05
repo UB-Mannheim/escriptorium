@@ -544,7 +544,7 @@ msgid "Task Monitoring"
 msgstr "Tasküberwachung"
 
 msgid "Task Usage"
-msgstr "Task-Nutzung"
+msgstr "Tasknutzung"
 
 msgid "Tasks"
 msgstr "Tasks"
