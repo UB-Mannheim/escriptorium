@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eScriptorium 0.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-05 13:44+0000\n"
+"POT-Creation-Date: 2026-09-05 15:41+0000\n"
 "PO-Revision-Date: 2025-07-28 12:09\n"
 "Last-Translator: Automatic Translation\n"
 "Language-Team: Spanish\n"
@@ -173,8 +173,8 @@ msgid ""
 msgstr ""
 "Distancia entre n-gramas únicos coincidentes; 600 debería funcionar bien "
 "para OCR limpio o textos en los que los pasajes se alinean con distintas "
-"partes del texto testigo. Para forzar la alineación de principio a fin de dos"
-" documentos, aumente a 1.000.000."
+"partes del texto testigo. Para forzar la alineación de principio a fin de "
+"dos documentos, aumente a 1.000.000."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Merge aligned text with existing transcription"
@@ -187,8 +187,8 @@ msgid ""
 "blank."
 msgstr ""
 "Si se marca, el alineador reutilizará el texto de la transcripción original "
-"cuando no se haya podido realizar la alineación; si no se marca, esas líneas"
-" quedarán en blanco."
+"cuando no se haya podido realizar la alineación; si no se marca, esas líneas "
+"quedarán en blanco."
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "Add hyphens"
@@ -290,7 +290,8 @@ msgstr ""
 
 #: apps/api/serializers.py apps/core/forms.py
 msgid "You can't overwrite the existing file of a model you don't own."
-msgstr "No puede sobrescribir el archivo existente de un modelo que no es suyo."
+msgstr ""
+"No puede sobrescribir el archivo existente de un modelo que no es suyo."
 
 #: apps/api/views.py apps/core/models.py
 msgid "Canceled."
@@ -317,8 +318,8 @@ msgid ""
 "Text to search in all of your projects, surround one or more terms with "
 "quotation marks to deactivate fuzziness"
 msgstr ""
-"Texto a buscar en todos sus proyectos; rodee uno o más términos con comillas"
-" para desactivar la búsqueda aproximada"
+"Texto a buscar en todos sus proyectos; rodee uno o más términos con comillas "
+"para desactivar la búsqueda aproximada"
 
 #: apps/core/forms.py
 msgid "Word by word"
@@ -341,8 +342,8 @@ msgid ""
 "You cannot find and replace text across multiple projects at once, please "
 "pick a single project before submitting your request."
 msgstr ""
-"No puede buscar y reemplazar texto en varios proyectos a la vez; elija un solo"
-" proyecto antes de enviar su solicitud."
+"No puede buscar y reemplazar texto en varios proyectos a la vez; elija un "
+"solo proyecto antes de enviar su solicitud."
 
 #: apps/core/forms.py escriptorium/templates/core/models_list/rights/main.html
 msgid "Type"
@@ -365,8 +366,8 @@ msgid ""
 "Invalid model (Couldn't determine whether it's a segmentation or recognition "
 "model)."
 msgstr ""
-"Modelo no válido (no se pudo determinar si es un modelo de segmentación o de"
-" reconocimiento)."
+"Modelo no válido (no se pudo determinar si es un modelo de segmentación o de "
+"reconocimiento)."
 
 #: apps/core/forms.py
 msgid "eScriptorium is not compatible with bounding box models."
@@ -578,8 +579,8 @@ msgid ""
 msgstr ""
 "URL opcional que apunta a un documento externo que explica las pautas de "
 "edición de contenido y de autoría para este proyecto, con el fin de guiar a "
-"un equipo o grupo hacia prácticas coherentes para la "
-"segmentación/transcripción manual."
+"un equipo o grupo hacia prácticas coherentes para la segmentación/"
+"transcripción manual."
 
 #: apps/core/models.py
 msgid "Share with users"
@@ -636,8 +637,8 @@ msgid ""
 "a line and is set by the script."
 msgstr ""
 "La dirección de lectura describe el orden de los elementos del documento, en "
-"oposición a la dirección del texto, que describe el orden de las palabras en"
-" una línea y está determinada por el guion de escritura (script)."
+"oposición a la dirección del texto, que describe el orden de las palabras en "
+"una línea y está determinada por el guion de escritura (script)."
 
 #: apps/core/models.py
 msgid "The position of the line relative to the polygon."
@@ -706,8 +707,7 @@ msgstr "Elemento"
 #: apps/core/models.py
 #, python-format
 msgid "The segmentation model '%(name)s' has no file associated with it."
-msgstr ""
-"El modelo de segmentación '%(name)s' no tiene ningún archivo asociado."
+msgstr "El modelo de segmentación '%(name)s' no tiene ningún archivo asociado."
 
 #: apps/core/models.py
 msgid "No recognition model was provided."
@@ -920,8 +920,7 @@ msgstr ""
 
 #: apps/imports/fetch.py
 msgid "Importing from a private or local network address is not allowed."
-msgstr ""
-"No está permitido importar desde una dirección de red privada o local."
+msgstr "No está permitido importar desde una dirección de red privada o local."
 
 #: apps/imports/fetch.py
 msgid "Too many redirects while fetching the document."
@@ -1129,8 +1128,7 @@ msgstr ""
 #: apps/imports/parsers.py
 #, python-brace-format
 msgid "Block in '{filen}' line N°{line} was skipped because: {error}"
-msgstr ""
-"El bloque de la línea N°{line} de '{filen}' se omitió porque: {error}"
+msgstr "El bloque de la línea N°{line} de '{filen}' se omitió porque: {error}"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -1172,8 +1170,8 @@ msgid ""
 "Line without baseline in {filen} line #{linen}, very likely that it will not "
 "be usable!"
 msgstr ""
-"Línea sin línea base en la línea #{linen} de {filen}; es muy probable que "
-"no sea utilizable!"
+"Línea sin línea base en la línea #{linen} de {filen}; es muy probable que no "
+"sea utilizable!"
 
 #: apps/imports/parsers.py
 #, python-brace-format
@@ -1353,8 +1351,8 @@ msgid ""
 msgstr ""
 "Utilice la versión legacy de la interfaz de usuario. Si no se marca, es "
 "posible que queden fuera de uso las funciones que aún no se han trasladado a "
-"la nueva interfaz. Del mismo modo, si se marca, es posible que queden fuera de"
-" uso funciones más recientes."
+"la nueva interfaz. Del mismo modo, si se marca, es posible que queden fuera "
+"de uso funciones más recientes."
 
 #: apps/users/models.py
 msgid "Preferred transcription font"
@@ -1466,7 +1464,8 @@ msgstr "¡Ahora es miembro del equipo {team_name}!"
 #: apps/users/views.py
 #, python-brace-format
 msgid "User {user} successfully removed from the team {team_name}."
-msgstr "El usuario {user} se ha eliminado correctamente del equipo {team_name}."
+msgstr ""
+"El usuario {user} se ha eliminado correctamente del equipo {team_name}."
 
 #: apps/users/views.py
 #, python-brace-format
@@ -1800,6 +1799,17 @@ msgstr "Cerrar sesión"
 #: escriptorium/templates/base.html
 msgid "Login"
 msgstr "Iniciar sesión"
+
+#: escriptorium/templates/base.html
+msgid ""
+"eScriptorium uses cookies to store the user session and local storage to "
+"save user interface preferences."
+msgstr "eScriptorium utiliza cookies para almacenar la sesión del usuario y almacenamiento local para guardar las preferencias de la interfaz."
+
+#: escriptorium/templates/base.html
+#: escriptorium/templates/users/profile_group_list.html
+msgid "Accept"
+msgstr "Aceptar"
 
 #: escriptorium/templates/core/contributors.html
 #: escriptorium/templates/core/home.html
@@ -2160,8 +2170,8 @@ msgid ""
 "interface (and may be used as a hint for import/export)."
 msgstr ""
 "Los tipos de anotación permiten reagrupar los botones correspondientes en la "
-"interfaz de edición (y pueden usarse como pista para la "
-"importación/exportación)."
+"interfaz de edición (y pueden usarse como pista para la importación/"
+"exportación)."
 
 #: escriptorium/templates/core/document_ontology.html
 msgid "Region types"
@@ -2720,8 +2730,7 @@ msgstr "Configuración"
 #, python-format
 msgid "See %(opentag)sthe import documentation%(closetag)s for details."
 msgstr ""
-"Vea %(opentag)sla documentación de importación%(closetag)s para más "
-"detalles."
+"Vea %(opentag)sla documentación de importación%(closetag)s para más detalles."
 
 #: escriptorium/templates/core/wizards/import.html
 msgid ""
@@ -2736,8 +2745,8 @@ msgstr "Reanudar la importación anterior."
 #, python-format
 msgid "Previous import (%(filename)s) failed at step %(progress)s/%(total)s."
 msgstr ""
-"La importación anterior (%(filename)s) falló en el paso "
-"%(progress)s/%(total)s."
+"La importación anterior (%(filename)s) falló en el paso %(progress)s/"
+"%(total)s."
 
 #: escriptorium/templates/core/wizards/import.html
 msgid "Or"
@@ -2792,8 +2801,7 @@ msgstr "Un único pdf con una imagen por página."
 #: escriptorium/templates/core/wizards/segment.html
 msgid "Beware that re-segmenting will delete any existing transcriptions!"
 msgstr ""
-"¡Tenga en cuenta que resegmentar eliminará cualquier transcripción "
-"existente!"
+"¡Tenga en cuenta que resegmentar eliminará cualquier transcripción existente!"
 
 #: escriptorium/templates/core/wizards/segment.html
 #: escriptorium/templates/core/wizards/transcribe.html
@@ -2831,8 +2839,8 @@ msgid ""
 "Gathering data can take time and the model won't be available in the models "
 "tab until then."
 msgstr ""
-"La recopilación de datos puede tardar y el modelo no estará disponible en la"
-" pestaña de modelos hasta entonces."
+"La recopilación de datos puede tardar y el modelo no estará disponible en la "
+"pestaña de modelos hasta entonces."
 
 #: escriptorium/templates/core/wizards/transcribe.html
 msgid ""
@@ -2910,7 +2918,8 @@ msgstr ""
 "<b>clic derecho</b> para <b>añadir puntos</b> y <b>clic izquierdo</b> de "
 "nuevo para <u>terminarla</u>.\n"
 "    <br/>Puede mantener pulsado el botón del ratón para un trazado libre.\n"
-"    <br/>Pulsar <b>escape</b> mientras se dibuja una línea la <u>cancela</u>.\n"
+"    <br/>Pulsar <b>escape</b> mientras se dibuja una línea la <u>cancela</"
+"u>.\n"
 "    <br/>Si le importan las regiones, cambie primero al modo de regiones <i "
 "class=\"fas fa-th-large\"></i> (tecla R).\n"
 "    <br/>En el modo de regiones, <b>clic izquierdo</b> para crear una nueva "
@@ -2918,43 +2927,44 @@ msgstr ""
 "    <br/>Las líneas dibujadas dentro de una región se vincularán "
 "automáticamente a ella.\n"
 "    <br/>Cuando la calidad de la segmentación es buena, puede pedir al "
-"sistema que calcule las máscaras <i class=\"text-success fas "
-"fa-thumbs-up\"></i>,\n"
+"sistema que calcule las máscaras <i class=\"text-success fas fa-thumbs-"
+"up\"></i>,\n"
 "    <br/>una vez que una página ya tiene máscaras, las líneas nuevas "
 "obtendrán automáticamente una máscara y al actualizar una línea se "
 "recalculará también su máscara.\n"
 "    <br/><b>Nota</b>: la calidad de las máscaras depende en gran medida de "
 "la calidad de toda la segmentación, no solo de la línea correspondiente,\n"
-"    <br/>así que asegúrese de dibujar todas las líneas antes de calcular "
-"las máscaras.\n"
+"    <br/>así que asegúrese de dibujar todas las líneas antes de calcular las "
+"máscaras.\n"
 "    <br/>También puede calcular las máscaras <i>en conjunto</i> en la "
 "pestaña Imágenes -> segmentar -> elegir 'Solo máscaras'.\n"
 "</p>\n"
 "<p>\n"
-"    <b>Clic izquierdo</b> sobre una línea para seleccionarla; a "
-"continuación puede arrastrar su punto de control más cercano.\n"
+"    <b>Clic izquierdo</b> sobre una línea para seleccionarla; a continuación "
+"puede arrastrar su punto de control más cercano.\n"
 "    <br/><b>Doble clic</b> sobre la línea creará un <u>nuevo punto de "
 "control</u> en la posición del ratón.\n"
 "    <br/>Puede invertir el orden de los puntos de una línea seleccionándola "
-"(o varias) y usando invertir <i class=\"fas fa-arrow-alt-h\"></i> (tecla I).\n"
+"(o varias) y usando invertir <i class=\"fas fa-arrow-alt-h\"></i> (tecla "
+"I).\n"
 "    <br/>En el modo de regiones, las regiones pueden editarse de la misma "
 "manera.\n"
 "    <br/>Las líneas seleccionadas pueden vincularse o desvincularse de "
-"regiones con los botones correspondientes <i class=\"fas fa-link\"></i> (tecla "
-"Y) <i class=\"fas fa-unlink\"> (tecla U).</i>\n"
+"regiones con los botones correspondientes <i class=\"fas fa-link\"></i> "
+"(tecla Y) <i class=\"fas fa-unlink\"> (tecla U).</i>\n"
 "    <br/>Usando el modo de corte <i class=\"text-warning fas fa-cut\"></i> "
 "(tecla C) puede cortar líneas, dividiéndolas en dos o eliminando parte de "
 "ellas.\n"
-"    <br/>Si hay al menos dos líneas seleccionadas, está disponible la "
-"opción de unirlas <i class=\"fas fa-compress-arrows-alt\"></i> (tecla J).\n"
+"    <br/>Si hay al menos dos líneas seleccionadas, está disponible la opción "
+"de unirlas <i class=\"fas fa-compress-arrows-alt\"></i> (tecla J).\n"
 "    <br/>Puede recorrer el <u>historial</u> de sus cambios hacia delante y "
 "hacia atrás con <b>Ctrl+Z</b> (deshacer) y <b>Ctrl+Y</b> (rehacer) o usando "
-"los botones correspondientes <i class=\"fas fa-undo\"></i><i class=\"fas "
-"fa-redo\"></i>.\n"
+"los botones correspondientes <i class=\"fas fa-undo\"></i><i class=\"fas fa-"
+"redo\"></i>.\n"
 "</p>\n"
 "<p>\n"
-"    <b>Mayús+clic</b> permite añadir o quitar una línea de la "
-"<u>selección</u>,\n"
+"    <b>Mayús+clic</b> permite añadir o quitar una línea de la <u>selección</"
+"u>,\n"
 "    <br/>Hacer clic en un espacio vacío limpia la selección,\n"
 "    <br/><b>mayús y arrastrar</b> crea una herramienta de selección <u>de "
 "lazo</u> que permite seleccionar puntos de control (entonces aparecen en "
@@ -2965,10 +2975,11 @@ msgstr ""
 "seleccionados a la vez (o las líneas seleccionadas si no hay puntos de "
 "control seleccionados).\n"
 "\n"
-"    <br/>El botón de papelera roja <i class=\"text-danger fas fa-trash\"></i> "
-"<b>elimina</b> todas las <b>líneas/regiones</b> seleccionadas,\n"
-"    <br/>el botón de papelera amarilla <i class=\"text-warning fas "
-"fa-trash\"></i> solo <b>elimina</b> los puntos de control <b>seleccionados</b>.\n"
+"    <br/>El botón de papelera roja <i class=\"text-danger fas fa-trash\"></"
+"i> <b>elimina</b> todas las <b>líneas/regiones</b> seleccionadas,\n"
+"    <br/>el botón de papelera amarilla <i class=\"text-warning fas fa-"
+"trash\"></i> solo <b>elimina</b> los puntos de control <b>seleccionados</"
+"b>.\n"
 "</p>\n"
 
 #: escriptorium/templates/includes/help/compare_transcriptions.html
@@ -3012,11 +3023,11 @@ msgid ""
 msgstr ""
 "\n"
 "<p style=\"direction:ltr\">\n"
-"    Cada línea corresponde a una edición del contenido, en orden "
-"cronológico inverso (la más reciente arriba).\n"
+"    Cada línea corresponde a una edición del contenido, en orden cronológico "
+"inverso (la más reciente arriba).\n"
 "    <br>Los colores representan la diferencia con la versión anterior,\n"
-"    <br><font color=\"green\">en verde</font> están las <b>adiciones</b> y en "
-"<font color=\"red\">rojo</font> las <b>supresiones</b>,\n"
+"    <br><font color=\"green\">en verde</font> están las <b>adiciones</b> y "
+"en <font color=\"red\">rojo</font> las <b>supresiones</b>,\n"
 "    <br>es decir, los caracteres en rojo ya no forman parte de la línea; se "
 "muestran para facilitar la localización de las diferencias.\n"
 "    <br>Puede pasar el ratón sobre el texto para ver el contenido real.\n"
@@ -3088,8 +3099,7 @@ msgstr "Inicie sesión, por favor"
 
 #: escriptorium/templates/registration/login.html
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
-"Su nombre de usuario y su contraseña no coinciden. Inténtelo de nuevo."
+msgstr "Su nombre de usuario y su contraseña no coinciden. Inténtelo de nuevo."
 
 #: escriptorium/templates/registration/login.html
 msgid "Please login to see this page."
@@ -3207,8 +3217,7 @@ msgid ""
 "you registered with, and check your spam folder."
 msgstr ""
 "Si no recibe un correo electrónico, asegúrese de haber introducido la "
-"dirección con la que se registró y compruebe su carpeta de correo no "
-"deseado."
+"dirección con la que se registró y compruebe su carpeta de correo no deseado."
 
 #: escriptorium/templates/registration/password_reset_form.html
 msgid "Change your password"
@@ -3219,8 +3228,8 @@ msgid ""
 "Forgotten your password? Enter your email address below, and we’ll email "
 "instructions for setting a new one."
 msgstr ""
-"¿Ha olvidado su contraseña? Introduzca su dirección de correo electrónico "
-"a continuación y le enviaremos instrucciones para establecer una nueva."
+"¿Ha olvidado su contraseña? Introduzca su dirección de correo electrónico a "
+"continuación y le enviaremos instrucciones para establecer una nueva."
 
 #: escriptorium/templates/registration/password_reset_form.html
 msgid "Email address:"
@@ -3262,8 +3271,7 @@ msgstr "Partes del documento transcritas"
 #: escriptorium/templates/reporting/document_report.html
 msgid "The number of transcribed images in the selected transcription(s)."
 msgstr ""
-"El número de imágenes transcritas en la(s) transcripción(es) "
-"seleccionada(s)."
+"El número de imágenes transcritas en la(s) transcripción(es) seleccionada(s)."
 
 #: escriptorium/templates/reporting/document_report.html
 msgid "Average transcription confidence"
@@ -3358,8 +3366,8 @@ msgid ""
 "A character is any symbol used in the transcription, including punctuation, "
 "excepted white spaces."
 msgstr ""
-"Un carácter es cualquier símbolo utilizado en la transcripción, incluida la"
-" puntuación, excepto los espacios en blanco."
+"Un carácter es cualquier símbolo utilizado en la transcripción, incluida la "
+"puntuación, excepto los espacios en blanco."
 
 #: escriptorium/templates/reporting/project_reports.html
 msgid "Annotation"
@@ -3738,10 +3746,6 @@ msgstr ""
 "\n"
 "            Invitado a %(team_name)s por %(sender)s\n"
 "            "
-
-#: escriptorium/templates/users/profile_group_list.html
-msgid "Accept"
-msgstr "Aceptar"
 
 #: escriptorium/templates/users/profile_group_list.html
 msgid "My Teams"
