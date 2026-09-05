@@ -25,7 +25,7 @@
         />
         <EscrButton
             :on-click="onClose"
-            aria-label="Close"
+            :aria-label="$gettext('Close')"
             color="text"
             size="small"
         >

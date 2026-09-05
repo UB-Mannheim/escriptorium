@@ -172,17 +172,32 @@ export default {
             if (filteredTags.length === 0) {
                 return h(
                     "div",
-                    `No matching tags. ${this.tags.length} tag${this.tags.length !== 1 ? "s" : ""
-                    } hidden, including ${hiddenSelectedTagCount} selected.`,
+                    this.$gettextInterpolate(
+                        this.$gettext("No matching tags. %{hidden}"),
+                        {
+                            hidden: this.$gettextInterpolate(
+                                this.$ngettext(
+                                    "%{count} tag hidden, including %{selected} selected.",
+                                    "%{count} tags hidden, including %{selected} selected.",
+                                    this.tags.length,
+                                ),
+                                { count: this.tags.length, selected: hiddenSelectedTagCount },
+                            ),
+                        },
+                    ),
                 );
             } else if (filteredTags.length < this.tags.length) {
                 const hiddenTagCount = this.tags.length - filteredTags.length;
                 return h(
                     "div",
-                    `+ ${hiddenTagCount
-                    } tag${hiddenTagCount !== 1 ? "s" : ""} hidden, including ${
-                        hiddenSelectedTagCount
-                    } selected tag${hiddenSelectedTagCount !== 1 ? "s" : ""}`,
+                    this.$gettextInterpolate(
+                        this.$ngettext(
+                            "+ %{count} tag hidden, including %{selected} selected tag",
+                            "+ %{count} tags hidden, including %{selected} selected tags",
+                            hiddenTagCount,
+                        ),
+                        { count: hiddenTagCount, selected: hiddenSelectedTagCount },
+                    ),
                 );
             }
             return [];
@@ -197,8 +212,11 @@ export default {
                     props: {
                         color: "text",
                         label: this.tagName
-                            ? `Create a tag "${this.tagName}"`
-                            : "Create a tag",
+                            ? this.$gettextInterpolate(
+                                this.$gettext('Create a tag "%{tagName}"'),
+                                { tagName: this.tagName },
+                            )
+                            : this.$gettext("Create a tag"),
                         disabled: this.disabled || !this.tagName || this.tags.some(
                             (tag) => tag.name === this.tagName
                         ),
@@ -220,16 +238,16 @@ export default {
             "div",
             { class: "escr-tags-field escr-form-field" },
             [
-                h("span", { class: "escr-form-label" }, "Tags"),
+                h("span", { class: "escr-form-label" }, this.$gettext("Tags")),
                 h(
                     TextField,
                     {
                         props: {
                             disabled: this.disabled,
-                            label: "Add/search tags",
+                            label: this.$gettext("Add/search tags"),
                             labelVisible: false,
                             onInput: this.onChangeTagName,
-                            placeholder: "Add/search tags",
+                            placeholder: this.$gettext("Add/search tags"),
                             value: this.tagName,
                             maxLength: 100,
                         },

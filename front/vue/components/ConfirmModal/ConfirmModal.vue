@@ -10,20 +10,18 @@
         </template>
         <template #modal-content>
             <h3>{{ bodyText }}</h3>
-            <p v-if="cannotUndo">
-                You cannot undo this action.
-            </p>
+            <p v-if="cannotUndo" v-translate>You cannot undo this action.</p>
         </template>
         <template #modal-actions>
             <EscrButton
                 color="outline-text"
-                :label="cancelVerb"
+                :label="cancelLabel"
                 :on-click="onCancel"
                 :disabled="disabled"
             />
             <EscrButton
                 :color="color === 'text' ? 'outline-text' : color"
-                :label="confirmVerb"
+                :label="confirmLabel"
                 :on-click="onConfirm"
                 :disabled="disabled"
             />
@@ -55,7 +53,7 @@ export default {
          */
         cancelVerb: {
             type: String,
-            default: "Cancel",
+            default: "",
         },
         /**
          * Whether or not to display the "cannot undo this action" message, defaults to true.
@@ -85,7 +83,7 @@ export default {
          */
         confirmVerb: {
             type: String,
-            default: "Submit",
+            default: "",
         },
         /**
          * Whether or not the submit/cancel buttons are disabled.
@@ -123,6 +121,20 @@ export default {
             type: String,
             required: true,
         },
-    }
+    },
+    computed: {
+        /**
+         * The cancel button label, with a translatable default.
+         */
+        cancelLabel() {
+            return this.cancelVerb || this.$gettext("Cancel");
+        },
+        /**
+         * The confirm button label, with a translatable default.
+         */
+        confirmLabel() {
+            return this.confirmVerb || this.$gettext("Submit");
+        },
+    },
 }
 </script>
