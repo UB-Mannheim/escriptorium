@@ -122,11 +122,19 @@ msgstr "Aligner %{scope}"
 msgid "AND"
 msgstr "ET"
 
+msgid "annotation component"
+msgid_plural "annotation components"
+msgstr[0] "composant d'annotation"
+msgstr[1] "composants d'annotation"
+
 msgid "Apply Filter"
 msgstr "Appliquer le filtre"
 
 msgid "Are you sure you want to cancel this task?"
 msgstr "Voulez-vous vraiment annuler cette tâche ?"
+
+msgid "Are you sure you want to clear this project's default ontology?"
+msgstr "Voulez-vous vraiment effacer l'ontologie par défaut de ce projet ?"
 
 msgid "Are you sure you want to continue? Re-segmenting will delete any existing transcriptions."
 msgstr "Voulez-vous vraiment continuer ? La nouvelle segmentation supprimera toutes les transcriptions existantes."
@@ -163,6 +171,12 @@ msgstr "Ligne centrale"
 msgid "Change Password"
 msgstr "Changer le mot de passe"
 
+msgid "Clear"
+msgstr "Effacer"
+
+msgid "Clear Default Ontology"
+msgstr "Effacer l'ontologie par défaut"
+
 msgid "Clear filter"
 msgstr "Effacer le filtre"
 
@@ -198,6 +212,9 @@ msgstr "Créer un nouveau"
 
 msgid "Default"
 msgstr "Défaut"
+
+msgid "Default Ontology"
+msgstr "Ontologie par défaut"
 
 msgid "Delete"
 msgstr "Supprimer"
@@ -271,6 +288,9 @@ msgstr "Élément #"
 msgid "Elements"
 msgstr "Éléments"
 
+msgid "Empty ontology config."
+msgstr "Configuration d'ontologie vide."
+
 msgid "Enter project name"
 msgstr "Saisir le nom du projet"
 
@@ -285,6 +305,9 @@ msgstr "Développer le menu de suivi des tâches et d'utilisation"
 
 msgid "expand user profile menu"
 msgstr "Développer le menu du profil utilisateur"
+
+msgid "Export"
+msgstr "Exporter"
 
 msgid "Export %{scope}"
 msgstr "Exporter %{scope}"
@@ -346,6 +369,11 @@ msgstr "De gauche à droite"
 msgid "Line Position"
 msgstr "Position de la ligne"
 
+msgid "line type"
+msgid_plural "line types"
+msgstr[0] "type de ligne"
+msgstr[1] "types de ligne"
+
 msgid "Link to Project Guidelines"
 msgstr "Lien vers les directives du projet"
 
@@ -385,6 +413,9 @@ msgstr "Nom"
 msgid "No"
 msgstr "Non"
 
+msgid "No default ontology set. New documents in this project will use the instance's default types instead."
+msgstr "Aucune ontologie par défaut définie. Les nouveaux documents de ce projet utiliseront à la place les types par défaut de l'instance."
+
 msgid "No matching tags. %{hidden}"
 msgstr "Aucun tag correspondant. %{hidden}"
 
@@ -399,6 +430,11 @@ msgstr "Écraser la segmentation et les transcriptions existantes"
 
 msgid "Owner"
 msgstr "Propriétaire"
+
+msgid "part type"
+msgid_plural "part types"
+msgstr[0] "type de partie"
+msgstr[1] "types de partie"
 
 msgid "Profile"
 msgstr "Profil"
@@ -426,6 +462,11 @@ msgstr "Actions rapides"
 
 msgid "Read Direction"
 msgstr "Sens de lecture"
+
+msgid "region type"
+msgid_plural "region types"
+msgstr[0] "type de région"
+msgstr[1] "types de région"
 
 msgid "Right to left"
 msgstr "De droite à gauche"
@@ -507,6 +548,11 @@ msgstr "Utilisation des tâches"
 
 msgid "Tasks"
 msgstr "Tâches"
+
+msgid "taxonomy"
+msgid_plural "taxonomies"
+msgstr[0] "taxonomie"
+msgstr[1] "taxonomies"
 
 msgid "Text (Ctrl+5)"
 msgstr "Texte (Ctrl+5)"
