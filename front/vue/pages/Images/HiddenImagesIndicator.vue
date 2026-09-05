@@ -2,16 +2,16 @@
     <div class="hidden-images-indicator">
         <span v-if="filteredParts.length < parts.length">
             {{ parts.length - filteredParts.length }}
-            images hidden by search filter
+            {{ $ngettext("image hidden by search filter", "images hidden by search filter", parts.length - filteredParts.length) }}
         </span>
         <span
             v-if="hiddenSelectedCount > 0"
         >
-            including {{ hiddenSelectedCount }} selected images
+            {{ $gettext("including") }} {{ hiddenSelectedCount }} {{ $ngettext("selected image", "selected images", hiddenSelectedCount) }}
         </span>
         <EscrButton
             v-if="filteredParts.length < parts.length"
-            label="Clear search filter"
+            :label="$gettext('Clear search filter')"
             color="outline-secondary"
             size="small"
             :disabled="loading && loading.images"
@@ -22,8 +22,7 @@
             </template>
         </EscrButton>
         <span v-if="parts.length < partsCount">
-            Only the first {{ parts.length }} images currently visible;
-            click "Load More" below to load more images.
+            {{ visibilityNote }}
         </span>
     </div>
 </template>
@@ -36,6 +35,12 @@ export default {
     components: {
         EscrButton,
         XCircleFilledIcon,
+    },
+    computed: {
+        visibilityNote() {
+            const label = this.$gettext('Only the first %{count} images currently visible; click "Load More" below to load more images.');
+            return this.$gettextInterpolate(label, { count: this.parts.length });
+        },
     },
     props: {
         /**
