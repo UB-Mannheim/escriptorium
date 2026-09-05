@@ -66,15 +66,18 @@
 /* sidebar panel opened */
 .escr-selected-action {
     position: absolute;
-    right: 64px;
+    inset-inline-end: 64px;
     width: 288px;
     height: 100%;
     background-color: var(--background1);
-    border-top-left-radius: 15px;
+    border-start-start-radius: 15px;
     filter: drop-shadow(-5px 4px 10px rgba(0, 0, 0, 0.15));
     z-index: var(--sidebar-container-z);
     color: var(--text1);
     fill: var(--text1);
+}
+[dir="rtl"] .escr-selected-action {
+    filter: drop-shadow(5px 4px 10px rgba(0, 0, 0, 0.15));
 }
 .escr-action-header {
     padding: 35px 19px;
@@ -88,7 +91,7 @@
     padding: 0;
 }
 .escr-action-header .escr-action-icon {
-    margin-right: 1rem;
+    margin-inline-end: 1rem;
 }
 .escr-action-header .escr-close-action {
     cursor: pointer;
@@ -100,7 +103,7 @@
     width: 28px;
     height: 28px;
     position: absolute;
-    right: 1rem;
+    inset-inline-end: 1rem;
 }
 .escr-action-header .escr-close-action svg {
     width: 14px;
