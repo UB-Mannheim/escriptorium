@@ -413,6 +413,10 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+#: vue/pages/Downloads/Downloads.vue:41
+msgid "Could not load downloads"
+msgstr ""
+
 #: vue/components/DocumentsTasks/List.vue:102
 msgid "Crashed"
 msgstr ""
@@ -437,6 +441,10 @@ msgstr ""
 msgid "Create New"
 msgstr ""
 
+#: vue/pages/Downloads/Downloads.vue:19
+msgid "Created"
+msgstr ""
+
 #: vue/components/EditDocumentModal/EditDocumentModal.vue:154
 #: vue/components/EditProjectModal/EditProjectModal.vue:97
 msgid "Default"
@@ -457,6 +465,7 @@ msgstr ""
 #: vue/components/ImageCard/ImageCard.vue:83
 #: vue/components/ImageCard/ImageCard.vue:29
 #: vue/pages/Document/Document.vue:313
+#: vue/pages/Downloads/Downloads.vue:59
 #: vue/pages/Images/Images.vue:138
 #: vue/pages/Images/Images.vue:136
 #: vue/pages/Images/Images.vue:11
@@ -467,6 +476,10 @@ msgstr ""
 #: vue/pages/ProjectsList/ProjectsList.vue:87
 #: vue/pages/ProjectsList/ProjectsList.vue:120
 msgid "Delete"
+msgstr ""
+
+#: vue/pages/Downloads/Downloads.vue:37
+msgid "Delete \"%{label}\"? This cannot be undone."
 msgstr ""
 
 #: vue/pages/Project/Project.vue:163
@@ -546,6 +559,7 @@ msgid "Documents"
 msgstr ""
 
 #: vue/components/DownloadArchiveModal/DownloadArchiveModal.vue:65
+#: vue/pages/Downloads/Downloads.vue:56
 msgid "Download"
 msgstr ""
 
@@ -554,6 +568,10 @@ msgstr ""
 #: vue/pages/Images/Images.vue:130
 #: vue/pages/Images/Images.vue:5
 msgid "Download Archive"
+msgstr ""
+
+#: vue/pages/Downloads/Downloads.vue:21
+msgid "Downloads"
 msgstr ""
 
 #: vue/components/ImportModal/ImportImagesForm.vue:9
@@ -653,6 +671,10 @@ msgstr ""
 
 #: vue/components/GlobalNavigation/GlobalNavigation.vue:321
 msgid "expand user profile menu"
+msgstr ""
+
+#: vue/pages/Downloads/Downloads.vue:20
+msgid "Expires"
 msgstr ""
 
 #: vue/components/ExportModal/ExportModal.vue:19
@@ -893,6 +915,10 @@ msgstr ""
 msgid "Key"
 msgstr ""
 
+#: vue/pages/Downloads/Downloads.vue:14
+msgid "Label"
+msgstr ""
+
 #: vue/pages/Images/Images.vue:349
 msgid "Last Edited"
 msgstr ""
@@ -990,6 +1016,7 @@ msgstr ""
 #: vue/components/ExtraInfo.vue:44
 #: vue/components/Loader/Loader.vue:3
 #: vue/pages/Document/Document.vue:161
+#: vue/pages/Downloads/Downloads.vue:2
 #: vue/pages/Images/Images.vue:164
 #: vue/pages/Images/Images.vue:174
 #: vue/pages/Images/Images.vue:162
@@ -1135,6 +1162,10 @@ msgstr ""
 msgid "Name..."
 msgstr ""
 
+#: vue/pages/Downloads/Downloads.vue:46
+msgid "Never"
+msgstr ""
+
 #: vue/components/MoveImagesModal/MoveImagesModal.vue:38
 msgid "New Position"
 msgstr ""
@@ -1155,6 +1186,10 @@ msgstr ""
 
 #: vue/components/EscriptoriumBrowser/EscriptoriumBrowser.vue:137
 msgid "No documents to display."
+msgstr ""
+
+#: vue/pages/Downloads/Downloads.vue:8
+msgid "No downloads yet. Exports and archives you queue will show up here."
 msgstr ""
 
 #: vue/components/EscriptoriumBrowser/BrowserImageGrid.vue:115
@@ -1598,6 +1633,10 @@ msgstr ""
 msgid "Site Administration"
 msgstr ""
 
+#: vue/pages/Downloads/Downloads.vue:16
+msgid "Size"
+msgstr ""
+
 #: vue/components/ExtraNav.vue:30
 msgid "Source Image (Ctrl+2)"
 msgstr ""
@@ -1846,6 +1885,7 @@ msgstr ""
 msgid "Transcription:"
 msgstr ""
 
+#: vue/pages/Downloads/Downloads.vue:15
 #: vue/pages/OntologyOverview/OntologyOverview.vue:110
 msgid "Type"
 msgstr ""

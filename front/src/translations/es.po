@@ -322,6 +322,9 @@ msgstr "Confianza"
 msgid "Continue"
 msgstr "Continuar"
 
+msgid "Could not load downloads"
+msgstr "No se pudieron cargar las descargas"
+
 msgid "Crashed"
 msgstr "Con error"
 
@@ -337,6 +340,9 @@ msgstr "Crear la etiqueta \"%{tagName}\""
 msgid "Create New"
 msgstr "Crear nuevo"
 
+msgid "Created"
+msgstr "Creado"
+
 msgid "Default"
 msgstr "Predeterminado"
 
@@ -351,6 +357,9 @@ msgstr "Capa de transcripción predeterminada:"
 
 msgid "Delete"
 msgstr "Eliminar"
+
+msgid "Delete \"%{label}\"? This cannot be undone."
+msgstr "¿Eliminar \"%{label}\"? Esto no se puede deshacer."
 
 msgid "Delete %{name}"
 msgstr "Eliminar %{name}"
@@ -408,6 +417,9 @@ msgstr "Descargar"
 
 msgid "Download Archive"
 msgstr "Descargar archivo"
+
+msgid "Downloads"
+msgstr "Descargas"
 
 msgid "Drag and drop files here"
 msgstr "Arrastre y suelte archivos aquí"
@@ -489,6 +501,9 @@ msgstr "expandir el menú de supervisión y uso de tareas"
 
 msgid "expand user profile menu"
 msgstr "expandir el menú de perfil de usuario"
+
+msgid "Expires"
+msgstr "Caduca"
 
 msgid "Export"
 msgstr "Exportar"
@@ -646,6 +661,9 @@ msgstr "Invitar usuarios"
 msgid "Key"
 msgstr "Clave"
 
+msgid "Label"
+msgstr "Etiqueta"
+
 msgid "Last Edited"
 msgstr "Última edición"
 
@@ -792,6 +810,9 @@ msgstr "Nombre de su nuevo modelo..."
 msgid "Name..."
 msgstr "Nombre..."
 
+msgid "Never"
+msgstr "Nunca"
+
 msgid "New Position"
 msgstr "Nueva posición"
 
@@ -806,6 +827,9 @@ msgstr "No hay tareas de documentos que mostrar."
 
 msgid "No documents to display."
 msgstr "No hay documentos que mostrar."
+
+msgid "No downloads yet. Exports and archives you queue will show up here."
+msgstr "Todavía no hay descargas. Las exportaciones y archivos que se encolen aparecerán aquí."
 
 msgid "No images to display."
 msgstr "No hay imágenes que mostrar."
@@ -1095,6 +1119,9 @@ msgstr "Iniciar sesión"
 
 msgid "Site Administration"
 msgstr "Administración del sitio"
+
+msgid "Size"
+msgstr "Tamaño"
 
 msgid "Source Image (Ctrl+2)"
 msgstr "Imagen original (Ctrl+2)"
