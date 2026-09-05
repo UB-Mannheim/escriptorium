@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 
 from users.forms import BulkInvitationForm
@@ -29,7 +29,7 @@ class MyUserCreationForm(UserCreationForm):
     expiry_date = forms.DateTimeField(
         required=False,
         widget=forms.TextInput(attrs={'type': 'date'}),
-        help_text="Optional: Set the user's account expiry date"
+        help_text=_("Optional: Set the user's account expiry date")
     )
 
     class Meta(UserCreationForm.Meta):

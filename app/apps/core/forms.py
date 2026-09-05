@@ -670,7 +670,7 @@ class SegmentForm(BootstrapFormMixin, DocumentProcessFormBase):
     model = forms.ModelChoiceField(
         queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
         label=_("Model"),
-        empty_label="default ({name})".format(name=basename(SEGMENTATION_DEFAULT_MODEL)),
+        empty_label=_("default ({name})").format(name=basename(SEGMENTATION_DEFAULT_MODEL)),
         required=False)
 
     SEGMENTATION_STEPS_CHOICES = (
@@ -1040,7 +1040,7 @@ class SegTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     model_name = forms.CharField(required=False)
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT),
                                    required=False)
-    override = forms.BooleanField(required=False, label="Overwrite existing model file")
+    override = forms.BooleanField(required=False, label=_("Overwrite existing model file"))
 
     @property
     def model_job(self):
@@ -1068,7 +1068,7 @@ class RecTrainForm(BootstrapFormMixin, TrainMixin, DocumentProcessFormBase):
     model = forms.ModelChoiceField(queryset=OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE),
                                    required=False)
     transcription = forms.ModelChoiceField(queryset=Transcription.objects.all(), required=False)
-    override = forms.BooleanField(required=False, label="Overwrite existing model file")
+    override = forms.BooleanField(required=False, label=_("Overwrite existing model file"))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1154,7 +1154,7 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class MigrateDocumentForm(BootstrapFormMixin, forms.ModelForm):
-    keep_tags = forms.BooleanField(required=False, label="Migrate with associated tags")
+    keep_tags = forms.BooleanField(required=False, label=_("Migrate with associated tags"))
 
     class Meta:
         model = Document

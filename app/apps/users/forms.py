@@ -19,7 +19,7 @@ class InvitationForm(BootstrapFormMixin, forms.ModelForm):
     expiry_date = forms.DateTimeField(
         required=False,
         widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-        help_text="Optional: set an expiry date for this user's account"
+        help_text=_("Optional: set an expiry date for this user's account")
     )
 
     class Meta:
