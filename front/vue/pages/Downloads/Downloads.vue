@@ -1,11 +1,11 @@
 <template>
     <div class="escr-downloads">
+        <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
         <p
             v-if="loading"
             class="text-muted"
-            v-translate
         >
-            Loading...
+            {{ $gettext("Loading...") }}
         </p>
         <p
             v-else-if="error"
@@ -16,9 +16,8 @@
         <p
             v-else-if="!items.length"
             class="text-muted"
-            v-translate
         >
-            No downloads yet. Exports and archives you queue will show up here.
+            {{ $gettext("No downloads yet. Exports and archives you queue will show up here.") }}
         </p>
         <table
             v-else
