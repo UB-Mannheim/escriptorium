@@ -106,12 +106,24 @@
                     <div class="new-section with-separator">
                         <ToggleButton
                             class="escr-vk-toggle"
+                            color="text"
                             size="small"
                             :checked="isVKEnabled"
-                            :on-change="toggleVK"
+                            :on-change="() => isVKEnabled = !isVKEnabled"
                         >
                             <template #button-icon>
                                 <KeyboardIcon />
+                            </template>
+                        </ToggleButton>
+                        <ToggleButton
+                            class="escr-baseline-toggle"
+                            color="text"
+                            size="small"
+                            :checked="isBaselineEditEnabled"
+                            :on-change="toggleBaselineEdit"
+                        >
+                            <template #button-icon>
+                                <PencilIcon />
                             </template>
                         </ToggleButton>
                     </div>
@@ -174,6 +186,48 @@
                                 />
                             </svg>
                         </div>
+                        <!-- Baseline editing overlay: drawn in image-pixel coordinates,
+                             the <g> transform mirrors the <img> transform set in
+                             computeImgStyles (see baselineView) -->
+                        <svg
+                            v-show="isBaselineEditEnabled && line.baseline"
+                            class="baseline-editor-overlay"
+                            :width="baselineOverlayBox.width"
+                            :height="baselineOverlayBox.height"
+                            :viewBox="baselineOverlayViewBox"
+                            @mousedown="startBaselineDrag"
+                        >
+                            <g :transform="baselineOverlayTransform">
+                                <polygon
+                                    v-if="line.mask"
+                                    :points="pointsToString(line.mask)"
+                                    fill="none"
+                                    stroke="yellow"
+                                    stroke-width="2"
+                                    vector-effect="non-scaling-stroke"
+                                />
+                                <polyline
+                                    :points="pointsToString(activeBaseline)"
+                                    fill="none"
+                                    stroke="blue"
+                                    stroke-width="2"
+                                    vector-effect="non-scaling-stroke"
+                                />
+                                <circle
+                                    v-for="(pt, idx) in activeBaseline"
+                                    :key="'bl-pt-' + idx"
+                                    :cx="pt[0]"
+                                    :cy="pt[1]"
+                                    :r="pointRadius"
+                                    fill="blue"
+                                    stroke="white"
+                                    stroke-width="2"
+                                    vector-effect="non-scaling-stroke"
+                                    class="baseline-point"
+                                    :class="{ 'dragging': dragPointIndex === idx }"
+                                />
+                            </g>
+                        </svg>
                     </div>
 
                     <!-- TODO: Refactor to not use refs (use vuex store or component data) -->
@@ -433,6 +487,7 @@ import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
 import LineVersion from "./LineVersion.vue";
 import HelpVersions from "./HelpVersions.vue";
 import HelpCompareTranscriptions from "./HelpCompareTranscriptions.vue";
+import PencilIcon from "./Icons/PencilIcon/PencilIcon.vue";
 import ToggleButton from "./ToggleButton/ToggleButton.vue";
 import TranscriptionSelector from "./TranscriptionSelector/TranscriptionSelector.vue";
 import XIcon from "./Icons/XIcon/XIcon.vue";
@@ -447,6 +502,7 @@ export default Vue.extend({
         LineVersion,
         HelpVersions,
         HelpCompareTranscriptions,
+        PencilIcon,
         ToggleButton,
         TranscriptionSelector,
         XIcon,
@@ -462,7 +518,15 @@ export default Vue.extend({
     },
     data() {
         return {
-            isVKEnabled: false
+            isVKEnabled: false,
+            isBaselineEditEnabled: false,
+            // view transform of the line preview image, set by computeImgStyles:
+            // left/top/angle mirror the <img> transform, ratio is the display scale
+            baselineView: null,
+            // baseline (in image coordinates) while a point is being dragged
+            baselineDraft: null,
+            dragPointIndex: null,
+            dragOffset: null,
         }
     },
     computed: {
@@ -520,9 +584,37 @@ export default Vue.extend({
                 }
             }
         },
+        activeBaseline() {
+            return this.baselineDraft || (this.line && this.line.baseline) || [];
+        },
+        baselineOverlayBox() {
+            const view = this.baselineView;
+            if (!view || !this.image || !this.image.size) return { width: 0, height: 0 };
+            return {
+                width: this.image.size[0] * view.ratio,
+                height: this.image.size[1] * view.ratio,
+            };
+        },
+        baselineOverlayViewBox() {
+            if (!this.image || !this.image.size) return "0 0 100 100";
+            return `0 0 ${this.image.size[0]} ${this.image.size[1]}`;
+        },
+        baselineOverlayTransform() {
+            const view = this.baselineView;
+            if (!view || !this.image || !this.image.size) return "";
+            const [imgW, imgH] = this.image.size;
+            // the <img> transform (translate + rotate about the image center, in
+            // display pixels) expressed in image-pixel units, hence the /ratio
+            return `translate(${view.left / view.ratio} ${view.top / view.ratio}) rotate(${view.angle}, ${imgW / 2}, ${imgH / 2})`;
+        },
+        pointRadius() {
+            const view = this.baselineView;
+            return view ? 6 / view.ratio : 6;
+        },
     },
     watch: {
         line() {
+            this.cancelBaselineDrag();
             this.computeStyles();
         },
         enabledVKs() {
@@ -557,6 +649,7 @@ export default Vue.extend({
         $(this.$refs.transModal).modal("hide");
     },
     destroyed() {
+        this.cancelBaselineDrag();
         // unbind all events to avoid duplicating them
         $(document).off("hide.bs.modal");
         $(document).off("show.bs.modal");
@@ -598,6 +691,98 @@ export default Vue.extend({
             $(this.$refs.transModal).modal("hide");
         },
 
+        toggleBaselineEdit(event) {
+            this.isBaselineEditEnabled = event.target.checked;
+        },
+
+        // convert a mouse event to image-pixel coordinates by inverting the
+        // transform the preview image is displayed with (see computeImgStyles)
+        eventToImageCoords(event) {
+            const view = this.baselineView;
+            const container = this.$refs.modalImgContainer;
+            if (!view || !container || !this.image || !this.image.size) return null;
+            const rect = container.getBoundingClientRect();
+            const [imgW, imgH] = this.image.size;
+            const px = (event.clientX - rect.left - view.left) / view.ratio;
+            const py = (event.clientY - rect.top - view.top) / view.ratio;
+            const rad = (-view.angle * Math.PI) / 180;
+            const dx = px - imgW / 2;
+            const dy = py - imgH / 2;
+            return {
+                x: imgW / 2 + dx * Math.cos(rad) - dy * Math.sin(rad),
+                y: imgH / 2 + dx * Math.sin(rad) + dy * Math.cos(rad),
+            };
+        },
+
+        pointsToString(points) {
+            return (points || []).map((pt) => `${pt[0]},${pt[1]}`).join(" ");
+        },
+
+        startBaselineDrag(event) {
+            if (event.button !== 0 || !this.baselineView) return;
+            if (!this.line || !this.line.baseline) return;
+            const pos = this.eventToImageCoords(event);
+            if (!pos) return;
+            const baseline = this.line.baseline;
+            let index = -1;
+            let nearest = Infinity;
+            baseline.forEach((pt, i) => {
+                const dist = Math.hypot(pt[0] - pos.x, pt[1] - pos.y);
+                if (dist < nearest) {
+                    nearest = dist;
+                    index = i;
+                }
+            });
+            // grab radius of 25 screen pixels
+            if (index < 0 || nearest * this.baselineView.ratio > 25) return;
+            this.baselineDraft = baseline.map((pt) => [pt[0], pt[1]]);
+            this.dragPointIndex = index;
+            this.dragOffset = {
+                x: baseline[index][0] - pos.x,
+                y: baseline[index][1] - pos.y,
+            };
+            document.addEventListener("mousemove", this.onBaselineDragMove);
+            document.addEventListener("mouseup", this.onBaselineDragEnd);
+            event.preventDefault();
+        },
+
+        onBaselineDragMove(event) {
+            if (this.dragPointIndex === null || !this.baselineDraft) return;
+            const pos = this.eventToImageCoords(event);
+            if (!pos) return;
+            this.baselineDraft[this.dragPointIndex] = [
+                Math.round(pos.x + this.dragOffset.x),
+                Math.round(pos.y + this.dragOffset.y),
+            ];
+        },
+
+        onBaselineDragEnd() {
+            const draft = this.baselineDraft;
+            this.cancelBaselineDrag();
+            if (!draft) return;
+            const original = this.line && this.line.baseline;
+            if (!original || JSON.stringify(draft) === JSON.stringify(original)) return;
+            this.$store
+                .dispatch("lines/bulkUpdate", [{
+                    pk: this.line.pk,
+                    baseline: draft,
+                    mask: this.line.mask,
+                    region: this.line.region,
+                    type: this.line.type,
+                }])
+                .catch((err) => {
+                    console.error("Failed to update baseline:", err);
+                });
+        },
+
+        cancelBaselineDrag() {
+            document.removeEventListener("mousemove", this.onBaselineDragMove);
+            document.removeEventListener("mouseup", this.onBaselineDragEnd);
+            this.baselineDraft = null;
+            this.dragPointIndex = null;
+            this.dragOffset = null;
+        },
+
         editLine(direction) {
             // making sure the line is saved (it isn't in case of shortcut usage)
             this.localTranscription = this.$refs.transInput.value;
@@ -632,27 +817,39 @@ export default Vue.extend({
         },
 
         getLineAngle() {
+            if (!this.line) return 0;
             let p1, p2;
-            if (this.line.baseline) {
+            if (this.line.baseline && this.line.baseline.length >= 2) {
                 p1 = this.line.baseline[0];
                 p2 = this.line.baseline[this.line.baseline.length-1];
-            } else {
+            } else if (this.line.mask && this.line.mask.length > 0) {
                 // fake baseline from left most to right most points in mask
                 p1 = this.line.mask.reduce((minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt);
                 p2 = this.line.mask.reduce((maxPt, curPt) => (curPt[0] > maxPt[0]) ? curPt : maxPt);
+            } else {
+                return 0;
             }
 
             return Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180 / Math.PI;
         },
 
         getRotatedLineBBox() {
+            // Guard against this.line or this.image being undefined during rapid line changes
+            if (!this.line || !this.image) {
+                return {width: 100, height: 50, top: 0, left: 0, angle: 0};
+            }
+
             // create temporary polygon to calculate the line bounding box
-            if (this.line.mask) {
-                var maskPoints = this.line.mask.map(
-                    (pt) => Math.round(pt[0])+ ","+
-                        Math.round(pt[1])).join(" ");
+            let maskPoints = "";
+            if (this.line.mask && this.line.mask.length > 0) {
+                maskPoints = this.line.mask.map(
+                    (pt) => {
+                        if (!pt) return "0,0";
+                        return Math.round(pt[0])+ ","+ Math.round(pt[1]);
+                    }).join(" ");
             } else {
-                // TODO
+                // No mask available - return a default bbox
+                return {width: 100, height: 50, top: 0, left: 0, angle: 0};
             }
             let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             let tmppoly = document.createElementNS("http://www.w3.org/2000/svg",
@@ -682,6 +879,9 @@ export default Vue.extend({
         },
 
         computeImgStyles(bbox, ratio, lineHeight, hContext) {
+            // Guard against this.line being undefined during rapid line changes
+            if (!this.line) return;
+
             let modalImgContainer = this.$refs.modalImgContainer;
             let img = modalImgContainer.querySelector("img#line-img");
 
@@ -716,7 +916,7 @@ export default Vue.extend({
 
             // Overlay
             let overlay = modalImgContainer.querySelector(".overlay");
-            if (this.line.mask) {
+            if (this.line?.mask) {
                 let maskPoints = this.line.mask.map(
                     (pt) => Math.round(pt[0]*ratio)+ ","+
                         Math.round(pt[1]*ratio)).join(" ");
@@ -731,6 +931,14 @@ export default Vue.extend({
                 // TODO: fake mask?!
                 overlay.classList.remove("show");
             }
+
+            // remember the view transform for the baseline editing overlay
+            this.baselineView = {
+                left,
+                top,
+                angle: bbox.angle,
+                ratio,
+            };
         },
 
         computeInputStyles(bbox, ratio, lineHeight, hContext) {
