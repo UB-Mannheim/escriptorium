@@ -80,3 +80,7 @@ DEBUG_TOOLBAR_PANELS = [
 
 # Uncomment the following line to disable alignment tempfile cleanup (will use extra space)
 # KEEP_ALIGNMENT_TEMPFILES = True
+
+# Matomo web analytics: URL of the Matomo installation and the site id.
+# MATOMO_URL = 'https://example.org/matomo/'
+# MATOMO_SITE_ID = '1'
