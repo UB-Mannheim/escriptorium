@@ -82,7 +82,10 @@ Object.defineProperty(store, "dispatch", {
 
 // Install vue-gettext and seed the locale store with the active language.
 // We do this *after* the store exists so that installGettext can commit
-// the initial language into `state.locale.current`.
-installGettext(store);
+// the initial language into `state.locale.current`. The initial
+// language's catalog is fetched on demand, so this returns a promise:
+// page entries must await `gettextReady` before mounting a Vue root so
+// the first render is already translated.
+export const gettextReady = installGettext(store);
 
 export default store;
