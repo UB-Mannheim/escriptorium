@@ -32,3 +32,5 @@ schema.yaml
 .vscode
 *.mo
 /front/src/translations/*.json
+/packaging/macos/build/
+/packaging/macos/.cache/
