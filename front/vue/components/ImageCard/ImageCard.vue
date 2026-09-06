@@ -194,12 +194,12 @@
                             >
                                 {{ workflowLabel(part.workflow.segment) }}
                             </span>
+                                <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
                             <span
                                 v-else
                                 class="status"
-                                v-translate
                             >
-                                Not initiated
+                                {{ $gettext("Not initiated") }}
                             </span>
                         <!-- TODO: Uncomment when task date info in API -->
                         <!-- <span class="date">
@@ -231,12 +231,12 @@
                             >
                                 {{ workflowLabel(part.workflow.transcribe) }}
                             </span>
+                                <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
                             <span
                                 v-else
                                 class="status"
-                                v-translate
                             >
-                                Not initiated
+                                {{ $gettext("Not initiated") }}
                             </span>
                         <!-- <span class="date">
                             {{ part.transcribe_date|formatDate }}
@@ -267,12 +267,12 @@
                             >
                                 {{ workflowLabel(part.workflow.align) }}
                             </span>
+                                <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
                             <span
                                 v-else
                                 class="status"
-                                v-translate
                             >
-                                Not initiated
+                                {{ $gettext("Not initiated") }}
                             </span>
                         <!-- <span class="date">
                             {{ part.align_date|formatDate }}

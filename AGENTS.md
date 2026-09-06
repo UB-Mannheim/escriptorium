@@ -84,6 +84,7 @@ comments) and delete `#~` obsolete entries before committing.
 - Frontend dependencies live in `front/package.json` + `front/package-lock.json`; install with `npm ci --prefix front` (or `npm upgrade` to refresh within semver ranges, then commit the new lock file)
 - Builds: `npm run build --prefix front` (dev), `npm run production --prefix front` (deploy)
 - Jest: `npm test --prefix front` — two suites (`store/lines.spec.js`, `components/ImportImagesForm.spec.js`) fail to load under jsdom because `document.currentScript` is null at module load in `front/src/scriptname.js`; this is a known, pre-existing limitation
+- **`v-translate` vs `$gettext()`**: the vue-gettext `v-translate` directive rewrites the element's `innerHTML` in its `bind` hook, orphaning the text node Vue's vdom tracks. If an element's text can change after mount (a `v-if`/`v-else` branch swap on the same tag, or interpolation), use `{{ $gettext("...") }}` interpolation instead — otherwise the visible text freezes at its initial value with no console error. `v-translate` is fine for elements whose text never changes. Keep a short comment at such spots.
 
 ### Non-root / subpath installation
 
