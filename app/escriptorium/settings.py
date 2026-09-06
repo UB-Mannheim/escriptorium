@@ -304,7 +304,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 150 * 1024 * 1024  # value in bytes (so 150Mb)
 FRONTEND_DIR = os.getenv('FRONTEND_DIR', os.path.join(BASE_DIR, '..', 'front', 'dist'))
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.getenv('STATIC_ROOT', os.path.join(BASE_DIR, 'static'))
 STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
     os.path.join(BASE_DIR, 'homepage'),
@@ -320,7 +320,7 @@ if CUSTOM_CONTRIBUTORS:
     STATICFILES_DIRS.append(os.path.join(BASE_DIR, 'contributors'))
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
 
 LOGGING = {
     'version': 1,
@@ -344,7 +344,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(PROJECT_ROOT, 'logs', 'error.log'),
+            'filename': os.getenv('LOG_FILE', os.path.join(PROJECT_ROOT, 'logs', 'error.log')),
         },
         'console': {
             'level': 'DEBUG',
