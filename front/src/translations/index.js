@@ -12,12 +12,15 @@
 //      or `msgmerge` + manual editing.
 //   4. `gettext-compile` converts each .po into a JSON catalog (see
 //      `npm run gettext:compile`).
-//   5. The catalogs are required from `./catalogs.js` and loaded by
-//      `installGettext` below at runtime.
+//   5. The catalogs are loaded by `installGettext` below, on demand.
+//
+// Catalogs are fetched per language (see ./catalogs.js) instead of being
+// bundled statically: each language is its own chunk, downloaded only when
+// that language is actually used.
 
 import Vue from "vue";
 import Gettext from "vue-gettext";
-import catalogs from "./catalogs.js";
+import { hasCatalog, loadCatalog } from "./catalogs.js";
 
 export const DEFAULT_LANGUAGE = "en";
 
@@ -29,54 +32,77 @@ export const availableLanguages = {
     he: "עברית",
 };
 
+// The single translations object owned by vue-gettext. Catalogs are added
+// here as they load; the plugin reads it on every lookup, so languages
+// loaded later on become available without reinstalling the plugin.
+const translations = {};
+
 function readInitialLanguage() {
     // 1. User's previous choice (localStorage).
     try {
         const stored = window.localStorage.getItem("escriptorium-language");
-        if (stored && catalogs[stored]) return stored;
+        if (stored && hasCatalog(stored)) return stored;
     } catch (_) {
-        // localStorage may be unavailable (e.g. private mode).
+        // localStorage may be unavailable (e.g. in private mode).
     }
     // 2. <html lang="…"> rendered by Django (see app/escriptorium/templates/base.html).
     const htmlLang = (document.documentElement.lang || "").split("-")[0];
-    if (htmlLang && catalogs[htmlLang]) return htmlLang;
+    if (htmlLang && hasCatalog(htmlLang)) return htmlLang;
     return DEFAULT_LANGUAGE;
 }
 
+let installPromise = null;
+
+// Load the initial language's catalog and install the plugin. Returns a
+// promise that callers must await before mounting a Vue root, so the first
+// render is already translated (no English flash followed by a re-render).
 export function installGettext(store) {
+    if (installPromise) return installPromise;
     const language = readInitialLanguage();
-    Vue.use(Gettext, {
-        availableLanguages,
-        defaultLanguage: DEFAULT_LANGUAGE,
-        translations: catalogs,
-        silent: true, // don't spam console with missing-translation warnings
-    });
-    // The plugin has no option for the initial language; it always starts on
-    // defaultLanguage. Override it right after installation.
-    Vue.config.language = language;
+    installPromise = loadCatalog(language)
+        // A failed chunk load falls back to the untranslated (English)
+        // strings instead of blocking the page.
+        .catch(() => ({}))
+        .then((catalog) => {
+            translations[language] = catalog;
+            Vue.use(Gettext, {
+                availableLanguages,
+                defaultLanguage: DEFAULT_LANGUAGE,
+                translations,
+                silent: true, // don't spam console with missing-translation warnings
+            });
+            // The plugin has no option for the initial language; it always
+            // starts on defaultLanguage. Override it right after installation.
+            Vue.config.language = language;
 
-    // Seed the locale store with the active language. The store may
-    // be omitted (e.g. on pages that don't use the locale module).
-    if (store && store.commit) {
-        store.commit("locale/SET_LANGUAGE", language);
-    }
+            // Seed the locale store with the active language. The store may
+            // be omitted (e.g. on pages that don't use the locale module).
+            if (store && store.commit) {
+                store.commit("locale/SET_LANGUAGE", language);
+            }
 
-    return language;
+            return language;
+        });
+    return installPromise;
 }
 
 // Change the active UI language at runtime. vue-gettext keeps the active
 // language on Vue.config.language and re-renders every component that
-// uses $gettext / v-translate when that value changes.
+// uses $gettext / v-translate when that value changes. Returns a promise
+// that resolves once the language's catalog has been loaded.
 export function setLanguage(code) {
-    if (!catalogs[code]) {
+    if (!hasCatalog(code)) {
         // Unknown language – fall back to the default. The English strings
         // embedded in the source serve as msgids in this case.
         code = DEFAULT_LANGUAGE;
     }
-    try {
-        window.localStorage.setItem("escriptorium-language", code);
-    } catch (_) {
-        // localStorage may be unavailable.
-    }
-    Vue.config.language = code;
+    return loadCatalog(code).then((catalog) => {
+        translations[code] = catalog;
+        try {
+            window.localStorage.setItem("escriptorium-language", code);
+        } catch (_) {
+            // localStorage may be unavailable (e.g. in private mode).
+        }
+        Vue.config.language = code;
+    });
 }
