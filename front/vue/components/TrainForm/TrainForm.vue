@@ -80,15 +80,19 @@
             role="alert"
             aria-live="polite"
         >
+            <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
             <span
                 v-if="
                     !currentCollection.id &&
-                        currentCollection.items &&
-                        currentCollection.items.length > 0
+                    currentCollection.items &&
+                    currentCollection.items.length > 0
                 "
-                v-translate
             >
-                You must save this selection as a collection before you can train a model.
+                {{
+                    $gettext(
+                        "You must save this selection as a collection before you can train a model.",
+                    )
+                }}
             </span>
             <span
                 v-else-if="
@@ -96,9 +100,12 @@
                         (!currentCollection.items ||
                             currentCollection.items.length === 0)
                 "
-                v-translate
             >
-                You must select a collection of document parts in order to train a model.
+                {{
+                    $gettext(
+                        "You must select a collection of document parts in order to train a model.",
+                    )
+                }}
             </span>
         </div>
     </div>
