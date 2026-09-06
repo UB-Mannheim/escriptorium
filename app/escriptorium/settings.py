@@ -125,6 +125,7 @@ TEMPLATES = [
                 'escriptorium.context_processors.enable_tei_export',
                 'escriptorium.context_processors.models_version_retention',
                 'escriptorium.context_processors.esc_languages',
+                'escriptorium.context_processors.matomo',
             ],
         },
     },
@@ -431,6 +432,11 @@ THUMBNAIL_ALIASES = {
 
 
 ENABLE_COOKIE_CONSENT = os.getenv('ENABLE_COOKIE_CONSENT', True)
+
+# Optional Matomo (PIWIK) web analytics, enabled when both values are set.
+# MATOMO_URL is the URL of the Matomo installation, e.g. 'https://example.org/matomo/'.
+MATOMO_URL = os.getenv('MATOMO_URL', '')
+MATOMO_SITE_ID = os.getenv('MATOMO_SITE_ID', '')
 
 VERSIONING_DEFAULT_SOURCE = 'eScriptorium'
 
