@@ -46,3 +46,8 @@ def models_version_retention(request):
 
 def esc_languages(request):
     return {'ESC_LANGUAGES': getattr(settings, 'ESC_LANGUAGES', ['en'])}
+
+
+def matomo(request):
+    return {'MATOMO_URL': getattr(settings, 'MATOMO_URL', '').rstrip('/'),
+            'MATOMO_SITE_ID': getattr(settings, 'MATOMO_SITE_ID', '')}

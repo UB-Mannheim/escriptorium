@@ -128,3 +128,7 @@ TEXT_ALIGNMENT_ENABLED = True
 
 # Uncomment the following line to disable alignment tempfile cleanup (will use extra space)
 # KEEP_ALIGNMENT_TEMPFILES = True
+
+# Matomo web analytics: URL of the Matomo installation and the site id.
+MATOMO_URL = 'https://ub-monitor.bib.uni-mannheim.de/matomo/'
+MATOMO_SITE_ID = '24'
