@@ -1,12 +1,14 @@
 import Vue from "vue";
-import store from "../store";
+import store, { gettextReady } from "../store";
 import GlobalNavigation from "../components/GlobalNavigation/GlobalNavigation.vue";
 import "../index.css";
 
-export default new Vue({
-    el: "#vue-global-nav",
-    store,
-    components: {
-        "global-navigation": GlobalNavigation,
-    },
-});
+gettextReady.then(() =>
+    new Vue({
+        el: "#vue-global-nav",
+        store,
+        components: {
+            "global-navigation": GlobalNavigation,
+        },
+    })
+);

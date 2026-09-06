@@ -1,10 +1,13 @@
-import { setLanguage as setRuntimeLanguage } from "../../../src/translations/index.js";
+import {
+    availableLanguages,
+    setLanguage as setRuntimeLanguage,
+} from "../../../src/translations/index.js";
 
 export default {
     namespaced: true,
     state: () => ({
         current: "en",
-        available: ["en", "fr", "de"],
+        available: Object.keys(availableLanguages),
     }),
     mutations: {
         SET_LANGUAGE(state, code) {
@@ -15,8 +18,9 @@ export default {
     },
     actions: {
         setLanguage({ commit }, code) {
-            setRuntimeLanguage(code);
-            commit("SET_LANGUAGE", code);
+            return setRuntimeLanguage(code).then(() => {
+                commit("SET_LANGUAGE", code);
+            });
         },
     },
 };
