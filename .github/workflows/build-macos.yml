@@ -1,0 +1,42 @@
+name: Build macOS installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "VERSION_DATE override (default: UBMA-<base release> from git describe)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest-arm64
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build
+        id: build
+        env:
+          VERSION_DATE: ${{ inputs.version }}
+        run: |
+          packaging/macos/build.sh --test
+          echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "version=$(cat packaging/macos/build/dist/eScriptorium.app/Contents/Resources/version.txt)" >> "$GITHUB_OUTPUT"
+      # GitHub Actions artifacts are always downloaded as a zip, so the DMG
+      # is attached to a release instead for a direct .dmg download.
+      - name: Attach DMG to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "macos-${{ steps.build.outputs.short_sha }}-${{ github.run_number }}"
+          name: "macOS build ${{ steps.build.outputs.short_sha }} (${{ steps.build.outputs.version }})"
+          body: "Self-contained eScriptorium.app (Apple Silicon), built by the 'Build macOS installer' workflow."
+          make_latest: false
+          files: packaging/macos/build/eScriptorium-*.dmg
