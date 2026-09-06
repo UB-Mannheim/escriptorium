@@ -1,0 +1,311 @@
+#!/bin/bash
+#
+# Launcher for the self-contained eScriptorium macOS bundle.
+#
+# Usage:
+#   eScriptorium            start (if needed) and open the web interface
+#   eScriptorium start      start without opening a browser
+#   eScriptorium stop       stop all services
+#   eScriptorium status     show service status
+#   eScriptorium logs       follow the launcher log
+#   eScriptorium reset      stop and delete all local data (asks for confirmation)
+#
+# All user data lives in:
+#   ~/Library/Application Support/eScriptorium
+
+set -u
+
+CONTENTS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+RES="$CONTENTS_DIR/Resources"
+DATA_DIR="${ESCR_DATA_DIR:-$HOME/Library/Application Support/eScriptorium}"
+LOG_DIR="$DATA_DIR/logs"
+PID_DIR="$DATA_DIR/pids"
+
+WEB_HOST=127.0.0.1
+WEB_PORT="${ESCR_WEB_PORT:-8000}"
+PG_PORT="${ESCR_PG_PORT:-5433}"
+REDIS_PORT="${ESCR_REDIS_PORT:-6380}"
+WEB_URL="http://$WEB_HOST:$WEB_PORT/"
+
+PY="$RES/python/bin/python"
+APP_DIR="$RES/escriptorium/app"
+PG_BIN="$RES/postgres/bin"
+JRE_HOME="$RES/jre/Contents/Home"
+VERSION_DATE="$(cat "$RES/version.txt" 2>/dev/null || echo unknown)"
+
+ensure_dirs() {
+    mkdir -p "$DATA_DIR" "$LOG_DIR" "$PID_DIR" "$DATA_DIR/pgdata" \
+        "$DATA_DIR/pgsocket" "$DATA_DIR/media" "$DATA_DIR/redis"
+}
+
+log() {
+    echo "[eScriptorium] $*" | tee -a "$LOG_DIR/launcher.log"
+}
+
+# Log a fatal error and show a macOS alert (the launcher runs without a
+# terminal when started by double-clicking the app).
+die() {
+    log "ERROR: $1"
+    osascript -e "display alert \"eScriptorium\" message \"$1\" as warning" >/dev/null 2>&1 || true
+    exit 1
+}
+
+pid_alive() {
+    [ -f "$PID_DIR/$1.pid" ] && kill -0 "$(cat "$PID_DIR/$1.pid")" 2>/dev/null
+}
+
+port_in_use() {
+    nc -z "$WEB_HOST" "$1" 2>/dev/null
+}
+
+stop_service() {
+    if pid_alive "$1"; then
+        kill "$(cat "$PID_DIR/$1.pid")" 2>/dev/null || true
+    fi
+    rm -f "$PID_DIR/$1.pid"
+}
+
+app_env() {
+    export SECRET_KEY="$(cat "$DATA_DIR/secret.key")"
+    export DEBUG=True
+    export SQL_HOST="$WEB_HOST" SQL_PORT="$PG_PORT"
+    export POSTGRES_DB=escriptorium POSTGRES_USER=postgres
+    export REDIS_HOST="$WEB_HOST" REDIS_PORT="$REDIS_PORT"
+    export KRAKEN_TRAINING_DEVICE="${ESCR_KRAKEN_DEVICE:-mps}" KRAKEN_INFERENCE_DEVICE="${ESCR_KRAKEN_DEVICE:-mps}"
+    export TEXT_ALIGNMENT=True
+    export JAVA_HOME="$JRE_HOME"
+    export PATH="$JRE_HOME/bin:$PATH"
+    export VERSION_DATE="$VERSION_DATE"
+    export ESC_LANGUAGES="en,de,fr,es,he"
+    export FRONTEND_DIR="$RES/escriptorium/front/dist"
+    export MEDIA_ROOT="$DATA_DIR/media"
+    export STATIC_ROOT="$DATA_DIR/static"
+    export LOG_FILE="$LOG_DIR/error.log"
+}
+
+bootstrap() {
+    if [ ! -f "$DATA_DIR/secret.key" ]; then
+        "$PY" -c 'import secrets; print(secrets.token_urlsafe(50))' > "$DATA_DIR/secret.key"
+        chmod 600 "$DATA_DIR/secret.key"
+        log "bootstrap: generated SECRET_KEY"
+    fi
+    if [ ! -f "$DATA_DIR/pgdata/PG_VERSION" ]; then
+        log "bootstrap: initializing PostgreSQL data directory (first run)"
+        LC_ALL=C "$PG_BIN/initdb" -D "$DATA_DIR/pgdata" -U postgres -A trust \
+            > "$LOG_DIR/initdb.log" 2>&1 \
+            || { tail -20 "$LOG_DIR/initdb.log" >&2; die "PostgreSQL initialization failed (see $LOG_DIR/initdb.log)"; }
+    fi
+}
+
+start_redis() {
+    if pid_alive redis; then
+        return
+    fi
+    if port_in_use "$REDIS_PORT"; then
+        die "Redis port $REDIS_PORT is already in use by another process"
+    fi
+    "$RES/redis/redis-server" --port "$REDIS_PORT" --bind "$WEB_HOST" \
+        --dir "$DATA_DIR/redis" --save "" --logfile "$LOG_DIR/redis.log" &
+    echo $! > "$PID_DIR/redis.pid"
+    log "redis: started on $WEB_HOST:$REDIS_PORT"
+}
+
+start_postgres() {
+    if [ -f "$DATA_DIR/pgdata/postmaster.pid" ]; then
+        local pmpid
+        pmpid="$(head -1 "$DATA_DIR/pgdata/postmaster.pid")"
+        if kill -0 "$pmpid" 2>/dev/null; then
+            return
+        fi
+    fi
+    if "$PG_BIN/pg_isready" -h "$WEB_HOST" -p "$PG_PORT" -q 2>/dev/null; then
+        die "PostgreSQL port $PG_PORT is already in use by another process"
+    fi
+    # LC_ALL=C keeps postgres single-threaded on macOS (its locale handling
+    # can spawn threads, which the postmaster refuses) and uses English logs.
+    LC_ALL=C "$PG_BIN/pg_ctl" -D "$DATA_DIR/pgdata" -l "$LOG_DIR/postgres.log" \
+        -o "-p $PG_PORT -c listen_addresses=$WEB_HOST -k \"$DATA_DIR/pgsocket\"" -w start \
+        || { tail -20 "$LOG_DIR/postgres.log" >&2; die "PostgreSQL failed to start (see $LOG_DIR/postgres.log)"; }
+    log "postgres: started on $WEB_HOST:$PG_PORT"
+}
+
+create_db() {
+    if "$PG_BIN/psql" -h "$WEB_HOST" -p "$PG_PORT" -U postgres -d postgres -tAc \
+        "SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'" 2>/dev/null | grep -q 1; then
+        return
+    fi
+    "$PG_BIN/createdb" -h "$WEB_HOST" -p "$PG_PORT" -U postgres "$POSTGRES_DB" \
+        || die "Creating the database failed"
+    log "created database $POSTGRES_DB"
+}
+
+import_default_model() {
+    local model="$RES/models/german_print.mlmodel"
+    [ -f "$model" ] || return
+    (cd "$APP_DIR" && DEFAULT_MODEL_FILE="$model" "$PY" manage.py shell -c '
+import os
+from django.core.files import File
+from core.models import OcrModel
+from users.models import User
+
+if OcrModel.objects.filter(job=OcrModel.MODEL_JOB_RECOGNIZE).exists():
+    raise SystemExit
+with open(os.environ["DEFAULT_MODEL_FILE"], "rb") as f:
+    m = OcrModel(name="german_print", job=OcrModel.MODEL_JOB_RECOGNIZE, public=True)
+    m.owner = User.objects.get(username="admin")
+    m.file.save("german_print.mlmodel", File(f), save=False)
+    m.file_size = os.path.getsize(os.environ["DEFAULT_MODEL_FILE"])
+    m.save()
+print("imported default recognition model german_print")
+') >> "$LOG_DIR/launcher.log" 2>&1 || log "warning: importing the default recognition model failed"
+}
+
+start_celery() {
+    if pid_alive celery; then
+        return
+    fi
+    (cd "$APP_DIR" && exec env OMP_NUM_THREADS=2 "$PY" -m celery -A escriptorium worker -l INFO \
+        -Q default,live,low-priority,gpu,intensive-inference,jvm \
+        -c 2 --max-tasks-per-child=10) >> "$LOG_DIR/celery.log" 2>&1 &
+    echo $! > "$PID_DIR/celery.pid"
+    sleep 3
+    pid_alive celery || { tail -20 "$LOG_DIR/celery.log" >&2; die "Celery worker failed to start (see $LOG_DIR/celery.log)"; }
+    log "celery: worker started"
+}
+
+pick_free_port() {
+    local p
+    for p in "$1" 8001 8002 8003 8004 8005 8006 8007 8008 8009 8010; do
+        if ! port_in_use "$p"; then
+            echo "$p"
+            return 0
+        fi
+    done
+    return 1
+}
+
+start_web() {
+    if pid_alive web; then
+        if [ -f "$PID_DIR/web.port" ]; then
+            WEB_PORT="$(cat "$PID_DIR/web.port")"
+            WEB_URL="http://$WEB_HOST:$WEB_PORT/"
+        fi
+        return
+    fi
+    local port
+    port="$(pick_free_port "$WEB_PORT")" || die "No free port in range $WEB_PORT-8010 for the web server"
+    WEB_PORT="$port"
+    WEB_URL="http://$WEB_HOST:$port/"
+    (cd "$APP_DIR" && exec "$PY" manage.py runserver "$WEB_HOST:$WEB_PORT" --noreload) \
+        >> "$LOG_DIR/web.log" 2>&1 &
+    echo $! > "$PID_DIR/web.pid"
+    echo "$port" > "$PID_DIR/web.port"
+    log "web: started on $WEB_HOST:$WEB_PORT"
+}
+
+start_agent() {
+    local agent="$CONTENTS_DIR/MacOS/eScriptoriumAgent"
+    [ -x "$agent" ] || return
+    if [ -f "$PID_DIR/agent.pid" ] && kill -0 "$(cat "$PID_DIR/agent.pid")" 2>/dev/null; then
+        return
+    fi
+    ESCR_DATA_DIR="$DATA_DIR" ESCR_WEB_PORT="$WEB_PORT" ESCR_PG_PORT="$PG_PORT" \
+        ESCR_REDIS_PORT="$REDIS_PORT" "$agent" >/dev/null 2>&1 &
+    log "menu bar agent started"
+}
+
+wait_for_web() {
+    local i
+    for i in $(seq 1 60); do
+        if curl -fsS "$WEB_URL"health >/dev/null 2>&1; then
+            return
+        fi
+        sleep 1
+    done
+    tail -30 "$LOG_DIR/web.log" 2>/dev/null >&2
+    die "The web server did not come up (see $LOG_DIR/web.log)"
+}
+
+start() {
+    ensure_dirs
+    bootstrap
+    app_env
+    start_redis
+    start_postgres
+    create_db
+    (cd "$APP_DIR" && "$PY" manage.py migrate --noinput) >> "$LOG_DIR/migrate.log" 2>&1 \
+        || { tail -30 "$LOG_DIR/migrate.log" >&2; die "Database migrations failed (see $LOG_DIR/migrate.log)"; }
+    import_default_model
+    start_celery
+    start_web
+    wait_for_web
+    start_agent
+    log "eScriptorium $VERSION_DATE is running at $WEB_URL"
+}
+
+stop() {
+    ensure_dirs
+    log "stopping eScriptorium"
+    stop_service web
+    stop_service celery
+    stop_service redis
+    if [ -f "$DATA_DIR/pgdata/PG_VERSION" ]; then
+        LC_ALL=C "$PG_BIN/pg_ctl" -D "$DATA_DIR/pgdata" -m fast -w stop >> "$LOG_DIR/launcher.log" 2>&1 || true
+    fi
+    log "stopped"
+}
+
+status() {
+    ensure_dirs
+    echo "eScriptorium $VERSION_DATE"
+    echo "data directory: $DATA_DIR"
+    for svc in redis postgres celery web; do
+        if [ "$svc" = "postgres" ]; then
+            if "$PG_BIN/pg_isready" -h "$WEB_HOST" -p "$PG_PORT" -q 2>/dev/null; then
+                echo "  postgres: running (port $PG_PORT)"
+            else
+                echo "  postgres: stopped"
+            fi
+        elif pid_alive "$svc"; then
+            echo "  $svc: running"
+        else
+            echo "  $svc: stopped"
+        fi
+    done
+}
+
+reset() {
+    ensure_dirs
+    read -r -p "Delete ALL local eScriptorium data (database, uploads, models)? [yes/N] " answer
+    [ "$answer" = "yes" ] || { echo "aborted"; exit 1; }
+    stop
+    rm -rf "$DATA_DIR"
+    log "reset: data directory deleted"
+}
+
+case "${1:-open}" in
+    open)
+        start
+        open "$WEB_URL"
+        ;;
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    logs)
+        ensure_dirs
+        exec tail -n 50 -f "$LOG_DIR/launcher.log"
+        ;;
+    reset)
+        reset
+        ;;
+    *)
+        echo "usage: $0 [open|start|stop|status|logs|reset]"
+        exit 1
+        ;;
+esac
