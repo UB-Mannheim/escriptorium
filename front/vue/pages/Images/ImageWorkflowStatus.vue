@@ -9,12 +9,12 @@
         >
             {{ workflowLabel(status) }}
         </span>
+        <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
         <span
             v-else
             class="status"
-            v-translate
         >
-            Not initiated
+            {{ $gettext("Not initiated") }}
         </span>
     </div>
 </template>
