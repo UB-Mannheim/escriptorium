@@ -1,4 +1,5 @@
 <template>
+    <!-- eslint-disable vue/no-v-html, max-len -->
     <div
         id="trans-modal"
         ref="transModal"
@@ -459,10 +460,12 @@
                             id="history"
                             class="history-show card-body collapse"
                         >
-                            <div class="d-table">
+                            <div
+                                v-if="line.currentTrans && line.currentTrans.versions"
+                                class="d-table"
+                            >
                                 <LineVersion
                                     v-for="(version, index) in line.currentTrans.versions"
-                                    v-if="line.currentTrans && line.currentTrans.versions"
                                     :key="version.revision"
                                     :previous="line.currentTrans.versions[index+1]"
                                     :version="version"
@@ -580,7 +583,10 @@ export default Vue.extend({
                 }
 
                 if (oldValue != newValue) {
-                    await this.$store.dispatch("transcriptions/updateLineTranscriptionVersion", { line: this.line, content: newValue });
+                    await this.$store.dispatch(
+                        "transcriptions/updateLineTranscriptionVersion",
+                        { line: this.line, content: newValue },
+                    );
                 }
             }
         },
@@ -623,14 +629,16 @@ export default Vue.extend({
         }
     },
     created() {
-        $(document).on("hide.bs.modal", "#trans-modal", function(ev) {
+        $(document).on("hide.bs.modal", "#trans-modal", function(_ev) {
             if (this.localTranscription != this.$refs.transInput.value
                 && !confirm("You have unsaved data, are you sure you want to close the modal?")) {
                 return false;
             }
 
             if (this.isVKEnabled) {
-                for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
+                for (const input of [...document.getElementsByClassName(
+                    "display-virtual-keyboard",
+                )])
                     input.blur();
             }
             this.$store.dispatch("lines/toggleLineEdition", null);
@@ -639,7 +647,7 @@ export default Vue.extend({
             this.$store.commit("document/setBlockShortcuts", false);
         }.bind(this));
 
-        $(document).on("show.bs.modal", "#trans-modal", function(ev) {
+        $(document).on("show.bs.modal", "#trans-modal", function(_ev) {
             this.$store.commit("document/setBlockShortcuts", true);
         }.bind(this));
 
@@ -667,7 +675,9 @@ export default Vue.extend({
         // no need to make focus on hidden input with a ttb text
         if(this.mainTextDirection != "ttb"){
             input.focus();
-        }else{  // avoid some br or other html tag for a copied text on an editable input div (vertical_text_input):
+        } else {
+            // avoid some br or other html tag for a copied text
+            // on an editable input div (vertical_text_input):
             //
             document.getElementById("vertical_text_input").addEventListener("paste", function(e) {
 
@@ -791,7 +801,8 @@ export default Vue.extend({
         },
 
         cleanHTMLTags(){
-            document.getElementById("vertical_text_input").innerHTML = document.getElementById("vertical_text_input").textContent;
+            document.getElementById("vertical_text_input").innerHTML =
+                document.getElementById("vertical_text_input").textContent;
         },
         recomputeInputCharsScaleY(){
 
@@ -801,7 +812,8 @@ export default Vue.extend({
 
             // to avoid input text outside the border box:
             if(inputHeight > wrapperHeight)
-                document.getElementById("vertical_text_input").style.transform = "scaleY("+textScaleY+")";
+                document.getElementById("vertical_text_input").style.transform =
+                    "scaleY(" + textScaleY + ")";
         },
         comparedContent(content) {
             if (!this.line.currentTrans) return;
@@ -968,7 +980,8 @@ export default Vue.extend({
             container.appendChild(ruler);
 
             let context = hContext*lineHeight;
-            let fontSize = Math.max(15, Math.round(lineHeight*0.7));  // Note could depend on the script
+            // Note could depend on the script
+            let fontSize = Math.max(15, Math.round(lineHeight*0.7));
             ruler.style.fontSize = fontSize+"px";
 
             let font = this.transcriptionFont || {};
@@ -1016,12 +1029,15 @@ export default Vue.extend({
                     let lineWidth = bbox.height*ratio;
                     var scaleY = Math.min(5,  lineWidth / ruler.clientHeight);
                     //var scaleY = Math.min(5,  lineWidth / modalImgContainer.clientHeight);
-                    //var scaleY = Math.min(5,  modalImgContainer.clientHeight / ruler.clientHeight);
-                    //var scaleY = Math.min(5,  modalImgContainer.clientHeight / textInputWrapper.clientHeight) * 0.7;
+                    //var scaleY = Math.min(5,
+                    //    modalImgContainer.clientHeight / ruler.clientHeight);
+                    //var scaleY = Math.min(5,
+                    //    modalImgContainer.clientHeight / textInputWrapper.clientHeight) * 0.7;
                     scaleY = Math.max(0.2, scaleY);
                     verticalTextInput.style.transformOrigin = "top";
                     verticalTextInput.style.transform = "scaleY("+ scaleY +")";
-                    //document.getElementById('vertical_text_input').style.height = 100/scaleY + '%'; // not needed here
+                    //document.getElementById('vertical_text_input').style.height =
+                    //    100/scaleY + '%'; // not needed here
                 } else {
                     verticalTextInput.style.transform = "none";
                     verticalTextInput.style.height = modalImgContainer.clientHeight + "px";
@@ -1061,7 +1077,8 @@ export default Vue.extend({
                 }
             }else{ // permutation of sizes for ttb text
 
-                modalImgContainer.style.height=String(window.innerHeight-230) + "px";   //   needed to fix height or ratio is nulled
+                // needed to fix height or ratio is nulled
+                modalImgContainer.style.height=String(window.innerHeight-230) + "px";
                 ratio = modalImgContainer.clientHeight / (bbox.height + (2*bbox.width*hContext));
                 let MAX_WIDTH = 30;
                 lineHeight = Math.max(30, Math.round(bbox.width*ratio));
@@ -1086,10 +1103,8 @@ export default Vue.extend({
             if (this.isVKEnabled) {
                 vks.push(this.documentId);
                 this.$store.commit("document/setEnabledVKs", vks);
-                // eslint-disable-next-line no-undef
                 userProfile.set("VK-enabled", vks);
                 for (const input of [...keyboardEnabledInputs]) {
-                    // eslint-disable-next-line no-undef
                     enableVirtualKeyboard(input);
                     input.focus();
                 }
@@ -1098,7 +1113,6 @@ export default Vue.extend({
                 this.localTranscription = this.$refs.transInput.value;
                 vks.splice(vks.indexOf(this.documentId), 1);
                 this.$store.commit("document/setEnabledVKs", vks);
-                // eslint-disable-next-line no-undef
                 userProfile.set("VK-enabled", vks);
                 for (const input of [...keyboardEnabledInputs]) {
                     input.onfocus = (e) => { e.preventDefault() };

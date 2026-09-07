@@ -72,7 +72,8 @@ export default {
     },
     created() {
         window.addEventListener("keyup", function(ev) {
-            let panels = [...document.getElementById("toggle-panels").querySelectorAll("button")].map((e)=>e.dataset.target);
+            let panels = [...document.getElementById("toggle-panels")
+                .querySelectorAll("button")].map((e) => e.dataset.target);
 
             if (ev.ctrlKey && ev.keyCode >=49 && ev.keyCode <=48+panels.length) {
                 this.togglePanel(panels[ev.keyCode-49]);

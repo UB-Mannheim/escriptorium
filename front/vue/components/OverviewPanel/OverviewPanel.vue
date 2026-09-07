@@ -251,7 +251,9 @@ export default {
             this.identifyingColumnMode = mode;
         },
         onSelectElement(item) {
-            const mutation = this.activeTab === "regions" ? "regions/setSelected" : "lines/setSelected";
+            const mutation = this.activeTab === "regions"
+                ? "regions/setSelected"
+                : "lines/setSelected";
             this.$store.commit(mutation, item.pk);
         },
         onEditLine(item) {

@@ -43,13 +43,6 @@ export default {
         EscrButton,
         XCircleFilledIcon,
     },
-    computed: {
-        visibilityNote() {
-            // eslint-disable-next-line max-len
-            const label = this.$gettext('Only the first %{count} images currently visible; click "Load More" below to load more images.');
-            return this.$gettextInterpolate(label, { count: this.parts.length });
-        },
-    },
     props: {
         /**
          * Array of images visible with the search filter applied
@@ -74,6 +67,11 @@ export default {
         },
     },
     computed: {
+        visibilityNote() {
+            // eslint-disable-next-line max-len
+            const label = this.$gettext('Only the first %{count} images currently visible; click "Load More" below to load more images.');
+            return this.$gettextInterpolate(label, { count: this.parts.length });
+        },
         ...mapState({
             loading: (state) => state.images.loading,
             parts: (state) => state.document.parts,

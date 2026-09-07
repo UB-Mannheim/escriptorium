@@ -5,16 +5,16 @@
             :value="value"
             :placeholder="placeholderText"
             :disabled="disabled"
+            class="escr-search-input-field"
             @input="handleInput"
             @keyup.enter="onEnter"
-            class="escr-search-input-field"
-        />
+        >
         <button
             v-if="value"
             :aria-label="$gettext('Clear search')"
-            @click="handleClear"
             :disabled="disabled"
             class="escr-search-input-clear"
+            @click="handleClear"
         >
             ×
         </button>

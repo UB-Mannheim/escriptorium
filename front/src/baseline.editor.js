@@ -35,7 +35,8 @@ function contrastingBW(hex) {
 }
 function polyEq(poly1, poly2) {
     // compares polygons point by point
-    let noPoly = poly1 == null && poly2 == null; // note: null is a singleton.. so we have to compare them separately
+    // note: null is a singleton.. so we have to compare them separately
+    let noPoly = poly1 == null && poly2 == null;
     let samePoly =
         poly1 &&
         poly2 &&
@@ -499,10 +500,6 @@ class SegmenterLine {
         if (this.directionHint) this.directionHint.remove();
         if (this.orderDisplay) this.orderDisplay.remove();
 
-        const lineIndex = this.segmenter.lines.findIndex(
-            (e) => e.id == this.id,
-        );
-
         this.segmenter.lines.splice(
             this.segmenter.lines.findIndex((e) => e.id == this.id),
             1,
@@ -515,7 +512,6 @@ class SegmenterLine {
 
     reverse() {
         if (this.baselinePath) {
-            let previous = { baseline: this.baseline, mask: this.mask };
             this.baselinePath.reverse();
             this.refresh();
             this.updateDataFromCanvas();
@@ -1178,8 +1174,10 @@ export class Segmenter {
                 //     if (this.copy && this.copy.length) {
                 //         var vector, lastPt, beforeLastPt;
                 //         if (this.lines.length >= 2) {
-                //             lastPt = this.lines[this.lines.length-1].baselinePath.segments[0].point;
-                //             beforeLastPt = this.lines[this.lines.length-2].baselinePath.segments[0].point;
+                //             lastPt = this.lines[this.lines.length - 1]
+                //                 .baselinePath.segments[0].point;
+                //             beforeLastPt = this.lines[this.lines.length - 2]
+                //                 .baselinePath.segments[0].point;
                 //             vector = new Point(lastPt - beforeLastPt);
                 //         } else {
                 //             vector = { x: 0, y: 30 };
@@ -1189,7 +1187,8 @@ export class Segmenter {
                 //             let newLine = this.createLine(this.copy[i][0], this.copy[i][1]);
                 //             newLine.changed = true;
                 //             if (lastPt) {
-                //                 let newLastPt = this.lines[this.lines.length-1].baselinePath.segments[0].point;
+                //                 let newLastPt = this.lines[this.lines.length - 1]
+                //                     .baselinePath.segments[0].point;
                 //                 vector = new Point(
                 //                     (newLastPt.x - newLine.baseline[0][0]) + vector.x,
                 //                     (newLastPt.y - newLine.baseline[0][1]) + vector.y
@@ -1314,7 +1313,8 @@ export class Segmenter {
         this.setColors(this.img);
         this.setCursor();
 
-        // this.raster = new Raster(this.img);  // Note: this seems to slow down everything significantly
+        // this.raster = new Raster(this.img);
+        // Note: this seems to slow down everything significantly
         // this.raster.position = view.center;
         // this.img.style.display = 'hidden';
 
@@ -1339,7 +1339,8 @@ export class Segmenter {
                 context = {};
             }
             if (context[this.idField] === undefined) {
-                // make sure the client receives a value for its id, even if it's null for a new line
+                // make sure the client receives a value for its id,
+                // even if it's null for a new line
                 context[this.idField] = null;
             }
         }
@@ -1388,7 +1389,8 @@ export class Segmenter {
                 context = {};
             }
             if (context[this.idField] === undefined) {
-                // make sure the client receives a value for its id, even if it's null for a new region
+                // make sure the client receives a value for its id,
+                // even if it's null for a new region
                 context[this.idField] = null;
             }
         }
@@ -1504,7 +1506,7 @@ export class Segmenter {
             // Creates a new control point in the region
             if (event.event.ctrlKey || this.mode != "regions" || region.locked) return;
             let location = region.polygonPath.getNearestLocation(event.point);
-            let newSegment = region.polygonPath.insert(
+            region.polygonPath.insert(
                 location.index + 1,
                 location,
             );
@@ -1567,7 +1569,7 @@ export class Segmenter {
                 let location = line.baselinePath.getNearestLocation(
                     event.point,
                 );
-                let newSegment = line.baselinePath.insert(
+                line.baselinePath.insert(
                     location.index + 1,
                     location,
                 );
@@ -1897,7 +1899,6 @@ export class Segmenter {
     startNewRegion(event) {
         this.purgeSelection();
         this.isDrawing = true;
-        var originPoint = event.point;
         let newRegion = this.createRegion(
             null,
             [
@@ -2940,17 +2941,12 @@ export class Segmenter {
                                 });
                                 clip.remove();
                                 // we are left with 3 polygons,
-                                // calculating the determinant of the normals against their center point
+                                // calculating the determinant of the normals
+                                // against their center point
                                 // to determine on which side they are.
                                 if (ng.children) {
                                     let a = intersections[i].point,
                                         b = intersections[i + 1].point;
-                                    let fp =
-                                        line.baselinePath.firstSegment.point;
-                                    let lp =
-                                        line.baselinePath.lastSegment.point;
-                                    let fp2 = split.firstSegment.point;
-                                    let lp2 = split.lastSegment.point;
                                     // if we have more than 3 we don't know what to do with them
                                     for (let n in ng.children.slice(0, 3)) {
                                         let ip = ng.children[n].bounds.center;
@@ -3060,7 +3056,8 @@ export class Segmenter {
     }
 
     frontendMergeSelection() {
-        /* This is a frontend only merge selection. It is kept here in case we want to revive it at some point,
+        /* This is a frontend only merge selection. It is kept here in
+           case we want to revive it at some point,
            for instance when we want the frontend to talk to an older backend. */
 
         /* strategy is:
@@ -3078,10 +3075,13 @@ export class Segmenter {
         }
 
         this.selection.lines.sort(function (first, second) {
-            // let vector = first.baselinePath.segments[1].point.subtract(first.baselinePath.firstSegment.point);
+            // let vector = first.baselinePath.segments[1].point.subtract(
+            //     first.baselinePath.firstSegment.point);
             // let rightToLeft = Math.cos(vector.angle/180*Math.PI) < 0;  // right to left
-            // // if (vertical) return first.baselinePath.position.y - second.baselinePath.position.y; // td
-            // if (rightToLeft) return second.baselinePath.position.x - first.baselinePath.position.x;
+            // // if (vertical) return first.baselinePath.position.y -
+            // second.baselinePath.position.y; // td
+            // if (rightToLeft) return second.baselinePath.position.x -
+            // first.baselinePath.position.x;
             // else
             return (
                 first.baselinePath.position.x - second.baselinePath.position.x
