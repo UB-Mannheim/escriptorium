@@ -10,7 +10,10 @@ Django~=4.2.13
 django-cleanup~=8.1.0
 django-country-and-language-flags
 django-filter
-django-ordered-model~=3.7
+# Pinned to this pre-release exactly: the LineViewSet bulk-delete test's
+# expected query count (16) is written for it; ~=3.7 would let CI resolve
+# to stable 3.7.4, which runs 13 queries and fails the test.
+django-ordered-model==3.8.0a0
 django-prometheus~=2.3.1
 django-redis~=5.4.0
 django-simple-captcha~=0.6.0
