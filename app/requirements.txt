@@ -6,7 +6,7 @@ channels~=4.3
 channels-redis~=4.3
 daphne~=4.2
 dfine-kraken~=0.4.3
-Django~=4.2.13
+Django~=6.1.1
 django-cleanup~=8.1.0
 django-country-and-language-flags
 django-filter
