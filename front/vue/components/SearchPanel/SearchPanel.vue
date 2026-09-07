@@ -30,8 +30,8 @@
                     name="query"
                 >
                 <span
-                    class="escr-help-text"
                     v-translate
+                    class="escr-help-text"
                 >Surround one or more terms with quotation marks to deactivate fuzziness.</span>
             </label>
         </div>
