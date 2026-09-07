@@ -42,3 +42,6 @@ updates:
         versions: [">=3.0.0"]
       - dependency-name: "django-debug-toolbar"
         versions: [">=5.0.0"]
+      # 4.2.0 breaks the seriatim (Spark) test in CI (log4j2 init failure)
+      - dependency-name: "pyspark"
+        versions: [">=4.2.0"]
