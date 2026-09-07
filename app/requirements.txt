@@ -1,5 +1,5 @@
 albumentations
-beautifulsoup4~=4.7.1
+beautifulsoup4~=4.15.0
 bleach~=5.0.1
 celery
 channels~=4.3
