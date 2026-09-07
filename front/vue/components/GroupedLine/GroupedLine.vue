@@ -149,7 +149,8 @@ export default {
                 filterCondition = (line) => line.pk !== draggingPk;
                 shouldMove = true;
             }
-            // generic move operation: splice line(s) into the correct position and recalculate ordering
+            // generic move operation: splice line(s) into the correct
+            // position and recalculate ordering
             if (shouldMove) {
                 const insertBefore = idx === -1;
                 let newPos = -1;

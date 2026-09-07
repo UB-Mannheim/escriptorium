@@ -739,7 +739,7 @@ export default {
                 }`;
                 this.$el.style.setProperty(
                     "--transcription-font-family",
-                    `"escr-transcription-font", "Noto Sans", "Resized Arabic", sans-serif`,
+                    "\"escr-transcription-font\", \"Noto Sans\", \"Resized Arabic\", sans-serif",
                 );
                 if (font.line_height) {
                     this.$el.style.setProperty(

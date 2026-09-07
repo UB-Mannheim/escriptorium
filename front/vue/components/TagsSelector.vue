@@ -28,11 +28,11 @@ export default {
             return value.slice(0, num) + (num < value.length ? "..." : "")
         }
     },
-    props: [
-        "tags",
-        "filters",
-        "tagsperdocuments",
-    ],
+    props: {
+        tags: { type: Array, required: true },
+        filters: { type: Array, required: true },
+        tagsperdocuments: { type: String, required: true },
+    },
     data () {
         return {
             tagList: []
@@ -47,7 +47,13 @@ export default {
         }
     },
     created(){
-        this.$store.commit("documentslist/setTagsListPerDocument", {docTags: this.splitNested(this.tagsperdocuments.split("¤")), update: true});
+        this.$store.commit(
+            "documentslist/setTagsListPerDocument",
+            {
+                docTags: this.splitNested(this.tagsperdocuments.split("¤")),
+                update: true,
+            },
+        );
         this.$store.commit("documentslist/setAllProjectTags", this.tags);
 
     },
@@ -60,7 +66,10 @@ export default {
             var elements = [];
             for (let i = 0; i < data.length; i++){
                 let items = data[i].split(";");
-                elements.push({"pk": parseInt(items[0]), "tags": ((items[1]) ? toNumbers(items[1].split(",")) : [])});
+                elements.push({
+                    "pk": parseInt(items[0]),
+                    "tags": ((items[1]) ? toNumbers(items[1].split(",")) : []),
+                });
             }
             return elements;
         }

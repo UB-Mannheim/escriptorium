@@ -75,7 +75,7 @@
                             :disabled="disabled"
                         >
                             <template #button-icon>
-                                <i class="fas fa-magic"></i>
+                                <i class="fas fa-magic" />
                             </template>
                         </EscrButton>
                         <template #popper>

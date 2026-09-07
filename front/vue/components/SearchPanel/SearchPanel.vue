@@ -52,6 +52,16 @@ import "./SearchPanel.css";
 export default {
     name: "EscrSearchPanel",
     components: { EscrButton },
+    props: {
+        /**
+         * Data for the search panel, an object containing searchScope, disabled, and optionally
+         * projectId and documentId.
+         */
+        data: {
+            type: Object,
+            required: true,
+        },
+    },
     computed: {
         searchAction() {
             return SCRIPT_NAME + "/search/";
@@ -65,16 +75,6 @@ export default {
                 this.$gettext("Search Text in %{scope}"),
                 { scope: (this.data && this.data.searchScope) || "" },
             );
-        },
-    },
-    props: {
-        /**
-         * Data for the search panel, an object containing searchScope, disabled, and optionally
-         * projectId and documentId.
-         */
-        data: {
-            type: Object,
-            required: true,
         },
     },
 }

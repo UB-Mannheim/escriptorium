@@ -102,9 +102,9 @@
 
 <script>
 export default {
-    props: [
-        "projectId",
-    ],
+    props: {
+        projectId: { type: Number, required: true },
+    },
     data () {
         return {
             tags: []
@@ -132,11 +132,19 @@ export default {
     },
     methods: {
         async updateSingleTag(pk=null){
-            let _name = ($("#name-tag-" + pk).val()) ? $("#name-tag-" + pk).val() : $(this.$refs.tagName).val();
+            let _name = ($("#name-tag-" + pk).val())
+                ? $("#name-tag-" + pk).val()
+                : $(this.$refs.tagName).val();
             if(_name){
-                if(pk) await this.$store.dispatch("documentslist/updateProjectTag", {pk: pk, name: _name, color: $("#color-tag-" + pk).val()});
+                if (pk) await this.$store.dispatch(
+                    "documentslist/updateProjectTag",
+                    { pk: pk, name: _name, color: $("#color-tag-" + pk).val() },
+                );
                 else{
-                    await this.$store.dispatch("documentslist/updateDocumentTags", {name: _name, color: $(this.$refs.tagColor).val()});
+                    await this.$store.dispatch(
+                        "documentslist/updateDocumentTags",
+                        { name: _name, color: $(this.$refs.tagColor).val() },
+                    );
                     this.resetField();
                 }
             }
@@ -146,7 +154,10 @@ export default {
             $("#div-tag-" + pk).remove();
         },
         async assignSingleTag(pk){
-            await this.$store.dispatch("documentslist/assignSingleTagToDocuments", {pk: pk, selected: $("#checkbox-tag-" + pk).prop("checked")});
+            await this.$store.dispatch(
+                "documentslist/assignSingleTagToDocuments",
+                { pk: pk, selected: $("#checkbox-tag-" + pk).prop("checked") },
+            );
         },
         async populateItems(){
             this.$store.commit("documentslist/setProjectID", this.projectId);

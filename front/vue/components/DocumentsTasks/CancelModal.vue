@@ -73,10 +73,10 @@
 
 <script>
 export default {
-    props: [
-        "id",
-        "documentsTasks",
-    ],
+    props: {
+        id: { type: String, required: true },
+        documentsTasks: { type: Array, required: true },
+    },
     data() {
         return {
             loading: false,
@@ -93,7 +93,9 @@ export default {
                     const data = await this.$store.dispatch("cancelDocumentTasks", document.pk)
                     successes.push(data.details)
                 } catch (err) {
-                    errors.push(err.response && err.response.data && err.response.data.error || err.message)
+                    errors.push(
+                        err.response && err.response.data && err.response.data.error || err.message,
+                    )
                 }
             }
 

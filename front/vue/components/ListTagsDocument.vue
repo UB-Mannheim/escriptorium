@@ -22,9 +22,9 @@ export default {
             return value.slice(0, num) + (num < value.length ? "..." : "")
         }
     },
-    props: [
-        "documentId",
-    ],
+    props: {
+        documentId: { type: Number, required: true },
+    },
     data () {
         return {
             tags: []
@@ -40,14 +40,14 @@ export default {
     },
     watch: {
         "$store.state.documentslist.TagsListPerDocument": {
-            handler: function(nv) {
+            handler: function(_nv) {
                 this.refreshTagsList();
             },
             immediate: false,
             deep: true
         },
         allTagsList: {
-            handler: function(newValue) {
+            handler: function(_newValue) {
                 this.refreshTagsList();
             },
             deep: true
@@ -60,7 +60,9 @@ export default {
         refreshTagsList() {
             const index = this.tagList.findIndex((doc) => doc.pk == this.documentId);
             if(index > -1){
-                let newTags = this.allTagsList.filter((obj) => this.tagList[index].tags.includes(obj.pk));
+                let newTags = this.allTagsList.filter(
+                    (obj) => this.tagList[index].tags.includes(obj.pk),
+                );
                 this.tags = newTags;
             }
         }

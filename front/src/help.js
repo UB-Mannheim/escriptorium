@@ -6,7 +6,6 @@ export function bootHelp() {
         e.addEventListener("click", function (ev) {
             let btn = ev.target.closest("button");
             let alert = btn.parentNode;
-            let container = alert.parentNode;
             if (!closed) closed = [];
             if (alert.getAttribute("id")) {
                 closed.push(alert.getAttribute("id"));
