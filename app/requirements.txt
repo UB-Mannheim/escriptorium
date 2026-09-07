@@ -29,7 +29,9 @@ git+https://github.com/dasmiq/passim.git@v2.0.1#egg=passim
 Pillow>=5.4.1
 psutil
 psycopg2-binary
-pyspark==4.2.0
+# Pinned to 4.1.1: 4.2.0 breaks the seriatim (Spark) align test in CI with a
+# log4j2 "No type attribute provided for component log4j" init failure.
+pyspark==4.1.1
 pyvips~=2.2
 PyYAML
 redis>=4.6,<5
