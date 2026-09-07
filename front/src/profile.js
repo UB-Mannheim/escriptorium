@@ -42,7 +42,8 @@ class Profile {
             const i18n = document.getElementById("cookie-consent-i18n");
             const message =
                 i18n?.querySelector(".message")?.textContent.trim() ||
-                "eScriptorium uses cookies to store the user session and local storage to save user interface preferences.";
+                "eScriptorium uses cookies to store the user session and local storage" +
+                " to save user interface preferences.";
             const accept =
                 i18n?.querySelector(".accept")?.textContent.trim() || "Accept";
             let alert = Alert.add(

@@ -1,4 +1,5 @@
 <template>
+    <!-- eslint-disable max-len -->
     <div class="escr-card escr-card-padding escr-project-ontology escr-project-ontology-card">
         <div class="escr-card-header">
             <h2 v-translate>
@@ -70,6 +71,7 @@
             :on-confirm="onConfirmClear"
         />
     </div>
+    <!-- eslint-enable max-len -->
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
@@ -110,23 +112,43 @@ export default {
             const counts = [];
             if (c.region_types && c.region_types.length)
                 counts.push(
-                    `${c.region_types.length} ${this.$ngettext("region type", "region types", c.region_types.length)}`,
+                    `${c.region_types.length} ${this.$ngettext(
+                        "region type",
+                        "region types",
+                        c.region_types.length,
+                    )}`,
                 );
             if (c.line_types && c.line_types.length)
                 counts.push(
-                    `${c.line_types.length} ${this.$ngettext("line type", "line types", c.line_types.length)}`,
+                    `${c.line_types.length} ${this.$ngettext(
+                        "line type",
+                        "line types",
+                        c.line_types.length,
+                    )}`,
                 );
             if (c.part_types && c.part_types.length)
                 counts.push(
-                    `${c.part_types.length} ${this.$ngettext("part type", "part types", c.part_types.length)}`,
+                    `${c.part_types.length} ${this.$ngettext(
+                        "part type",
+                        "part types",
+                        c.part_types.length,
+                    )}`,
                 );
             if (c.annotation_components && c.annotation_components.length)
                 counts.push(
-                    `${c.annotation_components.length} ${this.$ngettext("annotation component", "annotation components", c.annotation_components.length)}`,
+                    `${c.annotation_components.length} ${this.$ngettext(
+                        "annotation component",
+                        "annotation components",
+                        c.annotation_components.length,
+                    )}`,
                 );
             if (c.taxonomy && c.taxonomy.length)
                 counts.push(
-                    `${c.taxonomy.length} ${this.$ngettext("taxonomy", "taxonomies", c.taxonomy.length)}`,
+                    `${c.taxonomy.length} ${this.$ngettext(
+                        "taxonomy",
+                        "taxonomies",
+                        c.taxonomy.length,
+                    )}`,
                 );
             return counts.length
                 ? `${counts.join(", ")}.`

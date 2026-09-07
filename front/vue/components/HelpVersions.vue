@@ -1,4 +1,5 @@
 <template>
+    <!-- eslint-disable vue/no-v-html -->
     <p
         style="direction:ltr"
         v-html="helpText"
@@ -6,6 +7,7 @@
 </template>
 
 <script>
+/* eslint-disable max-len */
 export default {
     computed: {
         helpText() {

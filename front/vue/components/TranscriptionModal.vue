@@ -605,7 +605,8 @@ export default Vue.extend({
             const [imgW, imgH] = this.image.size;
             // the <img> transform (translate + rotate about the image center, in
             // display pixels) expressed in image-pixel units, hence the /ratio
-            return `translate(${view.left / view.ratio} ${view.top / view.ratio}) rotate(${view.angle}, ${imgW / 2}, ${imgH / 2})`;
+            return `translate(${view.left / view.ratio} ${view.top / view.ratio})`
+                + ` rotate(${view.angle}, ${imgW / 2}, ${imgH / 2})`;
         },
         pointRadius() {
             const view = this.baselineView;

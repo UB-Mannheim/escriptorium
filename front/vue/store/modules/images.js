@@ -213,7 +213,8 @@ const actions = {
                         ...part,
                         title: `${part.title} - ${part.filename}`,
                         thumbnail: part.image?.thumbnails?.card,
-                        href: SCRIPT_NAME + `/document/${rootState.document.id}/part/${part.pk}/edit/`,
+                        href: SCRIPT_NAME
+                            + `/document/${rootState.document.id}/part/${part.pk}/edit/`,
                     },
                     { root: true },
                 );

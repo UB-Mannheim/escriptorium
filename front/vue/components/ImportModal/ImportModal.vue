@@ -60,7 +60,9 @@
             it is disabled. -->
             <EscrButton
                 color="outline-primary"
-                :label="(importMode !== 'images' || imagesLoading) ? $gettext('Cancel') : $gettext('Close')"
+                :label="importMode !== 'images' || imagesLoading
+                    ? $gettext('Cancel')
+                    : $gettext('Close')"
                 :on-click="() => clickCancelButton()"
                 :disabled="disabled || imagesLoading"
             />

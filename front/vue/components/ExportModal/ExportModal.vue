@@ -61,6 +61,7 @@
                     v-translate
                     class="escr-help-text"
                 >
+                    <!-- eslint-disable-next-line max-len -->
                     This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition.
                 </span>
             </div>

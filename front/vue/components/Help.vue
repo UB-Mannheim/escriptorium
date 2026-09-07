@@ -1,5 +1,6 @@
 <template>
     <div>
+        <!-- eslint-disable vue/no-v-html -->
         <p v-html="helpOne" />
         <p v-html="helpTwo" />
         <p v-html="helpThree" />
@@ -7,6 +8,7 @@
 </template>
 
 <script>
+/* eslint-disable max-len */
 export default {
     name: "EscrHelp",
     computed: {

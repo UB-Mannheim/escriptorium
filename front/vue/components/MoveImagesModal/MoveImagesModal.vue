@@ -4,7 +4,8 @@
             <h2>{{ $gettext("Move") }} {{ $ngettext("Image", "Images", selectedParts.length) }}</h2>
         </template>
         <template #modal-content>
-            {{ $gettext("Move") }} {{ selectedParts.length }} {{ $ngettext("selected image", "selected images", selectedParts.length) }}
+            {{ $gettext("Move") }} {{ selectedParts.length }}
+            {{ $ngettext("selected image", "selected images", selectedParts.length) }}
             {{ $gettext("to the following position") }}
             <h3>
                 {{ $gettext("Location") }}<span
