@@ -135,7 +135,7 @@ export default {
         }),
     },
     watch: {
-        "$store.state.parts.pk": function(n, o) {
+        "$store.state.parts.pk": function(n, _o) {
             if (n) {
                 // set the new url
                 window.history.pushState(
@@ -150,14 +150,14 @@ export default {
                 $("#nav-img-tab").attr("href", tabUrl);
             }
         },
-        "$store.state.transcriptions.selectedTranscription": function(n, o) {
+        "$store.state.transcriptions.selectedTranscription": function(n, _o) {
             let itrans = userProfile.get("initialTranscriptions") || {};
             itrans[this.documentId] = n;
             userProfile.set("initialTranscriptions", itrans);
             this.$store.dispatch("transcriptions/getCurrentContent", n);
         },
         "$store.state.transcriptions.comparedTranscriptions": function(n, o) {
-            n.forEach(async function(tr, i) {
+            n.forEach(async function(tr, _i) {
                 if (!o.find((e)=>e==tr)) {
                     await this.$store.dispatch("transcriptions/fetchContent", tr);
                 }
@@ -178,7 +178,9 @@ export default {
             await this.$store.dispatch("parts/fetchPart", {pk: this.partId});
             let tr = userProfile.get("initialTranscriptions")
                   && userProfile.get("initialTranscriptions")[this.$store.state.document.id]
-                  && this.$store.state.transcriptions.all.find(e => e.pk == userProfile.get("initialTranscriptions"))
+                  && this.$store.state.transcriptions.all.find(
+                      (e) => e.pk == userProfile.get("initialTranscriptions"),
+                  )
                   || this.$store.state.transcriptions.all[0].pk;
 
             this.$store.commit("transcriptions/setSelectedTranscription", tr);
@@ -189,7 +191,8 @@ export default {
         document.addEventListener("keydown", async function(event) {
             if (this.$store.state.document.blockShortcuts) return;
             if (event.keyCode == 33 ||  // page up
-                (event.keyCode == (this.readDirection == "rtl"?39:37) && event.ctrlKey)) {  // arrow left
+                // arrow left
+                (event.keyCode == (this.readDirection == "rtl"?39:37) && event.ctrlKey)) {
 
                 await this.$store.dispatch("parts/loadPart", "previous");
                 event.preventDefault();
@@ -279,7 +282,7 @@ export default {
                 }`;
                 this.$el.style.setProperty(
                     "--transcription-font-family",
-                    `"escr-transcription-font", "Noto Sans", "Resized Arabic", sans-serif`,
+                    "\"escr-transcription-font\", \"Noto Sans\", \"Resized Arabic\", sans-serif",
                 );
                 if (font.line_height) {
                     this.$el.style.setProperty(

@@ -1,4 +1,4 @@
-import { assign } from "lodash";
+import { assign, debounce, isEqual, uniq } from "lodash";
 import * as api from "../api";
 
 export const initialState = () => ({
@@ -283,12 +283,13 @@ export const actions = {
                 return l.pk == lineData.pk;
             });
             if (line) {
-                if (!_.isEqual(line.baseline, lineData.baseline)) {
+                if (!isEqual(line.baseline, lineData.baseline)) {
                     updatedBaselines.push(line);
                 }
                 if (line.region != lineData.region)
                     hasToRecalculateOrdering = true;
-                // api returns typology pk, panels label lines by type name -> map it back before storing it
+                // api returns typology pk, panels label lines by type name
+                // -> map it back before storing it
                 commit("update", {
                     ...lineData,
                     type:
@@ -402,10 +403,10 @@ export const actions = {
     },
 
     recalculateMasks({ state, commit, rootState }, only = []) {
-        commit("setMasksToRecalc", _.uniq(state.masksToRecalc.concat(only)));
+        commit("setMasksToRecalc", uniq(state.masksToRecalc.concat(only)));
         if (!state.debouncedRecalculateMasks) {
             // avoid calling this too often
-            state.debouncedRecalculateMasks = _.debounce(async function (_only) {
+            state.debouncedRecalculateMasks = debounce(async function (_only) {
                 const params = {};
                 if (state.masksToRecalc.length > 0)
                     params.only = state.masksToRecalc.toString();
@@ -428,7 +429,7 @@ export const actions = {
     recalculateOrdering({ state, commit, rootState }) {
         if (!state.debouncedRecalculateOrdering) {
             // avoid calling this too often
-            state.debouncedRecalculateOrdering = _.debounce(async function () {
+            state.debouncedRecalculateOrdering = debounce(async function () {
                 try {
                     const resp = await api.recalculateOrdering(
                         rootState.document.id,

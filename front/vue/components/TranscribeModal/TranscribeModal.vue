@@ -56,7 +56,6 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import AutocompleteField from "../AutocompleteDropdown/AutocompleteField.vue";
-import DropdownField from "../Dropdown/DropdownField.vue";
 import EscrAlert from "../Alert/Alert.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrModal from "../Modal/Modal.vue";
@@ -67,7 +66,6 @@ export default {
     name: "EscrTranscribeModal",
     components: {
         AutocompleteField,
-        DropdownField,
         EscrAlert,
         EscrButton,
         EscrModal,

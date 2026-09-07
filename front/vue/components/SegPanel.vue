@@ -120,15 +120,15 @@
                     class="btn btn-sm btn-warning fas fa-cut"
                 />
             </div>
-                <!-- toggle labels button -->
-                <button
-                    id="toggle-region-labels"
-                    title="Toggle region labels"
-                    class="btn btn-sm fas fa-tag"
-                    :class="regionLabels ? 'btn-success' : 'btn-info'"
-                    :disabled="currentMode !== 'regions'"
-                    @click="toggleRegionLabels"
-                />
+            <!-- toggle labels button -->
+            <button
+                id="toggle-region-labels"
+                title="Toggle region labels"
+                class="btn btn-sm fas fa-tag"
+                :class="regionLabels ? 'btn-success' : 'btn-info'"
+                :disabled="currentMode !== 'regions'"
+                @click="toggleRegionLabels"
+            />
 
             <div class="btn-group">
                 <button
@@ -396,7 +396,7 @@ export default Vue.extend({
         return {
             segmenter: { loaded: false },
             regionLabels: false,
-            currentMode: 'lines',
+            currentMode: "lines",
             imageLoaded: false,
             colorMode: "color", //  color - binary - grayscale
             undoManager: new UndoManager(),
@@ -525,7 +525,7 @@ export default Vue.extend({
             // pass disabled state along to segmenter to prevent keyboard shortcuts
             this.segmenter.setDisabled(isDisabled);
         },
-        "$store.state.parts.loaded": function (isLoaded, wasLoaded) {
+        "$store.state.parts.loaded": function (isLoaded, _wasLoaded) {
             if (isLoaded === true) {
                 if (this.colorMode !== "binary" && !this.hasBinaryColor) {
                     this.colorMode = "color";
@@ -537,7 +537,7 @@ export default Vue.extend({
                 this.refreshHistoryBtns();
             }
         },
-        colorMode: function (n, o) {
+        colorMode: function (_n, _o) {
             this.$parent.prefetchImage(
                 this.imageSrc,
                 function (src) {
@@ -554,7 +554,7 @@ export default Vue.extend({
                 this.segmenter.refresh();
             }
         },
-        "$store.state.document.blockShortcuts": function(n, o) {
+        "$store.state.document.blockShortcuts": function(n, _o) {
             // make sure the segmenter does not trigger keyboard shortcuts either
             this.segmenter.disableShortcuts = n;
         },
@@ -644,12 +644,13 @@ export default Vue.extend({
                     origSetMode(mode)
                     this.currentMode = mode
                     this.$store.commit("document/setSegmentationMode", mode);
-                    if (mode !== 'regions' && this.regionLabels) {
-                    this.regionLabels = false
-                    this.segmenter.toggleRegionLabels(false)
+                    if (mode !== "regions" && this.regionLabels) {
+                        this.regionLabels = false
+                        this.segmenter.toggleRegionLabels(false)
                     }
                 }
-                // we need to move the baseline editor canvas up one tag so that it doesn't get caught by wheelzoom.
+                // we need to move the baseline editor canvas up one tag so
+                // that it doesn't get caught by wheelzoom.
                 let canvas = this.segmenter.canvas;
                 canvas.parentNode.parentNode.appendChild(canvas);
 
@@ -658,18 +659,19 @@ export default Vue.extend({
                     this.initSegmenter();
                 }
 
-                // Prevent shortcuts from interfering with the searchbox in the navbar and conversely
+                // Prevent shortcuts from interfering with the searchbox
+                // in the navbar and conversely
                 let searchbox = document.getElementById("navbar-searchbox")
                 if (searchbox) {
                     searchbox.addEventListener(
                         "focus",
-                        function (e) {
+                        function (_e) {
                             this.$store.commit("document/setBlockShortcuts", true);
                         }.bind(this)
                     );
                     searchbox.addEventListener(
                         "blur",
-                        function (e) {
+                        function (_e) {
                             this.$store.commit("document/setBlockShortcuts", false);
                         }.bind(this)
                     );
@@ -806,13 +808,13 @@ export default Vue.extend({
         if (this.legacyModeEnabled) {
             this.$refs.undo.addEventListener(
                 "click",
-                function (ev) {
+                function (_ev) {
                     this.undo();
                 }.bind(this)
             );
             this.$refs.redo.addEventListener(
                 "click",
-                function (ev) {
+                function (_ev) {
                     this.redo();
                 }.bind(this)
             );
@@ -823,7 +825,7 @@ export default Vue.extend({
 
         this.$refs.img.addEventListener(
             "load",
-            function (ev) {
+            function (_ev) {
                 this.onImageLoaded();
             }.bind(this)
         );
@@ -841,12 +843,12 @@ export default Vue.extend({
     methods: {
         ...mapActions("globalTools", ["setActiveTool", "toggleTool"]),
         ...mapActions("alerts", ["add"]),
-        toggleBinary(ev) {
+        toggleBinary(_ev) {
             if (this.colorMode == "color") this.colorMode = "binary";
             else this.colorMode = "color";
         },
 
-        toggleAutoOrder(ev) {
+        toggleAutoOrder(_ev) {
             this.autoOrder = !this.autoOrder;
             this.$store.commit("lines/setAutoOrdering", this.autoOrder);
             userProfile.set("autoOrder", this.autoOrder);
@@ -885,7 +887,10 @@ export default Vue.extend({
                         this.segmenter.refresh();
                     } else {
                         this.segmenter.init({ newUiEnabled: !this.legacyModeEnabled });
-                        this.$store.commit("document/setRegionColors", { ...this.segmenter.regionColors });
+                        this.$store.commit(
+                            "document/setRegionColors",
+                            { ...this.segmenter.regionColors },
+                        );
                     }
                 }.bind(this)
             );
@@ -899,7 +904,7 @@ export default Vue.extend({
             }
         },
         toggleRegionLabels() {
-            if (this.segmenter.mode !== 'regions') return;
+            if (this.segmenter.mode !== "regions") return;
             this.regionLabels = !this.regionLabels;
             this.segmenter.toggleRegionLabels(this.regionLabels);
         },
@@ -1117,15 +1122,18 @@ export default Vue.extend({
                 line.remove();
             }
 
-            // Update the original data.lines - adding the transcriptions, because we will want to pass them on to bulkCreate.
-            // The same data object is placed in the undo stack, so changing the lines in place is enough
+            // Update the original data.lines - adding the transcriptions,
+            // because we will want to pass them on to bulkCreate.
+            // The same data object is placed in the undo stack, so changing
+            // the lines in place is enough
             for (const deletedLine of deletedLines) {
                 const dataLine = data.lines.find(
                     (l) => l.context.pk === deletedLine.pk
                 );
                 if (!dataLine) {
                     console.warn(
-                        `Response of bulkDelete contained line ${deletedLine.pk} which we have never tried to delete`
+                        `Response of bulkDelete contained line ${deletedLine.pk} ` +
+                        "which we have never tried to delete"
                     );
                     continue;
                 }
@@ -1145,7 +1153,9 @@ export default Vue.extend({
                 (r) => r.context.pk == createdLine.region
             );
             if (createdLine.typology) {
-                var typo = this.$store.state.document.types.lines.find((t) => t.pk == createdLine.typology);
+                var typo = this.$store.state.document.types.lines.find(
+                    (t) => t.pk == createdLine.typology,
+                );
                 createdLine.type = typo.name;
             }
             const segmenterLine = this.segmenter.loadLine(createdLine, region);
@@ -1218,7 +1228,7 @@ export default Vue.extend({
             }
         },
 
-        async recalculateOrdering(ev) {
+        async recalculateOrdering(_ev) {
             await this.$store.dispatch("lines/recalculateOrdering");
         },
 

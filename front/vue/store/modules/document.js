@@ -1039,7 +1039,10 @@ const actions = {
                 commit("setMainScript", mainScript);
                 commit("setReadDirection", readDirection);
                 commit("setTranscriptionFont", transcriptionFont || null);
-                commit("setEffectiveTranscriptionFont", documentResponse.data.effective_transcription_font || null);
+                commit(
+                    "setEffectiveTranscriptionFont",
+                    documentResponse.data.effective_transcription_font || null,
+                );
                 commit(
                     "setTags",
                     documentResponse.data.tags.map((tag) => ({

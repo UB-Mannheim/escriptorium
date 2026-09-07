@@ -22,6 +22,14 @@ module.exports = {
         "DEBUG": "readonly",
         "Alert": "readonly",
         "Dropzone": "readonly",
+        "ReconnectingWebSocket": "readonly",
+        "UndoManager": "readonly",
+        "Diff": "readonly",
+        "math": "readonly",
+        "moment": "readonly",
+        "setupFormSet": "readonly",
+        "addImageToLoader": "readonly",
+        "enableVirtualKeyboard": "readonly",
     },
     extends: [
         "eslint:recommended",
@@ -33,6 +41,18 @@ module.exports = {
         {
             files: ["tests/**/*.spec.js"],
             env: { jest: true },
+        },
+        {
+            // headless components: the empty <template /> is intentional,
+            // the UI is provided by the base class / mixin
+            files: [
+                "vue/components/DiploLine.vue",
+                "vue/components/SegLine.vue",
+                "vue/components/SegRegion.vue",
+            ],
+            rules: {
+                "vue/valid-template-root": "off",
+            },
         },
     ],
     rules: {

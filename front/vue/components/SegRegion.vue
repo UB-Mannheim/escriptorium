@@ -2,7 +2,9 @@
 
 <script>
 export default Vue.extend({
-    props: ["region"],
+    props: {
+        region: { type: Object, required: true },
+    },
     data() { return {
         segmenterObject: null,
     };},

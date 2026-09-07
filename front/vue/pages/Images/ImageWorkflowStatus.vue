@@ -21,6 +21,12 @@
 <script>
 export default {
     name: "ImageWorkflowStatus",
+    props: {
+        status: {
+            type: String,
+            default: "",
+        }
+    },
     methods: {
         workflowLabel(state) {
             switch (state) {
@@ -36,12 +42,6 @@ export default {
                     return this.$gettext("Not initiated");
             }
         },
-    },
-    props: {
-        status: {
-            type: String,
-            default: "",
-        }
     }
 }
 </script>

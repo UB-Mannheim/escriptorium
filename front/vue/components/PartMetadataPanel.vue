@@ -26,7 +26,10 @@
                         @focusin="editInput(true)"
                         @focusout="editInput(false)"
                     >
-                    <small class="form-text text-muted">If left empty the name will automatically be {typology+index number}</small>
+                    <small class="form-text text-muted">
+                        If left empty the name will automatically be
+                        {typology+index number}
+                    </small>
                 </div>
                 <div class="form-group col-xl">
                     <label for="partTypology">Typology</label>
@@ -136,7 +139,9 @@ export default {
         },
 
         adjustHeight(el) {
-            el.target.style.height = (el.target.scrollHeight > el.target.clientHeight) ? (el.target.scrollHeight)+"px" : "60px";
+            el.target.style.height = (el.target.scrollHeight > el.target.clientHeight)
+                ? (el.target.scrollHeight) + "px"
+                : "60px";
         },
     },
 }

@@ -1,4 +1,5 @@
 <template>
+    <!-- eslint-disable max-len -->
     <div class="m-auto">
         <div
             v-if="$store.state.parts.loaded"
@@ -11,8 +12,7 @@
                 class="form-control custom-select"
             >
                 <option
-                    v-for="transcription in $store.state.transcriptions.all"
-                    v-if="transcription.archived == false"
+                    v-for="transcription in activeTranscriptions"
                     :key="transcription.pk"
                     :value="transcription.pk"
                 >
@@ -56,8 +56,7 @@
                                 <span class="float-right">Delete</span>
                             </div>
                             <div
-                                v-for="trans in $store.state.transcriptions.all"
-                                v-if="trans.archived == false"
+                                v-for="trans in activeTranscriptions"
                                 v-bind="trans"
                                 :key="trans.pk"
                                 class="inline-form form-check mt-1"
@@ -87,6 +86,7 @@
             </div>
         </div>
     </div>
+    <!-- eslint-enable max-len -->
 </template>
 
 <script>
@@ -100,15 +100,28 @@ export default {
             }
         },
     },
+    computed: {
+        activeTranscriptions() {
+            return this.$store.state.transcriptions.all.filter(
+                (t) => t.archived == false,
+            );
+        },
+    },
     methods: {
         async deleteTranscription(ev) {
             let transcription = ev.target.dataset.trpk;
             // I lied, it's only archived
-            if(confirm("Are you sure you want to delete the transcription? This will affect ALL pages of the document!")) {
+            if (confirm(
+                // eslint-disable-next-line max-len
+                "Are you sure you want to delete the transcription? This will affect ALL pages of the document!",
+            )) {
                 this.$store.dispatch("transcriptions/archive", transcription)
-                    .then((test) => {
+                    .then((_test) => {
                         ev.target.parentNode.remove();
-                        this.$store.commit("transcriptions/removeComparedTranscription", parseInt(transcription));
+                        this.$store.commit(
+                            "transcriptions/removeComparedTranscription",
+                            parseInt(transcription),
+                        );
                     })
                     .catch((err) => {
                         console.log("couldn't archive transcription #", transcription, err)

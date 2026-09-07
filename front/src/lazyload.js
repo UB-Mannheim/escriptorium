@@ -32,7 +32,7 @@ export function bootLazyload() {
         var lazyloadThrottleTimeout;
         lazyloadImages = document.querySelectorAll(".lazy");
 
-        function lazyload() {
+        var lazyload = function () {
             if (lazyloadThrottleTimeout) {
                 clearTimeout(lazyloadThrottleTimeout);
             }
@@ -51,7 +51,7 @@ export function bootLazyload() {
                     window.removeEventListener("orientationChange", lazyload);
                 }
             }, 20);
-        }
+        };
 
         document.addEventListener("scroll", lazyload);
         window.addEventListener("resize", lazyload);

@@ -274,10 +274,14 @@ export default {
         }.bind(this));
 
         // load the full size image when we reach a scale > some threshold in the largest zoomTarget
-        this.zoom.events.addEventListener("wheelzoom.updated", function(ev) {
+        this.zoom.events.addEventListener("wheelzoom.updated", function(_ev) {
             var full_size_scale_threshold = 0.75;
             if (this.partsLoaded && !this.fullsizeimage && this.zoom.targets.length) {
-                var largestTarget = this.zoom.targets.reduce((max, target) => max.container.clientWidth > target.container.clientWidth ? max : target);
+                var largestTarget = this.zoom.targets.reduce(
+                    (max, target) => max.container.clientWidth > target.container.clientWidth
+                        ? max
+                        : target,
+                );
                 let ratio = largestTarget.container.clientWidth / this.image.size[0];
                 if (this.zoom.scale * ratio > full_size_scale_threshold) {
                     this.prefetchImage(this.image.uri, function() {

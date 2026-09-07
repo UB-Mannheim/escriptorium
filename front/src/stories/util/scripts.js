@@ -1587,7 +1587,8 @@ export const scripts = [
     {
         id: 192,
         name:
-            "Zanabazar Square (Zanabazarin Dörböljin Useg, Xewtee Dörböljin Bicig, Horizontal Square Script)",
+            "Zanabazar Square (Zanabazarin Dörböljin Useg, Xewtee Dörböljin " +
+            "Bicig, Horizontal Square Script)",
         name_fr: "zanabazar quadratique",
         iso_code: "Zanb",
         text_direction: "horizontal-lr",

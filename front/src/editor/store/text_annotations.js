@@ -78,7 +78,7 @@ export const actions = {
     },
 
     async delete({ commit, rootState }, annotationPk) {
-        const resp = await api.deleteTextAnnotation(
+        await api.deleteTextAnnotation(
             rootState.document.id,
             rootState.parts.pk,
             annotationPk,

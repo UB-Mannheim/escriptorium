@@ -1,5 +1,5 @@
 import Vue from "vue";
-import Vuex from "vuex";
+import Vuex, { Store } from "vuex";
 import { assign } from "lodash";
 import * as api from "./api.js";
 import { installGettext } from "../translations/index.js";
@@ -39,7 +39,7 @@ const actions = {
     },
 };
 
-export default new Vuex.Store({
+export default new Store({
     state: initialState(),
     mutations,
     actions,

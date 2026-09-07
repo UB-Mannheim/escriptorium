@@ -92,7 +92,7 @@ export default {
             let m = method.split(".").pop();
             if (["segment", "transcribe"].includes(m)) {
                 // these two taskgroups have one task per element
-                m = `${m} ${elementCount} Element${elementCount > 1 ? 's' : ''}`;
+                m = `${m} ${elementCount} Element${elementCount > 1 ? "s" : ""}`;
             }
             if (m === "segtrain") {
                 taskStatus.method = "Train Segmenter Model";

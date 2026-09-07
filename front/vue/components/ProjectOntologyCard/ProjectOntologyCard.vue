@@ -50,14 +50,20 @@
                 </EscrButton>
             </div>
         </div>
-        <p v-if="!ontologyConfig" class="escr-project-ontology-empty">
+        <p
+            v-if="!ontologyConfig"
+            class="escr-project-ontology-empty"
+        >
             {{
                 $gettext(
                     "No default ontology set. New documents in this project will use the instance's default types instead.",
                 )
             }}
         </p>
-        <p v-else class="escr-project-ontology-summary">
+        <p
+            v-else
+            class="escr-project-ontology-summary"
+        >
             {{ summary }}
         </p>
         <ConfirmModal
