@@ -60,8 +60,8 @@
         </div>
 
         <button
-            class="btn btn-primary mb-4"
             v-translate
+            class="btn btn-primary mb-4"
             @click="getDocumentTasks"
         >
             Filter results
@@ -101,8 +101,8 @@
         <template v-for="item in results">
             <CancelModal
                 v-if="hasActiveTasks(item)"
-                :key="'cancelTasksModal' + item.pk"
                 :id="'cancelTasksModal' + item.pk"
+                :key="'cancelTasksModal' + item.pk"
                 :documents-tasks="[item]"
                 @cancel-success="cancelSucceeded"
                 @cancel-error="cancelFailed"

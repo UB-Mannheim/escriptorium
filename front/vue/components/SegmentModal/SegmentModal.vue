@@ -45,7 +45,10 @@
                     >
                     {{ $gettext("Overwrite Existing Segmentation and Transcriptions") }}
                 </label>
-                <span class="escr-help-text" v-translate>
+                <span
+                    v-translate
+                    class="escr-help-text"
+                >
                     If checked, all existing segmentation and bound transcriptions will be deleted.
                 </span>
             </div>
@@ -53,8 +56,8 @@
         <template #modal-actions>
             <span
                 v-if="segmentationInFlight"
-                class="escr-cooldown-message"
                 v-translate
+                class="escr-cooldown-message"
             >
                 Segmentation is already in progress for the selected image(s).
             </span>

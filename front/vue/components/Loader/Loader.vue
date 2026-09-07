@@ -7,7 +7,10 @@
             class="escr-spinner"
             role="status"
         >
-            <span class="sr-only" v-translate>Loading...</span>
+            <span
+                v-translate
+                class="sr-only"
+            >Loading...</span>
         </div>
     </div>
     <div

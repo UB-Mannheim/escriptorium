@@ -6,9 +6,9 @@
             :aria-label="$gettext('Model Type')"
         >
             <span
+                v-translate
                 class="escr-field-label"
                 aria-hidden="true"
-                v-translate
             >
                 Model Type
             </span>
@@ -29,7 +29,7 @@
             :invalid="dirty && !isValid"
             :errors="
                 dirty && !isValid
-                    ? [this.$gettext('A name is required unless overwriting')]
+                    ? [$gettext('A name is required unless overwriting')]
                     : []
             "
             required
@@ -57,8 +57,8 @@
         </label>
         <span
             id="overwrite-help"
-            class="sr-only"
             v-translate
+            class="sr-only"
         >
             You must be the owner of the base model to overwrite its file.
         </span>
@@ -84,8 +84,8 @@
             <span
                 v-if="
                     !currentCollection.id &&
-                    currentCollection.items &&
-                    currentCollection.items.length > 0
+                        currentCollection.items &&
+                        currentCollection.items.length > 0
                 "
             >
                 {{

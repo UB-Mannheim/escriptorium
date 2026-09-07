@@ -10,7 +10,9 @@
                     <h3 :title="documentName">
                         {{ documentName || $gettext("Loading...") }}
                     </h3>
-                    <h1 v-translate>Ontology Overview</h1>
+                    <h1 v-translate>
+                        Ontology Overview
+                    </h1>
                 </div>
                 <div class="escr-ontology-overview-controls">
                     <SegmentedButtonGroup
@@ -24,7 +26,9 @@
                         v-if="category === 'characters'"
                         class="escr-ontology-overview-transcription"
                     >
-                        <h3 v-translate>Transcription:</h3>
+                        <h3 v-translate>
+                            Transcription:
+                        </h3>
                         <EscrDropdown
                             :label="$gettext('Change the transcription used for character stats')"
                             :disabled="loading"
@@ -84,7 +88,10 @@
                                 :no-data-message="$gettext('This type is not used in any part.')"
                             />
                         </template>
-                        <p v-else v-translate>
+                        <p
+                            v-else
+                            v-translate
+                        >
                             Select a type to see which parts contain it.
                         </p>
                     </div>
