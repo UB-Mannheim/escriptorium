@@ -67,7 +67,9 @@ Then double-click *eScriptorium*. On first start the launcher:
    account: username `admin`, password `admin` — change it in the user
    settings once logged in),
 4. imports the bundled recognition model *german_print* (public, owned by
-   `admin`) if no recognition model exists yet,
+   `admin`) if no recognition model exists yet, and the bundled
+   transcription fonts (Gentium Plus, Noto Sans Hebrew, OpenDyslexic) if
+   not present,
 5. starts Redis, PostgreSQL, a Celery worker and the web server,
 6. opens `http://127.0.0.1:8000/` in the default browser,
 7. adds a menu bar (status bar) item for stopping the services.
@@ -149,5 +151,9 @@ pending migrations.
 - The *german_print* recognition model (Zenodo 10519596) is downloaded at
   build time (cached in `.cache/models/`), bundled in `Resources/models/`,
   and imported on first start if no recognition model exists yet.
+- The transcription fonts Gentium Plus (SIL), Noto Sans Hebrew (Google)
+  and OpenDyslexic (antijingoist) are all OFL-licensed, downloaded at
+  build time (cached in `.cache/fonts/`), bundled in `Resources/fonts/`,
+  and imported on first start if not present by name.
 - The bundle runs with trust authentication on a localhost-only PostgreSQL
   instance — acceptable for a single-user local tool, not for network use.

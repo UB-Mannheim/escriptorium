@@ -160,6 +160,24 @@ print("imported default recognition model german_print")
 ') >> "$LOG_DIR/launcher.log" 2>&1 || log "warning: importing the default recognition model failed"
 }
 
+import_default_fonts() {
+    [ -d "$RES/fonts" ] || return
+    (cd "$APP_DIR" && FONTS_DIR="$RES/fonts" "$PY" manage.py shell -c '
+import os
+from django.core.files import File
+from core.models import Font
+
+src = os.environ["FONTS_DIR"]
+for fn in sorted(os.listdir(src)):
+    name = os.path.splitext(fn)[0]
+    if Font.objects.filter(name=name).exists():
+        continue
+    with open(os.path.join(src, fn), "rb") as f:
+        Font(name=name, file=File(f, name=fn)).save()
+    print("imported transcription font", name)
+') >> "$LOG_DIR/launcher.log" 2>&1 || log "warning: importing the default transcription fonts failed"
+}
+
 start_celery() {
     if pid_alive celery; then
         return
@@ -236,6 +254,7 @@ start() {
     (cd "$APP_DIR" && "$PY" manage.py migrate --noinput) >> "$LOG_DIR/migrate.log" 2>&1 \
         || { tail -30 "$LOG_DIR/migrate.log" >&2; die "Database migrations failed (see $LOG_DIR/migrate.log)"; }
     import_default_model
+    import_default_fonts
     start_celery
     start_web
     wait_for_web
