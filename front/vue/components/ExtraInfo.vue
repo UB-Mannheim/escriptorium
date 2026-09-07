@@ -12,7 +12,12 @@
                 data-toggle="modal"
                 data-target="#gotoModal"
                 role="button"
-            >{{ $store.state.parts.title }} - {{ $store.state.parts.filename }} - ({{ imageSize }}) - {{ $store.state.parts.image_file_size | prettyBytes }}</span>
+            >
+                {{ $store.state.parts.title }} -
+                {{ $store.state.parts.filename }} -
+                ({{ imageSize }}) -
+                {{ $store.state.parts.image_file_size | prettyBytes }}
+            </span>
             <span
                 v-if="!$store.state.parts.loaded"
                 class="loading"
@@ -75,7 +80,7 @@ export default {
         });
     },
     methods: {
-        async goTo(ev) {
+        async goTo(_ev) {
             let input = document.getElementById("goto-modal-input");
             if (input.value > 0 && input.value <= parseInt(input.attributes.max.value)) {
                 await this.$store.dispatch("parts/loadPartByOrder", input.value-1);

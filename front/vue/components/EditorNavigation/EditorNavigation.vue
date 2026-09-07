@@ -203,7 +203,9 @@ export default {
                     },
                     {
                         title: this.elementTitle
-                            ? (this.elementTitle.length > 60 ? this.elementTitle.slice(0, 60) + "…" : this.elementTitle)
+                            ? (this.elementTitle.length > 60
+                                ? this.elementTitle.slice(0, 60) + "…"
+                                : this.elementTitle)
                             : "Loading...",
                     },
                 ];

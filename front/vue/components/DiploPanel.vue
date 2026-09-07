@@ -105,7 +105,7 @@
                             :on-change="toggleSort"
                         >
                             <template #button-icon>
-                                <i class="fas fa-sort"></i>
+                                <i class="fas fa-sort" />
                             </template>
                         </ToggleButton>
                         <template #popper>
@@ -305,7 +305,6 @@ import ChevronDownIcon from "./Icons/ChevronDownIcon/ChevronDownIcon.vue";
 import CopyIcon from "./Icons/CopyIcon/CopyIcon.vue";
 import EscrButton from "./Button/Button.vue";
 import KeyboardIcon from "./Icons/KeyboardIcon/KeyboardIcon.vue";
-import LineOrderingIcon from "./Icons/LineOrderingIcon/LineOrderingIcon.vue";
 import DiploLine from "./DiploLine.vue";
 import EditorToolbar from "./EditorToolbar/EditorToolbar.vue";
 import GroupedLine from "../components/GroupedLine/GroupedLine.vue";
@@ -323,7 +322,6 @@ export default {
         EscrButton,
         GroupedLine,
         KeyboardIcon,
-        LineOrderingIcon,
         RegionsIcon,
         ToggleButton,
         TranscriptionDropdown,
@@ -873,8 +871,11 @@ export default {
             if(ev.newIndicies.length === 0 && ev.newIndex != ev.oldIndex) {
                 // single drag: if newIndex is -1, fallback to oldIndex.
                 let finalIndex = (ev.newIndex === -1 ? ev.oldIndex : ev.newIndex);
-                if (finalIndex === -1) console.log('fallback to old index,single drag', ev.oldIndex);
-                let diploLine = this.$refs.diploLineComponents.find(dl=>dl.line.order==ev.oldIndex);
+                if (finalIndex === -1)
+                    console.log("fallback to old index,single drag", ev.oldIndex);
+                let diploLine = this.$refs.diploLineComponents.find(
+                    (dl) => dl.line.order == ev.oldIndex,
+                );
                 this.movedLines.push({
                     "pk": diploLine.line.pk,
                     "order": finalIndex
@@ -887,7 +888,7 @@ export default {
                         newIndex = ev.oldIndicies[i].index;
                     }
                     let diploLine = this.$refs.diploLineComponents.find(
-                        dl=>dl.line.order==ev.oldIndicies[i].index
+                        (dl)=>dl.line.order==ev.oldIndicies[i].index
                     );
                     this.movedLines.push({
                         "pk": diploLine.line.pk,

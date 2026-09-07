@@ -52,7 +52,9 @@
 
 <script>
 export default Vue.extend({
-    props: ["metadata"],
+    props: {
+        metadata: { type: Object, default: null },
+    },
     computed: {
         rowId() {
             return this.metadata != null ? this.metadata.pk : null;
@@ -80,7 +82,7 @@ export default Vue.extend({
             valInput.value = "";
         },
 
-        async deleteMetadata(ev) {
+        async deleteMetadata(_ev) {
             await this.$store.dispatch("parts/deletePartMetadata", this.metadata.pk);
         },
 
