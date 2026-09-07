@@ -1,4 +1,5 @@
 <template>
+    <!-- eslint-disable max-len -->
     <EscrModal class="escr-edit-project">
         <template #modal-header>
             <h2>{{ headerText }}</h2>
@@ -68,6 +69,7 @@
             />
         </template>
     </EscrModal>
+    <!-- eslint-enable max-len -->
 </template>
 <script>
 import { mapActions, mapState } from "vuex";

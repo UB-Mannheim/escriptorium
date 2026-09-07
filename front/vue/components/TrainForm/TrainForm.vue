@@ -1,4 +1,5 @@
 <template>
+    <!-- eslint-disable max-len -->
     <div class="escr-model-training-form escr-card escr-card-padding">
         <div
             class="escr-form-field escr-model-type"
@@ -109,6 +110,7 @@
             </span>
         </div>
     </div>
+    <!-- eslint-enable max-len -->
 </template>
 
 <script>
@@ -217,6 +219,7 @@ export default {
         async submitTraining() {
             if (this.isCollectionDirty) {
                 const confirmProceed = window.confirm(
+                    // eslint-disable-next-line max-len
                     this.$gettext("You have unsaved changes in your collection. If you start training now, these changes will not be reflected in the training data. Are you sure you want to proceed without saving?"),
                 );
                 if (!confirmProceed) {

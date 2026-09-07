@@ -147,11 +147,20 @@ export default {
             return !!this.documentLoading || this.refreshingStats;
         },
         breadcrumbs() {
-            let docBreadcrumbs = [{ title: this.$gettext("Loading...") }, { title: this.$gettext("Loading...") }];
+            let docBreadcrumbs = [
+                { title: this.$gettext("Loading...") },
+                { title: this.$gettext("Loading...") },
+            ];
             if (this.projectName && this.projectSlug && this.documentName) {
                 docBreadcrumbs = [
-                    { title: this.projectName, href: SCRIPT_NAME + `/project/${this.projectSlug}/` },
-                    { title: this.documentName, href: SCRIPT_NAME + `/document/${this.documentId}/` },
+                    {
+                        title: this.projectName,
+                        href: SCRIPT_NAME + `/project/${this.projectSlug}/`,
+                    },
+                    {
+                        title: this.documentName,
+                        href: SCRIPT_NAME + `/document/${this.documentId}/`,
+                    },
                 ];
             }
             return [
@@ -210,7 +219,9 @@ export default {
         typeHeaders() {
             return [
                 {
-                    label: this.category === "characters" ? this.$gettext("Character") : this.$gettext("Type"),
+                    label: this.category === "characters"
+                        ? this.$gettext("Character")
+                        : this.$gettext("Type"),
                     value: "name",
                     sortable: false,
                 },

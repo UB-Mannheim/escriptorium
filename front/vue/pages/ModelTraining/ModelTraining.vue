@@ -37,6 +37,7 @@
                                     class="escr-spinner escr-spinner--secondary"
                                     role="status"
                                 >
+                                    <!-- eslint-disable-next-line max-len -->
                                     <span class="sr-only">{{ $gettext("Loading browser...") }}</span>
                                 </div>
                             </div>
@@ -60,6 +61,7 @@
                                     class="escr-spinner escr-spinner--secondary"
                                     role="status"
                                 >
+                                    <!-- eslint-disable-next-line max-len -->
                                     <span class="sr-only">{{ $gettext("Loading collection...") }}</span>
                                 </div>
                                 <SelectedDocuments v-else-if="collectionItems.length" />

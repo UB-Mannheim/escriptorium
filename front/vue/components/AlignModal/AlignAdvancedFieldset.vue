@@ -26,6 +26,7 @@
                     </EscrButton>
                     <template #popper>
                         <span v-translate>
+                            <!-- eslint-disable-next-line max-len -->
                             Minimum proportion (0.0-1.0) of aligned line length to original transcription, below which matches are ignored. At 0.0, all matches are accepted.
                         </span>
                     </template>
@@ -63,6 +64,7 @@
                     </EscrButton>
                     <template #popper>
                         <span v-translate>
+                            <!-- eslint-disable-next-line max-len -->
                             Length (2–25) of token sequences to compare; 25 should work well for at least moderately clean OCR. For very poor OCR, lower to 3 or 4.
                         </span>
                     </template>
@@ -99,6 +101,7 @@
                     </EscrButton>
                     <template #popper>
                         <span v-translate>
+                            <!-- eslint-disable-next-line max-len -->
                             1-100, enables beam search; if this and max offset are left unset, beam search will be on and beam size set to 20. Higher beam size will result in slower computation but more accurate results.
                         </span>
                     </template>
@@ -135,6 +138,7 @@
                     </EscrButton>
                     <template #popper>
                         <span v-translate>
+                            <!-- eslint-disable-next-line max-len -->
                             Enables max-offset and disables beam search. Maximum number of characters (20–80) difference between the aligned witness text and the original transcription.
                         </span>
                     </template>
@@ -171,6 +175,7 @@
                     </EscrButton>
                     <template #popper>
                         <span v-translate>
+                            <!-- eslint-disable-next-line max-len -->
                             The distance between matching unique n-grams; 600 should work well for clean OCR or texts where passages align to different portions of the witness text. To force end-to-end alignment of two documents, increase to 1,000,000.
                         </span>
                     </template>

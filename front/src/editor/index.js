@@ -1,5 +1,5 @@
 import Vue from "vue";
-import Vuex from "vuex";
+import Vuex, { Store } from "vuex";
 import vueFilterPrettyBytes from "vue-filter-pretty-bytes";
 import document from "./store/document";
 import parts from "./store/parts";
@@ -18,7 +18,7 @@ import { installGettext } from "../translations/index.js";
 Vue.use(Vuex);
 Vue.use(vueFilterPrettyBytes);
 
-const store = new Vuex.Store({
+const store = new Store({
     modules: {
         alerts,
         document,

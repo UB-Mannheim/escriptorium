@@ -222,8 +222,18 @@ export default {
         ...mapState("images", ["nextPage"]),
         projectHeaders() {
             return [
-                { label: this.$gettext("Project Name"), value: "name", sortable: true, class: "col-title" },
-                { label: this.$gettext("Tags"), value: "tags", component: EscrTags, class: "col-tags" },
+                {
+                    label: this.$gettext("Project Name"),
+                    value: "name",
+                    sortable: true,
+                    class: "col-title",
+                },
+                {
+                    label: this.$gettext("Tags"),
+                    value: "tags",
+                    component: EscrTags,
+                    class: "col-tags",
+                },
                 {
                     label: this.$gettext("Documents"),
                     value: "documents_count",
@@ -241,9 +251,24 @@ export default {
         },
         documentHeaders() {
             return [
-                { label: this.$gettext("Document Name"), value: "name", sortable: true, class: "col-title" },
-                { label: this.$gettext("Tags"), value: "tags", component: EscrTags, class: "col-tags" },
-                { label: this.$gettext("Pages"), value: "parts_count", sortable: true, class: "col-small" },
+                {
+                    label: this.$gettext("Document Name"),
+                    value: "name",
+                    sortable: true,
+                    class: "col-title",
+                },
+                {
+                    label: this.$gettext("Tags"),
+                    value: "tags",
+                    component: EscrTags,
+                    class: "col-tags",
+                },
+                {
+                    label: this.$gettext("Pages"),
+                    value: "parts_count",
+                    sortable: true,
+                    class: "col-small",
+                },
                 {
                     label: this.$gettext("Updated At"),
                     value: "updated_at",
