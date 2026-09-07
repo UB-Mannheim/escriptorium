@@ -13,7 +13,9 @@
                         <h3 :title="documentName">
                             {{ documentName || $gettext("Loading...") }}
                         </h3>
-                        <h1 v-translate>Images</h1>
+                        <h1 v-translate>
+                            Images
+                        </h1>
                     </div>
                     <VDropdown
                         placement="bottom-end"
@@ -31,7 +33,10 @@
                             </template>
                         </EscrButton>
                         <template #popper>
-                            <span class="escr-tooltip-text" v-translate>
+                            <span
+                                v-translate
+                                class="escr-tooltip-text"
+                            >
                                 Import images or transcription content.
                             </span>
                         </template>
@@ -348,7 +353,10 @@
                             class="escr-spinner"
                             role="status"
                         >
-                            <span class="sr-only" v-translate>Loading...</span>
+                            <span
+                                v-translate
+                                class="sr-only"
+                            >Loading...</span>
                         </div>
                     </div>
                 </div>
@@ -395,7 +403,10 @@
                             class="escr-spinner"
                             role="status"
                         >
-                            <span class="sr-only" v-translate>Loading...</span>
+                            <span
+                                v-translate
+                                class="sr-only"
+                            >Loading...</span>
                         </div>
                     </div>
                 </div>

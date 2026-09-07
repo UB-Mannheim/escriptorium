@@ -43,7 +43,9 @@
                     <!-- Document tags card -->
                     <div class="escr-card escr-card-padding escr-document-tags">
                         <div class="escr-card-header">
-                            <h2 v-translate>Tags</h2>
+                            <h2 v-translate>
+                                Tags
+                            </h2>
                         </div>
                         <EscrTags
                             v-if="tags && tags.length"
@@ -60,7 +62,9 @@
                     <!-- Document tasks card -->
                     <div class="escr-card escr-card-table escr-document-tasks">
                         <div class="escr-card-header">
-                            <h2 v-translate>Tasks</h2>
+                            <h2 v-translate>
+                                Tasks
+                            </h2>
                             <div class="escr-card-actions">
                                 <EscrButton
                                     :label="$gettext('View All')"
@@ -90,7 +94,9 @@
                     <!-- Document images list -->
                     <div class="escr-card escr-card-table escr-document-images">
                         <div class="escr-card-header">
-                            <h2 v-translate>Your Recent Images</h2>
+                            <h2 v-translate>
+                                Your Recent Images
+                            </h2>
                             <div class="escr-card-actions">
                                 <EscrButton
                                     :label="$gettext('View All')"
@@ -125,9 +131,13 @@
                 <div class="escr-doc-right-grid">
                     <!-- transcription picker -->
                     <div class="doc-stats-header">
-                        <h2 v-translate>Document Statistics</h2>
+                        <h2 v-translate>
+                            Document Statistics
+                        </h2>
                         <div>
-                            <h3 v-translate>View:</h3>
+                            <h3 v-translate>
+                                View:
+                            </h3>
                             <EscrDropdown
                                 :options="transcriptionLevels"
                                 :on-change="selectTranscription"
@@ -138,7 +148,9 @@
                     <!-- Document total images card -->
                     <div class="escr-card escr-card-padding images-stats">
                         <div class="escr-card-header">
-                            <h2 v-translate>Total Images</h2>
+                            <h2 v-translate>
+                                Total Images
+                            </h2>
                         </div>
                         <span class="escr-stat">
                             {{
@@ -151,7 +163,9 @@
                     <!-- Document total lines card -->
                     <div class="escr-card escr-card-padding lines-stats">
                         <div class="escr-card-header">
-                            <h2 v-translate>Total Lines</h2>
+                            <h2 v-translate>
+                                Total Lines
+                            </h2>
                         </div>
                         <EscrLoader
                             v-if="!lineCount ||
@@ -171,7 +185,9 @@
                     <!-- Document total characters card -->
                     <div class="escr-card escr-card-padding chars-stats">
                         <div class="escr-card-header">
-                            <h2 v-translate>Total Characters</h2>
+                            <h2 v-translate>
+                                Total Characters
+                            </h2>
                         </div>
                         <EscrLoader
                             v-if="!charCount ||
@@ -190,9 +206,13 @@
                     </div>
                     <!-- Document transcription status card -->
                     <div class="escr-card escr-card-padding transcription-status">
-                        <h2 v-translate>Transcription Status</h2>
+                        <h2 v-translate>
+                            Transcription Status
+                        </h2>
                         <dl>
-                            <dt v-translate>Confidence</dt>
+                            <dt v-translate>
+                                Confidence
+                            </dt>
                             <dd>{{ transcriptionConfidence }}</dd>
                         </dl>
                     </div>

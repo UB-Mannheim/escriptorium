@@ -1,6 +1,8 @@
 <template>
     <div>
-        <h3 v-translate>Import images from IIIF</h3>
+        <h3 v-translate>
+            Import images from IIIF
+        </h3>
         Input a valid IIIF manifest URI to import all of its images in full resolution
         along with its metadata.
         <fieldset>

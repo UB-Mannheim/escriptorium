@@ -32,9 +32,9 @@
                     </div>
                     <a
                         v-if="guidelines"
+                        v-translate
                         :href="guidelines"
                         class="escr-project-guidelines"
-                        v-translate
                     >Project Guidelines</a>
                     <EscrTags
                         v-if="tags"
@@ -44,7 +44,9 @@
                 <!-- Documents list -->
                 <div class="escr-card escr-card-table escr-documents-list">
                     <div class="escr-card-header">
-                        <h2 v-translate>Documents</h2>
+                        <h2 v-translate>
+                            Documents
+                        </h2>
                         <div class="escr-card-actions">
                             <FilterSet
                                 :disabled="loading"
@@ -181,7 +183,7 @@ import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
 import ProjectOntologyCard from "../../components/ProjectOntologyCard/ProjectOntologyCard.vue";
-import { SCRIPT_NAME } from '../../../src/scriptname.js';
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import ShareModal from "../../components/SharePanel/ShareModal.vue";

@@ -25,7 +25,10 @@
             @click="onClear"
         >
             <XIcon />
-            <span class="sr-only" v-translate>Clear filter</span>
+            <span
+                v-translate
+                class="sr-only"
+            >Clear filter</span>
         </button>
     </div>
 </template>

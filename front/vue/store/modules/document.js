@@ -21,7 +21,7 @@ import { tagColorToVariant } from "../util/color";
 import { getMetadataCRUD } from "../util/metadata";
 import forms from "../util/initialFormState";
 import { throttle } from "../util/throttle";
-import { SCRIPT_NAME } from '../../../src/scriptname.js';
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 
 // initial state
 const state = () => ({

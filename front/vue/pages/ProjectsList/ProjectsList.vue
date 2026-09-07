@@ -4,7 +4,9 @@
             <h1>{{ welcomeMessage }}</h1>
             <div class="escr-card escr-card-table">
                 <div class="escr-card-padding escr-card-header">
-                    <h2 v-translate>Projects</h2>
+                    <h2 v-translate>
+                        Projects
+                    </h2>
                     <div class="escr-card-actions">
                         <FilterSet
                             :disabled="loading"

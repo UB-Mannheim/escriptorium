@@ -4,7 +4,9 @@
             v-if="data && data.groups && data.groups.length"
             class="escr-share-list"
         >
-            <h3 v-translate>Groups</h3>
+            <h3 v-translate>
+                Groups
+            </h3>
             <ul>
                 <li
                     v-for="group in data.groups"
@@ -18,7 +20,9 @@
             v-if="data && data.users && data.users.length"
             class="escr-share-list"
         >
-            <h3 v-translate>Users</h3>
+            <h3 v-translate>
+                Users
+            </h3>
             <ul>
                 <li
                     v-for="user in data.users"

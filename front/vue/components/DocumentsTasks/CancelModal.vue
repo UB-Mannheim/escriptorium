@@ -13,7 +13,10 @@
         >
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" v-translate>
+                    <h5
+                        v-translate
+                        class="modal-title"
+                    >
                         Cancel tasks
                     </h5>
                     <button
@@ -27,7 +30,9 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p v-translate>You're about to cancel all pending/running tasks for documents:</p>
+                    <p v-translate>
+                        You're about to cancel all pending/running tasks for documents:
+                    </p>
                     <ul>
                         <li
                             v-for="document in documentsTasks"
@@ -36,15 +41,17 @@
                             <strong>{{ document.name }}</strong> <span v-translate>owned by</span> <strong>{{ document.owner }}</strong>
                         </li>
                     </ul>
-                    <p v-translate>Please confirm that you want to proceed.</p>
+                    <p v-translate>
+                        Please confirm that you want to proceed.
+                    </p>
                 </div>
                 <div class="modal-footer">
                     <button
+                        v-translate
                         type="button"
                         class="btn btn-secondary"
                         data-dismiss="modal"
                         :disabled="loading"
-                        v-translate
                     >
                         Abort
                     </button>
