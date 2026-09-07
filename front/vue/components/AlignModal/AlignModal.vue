@@ -61,13 +61,16 @@
             <h3 class="escr-align-settings">
                 Settings <EscrButton
                     color="link-secondary"
-                    :label="`${showAdvanced ? $gettext('Hide') : $gettext('Show')} ${$gettext('advanced settings')}`"
+                    :label="`${showAdvanced ? $gettext('Hide') : $gettext('Show')} ${$gettext(
+                        'advanced settings',
+                    )}`"
                     :on-click="showHideAdvanced"
                 />
             </h3>
             <TextField
                 :disabled="disabled"
-                :help-text="$gettext('Name for the new transcription layer produced by this alignment.')"
+                :help-text="$gettext(
+                    'Name for the new transcription layer produced by this alignment.')"
                 :on-input="handleLayerNameInput"
                 :value="layerName"
                 :max-length="512"
@@ -101,6 +104,7 @@
                     v-translate
                     class="escr-help-text"
                 >
+                    <!-- eslint-disable-next-line max-len -->
                     If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately.
                 </span>
             </div>
@@ -118,6 +122,7 @@
                     v-translate
                     class="escr-help-text"
                 >
+                    <!-- eslint-disable-next-line max-len -->
                     If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank.
                 </span>
             </div>
@@ -135,6 +140,7 @@
                     v-translate
                     class="escr-help-text"
                 >
+                    <!-- eslint-disable-next-line max-len -->
                     If checked, the aligner will automatically insert hyphens when it detects a word was split across two lines in the ground truth.
                 </span>
             </div>

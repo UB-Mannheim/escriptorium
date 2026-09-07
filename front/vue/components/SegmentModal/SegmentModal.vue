@@ -69,7 +69,9 @@
             />
             <EscrButton
                 color="primary"
-                :label="(submitting || segmentationInFlight) ? $gettext('Segmenting\u2026') : $gettext('Segment')"
+                :label="submitting || segmentationInFlight
+                    ? $gettext('Segmenting\u2026')
+                    : $gettext('Segment')"
                 :loading="submitting || segmentationInFlight"
                 :on-click="handleSubmit"
                 :disabled="disabled || invalid"

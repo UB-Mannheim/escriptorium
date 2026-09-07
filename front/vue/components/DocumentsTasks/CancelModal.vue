@@ -38,7 +38,9 @@
                             v-for="document in documentsTasks"
                             :key="document.pk"
                         >
-                            <strong>{{ document.name }}</strong> <span v-translate>owned by</span> <strong>{{ document.owner }}</strong>
+                            <strong>{{ document.name }}</strong>
+                            <span v-translate>owned by</span>
+                            <strong>{{ document.owner }}</strong>
                         </li>
                     </ul>
                     <p v-translate>

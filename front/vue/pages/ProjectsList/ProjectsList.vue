@@ -154,7 +154,11 @@ export default {
             return [
                 { label: this.$gettext("Name"), value: "name", sortable: true },
                 { label: this.$gettext("Project Tags"), value: "tags", component: EscrTags },
-                { label: this.$gettext("# of Documents"), value: "documents_count", sortable: true  },
+                {
+                    label: this.$gettext("# of Documents"),
+                    value: "documents_count",
+                    sortable: true,
+                },
                 { label: this.$gettext("Owner"), value: "owner", sortable: true  },
                 {
                     label: this.$gettext("Last Update"),
