@@ -3,7 +3,9 @@
         class="escr-import-modal"
     >
         <template #modal-header>
-            <h2 v-translate>Import Elements</h2>
+            <h2 v-translate>
+                Import Elements
+            </h2>
             <EscrButton
                 color="text"
                 :on-click="imagesLoading ? () => openModal('imageCancelWarning') : onCancel"

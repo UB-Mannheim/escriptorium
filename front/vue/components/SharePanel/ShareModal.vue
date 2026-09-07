@@ -3,7 +3,9 @@
         class="escr-share-modal"
     >
         <template #modal-header>
-            <h2 v-translate>Add Group or User</h2>
+            <h2 v-translate>
+                Add Group or User
+            </h2>
             <EscrButton
                 color="text"
                 :on-click="onCancel"
@@ -15,14 +17,18 @@
             </EscrButton>
         </template>
         <template #modal-content>
-            <h3 v-translate>Add Group</h3>
+            <h3 v-translate>
+                Add Group
+            </h3>
             <EscrDropdown
                 :label="$gettext('Add group')"
                 :disabled="disabled || !groups"
                 :options="groupOptions"
                 :on-change="handleGroupChange"
             />
-            <h3 v-translate>Add User</h3>
+            <h3 v-translate>
+                Add User
+            </h3>
             <TextField
                 :placeholder="$gettext('Enter username of registered user')"
                 :label="$gettext('Add user')"

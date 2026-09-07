@@ -1,6 +1,9 @@
 <template>
     <fieldset class="escr-form-field escr-metadata-field">
-        <legend class="escr-field-label" v-translate>
+        <legend
+            v-translate
+            class="escr-field-label"
+        >
             Metadata
         </legend>
         <div

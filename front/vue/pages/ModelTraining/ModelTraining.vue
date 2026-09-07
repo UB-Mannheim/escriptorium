@@ -1,7 +1,9 @@
 <template>
     <EscrPage class="escr-model-training">
         <template #page-content>
-            <h1 v-translate>Model Training</h1>
+            <h1 v-translate>
+                Model Training
+            </h1>
             <div class="escr-training-container">
                 <div class="escr-training-collections">
                     <div class="escr-training-data">
@@ -19,7 +21,10 @@
                                 aria-labelledby="tab-browse"
                                 tabindex="0"
                             >
-                                <h2 class="sr-only" v-translate>
+                                <h2
+                                    v-translate
+                                    class="sr-only"
+                                >
                                     Browse
                                 </h2>
                                 <EscriptoriumBrowser
@@ -44,7 +49,10 @@
                                 aria-labelledby="tab-selected"
                                 tabindex="0"
                             >
-                                <h2 class="sr-only" v-translate>
+                                <h2
+                                    v-translate
+                                    class="sr-only"
+                                >
                                     Selected Documents and Parts
                                 </h2>
                                 <div
@@ -59,8 +67,12 @@
                                     v-else
                                     class="escr-card escr-card-padding"
                                 >
-                                    <p v-translate>No parts currently selected.</p>
-                                    <p v-translate>Load a saved collection, or navigate to the Browse tab.</p>
+                                    <p v-translate>
+                                        No parts currently selected.
+                                    </p>
+                                    <p v-translate>
+                                        Load a saved collection, or navigate to the Browse tab.
+                                    </p>
                                     <EscrButton
                                         :label="$gettext('Browse')"
                                         color="outline-primary"
@@ -73,7 +85,9 @@
                     <!-- collection management -->
                     <aside class="escr-training-sidebar">
                         <section class="escr-collection-management">
-                            <h2 v-translate>Manage Collection</h2>
+                            <h2 v-translate>
+                                Manage Collection
+                            </h2>
                             <ManageCollectionForm
                                 @loaded="activeTab = 'selected'"
                                 @new-started="activeTab = 'browse'"
@@ -83,7 +97,9 @@
                 </div>
                 <!-- model training form -->
                 <section class="escr-training-footer">
-                    <h2 v-translate>Train Model</h2>
+                    <h2 v-translate>
+                        Train Model
+                    </h2>
                     <TrainForm />
                 </section>
             </div>

@@ -10,7 +10,12 @@
         </template>
         <template #modal-content>
             <h3>{{ bodyText }}</h3>
-            <p v-if="cannotUndo" v-translate>You cannot undo this action.</p>
+            <p
+                v-if="cannotUndo"
+                v-translate
+            >
+                You cannot undo this action.
+            </p>
         </template>
         <template #modal-actions>
             <EscrButton

@@ -40,7 +40,10 @@
                     >
                     {{ $gettext("Include images") }}
                 </label>
-                <span class="escr-help-text" v-translate>
+                <span
+                    v-translate
+                    class="escr-help-text"
+                >
                     Will significantly increase the time to produce and download the export.
                 </span>
             </div>
@@ -54,7 +57,10 @@
                     >
                     {{ $gettext("Include Characters") }}
                 </label>
-                <span class="escr-help-text" v-translate>
+                <span
+                    v-translate
+                    class="escr-help-text"
+                >
                     This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition.
                 </span>
             </div>

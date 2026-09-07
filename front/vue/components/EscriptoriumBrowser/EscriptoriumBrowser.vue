@@ -2,11 +2,14 @@
     <div class="escr-browser escr-card">
         <div class="escr-card-header">
             <h3 class="escr-browser-breadcrumbs">
-                <span v-if="!currentProject" v-translate>Projects</span>
+                <span
+                    v-if="!currentProject"
+                    v-translate
+                >Projects</span>
                 <template v-else>
                     <a
-                        href="#"
                         v-translate
+                        href="#"
                         @click.prevent="fetchProjects"
                     > Projects </a>
                     <span class="separator italic">></span>

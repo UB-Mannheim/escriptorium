@@ -224,7 +224,7 @@ import TrainIcon from "../Icons/TrainIcon/TrainIcon.vue";
 import "../VerticalMenu/VerticalMenu.css";
 import "./GlobalNavigation.css";
 import { mapActions, mapState } from "vuex";
-import { SCRIPT_NAME } from '../../../src/scriptname.js';
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 
 export default {
     name: "EscrGlobalNavigation",
