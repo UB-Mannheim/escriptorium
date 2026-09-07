@@ -7,16 +7,16 @@
             <button
                 type="button"
                 class="escr-multiselect-action-btn"
-                @click.stop="selectAll"
                 :disabled="disabled"
+                @click.stop="selectAll"
             >
                 Select All
             </button>
             <button
                 type="button"
                 class="escr-multiselect-action-btn"
-                @click.stop="clearAll"
                 :disabled="disabled"
+                @click.stop="clearAll"
             >
                 Clear
             </button>
@@ -24,16 +24,19 @@
         <div
             ref="trigger"
             class="escr-multiselect-trigger"
-            :class="{ 'escr-multiselect-trigger--disabled': disabled, 'escr-multiselect-trigger--open': showDropdown }"
+            :class="{
+                'escr-multiselect-trigger--disabled': disabled,
+                'escr-multiselect-trigger--open': showDropdown,
+            }"
             :disabled="disabled"
-            @click="toggleDropdown"
-            @keydown.enter.prevent="toggleDropdown"
-            @keydown.space.prevent="toggleDropdown"
-            @keydown.escape="closeDropdown"
             tabindex="0"
             role="button"
             :aria-label="label"
             :aria-expanded="showDropdown"
+            @click="toggleDropdown"
+            @keydown.enter.prevent="toggleDropdown"
+            @keydown.space.prevent="toggleDropdown"
+            @keydown.escape="closeDropdown"
         >
             <span class="escr-multiselect-trigger-text">
                 {{ triggerText }}
@@ -47,8 +50,8 @@
             <div class="escr-multiselect-search">
                 <input
                     ref="searchInput"
-                    type="text"
                     v-model="searchText"
+                    type="text"
                     placeholder="Search..."
                     class="escr-multiselect-search-input"
                 >
@@ -141,7 +144,7 @@ export default {
                 return this.options;
             }
 
-            return this.options.filter(option =>
+            return this.options.filter((option) =>
                 option.label.toLowerCase().includes(search)
             );
         },
@@ -149,7 +152,7 @@ export default {
          * Count of selected options
          */
         selectedCount() {
-            return this.options.filter(opt => opt.selected).length;
+            return this.options.filter((opt) => opt.selected).length;
         },
         /**
          * Text to display on the trigger button
@@ -165,13 +168,16 @@ export default {
          */
         dropdownSpacing() {
             if (!this.showDropdown) {
-                return '0px';
+                return "0px";
             }
 
             // Search input: 40px, max list height: 200px
             const maxHeight = 40 + 200;
             return `${maxHeight + 10}px`;
         },
+    },
+    beforeUnmount() {
+        document.removeEventListener("click", this.handleClickOutside);
     },
     methods: {
         toggleDropdown() {
@@ -183,14 +189,14 @@ export default {
                         this.$refs.searchInput.focus();
                     }
                 });
-                document.addEventListener('click', this.handleClickOutside);
+                document.addEventListener("click", this.handleClickOutside);
             } else {
-                document.removeEventListener('click', this.handleClickOutside);
+                document.removeEventListener("click", this.handleClickOutside);
             }
         },
         closeDropdown() {
             this.showDropdown = false;
-            document.removeEventListener('click', this.handleClickOutside);
+            document.removeEventListener("click", this.handleClickOutside);
         },
         handleClickOutside(e) {
             if (this.$el && !this.$el.contains(e.target)) {
@@ -202,7 +208,7 @@ export default {
         },
         selectAll() {
             // Select all visible (filtered) options
-            this.filteredOptions.forEach(option => {
+            this.filteredOptions.forEach((option) => {
                 if (!option.selected) {
                     this.onChange({
                         target: {
@@ -215,7 +221,7 @@ export default {
         },
         clearAll() {
             // Clear all selected options
-            this.options.forEach(option => {
+            this.options.forEach((option) => {
                 if (option.selected) {
                     this.onChange({
                         target: {
@@ -226,9 +232,6 @@ export default {
                 }
             });
         },
-    },
-    beforeUnmount() {
-        document.removeEventListener('click', this.handleClickOutside);
     },
 };
 </script>

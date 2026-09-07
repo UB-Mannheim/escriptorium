@@ -145,13 +145,13 @@
 </template>
 
 <script>
-/* global moment */
 import CancelModal from "./CancelModal.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrLoader from "../Loader/Loader.vue";
 import EscrTable from "../Table/Table.vue";
 
 export default {
+    name: "DocumentsTasksList",
     components: {
         CancelModal,
         EscrButton,
@@ -160,8 +160,8 @@ export default {
     },
     props: {
         isAdmin: Boolean,
-        taskStates: Object,
-        users: Object,
+        taskStates: { type: Object, required: true },
+        users: { type: Object, required: true },
     },
     data() {
         return {
@@ -230,11 +230,23 @@ export default {
     },
     methods: {
         cancelSucceeded(messages) {
-            messages.forEach((message, i) => Alert.add(`cancel-succeeded-${i}-${Date.now()}`, message, "success"))
+            messages.forEach(
+                (message, i) => Alert.add(
+                    `cancel-succeeded-${i}-${Date.now()}`,
+                    message,
+                    "success",
+                ),
+            )
             this.getDocumentTasks()
         },
         cancelFailed(messages) {
-            messages.forEach((message, i) => Alert.add(`cancel-failed-${i}-${Date.now()}`, message, "danger"))
+            messages.forEach(
+                (message, i) => Alert.add(
+                    `cancel-failed-${i}-${Date.now()}`,
+                    message,
+                    "danger",
+                ),
+            )
         },
         openCancelModal(documentTasks) {
             $(`#cancelTasksModal${documentTasks.pk}`).modal("show");

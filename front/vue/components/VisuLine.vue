@@ -5,7 +5,9 @@
         @click="edit"
     >
         <polygon
-            :fill="(legacyModeEnabled && globalConfidenceVisible) || confidenceVizOn ? maskFillColor : 'transparent'"
+            :fill="(legacyModeEnabled && globalConfidenceVisible) || confidenceVizOn
+                ? maskFillColor
+                : 'transparent'"
             :stroke="maskStrokeColor"
             :points="maskPoints"
         />
@@ -95,19 +97,28 @@ export default Vue.extend({
             if (this.line.currentTrans?.graphs?.length || this.line.currentTrans?.avg_confidence) {
                 // convert the avg confidence to hue (0 = red, 120 = green)
                 // use a slight curve so that values are more easily red/yellow
-                const hue = Math.pow(this.lineAvgConfidence, this.$store.state.document.confidenceScale) * 120;
+                const hue = Math.pow(
+                    this.lineAvgConfidence,
+                    this.$store.state.document.confidenceScale,
+                ) * 120;
                 return `hsl(${hue}, 100%, 50%, 50%)`;
             }
             return "transparent";
         },
         maskPoints() {
             if (this.line == null || !this.line.mask) return "";
-            return this.line.mask.map((pt) => Math.round(pt[0]*this.ratio)+","+Math.round(pt[1]*this.ratio)).join(" ");
+            return this.line.mask.map(
+                (pt) => Math.round(pt[0]*this.ratio)+","+Math.round(pt[1]*this.ratio),
+            ).join(" ");
         },
         fakeBaseline() {
             // create a fake path based on the mask,
-            var min = this.line.mask.reduce((minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt);
-            var max = this.line.mask.reduce((maxPt, curPt) => (curPt[0] > maxPt[0]) ? curPt : maxPt);
+            var min = this.line.mask.reduce(
+                (minPt, curPt) => (curPt[0] < minPt[0]) ? curPt : minPt,
+            );
+            var max = this.line.mask.reduce(
+                (maxPt, curPt) => (curPt[0] > maxPt[0]) ? curPt : maxPt,
+            );
             return [min, max];
         },
         pathStrokeColor() {
@@ -131,10 +142,10 @@ export default Vue.extend({
         },
     },
     watch: {
-        "line.currentTrans.content": function(n, o) {
+        "line.currentTrans.content": function(_n, _o) {
             this.$nextTick(this.reset);
         },
-        "line.baseline": function(n, o) {
+        "line.baseline": function(_n, _o) {
             this.$nextTick(this.reset);
         }
     },
@@ -166,7 +177,8 @@ export default Vue.extend({
 
                 for (let i=0; i<arrayCoordonnees.length; i++) {
                     let j = (i+1) % arrayCoordonnees.length; // loop back to 1
-                    area += arrayCoordonnees[i][0]*arrayCoordonnees[j][1] - arrayCoordonnees[j][0]*arrayCoordonnees[i][1];
+                    area += arrayCoordonnees[i][0]*arrayCoordonnees[j][1]
+                        - arrayCoordonnees[j][0]*arrayCoordonnees[i][1];
                 }
 
                 area = Math.abs(area*this.ratio);

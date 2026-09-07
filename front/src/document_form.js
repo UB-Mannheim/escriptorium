@@ -8,7 +8,6 @@ export function bootDocumentForm(scripts) {
     $("div.nav.nav-tabs a").click(function (_e) {
         if (!$(this).is(".disabled")) {
             $(this).tab("show");
-            var scrollmem = $("body").scrollTop();
             window.location.hash = this.hash;
         }
     });

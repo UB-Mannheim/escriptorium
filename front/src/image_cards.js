@@ -142,7 +142,8 @@ class partCard {
                 if (
                     !["ongoing", "pending"].includes(this.workflow["align"]) ||
                     window.confirm(
-                        "This will stop ALL alignment tasks on this document. Are you sure you want to stop alignment?",
+                        "This will stop ALL alignment tasks on this document. " +
+                        "Are you sure you want to stop alignment?",
                     )
                 ) {
                     this.cancelTasks();
@@ -234,7 +235,8 @@ class partCard {
                     "text/card-id",
                     ev.target.id,
                 );
-                g_dragged = ev.target.id; // chrome gets confused with dataTransfer, so we use a global
+                // chrome gets confused with dataTransfer, so we use a global
+                g_dragged = ev.target.id;
                 $(".js-drop").addClass("drop-target");
             }, this),
         );
@@ -436,7 +438,7 @@ class partCard {
     }
 
     delete() {
-        var posting = $.ajax({ url: this.api, type: "DELETE" })
+        $.ajax({ url: this.api, type: "DELETE" })
             .done(
                 $.proxy(function (_data) {
                     this.remove();
@@ -688,7 +690,6 @@ export function bootImageCards(
     });
 
     // training
-    var max_accuracy = 0;
     $alertsContainer.on("training:start", function (_ev, _data) {
         $("#train-selected").addClass("blink");
         $("#cancel-training").show();
