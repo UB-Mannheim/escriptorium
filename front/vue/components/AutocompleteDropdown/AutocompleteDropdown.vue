@@ -10,11 +10,11 @@
             :placeholder="placeholder"
             :disabled="disabled"
             :aria-label="label"
+            autocomplete="off"
             @input="handleInput"
             @focus="handleFocus"
             @blur="handleBlur"
             @keydown="handleKeyDown"
-            autocomplete="off"
         >
         <button
             v-if="searchText && !disabled"
@@ -22,7 +22,9 @@
             type="button"
             :aria-label="`Clear ${label}`"
             @mousedown.prevent="clearValue"
-        >×</button>
+        >
+            ×
+        </button>
         <ChevronDownIcon v-else />
         <div
             v-if="listVisible"
@@ -47,7 +49,10 @@
                 <div
                     v-if="showCustomOption"
                     class="escr-autocomplete-new-option escr-autocomplete-new-option--clickable"
-                    :class="{ 'escr-autocomplete-new-option--highlighted': highlightedIndex === -1 }"
+                    :class="{
+                        'escr-autocomplete-new-option--highlighted':
+                            highlightedIndex === -1,
+                    }"
                     @mousedown.prevent="selectCustomValue"
                     @mouseenter="highlightedIndex = -1"
                 >
@@ -70,7 +75,8 @@
                         class="escr-autocomplete-option"
                         :class="{
                             'escr-autocomplete-option--selected': option.selected,
-                            'escr-autocomplete-option--highlighted': getFlatIndex(index, optIndex) === highlightedIndex
+                            'escr-autocomplete-option--highlighted':
+                                getFlatIndex(index, optIndex) === highlightedIndex
                         }"
                         @mousedown.prevent="selectOption(option)"
                         @mouseenter="highlightedIndex = getFlatIndex(index, optIndex)"
@@ -168,21 +174,21 @@ export default {
             }
 
             return this.optionGroups
-                .map(group => ({
+                .map((group) => ({
                     label: group.label,
-                    options: group.options.filter(option =>
+                    options: group.options.filter((option) =>
                         option.label.toLowerCase().includes(search)
                         || (option.hint || "").toLowerCase().includes(search)
                     ),
                 }))
-                .filter(group => group.options.length > 0);
+                .filter((group) => group.options.length > 0);
         },
         /**
          * Get the currently selected option across all groups
          */
         selectedOption() {
             for (const group of this.optionGroups) {
-                const selected = group.options.find(opt => opt.selected);
+                const selected = group.options.find((opt) => opt.selected);
                 if (selected) return selected;
             }
             return null;
@@ -192,8 +198,8 @@ export default {
          */
         hasExactMatch() {
             const search = this.searchText.toLowerCase();
-            return this.optionGroups.some(group =>
-                group.options.some(option => option.label.toLowerCase() === search)
+            return this.optionGroups.some((group) =>
+                group.options.some((option) => option.label.toLowerCase() === search)
             );
         },
         /**
@@ -201,8 +207,8 @@ export default {
          */
         flattenedOptions() {
             const flattened = [];
-            this.filteredOptions.forEach(group => {
-                group.options.forEach(option => {
+            this.filteredOptions.forEach((group) => {
+                group.options.forEach((option) => {
                     flattened.push(option);
                 });
             });
@@ -230,7 +236,7 @@ export default {
                 if (this.showCustomOption) {
                     height += 38;
                 }
-                this.filteredOptions.forEach(group => {
+                this.filteredOptions.forEach((group) => {
                     if (group.label) {
                         height += 32;
                     }
@@ -306,7 +312,8 @@ export default {
                 }
                 // If custom values NOT allowed and text doesn't match, revert to selected value
                 else if (!this.allowCustomValue) {
-                    // If there's no exact match and searchText is not empty, restore the selected option
+                    // If there's no exact match and searchText is not empty,
+                    // restore the selected option
                     if (this.searchText && !this.hasExactMatch) {
                         this.searchText = this.selectedOption ? this.selectedOption.label : "";
                     }

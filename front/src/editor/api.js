@@ -11,12 +11,16 @@ export const retrieveDocument = async (document_id) =>
 
 export const retrievePage = async (document_id, part_id, transcription, page) =>
     await axios.get(
-        `/documents/${document_id}/parts/${part_id}/transcriptions/?transcription=${transcription}&page=${page}`,
+        `/documents/${document_id}/parts/${part_id}/transcriptions/?transcription=${
+            transcription
+        }&page=${page}`,
     );
 
 export const retrieveAnnotationTaxonomies = async (document_id, target, page) =>
     await axios.get(
-        `/documents/${document_id}/taxonomies/annotations/?target=${target}&page=${page}&paginate_by=50`,
+        `/documents/${document_id}/taxonomies/annotations/?target=${target}&page=${
+            page
+        }&paginate_by=50`,
     );
 
 export const retrieveImageAnnotations = async (document_id, part_id, page) =>
@@ -31,7 +35,9 @@ export const retrieveTextAnnotations = async (
     page,
 ) =>
     await axios.get(
-        `/documents/${document_id}/parts/${part_id}/annotations/text/?transcription=${transcription_id}&page=${page}`,
+        `/documents/${document_id}/parts/${part_id}/annotations/text/?transcription=${
+            transcription_id
+        }&page=${page}`,
     );
 
 export const createContent = async (document_id, part_id, data) =>

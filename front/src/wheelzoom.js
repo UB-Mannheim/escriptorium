@@ -180,7 +180,8 @@ export class WheelZoom {
                 this.scrolled.bind(this)(event);
             }
             const drag = function (event) {
-                // in case of mask over the element, bc we bind to document so event.target can be whatever
+                // in case of mask over the element, bc we bind to document
+                // so event.target can be whatever
                 if (
                     (this.legacyModeEnabled || this.getActiveTool() !== "pan") &&
                     !(event.which === 3 || event.button === 2)
@@ -357,7 +358,8 @@ export class WheelZoom {
             function (target, _i) {
                 target.update(this.pos, this.scale);
                 // if (this.rotationOrigin) {
-                //     target.rotationContainer.style.transformOrigin = this.rotationOrigin.x+'px '+this.rotationOrigin.y+'px';
+                //     target.rotationContainer.style.transformOrigin =
+                //         this.rotationOrigin.x+'px '+this.rotationOrigin.y+'px';
                 //     target.rotationContainer.style.transform = 'rotate('+this.angle+'deg)';
                 // }
             }.bind(this),

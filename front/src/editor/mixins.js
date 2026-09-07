@@ -141,8 +141,9 @@ var KeyValueWidget = function (args) {
     label.htmlFor = wid;
     label.innerText = args.name;
     container.append(label);
+    var input;
     if (args.values.length) {
-        var input = document.createElement("select");
+        input = document.createElement("select");
         args.values.forEach((v) => {
             let opt = document.createElement("option");
             opt.value = v;
@@ -151,7 +152,7 @@ var KeyValueWidget = function (args) {
             input.append(opt);
         });
     } else {
-        var input = document.createElement("input");
+        input = document.createElement("input");
         if (currentValue) input.value = currentValue.value;
     }
 

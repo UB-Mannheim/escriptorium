@@ -122,9 +122,9 @@
 
 <script>
 export default {
-    props: [
-        "projectId",
-    ],
+    props: {
+        projectId: { type: Number, required: true },
+    },
     data () {
         return {
             valuesSelected: [],
@@ -193,7 +193,8 @@ export default {
             let element = {};
             let tabindex = [];
             for(let i = 0; i < el.length; i++){
-                if((el[i].value.toLowerCase() != "button") && (el[i].value.toLowerCase() != "submit")){
+                if ((el[i].value.toLowerCase() != "button")
+                    && (el[i].value.toLowerCase() != "submit")) {
                     if(!tabindex.includes(el[i].name.toString())){
                         Object.defineProperty(element, el[i].name, { value: el[i].value });
                     }

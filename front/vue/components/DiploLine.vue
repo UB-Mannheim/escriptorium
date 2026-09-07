@@ -20,7 +20,7 @@ export default Vue.extend({
         }
     },
     watch: {
-        "line.order": function(n, o) {
+        "line.order": function(n, _o) {
             // make sure it's at the right place,
             // in case it was just created or the ordering got recalculated
             let lineEl = this.getEl();
@@ -35,7 +35,7 @@ export default Vue.extend({
                 this.setElContent(this.line.currentTrans.content);
             }
         },
-        "line.currentTrans": function(n, o) {
+        "line.currentTrans": function(n, _o) {
             if (n!=undefined) {
                 this.setElContent(n.content);
             }
@@ -55,7 +55,9 @@ export default Vue.extend({
     },
     methods: {
         getEl() {
-            return this.$parent.$refs.diplomaticLines.querySelector('div[data-line-pk="' + this.line.pk + '"]');
+            return this.$parent.$refs.diplomaticLines.querySelector(
+                'div[data-line-pk="' + this.line.pk + '"]',
+            );
         },
         setElContent(content) {
             let line = this.getEl();

@@ -6,7 +6,8 @@ module.exports = {
     },
     moduleNameMapper: {
         "\\.(css|less|scss|sass)$": "<rootDir>/tests/__mocks__/styleMock.js",
-        "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2)$": "<rootDir>/tests/__mocks__/fileMock.js",
+        "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2)$":
+            "<rootDir>/tests/__mocks__/fileMock.js",
     },
     testMatch: ["**/tests/unit/**/*.spec.js"],
     moduleFileExtensions: ["js", "vue", "json"],
