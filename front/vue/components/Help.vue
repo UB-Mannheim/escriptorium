@@ -1,8 +1,8 @@
 <template>
     <div>
-        <p v-html="helpOne"></p>
-        <p v-html="helpTwo"></p>
-        <p v-html="helpThree"></p>
+        <p v-html="helpOne" />
+        <p v-html="helpTwo" />
+        <p v-html="helpThree" />
     </div>
 </template>
 

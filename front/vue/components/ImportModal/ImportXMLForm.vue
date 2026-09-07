@@ -1,6 +1,8 @@
 <template>
     <div>
-        <h3 v-translate>Import segmentation and transcriptions from XML</h3>
+        <h3 v-translate>
+            Import segmentation and transcriptions from XML
+        </h3>
         <span>
             Upload a single ALTO or PageXML file; alternatively, upload multiple files by
             compressing them into a ZIP file where all the XML files are at the root.
@@ -30,7 +32,10 @@
                     >
                     {{ $gettext("Overwrite Existing Segmentation and Transcriptions") }}
                 </label>
-                <span class="escr-help-text" v-translate>
+                <span
+                    v-translate
+                    class="escr-help-text"
+                >
                     Overwriting destroys existing regions, lines and any bound transcriptions before importing.
                 </span>
             </div>

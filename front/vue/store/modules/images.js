@@ -8,7 +8,7 @@ import {
     segmentDocument,
 } from "../../../src/api";
 import forms from "../util/initialFormState";
-import { SCRIPT_NAME } from '../../../src/scriptname.js';
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 
 // initial state
 const state = () => ({

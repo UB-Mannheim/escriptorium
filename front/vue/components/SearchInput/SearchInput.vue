@@ -11,10 +11,10 @@
         />
         <button
             v-if="value"
+            :aria-label="$gettext('Clear search')"
             @click="handleClear"
             :disabled="disabled"
             class="escr-search-input-clear"
-            :aria-label="$gettext('Clear search')"
         >
             ×
         </button>

@@ -1,6 +1,8 @@
 <template>
     <div>
-        <h3 v-translate>Import images, segmentation and transcriptions described by METS</h3>
+        <h3 v-translate>
+            Import images, segmentation and transcriptions described by METS
+        </h3>
         <fieldset>
             <SegmentedButtonGroup
                 color="secondary"
@@ -49,7 +51,10 @@
                     >
                     {{ $gettext("Overwrite Existing Segmentation and Transcriptions") }}
                 </label>
-                <span class="escr-help-text" v-translate>
+                <span
+                    v-translate
+                    class="escr-help-text"
+                >
                     Overwriting destroys existing regions, lines and any bound transcriptions before importing.
                 </span>
             </div>

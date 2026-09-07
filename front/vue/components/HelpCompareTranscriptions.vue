@@ -2,7 +2,7 @@
     <p
         style="direction:ltr"
         v-html="helpText"
-    ></p>
+    />
 </template>
 
 <script>

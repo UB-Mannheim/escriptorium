@@ -3,7 +3,9 @@
         class="escr-share-modal"
     >
         <template #modal-header>
-            <h2 v-translate>Add Group or User</h2>
+            <h2 v-translate>
+                Add Group or User
+            </h2>
             <EscrButton
                 color="text"
                 :on-click="onCancel"

@@ -14,8 +14,14 @@
         </button>
         <template #popper>
             <ul class="escr-vertical-menu">
-                <li v-for="lang in languages" :key="lang">
-                    <a href="#" @click.prevent="select(lang)">{{ languageName(lang) }}</a>
+                <li
+                    v-for="lang in languages"
+                    :key="lang"
+                >
+                    <a
+                        href="#"
+                        @click.prevent="select(lang)"
+                    >{{ languageName(lang) }}</a>
                 </li>
             </ul>
         </template>
