@@ -1,4 +1,4 @@
-import { SCRIPT_NAME } from '../../../src/scriptname.js';
+import { SCRIPT_NAME } from "../../../src/scriptname.js";
 import axios from "axios";
 import {
     createProject,

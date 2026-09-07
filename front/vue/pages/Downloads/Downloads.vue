@@ -25,14 +25,28 @@
         >
             <thead>
                 <tr>
-                    <th v-translate>Label</th>
-                    <th v-translate>Type</th>
-                    <th class="text-right" v-translate>
+                    <th v-translate>
+                        Label
+                    </th>
+                    <th v-translate>
+                        Type
+                    </th>
+                    <th
+                        v-translate
+                        class="text-right"
+                    >
                         Size
                     </th>
-                    <th v-translate>Created</th>
-                    <th v-translate>Expires</th>
-                    <th class="text-right" v-translate>
+                    <th v-translate>
+                        Created
+                    </th>
+                    <th v-translate>
+                        Expires
+                    </th>
+                    <th
+                        v-translate
+                        class="text-right"
+                    >
                         Downloads
                     </th>
                     <th />
@@ -61,7 +75,10 @@
                     </td>
                     <td>
                         <small>
-                            <span v-if="!item.expires_at" v-translate>Never</span>
+                            <span
+                                v-if="!item.expires_at"
+                                v-translate
+                            >Never</span>
                             <span
                                 v-else
                                 :class="{ 'text-danger': item.is_expired }"
@@ -76,18 +93,18 @@
                     <td class="text-right">
                         <a
                             v-if="!item.is_expired"
+                            v-translate
                             :href="item.file_url"
                             class="btn btn-sm btn-primary mr-1"
                             download
-                            v-translate
                         >
                             Download
                         </a>
                         <button
+                            v-translate
                             type="button"
                             class="btn btn-sm btn-outline-danger"
                             @click="onDelete(item)"
-                            v-translate
                         >
                             Delete
                         </button>

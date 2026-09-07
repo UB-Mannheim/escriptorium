@@ -32,8 +32,8 @@
             />
             <span
                 v-if="guidelines && !isHttpUrl(guidelines)"
-                class="escr-help-text escr-error-text"
                 v-translate
+                class="escr-help-text escr-error-text"
             >Must be a valid URL starting with http:// or https://.</span>
             <DropdownField
                 :label="$gettext('Transcription Font')"

@@ -97,7 +97,10 @@
                     >
                     {{ $gettext("Use full transcribed document") }}
                 </label>
-                <span class="escr-help-text" v-translate>
+                <span
+                    v-translate
+                    class="escr-help-text"
+                >
                     If checked, the aligner will use all transcribed pages of the document to find matches. If unchecked, it will compare each page to the text separately.
                 </span>
             </div>
@@ -111,7 +114,10 @@
                     >
                     {{ $gettext("Merge aligned text with existing transcription") }}
                 </label>
-                <span class="escr-help-text" v-translate>
+                <span
+                    v-translate
+                    class="escr-help-text"
+                >
                     If checked, the aligner will reuse the text of the original transcription when alignment could not be performed; if unchecked, those lines will be blank.
                 </span>
             </div>
@@ -125,7 +131,10 @@
                     >
                     {{ $gettext("Add hyphens to words broken across lines") }}
                 </label>
-                <span class="escr-help-text" v-translate>
+                <span
+                    v-translate
+                    class="escr-help-text"
+                >
                     If checked, the aligner will automatically insert hyphens when it detects a word was split across two lines in the ground truth.
                 </span>
             </div>

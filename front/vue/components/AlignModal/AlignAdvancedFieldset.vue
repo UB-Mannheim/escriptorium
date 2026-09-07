@@ -1,6 +1,10 @@
 <template>
     <fieldset class="escr-align-advanced">
-        <legend><h3 v-translate>Advanced Settings</h3></legend>
+        <legend>
+            <h3 v-translate>
+                Advanced Settings
+            </h3>
+        </legend>
         <label class="escr-text-field">
             <div>
                 <span v-translate>Line length threshold</span>
