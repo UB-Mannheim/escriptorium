@@ -1,5 +1,5 @@
 albumentations
-beautifulsoup4~=4.7.1
+beautifulsoup4~=4.15.0
 bleach~=5.0.1
 celery
 channels~=4.3
@@ -29,8 +29,8 @@ git+https://github.com/dasmiq/passim.git@v2.0.1#egg=passim
 Pillow>=5.4.1
 psutil
 psycopg2-binary
-pyspark==4.1.1
-pyvips~=2.1
+pyspark==4.2.0
+pyvips~=2.2
 PyYAML
 redis>=4.6,<5
 requests>=2.21
