@@ -151,7 +151,10 @@ echo "==> Building Redis ${REDIS_VERSION}"
 curl -fSL --retry 3 --retry-delay 2 --retry-all-errors --progress-bar -o "$BUILD/downloads/redis.tar.gz" \
     "https://download.redis.io/releases/redis-${REDIS_VERSION}.tar.gz"
 tar -xzf "$BUILD/downloads/redis.tar.gz" -C "$BUILD/downloads"
-make -C "$BUILD/downloads/redis-${REDIS_VERSION}" -j"$(sysctl -n hw.ncpu)" MALLOC=libc >/dev/null
+# -Wno-implicit-const-int-float-conversion silences a benign warning in
+# Redis' timeout.c when built with recent Clang (Xcode 16+).
+make -C "$BUILD/downloads/redis-${REDIS_VERSION}" -j"$(sysctl -n hw.ncpu)" MALLOC=libc \
+    CFLAGS="-Wno-implicit-const-int-float-conversion" >/dev/null
 mkdir -p "$BUILD/work/redis"
 cp "$BUILD/downloads/redis-${REDIS_VERSION}/src/redis-server" "$BUILD/work/redis/"
 cp "$BUILD/downloads/redis-${REDIS_VERSION}/src/redis-cli" "$BUILD/work/redis/"
@@ -218,6 +221,28 @@ DEFAULT_MODEL_URL="https://zenodo.org/records/10519596/files/german_print.mlmode
     curl -fL --progress-bar -o "$MODEL_CACHE/german_print.mlmodel" "$DEFAULT_MODEL_URL"
 mkdir -p "$BUNDLE_RES/models"
 cp "$MODEL_CACHE/german_print.mlmodel" "$BUNDLE_RES/models/"
+
+# --- default transcription fonts ------------------------------------------------------------
+echo "==> Bundling default transcription fonts"
+FONT_CACHE="$HERE/.cache/fonts"
+mkdir -p "$FONT_CACHE" "$BUNDLE_RES/fonts"
+fetch_font() {
+    [ -f "$FONT_CACHE/$1" ] || curl -fL --progress-bar -o "$FONT_CACHE/$1" "$2"
+}
+# Gentium Plus (SIL, OFL): Latin/Greek/Cyrillic incl. full phonetic extensions
+fetch_font "GentiumPlus-6.200.zip" \
+    "https://github.com/silnrsi/font-gentium/releases/download/v6.200/GentiumPlus-6.200.zip"
+unzip -p "$FONT_CACHE/GentiumPlus-6.200.zip" "GentiumPlus-6.200/GentiumPlus-Regular.ttf" \
+    > "$BUNDLE_RES/fonts/Gentium Plus.ttf"
+# Noto Sans Hebrew (Google, OFL): Hebrew coverage for the transcription font fallback
+fetch_font "NotoSansHebrew-v3.001.zip" \
+    "https://github.com/notofonts/hebrew/releases/download/NotoSansHebrew-v3.001/NotoSansHebrew-v3.001.zip"
+unzip -p "$FONT_CACHE/NotoSansHebrew-v3.001.zip" "NotoSansHebrew/full/ttf/NotoSansHebrew-Regular.ttf" \
+    > "$BUNDLE_RES/fonts/Noto Sans Hebrew.ttf"
+# OpenDyslexic (antijingoist, OFL): dyslexia-friendly
+fetch_font "OpenDyslexic-Regular.otf" \
+    "https://raw.githubusercontent.com/antijingoist/opendyslexic/main/compiled/OpenDyslexic-Regular.otf"
+cp "$FONT_CACHE/OpenDyslexic-Regular.otf" "$BUNDLE_RES/fonts/OpenDyslexic.otf"
 
 rsync -a \
     --exclude '__pycache__' --exclude '*.pyc' --exclude '.git' \
