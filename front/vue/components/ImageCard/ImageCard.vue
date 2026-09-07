@@ -194,7 +194,7 @@
                             >
                                 {{ workflowLabel(part.workflow.segment) }}
                             </span>
-                            <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
+                            <!-- $gettext(), not v-translate: text changes after mount -->
                             <span
                                 v-else
                                 class="status"
@@ -231,7 +231,7 @@
                             >
                                 {{ workflowLabel(part.workflow.transcribe) }}
                             </span>
-                            <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
+                            <!-- $gettext(), not v-translate: text changes after mount -->
                             <span
                                 v-else
                                 class="status"
@@ -267,7 +267,7 @@
                             >
                                 {{ workflowLabel(part.workflow.align) }}
                             </span>
-                            <!-- $gettext(), not v-translate: text changes after mount (see AGENTS.md) -->
+                            <!-- $gettext(), not v-translate: text changes after mount -->
                             <span
                                 v-else
                                 class="status"

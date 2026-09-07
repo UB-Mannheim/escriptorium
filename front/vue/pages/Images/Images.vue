@@ -1,4 +1,5 @@
 <template>
+    <!-- eslint-disable max-len -->
     <EscrPage
         class="escr-images-page"
         :breadcrumbs="breadcrumbs"
@@ -545,6 +546,7 @@
             </div>
         </template>
     </EscrPage>
+    <!-- eslint-enable max-len -->
 </template>
 <script>
 import { Dropdown as VDropdown, Menu as VMenu } from "floating-vue";
@@ -744,7 +746,10 @@ export default {
          * Links and titles for the breadcrumbs above the page.
          */
         breadcrumbs() {
-            let docBreadcrumbs = [{ title: this.$gettext("Loading...") }, { title: this.$gettext("Loading...") }];
+            let docBreadcrumbs = [
+                { title: this.$gettext("Loading...") },
+                { title: this.$gettext("Loading...") },
+            ];
             if (this.projectName && this.projectSlug && this.documentName) {
                 docBreadcrumbs = [
                     {
@@ -926,7 +931,9 @@ export default {
         // join document websocket room
         const msg = `{"type": "join-room", "object_cls": "document", "object_pk": ${this.id}}`;
         const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-        const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`);
+        const msgSocket = new ReconnectingWebSocket(
+            `${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`,
+        );
         msgSocket.maxReconnectAttempts = 3;
         msgSocket.addEventListener("open", function() {
             msgSocket.send(msg);

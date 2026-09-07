@@ -145,6 +145,7 @@
 </template>
 
 <script>
+/* global moment */
 import CancelModal from "./CancelModal.vue";
 import EscrButton from "../Button/Button.vue";
 import EscrLoader from "../Loader/Loader.vue";
@@ -209,7 +210,11 @@ export default {
             return [
                 { label: this.$gettext("Name"), value: "name", sortable: true },
                 { label: this.$gettext("User"), value: "owner", sortable: true },
-                { label: this.$gettext("Statistics"), value: "tasks_stats", format: this.formatStats },
+                {
+                    label: this.$gettext("Statistics"),
+                    value: "tasks_stats",
+                    format: this.formatStats,
+                },
                 {
                     label: this.$gettext("Last task started"),
                     value: "last_started_task",
@@ -250,7 +255,11 @@ export default {
                 Finished: this.$gettext("Finished"),
                 Canceled: this.$gettext("Canceled"),
             };
-            const allStrings = Object.entries(rawStats).map((stat) => stat[1] !== 0 ? `${stat[1]} ${(stateNames[stat[0]] || stat[0]).toLowerCase()}` : null)
+            const allStrings = Object.entries(rawStats).map(
+                (stat) => stat[1] !== 0
+                    ? `${stat[1]} ${(stateNames[stat[0]] || stat[0]).toLowerCase()}`
+                    : null,
+            );
             const filteredStrings = allStrings.filter((val) => val)
             return filteredStrings.join(", ")
         },
@@ -282,7 +291,8 @@ export default {
         },
         onSelectAll() {
             const selectable = this.results.filter((item) => this.hasActiveTasks(item));
-            const allSelected = selectable.length > 0 && selectable.every((item) => this.selectedList[item.pk]);
+            const allSelected = selectable.length > 0 &&
+                selectable.every((item) => this.selectedList[item.pk]);
             selectable.forEach((item) => {
                 this.updateSelectedList(item, allSelected ? "remove" : "add");
             });
@@ -302,7 +312,9 @@ export default {
             if (this.documentName !== "") params["name"] = this.documentName
             if (this.sortState.direction !== 0) {
                 const prefix = this.sortState.direction === -1 ? "-" : "";
-                const field = this.sortState.value === "owner" ? "owner__username" : this.sortState.value;
+                const field = this.sortState.value === "owner"
+                    ? "owner__username"
+                    : this.sortState.value;
                 params["ordering"] = prefix + field;
             }
 
