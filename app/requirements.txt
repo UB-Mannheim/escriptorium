@@ -31,7 +31,7 @@ psutil
 psycopg2-binary
 # Pinned to 4.1.1: 4.2.0 breaks the seriatim (Spark) align test in CI with a
 # log4j2 "No type attribute provided for component log4j" init failure.
-pyspark==4.1.1
+pyspark==4.1.3
 pyvips~=2.2
 PyYAML
 redis>=4.6,<5
