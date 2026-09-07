@@ -15,7 +15,7 @@ django-filter
 # to stable 3.7.4, which runs 13 queries and fails the test.
 django-ordered-model==3.8.0a0
 django-prometheus~=2.5.0
-django-redis~=5.4.0
+django-redis~=7.0.0
 django-simple-captcha~=0.7.0
 django-solo>=1.1
 djangorestframework~=3.15.1
