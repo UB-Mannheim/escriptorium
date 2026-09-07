@@ -59,7 +59,8 @@
         <!-- images count and save -->
         <div class="escr-save-collection">
             <span class="collection-stats">
-                <strong>{{ collectionItems.length }}</strong> {{ $ngettext("part staged", "parts staged", collectionItems.length) }}
+                <strong>{{ collectionItems.length }}</strong>
+                {{ $ngettext("part staged", "parts staged", collectionItems.length) }}
             </span>
             <EscrButton
                 :label="$gettext('Save Collection')"
@@ -180,6 +181,7 @@ export default {
         handleLoadCollection(event) {
             if (this.isDirty) {
                 const confirmDiscard = window.confirm(
+                    // eslint-disable-next-line max-len
                     this.$gettext("You have unsaved changes in your current collection. Are you sure you want to load a new one and discard these changes?")
                 );
                 if (!confirmDiscard) {
@@ -198,6 +200,7 @@ export default {
         handleNewCollection() {
             if (this.isDirty) {
                 const confirmDiscard = window.confirm(
+                    // eslint-disable-next-line max-len
                     this.$gettext("You have unsaved changes in your current collection. Are you sure you want to start a new one and discard these changes?")
                 );
                 if (!confirmDiscard) {

@@ -36,6 +36,7 @@
                     v-translate
                     class="escr-help-text"
                 >
+                    <!-- eslint-disable-next-line max-len -->
                     Overwriting destroys existing regions, lines and any bound transcriptions before importing.
                 </span>
             </div>

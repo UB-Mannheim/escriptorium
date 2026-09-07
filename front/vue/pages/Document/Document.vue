@@ -1,4 +1,5 @@
 <template>
+    <!-- eslint-disable max-len -->
     <EscrPage
         class="escr-document-dashboard"
         :breadcrumbs="breadcrumbs"
@@ -348,6 +349,7 @@
             </div>
         </template>
     </EscrPage>
+    <!-- eslint-enable max-len -->
 </template>
 <script>
 import ReconnectingWebSocket from "reconnectingwebsocket";
@@ -642,7 +644,9 @@ export default {
         // join document websocket room
         const msg = `{"type": "join-room", "object_cls": "document", "object_pk": ${this.id}}`;
         const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-	    const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`);
+        const msgSocket = new ReconnectingWebSocket(
+            `${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`,
+        );
         msgSocket.maxReconnectAttempts = 3;
         msgSocket.addEventListener("open", function() {
             msgSocket.send(msg);

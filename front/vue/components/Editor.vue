@@ -218,7 +218,9 @@ export default {
                 this.documentId
             }}`;
             const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-	    const msgSocket = new ReconnectingWebSocket(`${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`);
+            const msgSocket = new ReconnectingWebSocket(
+                `${scheme}//${window.location.host}${SCRIPT_NAME}/ws/notif/`,
+            );
             msgSocket.maxReconnectAttempts = 3;
             // intercept all websocket messages
             msgSocket.addEventListener("message", this.websocketListener);

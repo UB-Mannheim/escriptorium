@@ -56,18 +56,6 @@ export default {
         searchAction() {
             return SCRIPT_NAME + "/search/";
         },
-    },
-    props: {
-        /**
-         * Data for the search panel, an object containing searchScope, disabled, and optionally
-         * projectId and documentId.
-         */
-        data: {
-            type: Object,
-            required: true,
-        },
-    },
-    computed: {
         /**
          * Panel heading, with the scope (e.g. "Project" or "Document")
          * interpolated at runtime.
@@ -77,6 +65,16 @@ export default {
                 this.$gettext("Search Text in %{scope}"),
                 { scope: (this.data && this.data.searchScope) || "" },
             );
+        },
+    },
+    props: {
+        /**
+         * Data for the search panel, an object containing searchScope, disabled, and optionally
+         * projectId and documentId.
+         */
+        data: {
+            type: Object,
+            required: true,
         },
     },
 }
