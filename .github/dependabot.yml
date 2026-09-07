@@ -1,6 +1,10 @@
 # Please see the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
+# The fork is pinned to a legacy stack (Vue 2, Bootstrap 4, Storybook 6,
+# Django 4.2 LTS, pyvips 2.x). The `ignore` rules below stop Dependabot from
+# proposing major-version bumps that this codebase cannot adopt yet.
+
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -12,8 +16,29 @@ updates:
     directory: "/front/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "vue"
+        versions: [">=3.0.0"]
+      - dependency-name: "bootstrap"
+        versions: [">=5.0.0"]
+      - dependency-name: "@storybook/*"
+        versions: [">=7.0.0"]
+      # stay on the current major until validated
+      - dependency-name: "webpack-cli"
+        versions: [">=5.0.0"]
+      - dependency-name: "compression-webpack-plugin"
+        versions: [">=8.0.0"]
+      - dependency-name: "diff"
+        versions: [">=5.0.0"]
 
   - package-ecosystem: "pip"
     directory: "/app"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "django"
+        versions: [">=5.0.0"]
+      - dependency-name: "pyvips"
+        versions: [">=3.0.0"]
+      - dependency-name: "django-debug-toolbar"
+        versions: [">=5.0.0"]
