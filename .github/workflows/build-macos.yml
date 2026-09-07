@@ -33,7 +33,7 @@ jobs:
       # GitHub Actions artifacts are always downloaded as a zip, so the DMG
       # is attached to a release instead for a direct .dmg download.
       - name: Attach DMG to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: "macos-${{ steps.build.outputs.short_sha }}-${{ github.run_number }}"
           name: "macOS build ${{ steps.build.outputs.short_sha }} (${{ steps.build.outputs.version }})"
