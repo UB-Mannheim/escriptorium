@@ -55,6 +55,7 @@
                     v-translate
                     class="escr-help-text"
                 >
+                    <!-- eslint-disable-next-line max-len -->
                     Overwriting destroys existing regions, lines and any bound transcriptions before importing.
                 </span>
             </div>
@@ -87,8 +88,16 @@ export default {
         }),
         metsOptions() {
             return [
-                { value: "url", label: this.$gettext("Enter URL"), selected: this.metsType === "url" },
-                { value: "local", label: this.$gettext("Upload file"), selected: this.metsType === "local" }
+                {
+                    value: "url",
+                    label: this.$gettext("Enter URL"),
+                    selected: this.metsType === "url",
+                },
+                {
+                    value: "local",
+                    label: this.$gettext("Upload file"),
+                    selected: this.metsType === "local",
+                },
             ];
         },
     },
