@@ -87,15 +87,15 @@ jobs:
       - name: Install frontend dependencies
         working-directory: front
         run: npm ci
+      - name: Build production frontend
+        working-directory: front
+        run: npm run production
       - name: Lint frontend
         working-directory: front
         run: npm run lint
       - name: Run JavaScript tests
         working-directory: front
         run: npm test
-      - name: Build production frontend
-        working-directory: front
-        run: npm run production
       - uses: actions/upload-artifact@v7
         with:
           name: front-dist
