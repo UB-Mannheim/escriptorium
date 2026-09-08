@@ -88,7 +88,9 @@ vendor_dylibs() {
     local libdir="$dir/lib"
     local map="$dir/.dylibmap"
     mkdir -p "$libdir"
-    : > "$map"
+    # Map of copied dylib basename -> original location; callers may
+    # pre-populate it with directly copied seeds.
+    [ -e "$map" ] || : > "$map"
     local file ref base origin changed pass
     for pass in 1 2 3 4 5 6 7 8 9 10; do
         changed=0
@@ -122,8 +124,30 @@ vendor_dylibs() {
                             changed=1
                         fi
                         ;;
+                    @rpath/*)
+                        # Intra-keg dependency: resolve it via this file's own
+                        # LC_RPATH entries (absolute keg paths, or relative to
+                        # the file's original keg location) and copy it in.
+                        base="${ref#@rpath/}"
+                        origin="$(awk -F'\t' -v b="$(basename "$file")" '$1 == b {print $2; exit}' "$map" 2>/dev/null)"
+                        origin_dir=""; [ -n "$origin" ] && origin_dir="$(dirname "$origin")"
+                        [ -n "$origin_dir" ] || origin_dir="$(dirname "$file")"
+                        while IFS= read -r rp; do
+                            case "$rp" in
+                                /opt/homebrew/*) cand="$rp/$base" ;;
+                                @loader_path/*|@executable_path/*) cand="$origin_dir/${rp#*@*/}/$base" ;;
+                                *) continue ;;
+                            esac
+                            if [ -e "$cand" ] && [ ! -e "$libdir/$base" ]; then
+                                cp "$cand" "$libdir/$base"
+                                printf '%s\t%s\n' "$base" "$cand" >> "$map"
+                                install_name_tool -id "@rpath/$base" "$libdir/$base" 2>/dev/null
+                                changed=1
+                            fi
+                        done < <(otool -l "$file" 2>/dev/null | awk '/LC_RPATH/{f=1;next} f&&/path /{print $2;f=0}')
+                        ;;
                 esac
-            done < <(otool -L "$file" 2>/dev/null | awk 'NR>1 {print $1}' | grep -E '^(/opt/homebrew/|@loader_path/)' || true)
+            done < <(otool -L "$file" 2>/dev/null | awk 'NR>1 {print $1}' | grep -E '^(/opt/homebrew/|@loader_path/|@rpath/)' || true)
         done
         [ "$changed" = 1 ] || break
     done
@@ -210,6 +234,53 @@ cp -R "$BUILD/work/postgres" "$BUNDLE_RES/postgres"
 cp -R "$BUILD/work/redis" "$BUNDLE_RES/redis"
 cp -R "$BUILD/work/jre" "$BUNDLE_RES/jre"
 cp -R "$BUILD/work/python" "$BUNDLE_RES/python"
+
+# --- Homebrew-linked Python extensions (pyvips, shapely/GEOS, ...) ------------
+# Some wheels are built against Homebrew libraries via absolute paths, so they
+# cannot load on a machine without Homebrew. Collect the referenced libraries,
+# vendor the full closure, and rewrite the extension references to @rpath,
+# which is resolved via an rpath added to the python binary.
+echo "==> Vendoring Homebrew-linked libraries"
+brew install --quiet vips geos gettext
+PY_SITE_W="$BUILD/work/python/lib/python3.${PY_MINOR}/site-packages"
+[ -d "$PY_SITE_W" ] || fail "python site-packages not found: $PY_SITE_W"
+HBREW_LIB="$BUILD/work/hbrew/lib"
+mkdir -p "$HBREW_LIB"
+for so in $(find "$PY_SITE_W" \( -name '*.so' -o -name '*.dylib' \) -type f); do
+    for ref in $(otool -L "$so" 2>/dev/null | awk 'NR>1 {print $1}' | grep '^/opt/homebrew' || true); do
+        if [ ! -e "$HBREW_LIB/$(basename "$ref")" ]; then
+            cp "$ref" "$HBREW_LIB/"
+            printf '%s\t%s\n' "$(basename "$ref")" "$ref" >> "$BUILD/work/hbrew/.dylibmap"
+        fi
+    done
+done
+# Normalize the ids of the directly copied seeds (vendor_dylibs only re-ids
+# files it copies itself).
+for f in "$HBREW_LIB"/*; do
+    [ -f "$f" ] || continue
+    case "$(otool -D "$f" 2>/dev/null | tail -1)" in
+        /opt/homebrew/*) install_name_tool -id "@rpath/$(basename "$f")" "$f" ;;
+    esac
+done
+if [ -n "$(ls -A "$HBREW_LIB")" ]; then
+    vendor_dylibs "$BUILD/work/hbrew"
+    mkdir -p "$BUNDLE_RES/hbrew"
+    cp -R "$HBREW_LIB" "$BUNDLE_RES/hbrew/lib"
+    PY_SITE="$BUNDLE_RES/python/lib/python3.${PY_MINOR}/site-packages"
+    for so in $(find "$PY_SITE" \( -name '*.so' -o -name '*.dylib' \) -type f); do
+        changed=0
+        for ref in $(otool -L "$so" 2>/dev/null | awk 'NR>1 {print $1}' | grep '^/opt/homebrew' || true); do
+            install_name_tool -change "$ref" "@rpath/$(basename "$ref")" "$so"
+            changed=1
+        done
+        [ "$changed" = 1 ] && codesign --force --sign - "$so"
+    done
+    install_name_tool -add_rpath "@executable_path/../../hbrew/lib" "$BUNDLE_RES/python/bin/python3.${PY_MINOR}"
+    codesign --force --sign - "$BUNDLE_RES/python/bin/python3.${PY_MINOR}"
+fi
+leftover=$(find "$BUNDLE_RES/python" \( -name '*.so' -o -name '*.dylib' \) -type f \
+    -exec otool -L {} + 2>/dev/null | awk '{print $1}' | grep '^/opt/homebrew' | sort -u || true)
+[ -z "$leftover" ] || fail "extensions still reference Homebrew: $leftover"
 mkdir -p "$BUNDLE_RES/escriptorium/front"
 # Exclude root-level directories only (anchored '/'); keep per-app static dirs.
 # --- default recognition model ------------------------------------------------------------
