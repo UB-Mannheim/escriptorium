@@ -142,6 +142,12 @@ pending migrations.
 - PostgreSQL is vendored from the Homebrew keg; `build.sh` rewrites its
   dylib install names (`@rpath`) so no Homebrew installation is needed on
   the target machine.
+- Some Python wheels (pyvips, shapely) are built against Homebrew
+  libraries via absolute paths. `build.sh` detects every extension module
+  that references `/opt/homebrew`, vendors the full library closure into
+  `Resources/hbrew/lib`, rewrites the references to `@rpath`, and adds a
+  matching rpath to the bundled python, so no Homebrew installation is
+  needed on the target machine.
 - Text alignment (`TEXT_ALIGNMENT=True`) is enabled and a JRE is bundled;
   remove the JRE step and set the env var in the launcher to disable it.
 - Kraken OCR training and inference run on the Apple GPU (PyTorch MPS) by
