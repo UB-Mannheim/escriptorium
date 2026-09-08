@@ -626,7 +626,8 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
         return self.name
 
     def make_slug(self):
-        slug = slugify(self.name, allow_unicode=True)
+        # the slug column is varchar(50), so the slug must never exceed 50 chars
+        slug = slugify(self.name, allow_unicode=True)[:50]
         # check unicity
         exists = Project.objects.filter(slug=slug).count()
         if not exists:

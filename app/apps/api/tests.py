@@ -1587,6 +1587,18 @@ class ProjectViewSetTestCase(CoreFactoryTestCase):
         resp = self.client.post(uri, {'name': 'test proj'})
         self.assertEqual(resp.status_code, 201)
 
+    def test_create_with_long_name(self):
+        self.client.force_login(self.project.owner)
+        uri = reverse('api:project-list')
+        name = 'test project with a very long name indeed ' * 5
+        # a name slugifying to more than 50 chars must not overflow the varchar(50) slug column
+        resp = self.client.post(uri, {'name': name})
+        self.assertEqual(resp.status_code, 201)
+        # same name again: the truncated slug is a duplicate, so the
+        # timestamp-suffixed branch must also fit into 50 chars
+        resp = self.client.post(uri, {'name': name})
+        self.assertEqual(resp.status_code, 201)
+
     def test_documents_count(self):
         self.factory.make_document(project=self.project)
         uri = reverse('api:project-list')
