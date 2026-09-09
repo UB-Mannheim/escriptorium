@@ -115,7 +115,17 @@ start_postgres() {
         local pmpid
         pmpid="$(head -1 "$DATA_DIR/pgdata/postmaster.pid")"
         if kill -0 "$pmpid" 2>/dev/null; then
-            return
+            # A live pid can belong to a postmaster that is still shutting
+            # down (a stop and a start ran in parallel); wait for it to exit
+            # so we start a fresh server instead of assuming the server is up.
+            local i
+            for i in $(seq 1 30); do
+                kill -0 "$pmpid" 2>/dev/null || break
+                "$PG_BIN/pg_isready" -h "$WEB_HOST" -p "$PG_PORT" -q 2>/dev/null && return
+                sleep 1
+            done
+            kill -0 "$pmpid" 2>/dev/null && \
+                die "PostgreSQL (pid $pmpid) neither came up nor shut down within 30s"
         fi
     fi
     if "$PG_BIN/pg_isready" -h "$WEB_HOST" -p "$PG_PORT" -q 2>/dev/null; then
