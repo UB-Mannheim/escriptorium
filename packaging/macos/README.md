@@ -1,4 +1,4 @@
-# macOS bundle (Apple Silicon)
+# macOS bundle (Apple Silicon, macOS 14+)
 
 Self-contained `eScriptorium.app` that runs the full stack locally without
 any prerequisites: bundled CPython 3.12 with all Python dependencies,
@@ -6,8 +6,9 @@ PostgreSQL 18, Redis, and a Temurin JRE (for passim text alignment).
 
 ## Build
 
-Prerequisites on the build machine: Apple Silicon macOS 13+, Xcode command
-line tools, Homebrew, Node.js >= 20, `curl`, `jq`.
+Prerequisites on the build machine: Apple Silicon macOS (any recent version —
+the staged bottle tier, not the build machine, determines the minimum OS of
+the result), Xcode command line tools, Node.js >= 20, `curl`, `jq`.
 
 ```bash
 packaging/macos/build.sh            # build .app and .dmg
@@ -28,8 +29,11 @@ VERSION_DATE=UBMA-v26.07 packaging/macos/build.sh
 ```
 
 The build downloads the Python runtime, the JRE and the Redis source,
-installs PostgreSQL 18 via Homebrew, and runs `npm ci`/`npm run production`
-in `front/`. Budget a few GB of disk and a few minutes.
+downloads Homebrew bottles for PostgreSQL 18, vips, geos and gettext (and
+their dependencies) from the `arm64_sonoma` tier — so the bundle runs on
+macOS 14+ even when built on a newer macOS whose Homebrew tier would carry a
+higher minimum OS — and runs `npm ci`/`npm run production` in `front/`.
+Budget a few GB of disk and a few minutes.
 
 ### Building on GitHub
 
@@ -142,9 +146,13 @@ pending migrations.
   the bundle.
 - User data is kept out of the `.app` via the `MEDIA_ROOT`, `STATIC_ROOT`
   and `LOG_FILE` environment overrides in `settings.py`.
-- PostgreSQL is vendored from the Homebrew keg; `build.sh` rewrites its
-  dylib install names (`@rpath`) so no Homebrew installation is needed on
-  the target machine.
+- PostgreSQL is vendored from `arm64_sonoma`-tier Homebrew bottles (staged
+  into the build dir, not from the local keg, so the build machine's own
+  macOS version does not raise the bundle's minimum OS); `build.sh` rewrites
+  its dylib install names (`@rpath`) so no Homebrew installation is needed
+  on the target machine. A final audit fails the build if any bundled
+  Mach-O has a minimum OS above `MIN_MACOS` or references libSystem symbols
+  that only exist on newer macOS releases.
 - Some Python wheels (pyvips, shapely) are built against Homebrew
   libraries via absolute paths. `build.sh` detects every extension module
   that references `/opt/homebrew`, vendors the full library closure into
