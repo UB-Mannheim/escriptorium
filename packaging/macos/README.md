@@ -42,6 +42,9 @@ used instead.) The optional *version* input overrides `VERSION_DATE`.
 
 ## Install (users)
 
+See [INSTALL.md](INSTALL.md) for a user guide (DMG installation, unblocking
+the unsigned app, start-up time, menu bar). In short:
+
 Get the `eScriptorium-<VERSION_DATE>.dmg` from the release, open it and drag
 *eScriptorium* onto the *Applications* folder icon. The DMG is about 1.3 GB;
 the installed app takes about 2.5 GB.
