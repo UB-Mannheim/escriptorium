@@ -224,7 +224,16 @@ start_web() {
     port="$(pick_free_port "$WEB_PORT")" || die "No free port in range $WEB_PORT-8010 for the web server"
     WEB_PORT="$port"
     WEB_URL="http://$WEB_HOST:$port/"
-    (cd "$APP_DIR" && exec "$PY" manage.py runserver "$WEB_HOST:$WEB_PORT" --noreload) \
+    # daphne serves static files from STATIC_ROOT (runserver served them via
+    # the finders): (re)collect them when the app version changes.
+    if [ ! -f "$STATIC_ROOT/.collectstatic_version" ] \
+            || [ "$(cat "$STATIC_ROOT/.collectstatic_version" 2>/dev/null)" != "$VERSION_DATE" ]; then
+        (cd "$APP_DIR" && "$PY" manage.py collectstatic --noinput) >> "$LOG_DIR/web.log" 2>&1
+        echo "$VERSION_DATE" > "$STATIC_ROOT/.collectstatic_version"
+    fi
+    # daphne (ASGI): manage.py runserver is WSGI-only, so the /ws/ endpoints
+    # would 404 and no websocket notifications would ever be delivered.
+    (cd "$APP_DIR" && exec "$PY" -m daphne -b "$WEB_HOST" -p "$WEB_PORT" escriptorium.asgi:application) \
         >> "$LOG_DIR/web.log" 2>&1 &
     echo $! > "$PID_DIR/web.pid"
     echo "$port" > "$PID_DIR/web.port"
