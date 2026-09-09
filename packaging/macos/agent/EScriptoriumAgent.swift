@@ -12,6 +12,8 @@ let dataDir = env["ESCR_DATA_DIR"] ?? NSHomeDirectory()
     + "/Library/Application Support/eScriptorium"
 let pidDir = dataDir + "/pids"
 let logDir = dataDir + "/logs"
+let statusFile = pidDir + "/status"
+let launcherPidFile = pidDir + "/launcher.pid"
 let macosDir = URL(fileURLWithPath: proc.arguments[0]).deletingLastPathComponent()
 let launcherPath = macosDir.appendingPathComponent("eScriptorium").path
 
@@ -39,6 +41,17 @@ func webIsUp(port: Int) -> Bool {
     return up
 }
 
+func launcherAlive() -> Bool {
+    guard let s = try? String(contentsOfFile: launcherPidFile, encoding: .utf8),
+          let p = Int32(s.trimmingCharacters(in: .whitespacesAndNewlines)), p > 0 else { return false }
+    return kill(p, 0) == 0
+}
+
+func currentStatus() -> String {
+    (try? String(contentsOfFile: statusFile, encoding: .utf8))?
+        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+}
+
 func registerPid() {
     if let old = try? String(contentsOfFile: pidDir + "/agent.pid", encoding: .utf8),
        let pid = Int32(old.trimmingCharacters(in: .whitespacesAndNewlines)), pid > 0 {
@@ -53,6 +66,7 @@ func registerPid() {
 final class Agent: NSObject {
     let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     var statusText: NSMenuItem!
+    var phaseItem: NSMenuItem!
     var openItem: NSMenuItem!
     var toggleItem: NSMenuItem!
     var busy = false
@@ -69,6 +83,9 @@ final class Agent: NSObject {
         let menu = NSMenu()
         statusText = NSMenuItem(title: "eScriptorium", action: nil, keyEquivalent: "")
         statusText.isEnabled = false
+        phaseItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        phaseItem.isEnabled = false
+        phaseItem.isHidden = true
         openItem = NSMenuItem(title: "Open eScriptorium", action: #selector(openWeb), keyEquivalent: "")
         openItem.target = self
         toggleItem = NSMenuItem(title: "…", action: #selector(toggle), keyEquivalent: "")
@@ -78,6 +95,7 @@ final class Agent: NSObject {
         let quitItem = NSMenuItem(title: "Quit eScriptorium",
                                   action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(statusText)
+        menu.addItem(phaseItem)
         menu.addItem(.separator())
         menu.addItem(openItem)
         menu.addItem(toggleItem)
@@ -94,20 +112,44 @@ final class Agent: NSObject {
 
     func update() {
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            let up = FileManager.default.fileExists(atPath: dataDir) && webIsUp(port: webPort())
+            let dataDirExists = FileManager.default.fileExists(atPath: dataDir)
+            let up = dataDirExists && webIsUp(port: webPort())
+            let status = currentStatus()
+            let starting = !up && launcherAlive() && !status.isEmpty
             DispatchQueue.main.async {
                 guard let self else { return }
-                if !FileManager.default.fileExists(atPath: dataDir) {
+                if !dataDirExists {
                     // Data directory was deleted (reset / test cleanup).
                     NSApplication.shared.terminate(nil)
                     return
                 }
-                self.statusText.title = up ? "eScriptorium is running" : "eScriptorium is stopped"
+                if up {
+                    self.statusText.title = "eScriptorium is running"
+                    self.phaseItem.isHidden = true
+                } else if status == "failed to start" {
+                    self.statusText.title = "eScriptorium failed to start"
+                    self.phaseItem.isHidden = true
+                } else if starting {
+                    self.statusText.title = "eScriptorium is starting…"
+                    self.phaseItem.title = status
+                    self.phaseItem.isHidden = false
+                } else {
+                    self.statusText.title = "eScriptorium is stopped"
+                    self.phaseItem.isHidden = true
+                }
                 self.openItem.isHidden = !up
                 // While a stop/start is still running the toggle keeps its
-                // "Stopping/Starting …" title and stays disabled.
-                if !self.busy {
+                // "Stopping/Starting …" title and stays disabled; the same
+                // applies while a launcher started by double-clicking the
+                // app is still working through its startup phases.
+                if self.busy || starting {
+                    if !self.busy {
+                        self.toggleItem.title = "Starting eScriptorium…"
+                    }
+                    self.toggleItem.isEnabled = false
+                } else {
                     self.toggleItem.title = up ? "Stop eScriptorium" : "Start eScriptorium"
+                    self.toggleItem.isEnabled = true
                 }
             }
         }
