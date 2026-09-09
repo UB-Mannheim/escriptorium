@@ -540,12 +540,22 @@ export default Vue.extend({
             documentId: (state) => state.document.id,
             enabledVKs: (state) => state.document.enabledVKs,
             image: (state) => state.parts.image,
-            line: (state) => state.lines.editedLine,
             mainTextDirection: (state) => state.document.mainTextDirection,
             readDirection: (state) => state.document.readDirection,
             selectedTranscription: (state) => state.transcriptions.selectedTranscription,
             transcriptionFont: (state) => state.document.transcriptionFont,
         }),
+        line() {
+            const lines = this.$store.state.lines;
+            const edited = lines.editedLine;
+            if (!edited) return edited;
+            // Resolve the line from the store's live list rather than relying on
+            // the `editedLine` reference: some entry points (Elements panel)
+            // dispatch a shallow copy, and the lines/update mutation updates the
+            // list entry in place, so the copy would never see e.g. a
+            // recalculated mask.
+            return lines.all.find((l) => l.pk == edited.pk) || edited;
+        },
         momentDate() {
             return moment.tz(this.line.currentTrans.version_updated_at, this.timeZone);
         },
@@ -622,6 +632,12 @@ export default Vue.extend({
     watch: {
         line() {
             this.cancelBaselineDrag();
+            this.computeStyles();
+        },
+        "line.mask"() {
+            // The mask was recalculated in the store (e.g. after a baseline
+            // edit); reframe the preview and redraw the overlay. The `line`
+            // watcher does not fire here because the line reference is stable.
             this.computeStyles();
         },
         enabledVKs() {
@@ -761,10 +777,12 @@ export default Vue.extend({
             if (this.dragPointIndex === null || !this.baselineDraft) return;
             const pos = this.eventToImageCoords(event);
             if (!pos) return;
-            this.baselineDraft[this.dragPointIndex] = [
+            // $set: replacing an array item by index is not reactive in Vue 2,
+            // and the overlay must follow the pointer live while dragging.
+            this.$set(this.baselineDraft, this.dragPointIndex, [
                 Math.round(pos.x + this.dragOffset.x),
                 Math.round(pos.y + this.dragOffset.y),
-            ];
+            ]);
         },
 
         onBaselineDragEnd() {
