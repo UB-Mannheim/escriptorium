@@ -1,6 +1,6 @@
 # Installing and running eScriptorium on macOS (DMG)
 
-User guide for the self-contained `eScriptorium.app` (Apple Silicon, macOS 13+).
+User guide for the self-contained `eScriptorium.app` (Apple Silicon, macOS 14+).
 The bundle includes everything it needs — a CPython 3.12 runtime with all
 Python dependencies, PostgreSQL, Redis, and a JRE — so no prerequisites,
 virtual environments, or Homebrew installation are required on the target

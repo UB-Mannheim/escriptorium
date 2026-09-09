@@ -42,10 +42,16 @@ log() {
     echo "[eScriptorium] $*" | tee -a "$LOG_DIR/launcher.log"
 }
 
+# Current startup phase, shown by the menu bar agent while starting.
+set_status() {
+    echo "$1" > "$PID_DIR/status" 2>/dev/null || true
+}
+
 # Log a fatal error and show a macOS alert (the launcher runs without a
 # terminal when started by double-clicking the app).
 die() {
     log "ERROR: $1"
+    set_status "failed to start"
     osascript -e "display alert \"eScriptorium\" message \"$1\" as warning" >/dev/null 2>&1 || true
     exit 1
 }
@@ -265,19 +271,27 @@ wait_for_web() {
 
 start() {
     ensure_dirs
+    # Remember this launcher so the agent can tell an in-progress start
+    # apart from a stale status file.
+    echo $$ > "$PID_DIR/launcher.pid"
+    set_status "initializing"
+    start_agent
     bootstrap
     app_env
     start_redis
     start_postgres
     create_db
+    set_status "running migrations"
     (cd "$APP_DIR" && "$PY" manage.py migrate --noinput) >> "$LOG_DIR/migrate.log" 2>&1 \
         || { tail -30 "$LOG_DIR/migrate.log" >&2; die "Database migrations failed (see $LOG_DIR/migrate.log)"; }
+    set_status "importing default data"
     import_default_model
     import_default_fonts
+    set_status "starting services"
     start_celery
     start_web
     wait_for_web
-    start_agent
+    rm -f "$PID_DIR/status"
     log "eScriptorium $VERSION_DATE is running at $WEB_URL"
 }
 
