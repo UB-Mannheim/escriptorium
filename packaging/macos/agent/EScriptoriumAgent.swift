@@ -39,16 +39,6 @@ func webIsUp(port: Int) -> Bool {
     return up
 }
 
-func runLauncher(_ args: [String]) {
-    let p = Process()
-    p.executableURL = URL(fileURLWithPath: launcherPath)
-    p.arguments = args
-    p.environment = env
-    p.standardOutput = FileHandle.nullDevice
-    p.standardError = FileHandle.nullDevice
-    try? p.run()
-}
-
 func registerPid() {
     if let old = try? String(contentsOfFile: pidDir + "/agent.pid", encoding: .utf8),
        let pid = Int32(old.trimmingCharacters(in: .whitespacesAndNewlines)), pid > 0 {
@@ -66,6 +56,7 @@ final class Agent: NSObject {
     var openItem: NSMenuItem!
     var toggleItem: NSMenuItem!
     var busy = false
+    var launcherProc: Process?
 
     override init() {
         super.init()
@@ -113,7 +104,11 @@ final class Agent: NSObject {
                 }
                 self.statusText.title = up ? "eScriptorium is running" : "eScriptorium is stopped"
                 self.openItem.isHidden = !up
-                self.toggleItem.title = up ? "Stop eScriptorium" : "Start eScriptorium"
+                // While a stop/start is still running the toggle keeps its
+                // "Stopping/Starting …" title and stays disabled.
+                if !self.busy {
+                    self.toggleItem.title = up ? "Stop eScriptorium" : "Start eScriptorium"
+                }
             }
         }
     }
@@ -127,15 +122,31 @@ final class Agent: NSObject {
     @objc func toggle() {
         guard !busy else { return }
         busy = true
-        toggleItem.isEnabled = false
         let up = webIsUp(port: webPort())
-        runLauncher(up ? ["stop"] : ["start"])
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2) { [weak self] in
+        toggleItem.title = up ? "Stopping eScriptorium…" : "Starting eScriptorium…"
+        toggleItem.isEnabled = false
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: launcherPath)
+        p.arguments = up ? ["stop"] : ["start"]
+        p.environment = env
+        p.standardOutput = FileHandle.nullDevice
+        p.standardError = FileHandle.nullDevice
+        p.terminationHandler = { [weak self] _ in
             DispatchQueue.main.async {
-                self?.busy = false
-                self?.toggleItem.isEnabled = true
-                self?.update()
+                guard let self else { return }
+                self.busy = false
+                self.launcherProc = nil
+                self.toggleItem.isEnabled = true
+                self.update()
             }
+        }
+        launcherProc = p
+        do {
+            try p.run()
+        } catch {
+            busy = false
+            launcherProc = nil
+            toggleItem.isEnabled = true
         }
     }
 
