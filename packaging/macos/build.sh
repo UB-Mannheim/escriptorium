@@ -6,8 +6,10 @@
 #   packaging/macos/build.sh          build the .app and .dmg
 #   packaging/macos/build.sh --test   additionally run a smoke test
 #
-# Prerequisites: Apple Silicon macOS 13+, Xcode command line tools,
-# Homebrew, Node.js >= 20, curl, jq.
+# Prerequisites: Apple Silicon macOS, Xcode command line tools, Node.js >= 20,
+# curl, jq. No Homebrew needed: all Homebrew dependencies are fetched as
+# bottles of the HOMEBREW_TIER tier, so the result runs on macOS >=
+# MIN_MACOS regardless of the build machine's own macOS version.
 
 set -euo pipefail
 
@@ -20,6 +22,8 @@ PY_MINOR=12
 PG_VERSION=18
 REDIS_VERSION=7.4.3
 JRE_MAJOR=21
+MIN_MACOS="14.0"
+HOMEBREW_TIER="arm64_sonoma"
 VERSION_DATE="${VERSION_DATE:-UBMA-$(git -C "$REPO_ROOT" describe --tags --abbrev=0 2>/dev/null || date +%Y-%m-%d)}"
 RUN_SMOKE_TEST=0
 [ "${1:-}" = "--test" ] && RUN_SMOKE_TEST=1
@@ -28,7 +32,7 @@ fail() { echo "error: $*" >&2; exit 1; }
 
 # --- prerequisites -----------------------------------------------------------
 [ "$(uname -m)" = "arm64" ] || fail "this build must run on Apple Silicon"
-for tool in curl jq npm node git hdiutil brew rsync swiftc; do
+for tool in curl jq npm node git hdiutil rsync swiftc; do
     command -v "$tool" >/dev/null || fail "required tool not found: $tool"
 done
 
@@ -72,12 +76,106 @@ echo "==> Building frontend"
 npm ci --prefix "$REPO_ROOT/front" --no-audit --no-fund
 npm run production --prefix "$REPO_ROOT/front"
 
+# --- Homebrew stage prefix -------------------------------------------------------
+# Homebrew publishes bottles per OS tier. A bottle carries that tier's
+# minimum OS and may reference libSystem symbols that only exist there (the
+# macOS 26 SDK added glibc-compat symbols such as strchrnul, which PG, glib
+# and krb5 now pick up). Installing the build machine's own tier would
+# therefore restrict the bundle to that OS. Instead, stage the HOMEBREW_TIER
+# bottles of the full dependency closure into a prefix mirroring
+# /opt/homebrew, so the bundle keeps running on macOS >= MIN_MACOS no matter
+# where the build runs.
+echo "==> Staging $HOMEBREW_TIER Homebrew bottles"
+HB_PREFIX="$BUILD/work/homebrew"
+HB_OPT="$HB_PREFIX/opt"
+HB_BOTTLES="$HERE/.cache/bottles"
+mkdir -p "$HB_PREFIX/Cellar" "$HB_OPT" "$HB_BOTTLES"
+
+hb_json() { curl -fsSL --retry 3 "https://formulae.brew.sh/api/formula/${1/@/%40}.json"; }
+
+hb_collect_deps() {
+    local f="$1" json d
+    case " $HB_SEEN " in *" $f "*) return ;; esac
+    HB_SEEN="$HB_SEEN $f"
+    json="$(hb_json "$f")" || fail "formula API failed for $f"
+    HB_FORMULAS="$HB_FORMULAS $f"
+    for d in $(jq -r '((.dependencies // []) + (.recommended_dependencies // []))[]? | if type == "string" then . else .name end' <<<"$json"); do
+        hb_collect_deps "$d"
+    done
+}
+
+hb_install_bottle() {
+    local f="$1" json url sha tarball token ver hb_repo
+    json="$(hb_json "$f")" || fail "formula API failed for $f"
+    url="$(jq -r ".bottle.stable.files.\"$HOMEBREW_TIER\".url // empty" <<<"$json")"
+    sha="$(jq -r ".bottle.stable.files.\"$HOMEBREW_TIER\".sha256 // empty" <<<"$json")"
+    if [ -z "$url" ] || [ -z "$sha" ]; then
+        # Formulae without a bottle (headers or data only, e.g. uthash,
+        # ca-certificates) produce no dylibs, so there is nothing to stage.
+        echo "    (no $HOMEBREW_TIER bottle for $f; nothing to stage)"
+        return 0
+    fi
+    tarball="$HB_BOTTLES/$f-$HOMEBREW_TIER.bottle.tar.gz"
+    if [ -f "$tarball" ] && ! echo "$sha  $tarball" | shasum -a 256 -c - >/dev/null 2>&1; then
+        rm -f "$tarball"
+    fi
+    if [ ! -f "$tarball" ]; then
+        # The GHCR repository is the path between /v2/ and /blobs/ (for
+        # versioned formulae it includes the version, e.g.
+        # homebrew/core/postgresql/18); the anonymous pull token must scope
+        # to exactly that name.
+        hb_repo="${url#https://ghcr.io/v2/}"
+        hb_repo="${hb_repo%%/blobs/*}"
+        token="$(curl -fsSL "https://ghcr.io/token?scope=repository:$hb_repo:pull" | jq -r .token)" \
+            || fail "could not fetch GHCR token for $hb_repo"
+        curl -fSL --retry 3 --retry-delay 2 --retry-all-errors \
+            -H "Authorization: Bearer $token" -o "$tarball" "$url"
+        echo "$sha  $tarball" | shasum -a 256 -c - >/dev/null || fail "bottle checksum mismatch for $f"
+    fi
+    tar -xzf "$tarball" -C "$HB_PREFIX/Cellar"
+    ver="$(ls "$HB_PREFIX/Cellar/$f" | sort -V | tail -1)"
+    ln -sfn "../Cellar/$f/$ver" "$HB_OPT/$f"
+}
+
+HB_SEEN=""
+HB_FORMULAS=""
+for f in "postgresql@${PG_VERSION}" vips geos gettext; do
+    hb_collect_deps "$f"
+done
+for f in $HB_FORMULAS; do
+    hb_install_bottle "$f"
+done
+
+# Translate a Homebrew path (installed /opt/homebrew prefix, or the
+# @@HOMEBREW_PREFIX@@ / @@HOMEBREW_CELLAR@@ placeholders that raw bottles
+# still carry) to the equivalent location in the staged prefix.
+hb_stage_path() {
+    local ref="$1" f sub rest2
+    case "$ref" in
+        /opt/homebrew/opt/*)
+            f="${ref#/opt/homebrew/opt/}"; f="${f%%/*}"; sub="${ref#/opt/homebrew/opt/$f/}" ;;
+        '@@HOMEBREW_PREFIX@@'/opt/*)
+            f="${ref#'@@HOMEBREW_PREFIX@@'/opt/}"; f="${f%%/*}"; sub="${ref#'@@HOMEBREW_PREFIX@@'/opt/$f/}" ;;
+        /opt/homebrew/Cellar/*|'@@HOMEBREW_CELLAR@@'/*)
+            case "$ref" in
+                /opt/homebrew/Cellar/*) rest2="${ref#/opt/homebrew/Cellar/}" ;;
+                *) rest2="${ref#'@@HOMEBREW_CELLAR@@'/}" ;;
+            esac
+            f="${rest2%%/*}"
+            sub="${rest2#*/}"
+            sub="${sub#*/}"
+            ;;
+        *) return 1 ;;
+    esac
+    printf '%s' "$HB_OPT/$f/$sub"
+}
+
 # --- PostgreSQL ----------------------------------------------------------------
-# Copy the Homebrew keg and rewrite its dylib references so the tree is
+# Copy the staged keg and rewrite its dylib references so the tree is
 # self-contained on machines without Homebrew.
 echo "==> Vendoring PostgreSQL ${PG_VERSION}"
-brew install --quiet "postgresql@${PG_VERSION}"
-PG_PREFIX="$(brew --prefix "postgresql@${PG_VERSION}")"
+PG_PREFIX="$HB_OPT/postgresql@${PG_VERSION}"
+[ -d "$PG_PREFIX" ] || fail "PostgreSQL ${PG_VERSION} not staged (no $HOMEBREW_TIER bottle?)"
 # Trailing /. forces dereferencing: the keg prefix is a symlink and
 # `cp -R` would otherwise copy the link itself.
 cp -R "$PG_PREFIX/." "$BUILD/work/postgres"
@@ -100,11 +198,15 @@ vendor_dylibs() {
             while IFS= read -r ref; do
                 [ -n "$ref" ] || continue
                 case "$ref" in
-                    /opt/homebrew/*)
+                    /opt/homebrew/*|'@@HOMEBREW_PREFIX@@'/*|'@@HOMEBREW_CELLAR@@'/*)
+                        staged="$(hb_stage_path "$ref")"
+                        [ -n "$staged" ] && [ -e "$staged" ] || fail "Homebrew reference outside staged prefix: $ref"
                         base="$(basename "$ref")"
                         if [ ! -e "$libdir/$base" ]; then
-                            cp "$ref" "$libdir/$base"
-                            printf '%s\t%s\n' "$base" "$ref" >> "$map"
+                            cp "$staged" "$libdir/$base"
+                            # Store the real staged location: sibling
+                            # resolution below needs a path that exists.
+                            printf '%s\t%s\n' "$base" "$staged" >> "$map"
                             # warnings about invalidated code signatures are
                             # expected (re-signed ad-hoc below)
                             install_name_tool -id "@rpath/$base" "$libdir/$base" 2>/dev/null
@@ -134,7 +236,9 @@ vendor_dylibs() {
                         [ -n "$origin_dir" ] || origin_dir="$(dirname "$file")"
                         while IFS= read -r rp; do
                             case "$rp" in
-                                /opt/homebrew/*) cand="$rp/$base" ;;
+                                /opt/homebrew/*|'@@HOMEBREW_PREFIX@@'/*|'@@HOMEBREW_CELLAR@@'/*)
+                                    rpp="$(hb_stage_path "$rp")"
+                                    cand="$rpp/$base" ;;
                                 @loader_path/*|@executable_path/*) cand="$origin_dir/${rp#*@*/}/$base" ;;
                                 *) continue ;;
                             esac
@@ -147,7 +251,7 @@ vendor_dylibs() {
                         done < <(otool -l "$file" 2>/dev/null | awk '/LC_RPATH/{f=1;next} f&&/path /{print $2;f=0}')
                         ;;
                 esac
-            done < <(otool -L "$file" 2>/dev/null | awk 'NR>1 {print $1}' | grep -E '^(/opt/homebrew/|@loader_path/|@rpath/)' || true)
+            done < <(otool -L "$file" 2>/dev/null | awk 'NR>1 {print $1}' | grep -E '^(/opt/homebrew/|@loader_path/|@rpath/|@@HOMEBREW_PREFIX@@/|@@HOMEBREW_CELLAR@@/)' || true)
         done
         [ "$changed" = 1 ] || break
     done
@@ -176,9 +280,13 @@ curl -fSL --retry 3 --retry-delay 2 --retry-all-errors --progress-bar -o "$BUILD
     "https://download.redis.io/releases/redis-${REDIS_VERSION}.tar.gz"
 tar -xzf "$BUILD/downloads/redis.tar.gz" -C "$BUILD/downloads"
 # -Wno-implicit-const-int-float-conversion silences a benign warning in
-# Redis' timeout.c when built with recent Clang (Xcode 16+).
+# Redis' timeout.c when built with recent Clang (Xcode 16+). The
+# -mmacosx-version-min pin keeps the binary loadable on macOS >= MIN_MACOS
+# even when built on a newer system; it must reach the link step too, which
+# only sees LDFLAGS in Redis' Makefile.
 make -C "$BUILD/downloads/redis-${REDIS_VERSION}" -j"$(sysctl -n hw.ncpu)" MALLOC=libc \
-    CFLAGS="-Wno-implicit-const-int-float-conversion" >/dev/null
+    CFLAGS="-Wno-implicit-const-int-float-conversion -mmacosx-version-min=$MIN_MACOS" \
+    LDFLAGS="-mmacosx-version-min=$MIN_MACOS" >/dev/null
 mkdir -p "$BUILD/work/redis"
 cp "$BUILD/downloads/redis-${REDIS_VERSION}/src/redis-server" "$BUILD/work/redis/"
 cp "$BUILD/downloads/redis-${REDIS_VERSION}/src/redis-cli" "$BUILD/work/redis/"
@@ -209,7 +317,7 @@ mkdir -p "$BUNDLE_RES"
 
 # --- menu bar agent ------------------------------------------------------------
 echo "==> Compiling menu bar agent"
-swiftc -O -o "$APP/Contents/MacOS/eScriptoriumAgent" "$HERE/agent/EScriptoriumAgent.swift"
+swiftc -O -target arm64-apple-macosx"$MIN_MACOS" -o "$APP/Contents/MacOS/eScriptoriumAgent" "$HERE/agent/EScriptoriumAgent.swift"
 
 # --- app icon ------------------------------------------------------------
 echo "==> Generating app icon"
@@ -234,6 +342,10 @@ cp -R "$BUILD/work/postgres" "$BUNDLE_RES/postgres"
 cp -R "$BUILD/work/redis" "$BUNDLE_RES/redis"
 cp -R "$BUILD/work/jre" "$BUNDLE_RES/jre"
 cp -R "$BUILD/work/python" "$BUNDLE_RES/python"
+# The autobahn wheel ships a flatc CLI (FlatBuffers code generation) built
+# for a newer macOS; eScriptorium never invokes it, so drop it to keep the
+# bundle loadable on macOS >= MIN_MACOS.
+rm -f "$BUNDLE_RES/python/lib/python3.${PY_MINOR}/site-packages/autobahn/_flatc/bin/flatc"
 
 # --- Homebrew-linked Python extensions (pyvips, shapely/GEOS, ...) ------------
 # Some wheels are built against Homebrew libraries via absolute paths, so they
@@ -248,9 +360,11 @@ HBREW_LIB="$BUILD/work/hbrew/lib"
 mkdir -p "$HBREW_LIB"
 for so in $(find "$PY_SITE_W" \( -name '*.so' -o -name '*.dylib' \) -type f); do
     for ref in $(otool -L "$so" 2>/dev/null | awk 'NR>1 {print $1}' | grep '^/opt/homebrew' || true); do
+        staged="$(hb_stage_path "$ref")"
+        [ -n "$staged" ] && [ -e "$staged" ] || fail "wheel references Homebrew lib missing from staged prefix: $ref"
         if [ ! -e "$HBREW_LIB/$(basename "$ref")" ]; then
-            cp "$ref" "$HBREW_LIB/"
-            printf '%s\t%s\n' "$(basename "$ref")" "$ref" >> "$BUILD/work/hbrew/.dylibmap"
+            cp "$staged" "$HBREW_LIB/"
+            printf '%s\t%s\n' "$(basename "$ref")" "$staged" >> "$BUILD/work/hbrew/.dylibmap"
         fi
     done
 done
@@ -259,7 +373,7 @@ done
 for f in "$HBREW_LIB"/*; do
     [ -f "$f" ] || continue
     case "$(otool -D "$f" 2>/dev/null | tail -1)" in
-        /opt/homebrew/*) install_name_tool -id "@rpath/$(basename "$f")" "$f" ;;
+        /opt/homebrew/*|'@@HOMEBREW_PREFIX@@'/*|'@@HOMEBREW_CELLAR@@'/*) install_name_tool -id "@rpath/$(basename "$f")" "$f" ;;
     esac
 done
 if [ -n "$(ls -A "$HBREW_LIB")" ]; then
@@ -279,7 +393,7 @@ if [ -n "$(ls -A "$HBREW_LIB")" ]; then
     codesign --force --sign - "$BUNDLE_RES/python/bin/python3.${PY_MINOR}"
 fi
 leftover=$(find "$BUNDLE_RES/python" \( -name '*.so' -o -name '*.dylib' \) -type f \
-    -exec otool -L {} + 2>/dev/null | awk '{print $1}' | grep '^/opt/homebrew' | sort -u || true)
+    -exec otool -L {} + 2>/dev/null | awk '{print $1}' | grep -E '^(/opt/homebrew|@@HOMEBREW_PREFIX@@|@@HOMEBREW_CELLAR@@)' | sort -u || true)
 [ -z "$leftover" ] || fail "extensions still reference Homebrew: $leftover"
 mkdir -p "$BUNDLE_RES/escriptorium/front"
 # Exclude root-level directories only (anchored '/'); keep per-app static dirs.
@@ -322,6 +436,28 @@ rsync -a \
 rsync -a "$REPO_ROOT/front/dist/" "$BUNDLE_RES/escriptorium/front/dist/"
 echo "$VERSION_DATE" > "$BUNDLE_RES/version.txt"
 chmod +x "$APP/Contents/MacOS/$APP_NAME"
+
+# --- compatibility audit -----------------------------------------------------------
+# The bundle must load on macOS >= MIN_MACOS: fail if any Mach-O carries a
+# higher minimum OS or references libSystem symbols that only exist on newer
+# releases. The macOS 26 SDK added strchrnul/strrchrnul (glibc-compat); the
+# sonoma-tier bottles already reference asprintf/vasprintf, so those exist
+# since macOS 14 and are not listed here. Extend the list if a newer SDK
+# adds more symbols that end up in vendored binaries.
+echo "==> Auditing bundle for macOS $MIN_MACOS compatibility"
+AUDIT_BAD=""
+while IFS= read -r -d '' f; do
+    file -b "$f" 2>/dev/null | grep -q '^Mach-O' || continue
+    m="$(vtool -show "$f" 2>/dev/null | awk '/minos/{print $2; exit}')"
+    [ -n "$m" ] || continue
+    if awk -v a="$m" -v b="$MIN_MACOS" 'BEGIN { exit !(a + 0 > b + 0) }'; then
+        AUDIT_BAD="$AUDIT_BAD $f(minos=$m)"
+    fi
+    if nm -u "$f" 2>/dev/null | grep -qxE '_?(strchrnul|strrchrnul)'; then
+        AUDIT_BAD="$AUDIT_BAD $f(new-libSystem-symbols)"
+    fi
+done < <(find "$APP" -type f -print0)
+[ -z "$AUDIT_BAD" ] || fail "bundle not compatible with macOS $MIN_MACOS:$AUDIT_BAD"
 
 # --- disk image -------------------------------------------------------------------
 # Plain hdiutil: app plus Applications alias, volume icon set on the mounted
