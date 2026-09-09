@@ -117,11 +117,17 @@
     cursor: grabbing;
     fill: red;
 }
+.escr-line-modal .baseline-editor-overlay.cut-mode,
+.escr-line-modal .baseline-editor-overlay.cut-mode .baseline-point {
+    cursor: crosshair;
+}
 .escr-line-modal-header .escr-baseline-toggle:not(:active):not([class*="active"]):not(:hover),
+.escr-line-modal-header .escr-cut-toggle:not(:active):not([class*="active"]):not(:hover),
 .escr-line-modal-header .escr-vk-toggle:not(:active):not([class*="active"]):not(:hover) {
     background-color: transparent;
 }
 .escr-line-modal-header .escr-vk-toggle svg,
-.escr-line-modal-header .escr-baseline-toggle svg {
+.escr-line-modal-header .escr-baseline-toggle svg,
+.escr-line-modal-header .escr-cut-toggle svg {
     fill: var(--text1);
 }

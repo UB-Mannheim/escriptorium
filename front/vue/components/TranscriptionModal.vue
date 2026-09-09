@@ -127,6 +127,18 @@
                                 <PencilIcon />
                             </template>
                         </ToggleButton>
+                        <ToggleButton
+                            class="escr-cut-toggle"
+                            color="text"
+                            size="small"
+                            :disabled="!isBaselineEditEnabled"
+                            :checked="isCutMode"
+                            :on-change="toggleCutMode"
+                        >
+                            <template #button-icon>
+                                <ScissorsIcon />
+                            </template>
+                        </ToggleButton>
                     </div>
                     <div class="escr-line-modal-right">
                         <EscrButton
@@ -193,10 +205,11 @@
                         <svg
                             v-show="isBaselineEditEnabled && line.baseline"
                             class="baseline-editor-overlay"
+                            :class="{ 'cut-mode': isCutMode }"
                             :width="baselineOverlayBox.width"
                             :height="baselineOverlayBox.height"
                             :viewBox="baselineOverlayViewBox"
-                            @mousedown="startBaselineDrag"
+                            @mousedown="onOverlayMouseDown"
                         >
                             <g :transform="baselineOverlayTransform">
                                 <polygon
@@ -216,6 +229,7 @@
                                 />
                                 <circle
                                     v-for="(pt, idx) in activeBaseline"
+                                    v-show="!isCutMode"
                                     :key="'bl-pt-' + idx"
                                     :cx="pt[0]"
                                     :cy="pt[1]"
@@ -226,6 +240,18 @@
                                     vector-effect="non-scaling-stroke"
                                     class="baseline-point"
                                     :class="{ 'dragging': dragPointIndex === idx }"
+                                />
+                                <!-- selection rectangle while dragging in cut mode -->
+                                <rect
+                                    v-if="cutRect"
+                                    :x="cutRect.x"
+                                    :y="cutRect.y"
+                                    :width="cutRect.width"
+                                    :height="cutRect.height"
+                                    fill="rgba(255, 0, 0, 0.1)"
+                                    stroke="red"
+                                    stroke-width="1"
+                                    vector-effect="non-scaling-stroke"
                                 />
                             </g>
                         </svg>
@@ -491,6 +517,7 @@ import LineVersion from "./LineVersion.vue";
 import HelpVersions from "./HelpVersions.vue";
 import HelpCompareTranscriptions from "./HelpCompareTranscriptions.vue";
 import PencilIcon from "./Icons/PencilIcon/PencilIcon.vue";
+import ScissorsIcon from "./Icons/ScissorsIcon/ScissorsIcon.vue";
 import ToggleButton from "./ToggleButton/ToggleButton.vue";
 import TranscriptionSelector from "./TranscriptionSelector/TranscriptionSelector.vue";
 import XIcon from "./Icons/XIcon/XIcon.vue";
@@ -506,6 +533,7 @@ export default Vue.extend({
         HelpVersions,
         HelpCompareTranscriptions,
         PencilIcon,
+        ScissorsIcon,
         ToggleButton,
         TranscriptionSelector,
         XIcon,
@@ -523,6 +551,8 @@ export default Vue.extend({
         return {
             isVKEnabled: false,
             isBaselineEditEnabled: false,
+            // cut mode of the baseline overlay: a click on the baseline cuts it
+            isCutMode: false,
             // view transform of the line preview image, set by computeImgStyles:
             // left/top/angle mirror the <img> transform, ratio is the display scale
             baselineView: null,
@@ -530,6 +560,8 @@ export default Vue.extend({
             baselineDraft: null,
             dragPointIndex: null,
             dragOffset: null,
+            // cut-mode selection while dragging, in image coordinates
+            cutDrag: null,
         }
     },
     computed: {
@@ -628,10 +660,21 @@ export default Vue.extend({
             const view = this.baselineView;
             return view ? 6 / view.ratio : 6;
         },
+        cutRect() {
+            const d = this.cutDrag;
+            if (!d) return null;
+            return {
+                x: Math.min(d.x1, d.x2),
+                y: Math.min(d.y1, d.y2),
+                width: Math.abs(d.x2 - d.x1),
+                height: Math.abs(d.y2 - d.y1),
+            };
+        },
     },
     watch: {
         line() {
             this.cancelBaselineDrag();
+            this.cancelCutDrag();
             this.computeStyles();
         },
         "line.mask"() {
@@ -675,6 +718,7 @@ export default Vue.extend({
     },
     destroyed() {
         this.cancelBaselineDrag();
+        this.cancelCutDrag();
         // unbind all events to avoid duplicating them
         $(document).off("hide.bs.modal");
         $(document).off("show.bs.modal");
@@ -720,6 +764,179 @@ export default Vue.extend({
 
         toggleBaselineEdit(event) {
             this.isBaselineEditEnabled = event.target.checked;
+            if (!this.isBaselineEditEnabled) {
+                this.isCutMode = false;
+                this.cancelCutDrag();
+            }
+        },
+
+        toggleCutMode(event) {
+            this.isCutMode = event.target.checked;
+        },
+
+        onOverlayMouseDown(event) {
+            if (this.isCutMode) {
+                this.startCutDrag(event);
+            } else {
+                this.startBaselineDrag(event);
+            }
+        },
+
+        startCutDrag(event) {
+            if (event.button !== 0 || !this.baselineView) return;
+            if (!this.line || !this.line.baseline) return;
+            const pos = this.eventToImageCoords(event);
+            if (!pos) return;
+            this.cutDrag = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y };
+            document.addEventListener("mousemove", this.onCutDragMove);
+            document.addEventListener("mouseup", this.onCutDragEnd);
+            event.preventDefault();
+        },
+
+        onCutDragMove(event) {
+            if (!this.cutDrag) return;
+            const pos = this.eventToImageCoords(event);
+            if (!pos) return;
+            this.cutDrag.x2 = pos.x;
+            this.cutDrag.y2 = pos.y;
+        },
+
+        onCutDragEnd() {
+            const drag = this.cutDrag;
+            this.cancelCutDrag();
+            if (!drag || !this.baselineView) return;
+            // a plain click without a real drag does nothing
+            if (Math.hypot(drag.x2 - drag.x1, drag.y2 - drag.y1) * this.baselineView.ratio < 5)
+                return;
+            this.performCut(drag);
+        },
+
+        cancelCutDrag() {
+            document.removeEventListener("mousemove", this.onCutDragMove);
+            document.removeEventListener("mouseup", this.onCutDragEnd);
+            this.cutDrag = null;
+        },
+
+        pointInRect(p, rect) {
+            return p[0] >= rect.x1 && p[0] <= rect.x2
+                && p[1] >= rect.y1 && p[1] <= rect.y2;
+        },
+
+        // all points where segment p-q crosses the rectangle boundary,
+        // ordered along the segment (0, 1, or 2). A straight segment that
+        // merely passes through the box has both endpoints outside, so this
+        // catches crossings the endpoint test would miss.
+        segmentRectCrossings(p, q, rect) {
+            const dx = q[0] - p[0];
+            const dy = q[1] - p[1];
+            const ts = [];
+            if (dx !== 0) {
+                for (const x of [rect.x1, rect.x2]) {
+                    const t = (x - p[0]) / dx;
+                    if (t >= 0 && t <= 1) {
+                        const y = p[1] + t * dy;
+                        if (y >= rect.y1 && y <= rect.y2) ts.push(t);
+                    }
+                }
+            }
+            if (dy !== 0) {
+                for (const y of [rect.y1, rect.y2]) {
+                    const t = (y - p[1]) / dy;
+                    if (t >= 0 && t <= 1) {
+                        const x = p[0] + t * dx;
+                        if (x >= rect.x1 && x <= rect.x2) ts.push(t);
+                    }
+                }
+            }
+            ts.sort((a, b) => a - b);
+            const result = [];
+            for (const t of ts) {
+                // drop duplicates from hitting a rectangle corner
+                if (result.length && Math.abs(t - result[result.length - 1].t) < 1e-6)
+                    continue;
+                result.push({
+                    t,
+                    point: [Math.round(p[0] + t * dx), Math.round(p[1] + t * dy)],
+                });
+            }
+            return result;
+        },
+
+        // points where the baseline crosses the selection rectangle boundary,
+        // ordered along the baseline
+        baselineCrossings(baseline, rect) {
+            const crossings = [];
+            for (let i = 0; i < baseline.length - 1; i++) {
+                for (const c of this.segmentRectCrossings(baseline[i], baseline[i + 1], rect)) {
+                    crossings.push({ index: i, point: c.point });
+                }
+            }
+            return crossings;
+        },
+
+        removeConsecutiveDuplicates(points) {
+            return points.filter((pt, i) =>
+                i === 0 || pt[0] !== points[i - 1][0] || pt[1] !== points[i - 1][1]);
+        },
+
+        // cuts the baseline with the dragged selection rectangle: the part of
+        // the baseline inside the rectangle is removed. If that removes the
+        // middle of the line, it splits - this line keeps the left part, the
+        // right part becomes a new line with an empty transcription (same
+        // semantics as the segmentation canvas cut tool)
+        performCut(drag) {
+            const baseline = this.line.baseline;
+            if (!baseline || baseline.length < 2) return;
+            const rect = {
+                x1: Math.min(drag.x1, drag.x2),
+                y1: Math.min(drag.y1, drag.y2),
+                x2: Math.max(drag.x1, drag.x2),
+                y2: Math.max(drag.y1, drag.y2),
+            };
+            const crossings = this.baselineCrossings(baseline, rect);
+            if (!crossings.length) return;
+            const first = crossings[0];
+            const last = crossings[crossings.length - 1];
+            let before = this.removeConsecutiveDuplicates(
+                [...baseline.slice(0, first.index + 1), first.point]);
+            let after = this.removeConsecutiveDuplicates(
+                [last.point, ...baseline.slice(last.index + 1)]);
+            // only keep the tails that actually lie outside the rectangle
+            if (this.pointInRect(baseline[0], rect)) before = null;
+            if (this.pointInRect(baseline[baseline.length - 1], rect)) after = null;
+            if (before && before.length < 2) before = null;
+            if (after && after.length < 2) after = null;
+            if (!before && !after) return;
+
+            const region = this.line.region;
+            const type = this.line.type;
+            const saveLine = (newBaseline) =>
+                this.$store.dispatch("lines/bulkUpdate", [{
+                    pk: this.line.pk,
+                    baseline: newBaseline,
+                    mask: this.line.mask,
+                    region: region,
+                    type: type,
+                }]);
+            if (before && after) {
+                this.$store.dispatch("lines/bulkCreate", {
+                    lines: [{
+                        // no pk: the serializer rejects an explicit null
+                        baseline: after,
+                        region: region,
+                        type: type,
+                    }],
+                    transcription: this.selectedTranscription,
+                })
+                    .then(() => saveLine(before))
+                    .catch((err) => {
+                        console.error("Failed to split line:", err);
+                    });
+            } else {
+                saveLine(before || after).catch((err) => {
+                    console.error("Failed to cut line end:", err);
+                });
+            }
         },
 
         // convert a mouse event to image-pixel coordinates by inverting the
