@@ -139,7 +139,7 @@ hb_install_bottle() {
 
 HB_SEEN=""
 HB_FORMULAS=""
-for f in "postgresql@${PG_VERSION}" vips geos gettext; do
+for f in "icu4c@78" vips geos gettext; do
     hb_collect_deps "$f"
 done
 for f in $HB_FORMULAS; do
@@ -171,15 +171,36 @@ hb_stage_path() {
 }
 
 # --- PostgreSQL ----------------------------------------------------------------
-# Copy the staged keg and rewrite its dylib references so the tree is
-# self-contained on machines without Homebrew.
-echo "==> Vendoring PostgreSQL ${PG_VERSION}"
-PG_PREFIX="$HB_OPT/postgresql@${PG_VERSION}"
-[ -d "$PG_PREFIX" ] || fail "PostgreSQL ${PG_VERSION} not staged (no $HOMEBREW_TIER bottle?)"
-# Trailing /. forces dereferencing: the keg prefix is a symlink and
-# `cp -R` would otherwise copy the link itself.
-cp -R "$PG_PREFIX/." "$BUILD/work/postgres"
-rm -rf "$BUILD/work/postgres/include"
+# Build from the official source tarball instead of taking the Homebrew keg:
+# the keg bakes /opt/homebrew/share/postgresql@18 into get_share_path(), so
+# it cannot run on a machine without Homebrew. The stock build derives the
+# share dir from the executable's own path (.../bin/postgres ->
+# .../share/postgresql), which keeps the bundle relocatable.
+echo "==> Building PostgreSQL ${PG_VERSION} from source"
+PG_SRC_VERSION="${PG_SRC_VERSION:-18.6}"
+curl -fSL --retry 3 --retry-delay 2 --retry-all-errors --progress-bar \
+    -o "$BUILD/downloads/postgresql-${PG_SRC_VERSION}.tar.bz2" \
+    "https://ftp.postgresql.org/pub/source/v${PG_SRC_VERSION}/postgresql-${PG_SRC_VERSION}.tar.bz2"
+tar -xjf "$BUILD/downloads/postgresql-${PG_SRC_VERSION}.tar.bz2" -C "$BUILD/downloads"
+brew install --quiet icu4c@78
+ICU_PREFIX="$(brew --prefix icu4c@78)"
+# Link against the build machine's ICU keg so the recorded references are
+# /opt/homebrew paths; vendor_dylibs then substitutes the staged bottle.
+( cd "$BUILD/downloads/postgresql-${PG_SRC_VERSION}" && \
+    PKG_CONFIG_PATH="$ICU_PREFIX/lib/pkgconfig" \
+    CFLAGS="-mmacosx-version-min=${MIN_MACOS}" \
+    LDFLAGS="-mmacosx-version-min=${MIN_MACOS}" \
+    ./configure \
+        --prefix="$BUILD/work/postgres" \
+        --without-readline --without-openssl --without-lz4 --without-zstd \
+        > "$BUILD/pg-configure.log" 2>&1 ) \
+    || { tail -30 "$BUILD/pg-configure.log"; fail "PostgreSQL configure failed"; }
+make -C "$BUILD/downloads/postgresql-${PG_SRC_VERSION}" -j"$(sysctl -n hw.ncpu)" \
+    > "$BUILD/pg-make.log" 2>&1 \
+    || { tail -30 "$BUILD/pg-make.log"; fail "PostgreSQL build failed"; }
+make -C "$BUILD/downloads/postgresql-${PG_SRC_VERSION}" install > /dev/null 2>&1 \
+    || fail "PostgreSQL install failed"
+rm -rf "$BUILD/work/postgres/include" "$BUILD/work/postgres/share/doc" "$BUILD/work/postgres/share/man"
 
 vendor_dylibs() {
     local dir="$1"
