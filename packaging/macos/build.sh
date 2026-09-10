@@ -202,6 +202,16 @@ make -C "$BUILD/downloads/postgresql-${PG_SRC_VERSION}" install > /dev/null 2>&1
     || fail "PostgreSQL install failed"
 rm -rf "$BUILD/work/postgres/include" "$BUILD/work/postgres/share/doc" "$BUILD/work/postgres/share/man"
 
+# True for Mach-O dylibs and executables; rejects static archives (otool
+# -l/-L "work" on them, per member) and non-Mach-O files.
+macho_ok() {
+    otool -l "$1" >/dev/null 2>&1 || return 1
+    case "$(otool -f "$1" 2>/dev/null)" in
+        *Archive*) return 1 ;;
+    esac
+    return 0
+}
+
 vendor_dylibs() {
     local dir="$1"
     local libdir="$dir/lib"
@@ -213,9 +223,9 @@ vendor_dylibs() {
     local file ref base origin changed pass
     for pass in 1 2 3 4 5 6 7 8 9 10; do
         changed=0
-        for file in "$dir"/bin/* "$libdir"/*; do
+        for file in "$dir"/bin/* $(find "$libdir" -type f 2>/dev/null); do
             [ -f "$file" ] || continue
-            otool -L "$file" >/dev/null 2>&1 || continue
+            macho_ok "$file" || continue
             while IFS= read -r ref; do
                 [ -n "$ref" ] || continue
                 case "$ref" in
@@ -230,9 +240,9 @@ vendor_dylibs() {
                             printf '%s\t%s\n' "$base" "$staged" >> "$map"
                             # warnings about invalidated code signatures are
                             # expected (re-signed ad-hoc below)
-                            install_name_tool -id "@rpath/$base" "$libdir/$base" 2>/dev/null
+                            install_name_tool -id "@rpath/$base" "$libdir/$base" 2>/dev/null || true
                         fi
-                        install_name_tool -change "$ref" "@rpath/$base" "$file" 2>/dev/null
+                        install_name_tool -change "$ref" "@rpath/$base" "$file" 2>/dev/null || true
                         changed=1
                         ;;
                     @loader_path/*)
@@ -266,13 +276,20 @@ vendor_dylibs() {
                             if [ -e "$cand" ] && [ ! -e "$libdir/$base" ]; then
                                 cp "$cand" "$libdir/$base"
                                 printf '%s\t%s\n' "$base" "$cand" >> "$map"
-                                install_name_tool -id "@rpath/$base" "$libdir/$base" 2>/dev/null
+                                install_name_tool -id "@rpath/$base" "$libdir/$base" 2>/dev/null || true
                                 changed=1
                             fi
                         done < <(otool -l "$file" 2>/dev/null | awk '/LC_RPATH/{f=1;next} f&&/path /{print $2;f=0}')
                         ;;
+                    "$dir"/lib/*)
+                        # A from-source build stamps absolute build-dir paths
+                        # as install names: re-anchor the reference inside the
+                        # tree's own lib dir via @rpath.
+                        install_name_tool -change "$ref" "@rpath/${ref#"$dir"/lib/}" "$file" 2>/dev/null || true
+                        changed=1
+                        ;;
                 esac
-            done < <(otool -L "$file" 2>/dev/null | awk 'NR>1 {print $1}' | grep -E '^(/opt/homebrew/|@loader_path/|@rpath/|@@HOMEBREW_PREFIX@@/|@@HOMEBREW_CELLAR@@/)' || true)
+            done < <(otool -L "$file" 2>/dev/null | awk 'NR>1 {print $1}' | grep -E "^(/opt/homebrew/|@loader_path/|@rpath/|@@HOMEBREW_PREFIX@@/|@@HOMEBREW_CELLAR@@/|$dir/lib/)" || true)
         done
         [ "$changed" = 1 ] || break
     done
@@ -282,18 +299,36 @@ vendor_dylibs() {
         otool -L "$file" >/dev/null 2>&1 || continue
         install_name_tool -add_rpath "@executable_path/../lib" "$file" 2>/dev/null || true
     done
-    for file in "$libdir"/*; do
+    for file in $(find "$libdir" -type f 2>/dev/null); do
         [ -f "$file" ] || continue
+        macho_ok "$file" || continue
         install_name_tool -add_rpath "@loader_path" "$file" 2>/dev/null || true
+        # A from-source build stamps absolute build-dir paths as install
+        # names; re-anchor them inside the bundle.
+        id="$(otool -D "$file" 2>/dev/null | sed -n 's/^current dylib: //p' || true)"
+        case "$id" in
+            @rpath/*|/usr/lib/*|/System/*) ;;
+            *) install_name_tool -id "@rpath/${file#"$libdir"/}" "$file" 2>/dev/null || true ;;
+        esac
     done
     # install_name_tool invalidates the code signatures that Apple requires
     # on arm64; re-sign ad-hoc after modifying.
-    for file in "$dir"/bin/* "$libdir"/*; do
+    for file in "$dir"/bin/* $(find "$libdir" -type f 2>/dev/null); do
         [ -f "$file" ] || continue
+        macho_ok "$file" || continue
         codesign --force --sign - "$file" 2>/dev/null || true
     done
 }
 vendor_dylibs "$BUILD/work/postgres"
+# A from-source build stamps absolute build-dir paths into the binaries;
+# nothing in the bundle may reference the build tree.
+for f in "$BUILD/work/postgres"/bin/* $(find "$BUILD/work/postgres/lib" -type f 2>/dev/null); do
+    [ -f "$f" ] || continue
+    macho_ok "$f" || continue
+    if otool -L "$f" 2>/dev/null | awk 'NR>1 {print $1}' | grep -F "$BUILD/" >/dev/null; then
+        fail "PostgreSQL binary still references the build dir: $f"
+    fi
+done
 
 # --- Redis ---------------------------------------------------------------------
 echo "==> Building Redis ${REDIS_VERSION}"
