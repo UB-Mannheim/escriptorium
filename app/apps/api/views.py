@@ -139,6 +139,14 @@ CLIENT_TASK_NAME_MAP = {
 }
 
 
+def find_share_target_user(username):
+    users = list(User.objects.filter(username__iexact=username))
+    if len(users) > 1:
+        # usernames are only unique in unique case sensitive so keep the exact spelling
+        return next((user for user in users if user.username == username), None)
+    return users[0] if users else None
+
+
 class TagFilter(Filter):
     def filter(self, qs, value):
         if value and '|' in value:
@@ -299,13 +307,11 @@ class ProjectViewSet(ModelViewSet):
             else:
                 project.shared_with_groups.add(target)
         elif 'user' in request.data:
-            try:
-                target = User.objects.get(username__iexact=request.data['user'])
-            except User.DoesNotExist:
+            target = find_share_target_user(request.data['user'])
+            if target is None:
                 return Response({'error': 'invalid username.'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            else:
-                project.shared_with_users.add(target)
+            project.shared_with_users.add(target)
         else:
             return Response({'error': 'Please provide either a group(pk) or user(username).'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -821,13 +827,11 @@ class DocumentViewSet(ModelViewSet):
             else:
                 document.shared_with_groups.add(target)
         elif 'user' in request.data:
-            try:
-                target = User.objects.get(username__iexact=request.data['user'])
-            except User.DoesNotExist:
+            target = find_share_target_user(request.data['user'])
+            if target is None:
                 return Response({'error': 'invalid username.'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            else:
-                document.shared_with_users.add(target)
+            document.shared_with_users.add(target)
         else:
             return Response({'error': 'Please provide either a group(pk) or user(username).'},
                             status=status.HTTP_400_BAD_REQUEST)
