@@ -13,9 +13,11 @@
         />
         <div
             class="d-table-cell"
-            title="Edited by author (source)"
+            :title="'Edited by ' + version.author + ' (' + version.source + ')'"
         >
-            {{ version.author }} ( {{ version.source }} )
+            <span class="escr-version-author">
+                {{ version.author }} ( {{ version.source }} )
+            </span>
         </div>
         <div
             class="d-table-cell"
