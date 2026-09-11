@@ -32,7 +32,9 @@
 .escr-segment-modal .escr-modal,
 .escr-train-modal--Recognition .escr-modal,
 .escr-train-modal--Segmentation .escr-modal {
-    max-height: calc(100vh - 100px);
+    display: flex;
+    flex-flow: column;
+    max-height: calc(85vh - 16px);
     overflow: visible;
 }
 
