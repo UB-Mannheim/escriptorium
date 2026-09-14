@@ -92,7 +92,7 @@
 #trans-modal.escr-line-modal #history .d-table {
     border-spacing: 0;
 }
-.escr-line-modal .escr-line-version :not(.escr-line-content):not(button) {
+.escr-line-modal .escr-line-version :not(.escr-line-content):not(button):not(.escr-version-author) {
     font-size: 80%;
 }
 .escr-line-modal .escr-line-version {
@@ -100,6 +100,13 @@
 }
 .escr-line-modal .escr-line-version .d-table-cell {
     vertical-align: middle;
+}
+.escr-line-modal .escr-line-version .escr-version-author {
+    display: block;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .escr-line-modal .escr-line-version button {
     color: var(--primary);
