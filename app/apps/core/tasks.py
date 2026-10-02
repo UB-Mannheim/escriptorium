@@ -99,6 +99,18 @@ def recognition_training_classes(architecture):
     return RECOGNITION_TRAINING_CLASSES.get(architecture, VGSL_RECOGNITION_CLASSES)
 
 
+RECOGNITION_BATCH_SIZE_SETTINGS = {
+    'PPOCRv6Model': 'KRAKEN_TRAINING_BATCH_SIZE_PPOCR',
+    'TorchVGSLModel': 'KRAKEN_TRAINING_BATCH_SIZE_VGSL',
+}
+
+
+def recognition_batch_size(architecture):
+    setting = RECOGNITION_BATCH_SIZE_SETTINGS.get(architecture, 'KRAKEN_TRAINING_BATCH_SIZE_VGSL')
+    return (getattr(settings, setting, None)
+            or getattr(settings, 'KRAKEN_TRAINING_BATCH_SIZE', None))
+
+
 @shared_task
 def qualify_model(model_pk):
     """Detects and persists an OcrModel's architecture from its file, off the request/training path."""
@@ -674,8 +686,6 @@ def train_(qs, document=None, transcription=None, model=None, user=None, collect
 
     AMP_MODE = getattr(settings, 'KRAKEN_TRAINING_PRECISION', '32')
 
-    BATCH_SIZE = getattr(settings, 'KRAKEN_TRAINING_BATCH_SIZE', 12)
-
     with tempfile.TemporaryDirectory() as tmp_dir:
 
         train_dir = Path(tmp_dir)
@@ -730,6 +740,8 @@ def train_(qs, document=None, transcription=None, model=None, user=None, collect
          data_config_class,
          data_module_class,
          module_class) = recognition_training_classes(architecture)
+
+        BATCH_SIZE = recognition_batch_size(architecture) or train_config_class().batch_size
 
         logger.info(f'Starting recognition training on {accelerator}/{device} '
                     f'(precision: {AMP_MODE}, batch_size {BATCH_SIZE} '
