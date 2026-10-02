@@ -126,6 +126,12 @@
                                 :invalid="!item.name"
                                 @input="(e) => onChangeName(e, item)"
                             >
+                            <span
+                                v-if="isDuplicateName(item)"
+                                class="escr-help-text escr-error-text"
+                            >
+                                This name is already used
+                            </span>
                         </td>
                         <td
                             v-if="['lines', 'regions'].includes(tab)"
@@ -254,12 +260,7 @@ export default {
             const types = {};
             Object.keys(this.defaultTypes).forEach((key) => {
                 types[key] = this.formState[key]
-                    .filter(
-                        // Exclude all that are in default types (matched by name: the
-                        // document's valid types are document-owned copies with their
-                        // own pks, distinct from the template pks in defaultTypes)
-                        (t) => !this.defaultTypes[key].find((dt) => dt.name === t.name)
-                    )
+                    .filter((t) => !this.isDefaultType(t, key))
                     // Exclude pk null in custom types since that's always enabled
                     // and doesn't exist in DB.
                     .filter((t) => t.pk !== null)
@@ -483,6 +484,23 @@ export default {
             }
             return color;
         },
+
+        // if the name is taken by a default type or another custom one
+
+        isDuplicateName(item) {
+            if (!item.name) return false;
+            return this.defaultTypes[this.tab].some((dt) => dt.name === item.name) ||
+                this.customTypes[this.tab].filter((t) => t.name === item.name).length > 1;
+        },
+
+        // checks if default type
+
+        isDefaultType(type, key) {
+            if (!type.pk) return false;
+            const saved = (this.validTypes[key] || []).find((t) => t.pk === type.pk);
+            const name = saved ? saved.name : type.name;
+            return this.defaultTypes[key].some((dt) => dt.name === name);
+        },
         /**
          * True if the item is checked in the form. Matched by name: default
          * items carry template pks, while the document's valid types are
@@ -491,7 +509,10 @@ export default {
         isSelected(item) {
             return this.formState &&
                 this.formState[this.tab] &&
-                this.formState[this.tab].some((formItem) => formItem.name === item.name);
+                this.formState[this.tab].some(
+                    (formItem) => formItem.name === item.name &&
+                        this.isDefaultType(formItem, this.tab),
+                );
         },
         /**
          * Set the type's color: on the form entry if it's currently selected
