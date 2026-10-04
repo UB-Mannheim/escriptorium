@@ -269,7 +269,7 @@ export default {
             };
             const allStrings = Object.entries(rawStats).map(
                 (stat) => stat[1] !== 0
-                    ? `${stat[1]} ${(stateNames[stat[0]] || stat[0]).toLowerCase()}`
+                    ? `${stat[1]} ${stateNames[stat[0]] || stat[0]}`
                     : null,
             );
             const filteredStrings = allStrings.filter((val) => val)
