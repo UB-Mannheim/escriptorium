@@ -36,23 +36,38 @@ class CleanupGhostTasksTestCase(TestCase):
         )
         if age_seconds:
             TaskReport.objects.filter(pk=report.pk).update(
-                queued_at=timezone.now() - timedelta(seconds=age_seconds)
+                queued_at=timezone.now() - timedelta(seconds=age_seconds),
+                started_at=timezone.now() - timedelta(seconds=age_seconds),
             )
         return report
 
     def run_command(self):
         call_command('cleanup_ghost_tasks', verbosity=0)
 
-    def test_running_report_cleaned_when_process_gone(self):
-        report = self.make_report('task-running', TaskReport.WORKFLOW_STATE_STARTED)
-        with patch.object(TaskReport, 'check_process_running', return_value=False):
+    def test_running_report_cleaned_when_not_active_on_any_worker(self):
+        report = self.make_report('task-running', TaskReport.WORKFLOW_STATE_STARTED, age_seconds=120)
+        with patch('reporting.management.commands.cleanup_ghost_tasks.worker_task_ids', return_value=set()):
             self.run_command()
         report.refresh_from_db()
         self.assertEqual(report.workflow_state, TaskReport.WORKFLOW_STATE_ERROR)
 
-    def test_running_report_kept_when_process_running(self):
+    def test_running_report_kept_when_active_on_a_worker(self):
+        report = self.make_report('task-running', TaskReport.WORKFLOW_STATE_STARTED, age_seconds=120)
+        with patch('reporting.management.commands.cleanup_ghost_tasks.worker_task_ids', return_value={'task-running'}):
+            self.run_command()
+        report.refresh_from_db()
+        self.assertEqual(report.workflow_state, TaskReport.WORKFLOW_STATE_STARTED)
+
+    def test_running_report_kept_when_liveness_unknown(self):
+        report = self.make_report('task-running', TaskReport.WORKFLOW_STATE_STARTED, age_seconds=120)
+        with patch('reporting.management.commands.cleanup_ghost_tasks.worker_task_ids', return_value=None):
+            self.run_command()
+        report.refresh_from_db()
+        self.assertEqual(report.workflow_state, TaskReport.WORKFLOW_STATE_STARTED)
+
+    def test_running_report_kept_when_younger_than_min_age(self):
         report = self.make_report('task-running', TaskReport.WORKFLOW_STATE_STARTED)
-        with patch.object(TaskReport, 'check_process_running', return_value=True):
+        with patch('reporting.management.commands.cleanup_ghost_tasks.worker_task_ids', return_value=set()):
             self.run_command()
         report.refresh_from_db()
         self.assertEqual(report.workflow_state, TaskReport.WORKFLOW_STATE_STARTED)
