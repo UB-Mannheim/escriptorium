@@ -23,15 +23,15 @@ if [ "$HOSTNAME" = "ocr-01" ]; then
     #export SPARK_LAUNCHER_OPTS=-Xmx512m
 
     cd $basedir/app
-    nice celery --app escriptorium worker --concurrency 24 --queues default --loglevel INFO --max-tasks-per-child=16 --optimization fair &
+    nice celery --app escriptorium worker --concurrency 24 --hostname default --queues default --loglevel INFO --max-tasks-per-child=16 --optimization fair &
     # for everything that needs a java virtual machine (except search)
-    nice celery --app escriptorium worker --concurrency 2 --queues jvm --loglevel INFO --optimization fair &
+    nice celery --app escriptorium worker --concurrency 2 --hostname jvm --queues jvm --loglevel INFO --optimization fair &
     # for everything that needs to be done on the spot to update the ui
-    celery --app escriptorium worker --concurrency 2 --queues live --loglevel INFO --optimization fair &
-    nice celery --app escriptorium worker --concurrency 4 --queues low-priority --loglevel INFO --optimization fair &
+    celery --app escriptorium worker --concurrency 2 --hostname live --queues live --loglevel INFO --optimization fair &
+    nice celery --app escriptorium worker --concurrency 4 --hostname low-priority --queues low-priority --loglevel INFO --optimization fair &
     # for everything that could use a GPU
-    celery --app escriptorium worker --concurrency 2 --queues gpu --loglevel INFO --max-tasks-per-child=1 --optimization fair &
-    nice celery --app escriptorium worker --concurrency 1 --queues intensive-inference --loglevel INFO --max-tasks-per-child=1 --optimization fair &
+    nice celery --app escriptorium worker --concurrency 2 --hostname gpu --queues gpu --loglevel INFO --max-tasks-per-child=1 --optimization fair &
+    nice celery --app escriptorium worker --concurrency 1 --hostname intensive-inference --queues intensive-inference --loglevel INFO --max-tasks-per-child=1 --optimization fair &
     daphne -b 0.0.0.0 -p 8080 --root-path /escriptorium escriptorium.asgi:application
     # celery worker -l INFO -E -A escriptorium --optimization fair --prefetch-multiplier 1 --queues default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10
 
