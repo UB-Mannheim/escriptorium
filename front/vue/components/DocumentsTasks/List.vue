@@ -14,7 +14,7 @@
                         <option
                             v-for="[key, label] in Object.entries(taskStates)"
                             :key="key"
-                            :value="label"
+                            :value="key"
                         >
                             {{ label }}
                         </option>

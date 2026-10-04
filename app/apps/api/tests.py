@@ -565,6 +565,29 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json(), {'error': 'Invalid task_state, it should match a valid workflow_state.'})
 
+    def test_list_document_with_tasks_filter_task_state_by_value(self):
+        self.doc.owner.is_staff = True
+        self.doc.owner.save()
+        other_doc = self.factory.make_document(project=self.factory.make_project(name="Test API"))
+        report = other_doc.reports.create(user=other_doc.owner, label="Fake report")
+        report.start()
+
+        self.client.force_login(self.doc.owner)
+        # The stable numeric form of the state filter (independent of the
+        # API request's language, unlike the translated labels).
+        resp = self.client.get(reverse('api:document-tasks') + '?task_state=1')
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['count'], 1)
+        self.assertEqual(resp.json()['results'][0]['pk'], other_doc.pk)
+
+    def test_list_document_with_tasks_filter_task_state_by_value_out_of_range(self):
+        self.client.force_login(self.doc.owner)
+        resp = self.client.get(reverse('api:document-tasks') + '?task_state=99')
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json(), {'error': 'Invalid task_state, it should match a valid workflow_state.'})
+
     def test_list_document_with_tasks_filter_task_state(self):
         self.doc.owner.is_staff = True
         self.doc.owner.save()

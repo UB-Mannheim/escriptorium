@@ -488,16 +488,24 @@ class DocumentViewSet(ModelViewSet):
             extra["name__icontains"] = document_name_filter
 
         # Filter results by TaskReport.workflow_state
-        state_filter = request.GET.get('task_state', '').lower()
+        # Accept the state value (0-4) or, for backwards compatibility, an
+        # English state label (the labels are translated elsewhere, so they
+        # would not match for non-English clients).
+        state_filter = request.GET.get('task_state', '')
         if state_filter:
-            mapped_labels = {label.lower(): state for state, label in TaskReport.WORKFLOW_STATE_CHOICES}
-            if state_filter not in mapped_labels:
-                return Response(
-                    {'error': 'Invalid task_state, it should match a valid workflow_state.'},
-                    status=400
-                )
+            valid_states = {state for state, _ in TaskReport.WORKFLOW_STATE_CHOICES}
+            if state_filter.isdigit() and int(state_filter) in valid_states:
+                extra["reports__workflow_state__in"] = [int(state_filter)]
+            else:
+                mapped_labels = {label.lower(): state for state, label in
+                                 TaskReport.WORKFLOW_STATE_CHOICES}
+                if state_filter.lower() not in mapped_labels:
+                    return Response(
+                        {'error': 'Invalid task_state, it should match a valid workflow_state.'},
+                        status=400
+                    )
 
-            extra["reports__workflow_state__in"] = [mapped_labels[state_filter]]
+                extra["reports__workflow_state__in"] = [mapped_labels[state_filter.lower()]]
 
         documents = Document.objects.filter(reports__isnull=False, **extra).select_related('owner').distinct()
 
