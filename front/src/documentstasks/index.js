@@ -45,4 +45,5 @@ export default new Store({
     actions,
 });
 
-installGettext(null); // null store – this page has no Vuex locale module.
+// null store – this page has no Vuex locale module.
+export const gettextReady = installGettext(null);
