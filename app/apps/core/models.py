@@ -1605,6 +1605,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
         if not model.file:
             raise ValueError(gettext("The recognition model '%(name)s' has no file associated with it.")
                              % {'name': model.name})
+        if not os.path.exists(model.file.path):
+            raise ValueError(gettext("The recognition model '%(name)s' file could not be found: %(path)s")
+                             % {'name': model.name, 'path': model.file.path})
         recognizer = RecognitionTaskModel.load_model(model.file.path)
 
         lines = self.lines.all()
@@ -1644,6 +1647,14 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                                        language=None)
 
                 it = recognizer.predict(im=im, segmentation=seg, config=rec_config)
+                # re-fetch to detect lines deleted concurrently (e.g. by a
+                # re-segmentation with override) between the initial query and
+                # the save, otherwise the FK insert would fail
+                try:
+                    line = type(line).objects.get(pk=line.pk)
+                except type(line).DoesNotExist:
+                    logger.warning('Line %s of part %s was deleted during transcription', line.pk, self.pk)
+                    continue
                 lt, created = LineTranscription.objects.get_or_create(
                     line=line, transcription=transcription
                 )
