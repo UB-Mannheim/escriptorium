@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import sys
 
 from celery import Celery, signals
 from celery.app import trace
@@ -20,23 +21,33 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
 
+def _needs_spawn_pool():
+    # forked children crash (SIGSEGV in CoreFoundation) once the worker has
+    # loaded native libraries (torch, pyvips, ...) on macOS; spawn re-execs a
+    # clean interpreter for each pool child instead. On Linux, fork is fast
+    # and stable, and spawn children are repeatedly killed by the 4s
+    # PROC_ALIVE_TIMEOUT (and can race the pool into an unrecoverable crash),
+    # so we only force spawn where it is actually needed.
+    return sys.platform == 'darwin'
+
+
 @signals.celeryd_init.connect
 def _use_spawn_pool(**kwargs):
-    # forked children crash (SIGSEGV in CoreFoundation) once the worker has
-    # loaded native libraries (torch, pyvips, ...); spawn re-execs a clean
-    # interpreter for each pool child instead.
-    from billiard import set_start_method
-    set_start_method('spawn')
+    if _needs_spawn_pool():
+        from billiard import set_start_method
+        set_start_method('spawn')
 
 
 @signals.worker_process_init.connect
 def _reinit_worker_optimizations(**kwargs):
-    # Celery 5.6 only populates the process-local trace._localized in pool
-    # children when FORKED_BY_MULTIPROCESSING is set, which billiard never
-    # does; without this, the first task in a spawned child fails with
-    # "not enough values to unpack (expected 3, got 0)".
-    from celery import current_app
-    trace.setup_worker_optimizations(current_app)
+    # Only relevant to spawned children: Celery 5.6 populates the
+    # process-local trace._localized in pool children only when
+    # FORKED_BY_MULTIPROCESSING is set, which billiard never does for
+    # spawned children; without this, the first task in a spawned child
+    # fails with "not enough values to unpack (expected 3, got 0)".
+    if _needs_spawn_pool():
+        from celery import current_app
+        trace.setup_worker_optimizations(current_app)
 
 
 @app.task(bind=True)
