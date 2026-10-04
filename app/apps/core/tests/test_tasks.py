@@ -5,9 +5,10 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
-from core.models import Document, Line, OcrModel
+from core.models import Document, Line, LineTranscription, OcrModel
 from core.tasks import (
     align,
     detect_model_architecture,
@@ -95,6 +96,48 @@ class TasksTestCase(CoreFactoryTestCase):
         self.makeTranscriptionContent()
         with self.assertRaisesMessage(ValueError, "No recognition model"):
             self.part.transcribe(None, self.transcription)
+
+    def test_transcribe_skips_lines_deleted_during_inference(self):
+        self.makeTranscriptionContent()
+        part = self.part
+        transcription = self.transcription
+        model = OcrModel.objects.create(name='fake', job=OcrModel.MODEL_JOB_RECOGNIZE, file_size=0)
+        model.file = SimpleUploadedFile('model.mlmodel', b'data', content_type='application/octet-stream')
+        model.save()
+
+        lines = list(part.lines.all())
+        first_line = lines[0]
+
+        def fake_predict(im, segmentation, config):
+            # simulate concurrent deletion (e.g. re-segmentation with override)
+            if first_line.pk is not None:
+                first_line.delete()
+            yield type('Pred', (), {'prediction': 'abc', 'cuts': 'abc', 'confidences': (0.9, 0.9, 0.9)})()
+
+        with patch('core.models.RecognitionTaskModel.load_model') as load_model, \
+             patch('core.models.RecognitionInferenceConfig'), \
+             patch('core.models.Image.open'):
+            load_model.return_value.predict.side_effect = lambda im, segmentation, config: list(
+                fake_predict(im, segmentation, config))
+            part.transcribe(model, transcription)
+
+        part.refresh_from_db()
+        self.assertEqual(part.workflow_state, part.WORKFLOW_STATE_TRANSCRIBING)
+        # the line deleted during inference must not have a transcription
+        self.assertFalse(LineTranscription.objects.filter(line_id=first_line.pk,
+                                                          transcription=transcription).exists())
+        self.assertEqual(LineTranscription.objects.filter(transcription=transcription).count(),
+                         len(lines) - 1)
+
+    def test_transcribe_model_file_missing(self):
+        self.makeTranscriptionContent()
+        model = OcrModel.objects.create(name='ghost', job=OcrModel.MODEL_JOB_RECOGNIZE, file_size=0)
+        model.file = SimpleUploadedFile('does_not_exist.mlmodel', b'data', content_type='application/octet-stream')
+        model.save()
+        path = model.file.path
+        os.remove(path)
+        with self.assertRaisesMessage(ValueError, "could not be found"):
+            self.part.transcribe(model, self.transcription)
 
     @unittest.skip
     def test_train_new_transcription_model(self):
