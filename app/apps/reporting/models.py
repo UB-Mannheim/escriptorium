@@ -146,13 +146,6 @@ class TaskReport(models.Model):
         self.gpu_cost = (task_duration * settings.GPU_COST) / 60
         self.save()
 
-    def check_process_running(self):
-        # Should only returns True if the actual process is still running.
-        try:
-            return app.AsyncResult(self.task_id).state == 'STARTED'
-        except AttributeError:
-            return False
-
 
 TASK_FINAL_STATES = [TaskReport.WORKFLOW_STATE_ERROR, TaskReport.WORKFLOW_STATE_DONE, TaskReport.WORKFLOW_STATE_CANCELED]
 

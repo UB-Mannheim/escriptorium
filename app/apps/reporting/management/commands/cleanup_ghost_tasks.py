@@ -48,17 +48,19 @@ def queued_task_ids():
                         ids.add(json.loads(payload)['headers']['id'])
                 return ids
             finally:
-                channel.release()
+                channel.close()
     except Exception:
         logger.warning('Could not inspect the broker queues.', exc_info=True)
         return None
 
 
 class Command(BaseCommand):
-    help = ("Mark TaskReports as crashed when their Celery task is gone: "
-            "'Running' reports whose task is no longer running, and 'Queued' "
-            "reports whose task is neither in a queue nor in a worker "
-            "anymore (e.g. the message was consumed and lost).")
+    help = ("Mark TaskReports as crashed when their Celery task is gone. "
+            "A 'Running' report is reaped when its task is no longer active or "
+            "reserved on any worker; a 'Queued' report is reaped when its task is "
+            "neither in a queue nor in a worker anymore (e.g. the message was "
+            "consumed and lost). Reports younger than --min-age are left alone, "
+            "and nothing is reaped if the workers or the broker cannot be asked.")
 
     verbosity_map = [
         logging.ERROR,
@@ -72,44 +74,73 @@ class Command(BaseCommand):
             '--min-age',
             type=int,
             default=60,
-            help='only clean up Queued reports that are at least this many '
-                 'seconds old (default: 60)'
+            help='only clean up reports that are at least this many seconds old, '
+                 'measured from when the task started (Running) or was queued '
+                 '(Queued) (default: 60)'
         )
 
     def handle(self, *args, **options):
         verbosity = options['verbosity']
         logger.setLevel(self.verbosity_map[verbosity])
-        count = self.cleanup_running()
-        count += self.cleanup_queued(min_age=options['min_age'])
+        min_age = options['min_age']
+        # Only talk to the workers when there is actually something to check.
+        active = None
+        if TaskReport.objects.filter(
+                workflow_state__in=(TaskReport.WORKFLOW_STATE_STARTED,
+                                    TaskReport.WORKFLOW_STATE_QUEUED)).exists():
+            active = worker_task_ids()
+        count = self.cleanup_running(active, min_age=min_age)
+        count += self.cleanup_queued(active, min_age=min_age)
         logger.info(f'Cleaned up {count} ghost tasks.')
 
-    def cleanup_running(self):
+    @staticmethod
+    def _reference_time(report):
+        # When the task started for Running reports, when it was queued otherwise.
+        return report.started_at or report.queued_at
+
+    def cleanup_running(self, active, min_age=60):
         count = 0
-        for report in TaskReport.objects.filter(workflow_state=TaskReport.WORKFLOW_STATE_STARTED):
-            if not report.check_process_running():
-                logger.debug('Cleaning up task %d : %s.' % (report.id, report.task_id))
-                report.workflow_state = TaskReport.WORKFLOW_STATE_ERROR
-                report.save()
-                count += 1
+        reports = TaskReport.objects.filter(workflow_state=TaskReport.WORKFLOW_STATE_STARTED)
+        if not reports:
+            return count
+        if active is None:
+            # We cannot tell which tasks are still alive; reaping would risk
+            # marking a live task as crashed.
+            logger.warning('Cannot determine which tasks are still alive; '
+                           'not cleaning up Running reports.')
+            return count
+        now = timezone.now()
+        for report in reports:
+            if (now - self._reference_time(report)).total_seconds() < min_age:
+                continue
+            if report.task_id and report.task_id in active:
+                continue
+            logger.debug('Cleaning up task %d : %s.' % (report.id, report.task_id))
+            report.error(
+                f'Celery task {report.task_id or "<unknown>"} is no longer active on any worker; '
+                f'marked as crashed by cleanup_ghost_tasks.'
+            )
+            count += 1
         return count
 
-    def cleanup_queued(self, min_age=60):
+    def cleanup_queued(self, active, min_age=60):
         count = 0
         reports = TaskReport.objects.filter(workflow_state=TaskReport.WORKFLOW_STATE_QUEUED)
         if not reports:
             return count
-        active = worker_task_ids()
-        queued = queued_task_ids()
-        if active is None or queued is None:
-            # We cannot tell which tasks are still alive, and cleaning up
-            # would risk marking live tasks as crashed.
+        if active is None:
             logger.warning('Cannot determine which tasks are still alive; '
+                           'not cleaning up Queued reports.')
+            return count
+        queued = queued_task_ids()
+        if queued is None:
+            logger.warning('Cannot determine which tasks are still queued; '
                            'not cleaning up Queued reports.')
             return count
         live = active | queued
         now = timezone.now()
         for report in reports:
-            if (now - report.queued_at).total_seconds() < min_age:
+            if (now - self._reference_time(report)).total_seconds() < min_age:
                 continue
             if report.task_id and report.task_id in live:
                 continue
