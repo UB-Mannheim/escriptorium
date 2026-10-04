@@ -235,16 +235,16 @@ msgid "Cancel all selected"
 msgstr "Alle ausgewählten abbrechen"
 
 msgid "Cancel pending/running tasks for the selected documents"
-msgstr "Ausstehende oder laufende Tasks für die ausgewählten Dokumente abbrechen"
+msgstr "Ausstehende oder laufende Aufgaben für die ausgewählten Dokumente abbrechen"
 
 msgid "Cancel pending/running tasks for this document"
-msgstr "Ausstehende oder laufende Tasks für dieses Dokument abbrechen"
+msgstr "Ausstehende oder laufende Aufgaben für dieses Dokument abbrechen"
 
 msgid "Cancel Task"
 msgstr "Aufgabe abbrechen"
 
 msgid "Cancel tasks"
-msgstr "Tasks abbrechen"
+msgstr "Aufgaben abbrechen"
 
 msgid "Cancel Upload In Progress"
 msgstr "Laufenden Upload abbrechen"
@@ -253,7 +253,7 @@ msgid "Canceled"
 msgstr "Abgebrochen"
 
 msgid "Canceling tasks..."
-msgstr "Tasks werden abgebrochen ..."
+msgstr "Aufgaben werden abgebrochen ..."
 
 msgid "Centered"
 msgstr "Zentriert"
@@ -661,7 +661,7 @@ msgid "Last Edited"
 msgstr "Zuletzt bearbeitet"
 
 msgid "Last task started"
-msgstr "Letzter Task-Start"
+msgstr "Letzter Start"
 
 msgid "Last Update"
 msgstr "Letzte Aktualisierung"
@@ -816,7 +816,7 @@ msgid "No default ontology set. New documents in this project will use the insta
 msgstr "Keine Standard-Ontologie festgelegt. Neue Dokumente in diesem Projekt verwenden stattdessen die Standard-Typen der Instanz."
 
 msgid "No document tasks to display."
-msgstr "Keine Dokument-Tasks vorhanden."
+msgstr "Keine Dokumentaufgaben vorhanden."
 
 msgid "No documents to display."
 msgstr "Keine Dokumente vorhanden."
@@ -1052,7 +1052,7 @@ msgid "Select All"
 msgstr "Alle auswählen"
 
 msgid "Select all documents with pending or running tasks"
-msgstr "Alle Dokumente mit ausstehenden oder laufenden Tasks auswählen"
+msgstr "Alle Dokumente mit ausstehenden oder laufenden Aufgaben auswählen"
 
 msgid "Select all images in the document"
 msgstr "Alle Bilder im Dokument auswählen"
@@ -1141,16 +1141,16 @@ msgid "Tags"
 msgstr "Schlagwörter"
 
 msgid "Task Monitoring"
-msgstr "Tasküberwachung"
+msgstr "Aufgabenüberwachung"
 
 msgid "Task state"
-msgstr "Taskstatus"
+msgstr "Aufgabenstatus"
 
 msgid "Task Usage"
-msgstr "Tasknutzung"
+msgstr "Aufgabenverwendung"
 
 msgid "Tasks"
-msgstr "Tasks"
+msgstr "Aufgaben"
 
 msgid "taxonomy"
 msgid_plural "taxonomies"
@@ -1374,7 +1374,7 @@ msgid "You must select a collection of document parts in order to train a model.
 msgstr "Sie müssen eine Sammlung von Dokumentteilen auswählen, um ein Modell trainieren zu können."
 
 msgid "You're about to cancel all pending/running tasks for documents:"
-msgstr "Sie sind dabei, alle ausstehenden oder laufenden Tasks für die folgenden Dokumente abzubrechen:"
+msgstr "Sie sind dabei, alle ausstehenden oder laufenden Aufgaben für die folgenden Dokumente abzubrechen:"
 
 msgid "Your Models"
 msgstr "Ihre Modelle"
