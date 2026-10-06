@@ -36,8 +36,10 @@ const store = new Store({
 });
 
 // Install vue-gettext so this entry can use $gettext / v-translate too.
-// `installGettext` is idempotent thanks to the catalog memoisation in
-// `vue-gettext`, but we still guard against double registration.
-installGettext(store);
+// The initial language's catalog is fetched on demand, so this returns a
+// promise: `main.js` must await `gettextReady` before mounting the Vue
+// root, otherwise the first render calls $gettext before it exists.
+// Null store – this entry's store has no Vuex locale module.
+export const gettextReady = installGettext(null);
 
 export default store;
