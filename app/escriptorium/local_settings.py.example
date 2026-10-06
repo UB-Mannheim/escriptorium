@@ -36,6 +36,10 @@ INTERNAL_IPS = ['127.0.0.1']
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = '/tmp/django-emails'
 
+# Recipients of admin e-mails (Django error reports, contact form).
+# Without this (or the DJANGO_SU_EMAIL environment variable) no admin e-mail is sent.
+# ADMINS = [('Administrator', 'admin@example.com')]
+
 # KRAKEN_TRAINING_DEVICE = 'cuda:0'
 
 DEBUG_TOOLBAR_PANELS = [
