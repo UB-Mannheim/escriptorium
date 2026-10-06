@@ -25,12 +25,6 @@
 {% endblock extrascript %}
 
 
-{% if not request.user.legacy_mode %}
-    {# hide legacy UI alerts #}
-    {% block legacy_alerts %}
-    {% endblock %}
-{% endif %}
-
 {% block extrastyle %}
     {% if not request.user.legacy_mode %}
         <link href="{% static 'documentDashboard.css' %}" rel="stylesheet" type="text/css">

@@ -233,7 +233,6 @@
 <script>
   $(document).ready(function() {
     // join the ws room
-    bootWebsocket();
     joinDocumentRoom('{{document.pk}}');
     bootImageCards(DOCUMENT_ID, '{{has_disk_storage_left}}', '{{has_cpu_minutes_left}}', {{document.show_confidence_viz|lower}});
     bootLazyload();

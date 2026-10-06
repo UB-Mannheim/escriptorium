@@ -200,9 +200,10 @@
     {% if user.is_authenticated %} {# no need to open a socket for anonymous users, bots etc #}
       <script>
         $(document).ready(function(){
-          {% block legacy_alerts %}
-            bootWebsocket();
-          {% endblock %}
+          {# The global socket serves the legacy UI only; new UI pages open their own socket in their Vue root. #}
+          {% if user.legacy_mode %}
+          bootWebsocket();
+          {% endif %}
 
           $('#find-replace-button').on('click', function(ev) {
             $('#searchbar').attr('action', '{% url 'find-replace' %}');

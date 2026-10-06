@@ -1,8 +1,8 @@
 <script>
 'use strict';
 $(document).ready(function() {
-  // join the ws room
-  {% if document.pk %}
+  // join the ws room (only the legacy UI uses the global socket)
+  {% if document.pk and request.user.legacy_mode %}
   joinDocumentRoom('{{document.pk}}');
   {% endif %}
   bootModels();
