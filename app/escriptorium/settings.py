@@ -21,8 +21,10 @@ from kombu import Queue
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
-ADMINS = [(os.getenv('DJANGO_SU_NAME', 'admin'),
-           os.getenv('DJANGO_SU_EMAIL', 'admin@example.com'))]
+# Default to no admin e-mail (avoids mailing a hard-coded example address);
+# set DJANGO_SU_EMAIL (and optionally DJANGO_SU_NAME) to enable admin e-mails.
+ADMINS = [(os.getenv('DJANGO_SU_NAME', 'admin'), os.getenv('DJANGO_SU_EMAIL'))] \
+    if os.getenv('DJANGO_SU_EMAIL') else []
 
 # Add apps directory the sys.path
 APPS_DIR = os.path.join(BASE_DIR, 'apps')
