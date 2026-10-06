@@ -72,12 +72,6 @@
     {% endif %}
 {% endblock extrastyle %}
 
-{% if not request.user.legacy_mode %}
-    {# hide legacy UI alerts #}
-    {% block legacy_alerts %}
-    {% endblock %}
-{% endif %}
-
 {% if request.user.legacy_mode and not DISABLE_ES_SEARCH %}
   {% block searchbar_hidden_inputs %}
   <input name="project" type="text" value="{{document.project.pk}}" hidden>

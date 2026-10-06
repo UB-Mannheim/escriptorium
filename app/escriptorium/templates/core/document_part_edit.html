@@ -33,13 +33,6 @@
     <script src="{% static 'editor.js' %}"></script>
 {% endblock %}
 
-
-{% if not request.user.legacy_mode %}
-    {# hide legacy UI alerts #}
-    {% block legacy_alerts %}
-    {% endblock %}
-{% endif %}
-
 {% block extrascript %}{% endblock %}
 
 {% block extrastyle %}

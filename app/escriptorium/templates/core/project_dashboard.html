@@ -27,9 +27,3 @@
         <link href="{% static 'projectDashboard.css' %}" rel="stylesheet" type="text/css">
     {% endif %}
 {% endblock extrastyle %}
-
-{% if not request.user.legacy_mode %}
-    {# hide legacy UI alerts #}
-    {% block legacy_alerts %}
-    {% endblock %}
-{% endif %}
