@@ -180,11 +180,14 @@ export const actions = {
             };
         });
 
+        const partPk = rootState.parts.pk;
         const resp = await api.bulkCreateLines(
             rootState.document.id,
-            rootState.parts.pk,
+            partPk,
             { lines: dataLines },
         );
+        // the user moved to another image while this was saving
+        if (rootState.parts.pk !== partPk) return [];
 
         let data = resp.data;
         let createdLines = [];
@@ -251,11 +254,12 @@ export const actions = {
             };
         });
 
+        const partPk = rootState.parts.pk;
         let resp
         try {
             resp = await api.bulkUpdateLines(
                 rootState.document.id,
-                rootState.parts.pk,
+                partPk,
                 { lines: dataLines }
             )
         } catch (err) {
@@ -272,6 +276,7 @@ export const actions = {
             }
             throw err
         }
+        if (rootState.parts.pk !== partPk) return [];
 
         let data = resp.data;
         let updatedLines = [];

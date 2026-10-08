@@ -948,6 +948,7 @@ export default Vue.extend({
                                 type: data.regions[i].type,
                             }),
                         );
+                        if (!newRegion) continue;
                         if (createInEditor) {
                             this.segmenter.loadRegion(newRegion);
                         }

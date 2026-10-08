@@ -196,13 +196,15 @@
             ref="contentContainer"
             :class="'content-container ' + readDirection"
         >
-            <DiploLine
-                v-for="line in allLines"
-                ref="diploLineComponents"
-                :key="'DL' + line.pk"
-                :line="line"
-                :ratio="ratio"
-            />
+            <div>
+                <DiploLine
+                    v-for="line in allLines"
+                    ref="diploLineComponents"
+                    :key="'DL' + line.pk"
+                    :line="line"
+                    :ratio="ratio"
+                />
+            </div>
 
             <!--adding a class to get styles for ttb direction:-->
             <div
