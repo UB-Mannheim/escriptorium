@@ -15,6 +15,11 @@ if [ "$HOSTNAME" = "ocr-01" ]; then
     source $basedir/venv3.13/bin/activate
     export OMP_NUM_THREADS=2
 
+    # Avoid OOM on the GPU for PPOCRv6 training.
+    export KRAKEN_TRAINING_BATCH_SIZE_PPOCR=16
+    # A5000 (Ampere) supports bf16; avoids fp16 loss-scaling issues
+    # export KRAKEN_TRAINING_PRECISION=bf16-mixed
+
     # Configuration for passim (alignment). Use 4 threads and 8 GiB RAM.
     # See https://github.com/dasmiq/passim and
     # https://spark.apache.org/docs/latest/configuration.html.
