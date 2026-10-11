@@ -36,7 +36,9 @@ if [ "$HOSTNAME" = "ocr-01" ]; then
     nice celery --app escriptorium worker --concurrency 4 --hostname low-priority --queues low-priority --loglevel INFO --optimization fair &
     # for everything that could use a GPU
     nice celery --app escriptorium worker --concurrency 2 --hostname gpu --queues gpu --loglevel INFO --max-tasks-per-child=1 --optimization fair &
-    nice celery --app escriptorium worker --concurrency 1 --hostname intensive-inference --queues intensive-inference --loglevel INFO --max-tasks-per-child=1 --optimization fair &
+    # DFINE segmentation models load their timm backbone from the local HF cache;
+    # skip the Hub check to avoid unnecessary network access per task
+    HF_HUB_OFFLINE=1 nice celery --app escriptorium worker --concurrency 1 --hostname intensive-inference --queues intensive-inference --loglevel INFO --max-tasks-per-child=1 --optimization fair &
     daphne -b 0.0.0.0 -p 8080 --root-path /escriptorium escriptorium.asgi:application
     # celery worker -l INFO -E -A escriptorium --optimization fair --prefetch-multiplier 1 --queues default -c ${CELERY_MAIN_CONC:-10} --max-tasks-per-child=10
 
