@@ -10,6 +10,11 @@ from typing import List
 
 import numpy as np
 from celery import shared_task
+from dfine.configs import (
+    DFINESegmentationTrainingConfig,
+    DFINESegmentationTrainingDataConfig,
+)
+from dfine.model import DFINESegmentationDataModule, DFINESegmentationModel
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -30,7 +35,7 @@ from kraken.configs import (
 from kraken.containers import BaselineLine, Region, Segmentation
 from kraken.kraken import SEGMENTATION_DEFAULT_MODEL
 from kraken.lib.arrow_dataset import build_binary_dataset
-from kraken.models import convert_models
+from kraken.models import convert_models, load_models, write_safetensors
 from kraken.tasks import ForcedAlignmentTaskModel
 from kraken.train import (
     BLLASegmentationDataModule,
@@ -63,21 +68,44 @@ class DidNotConverge(Exception):
     pass
 
 
-def detect_model_architecture(file_path):
-    """Returns the kraken '_model' architecture name from safetensors metadata, or None."""
+def read_kraken_meta(file_path):
     import json
 
     from safetensors import SafetensorError, safe_open
     try:
         with safe_open(file_path, framework="pt") as f:
             raw_meta = f.metadata()
-        kraken_meta = json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
+        return json.loads(raw_meta.get('kraken_meta')) if raw_meta else {}
     except (ValueError, TypeError, json.JSONDecodeError, SafetensorError, OSError):
-        return None
-    for v in kraken_meta.values():
+        return {}
+
+
+def detect_model_architecture(file_path):
+    """Returns the kraken '_model' architecture name from safetensors metadata, or None."""
+    for v in read_kraken_meta(file_path).values():
         if isinstance(v, dict) and v.get('_model'):
             return v['_model']
     return None
+
+
+def segmentation_parts(file_path):
+    parts = []
+    for v in read_kraken_meta(file_path).values():
+        if isinstance(v, dict) and 'segmentation' in (v.get('_tasks') or []):
+            mapping = v.get('class_mapping') or {}
+            parts.append((v.get('_model'),
+                          bool(mapping.get('lines') or mapping.get('baselines')),
+                          bool(mapping.get('regions'))))
+    return parts
+
+
+def split_segmentation_targets(parts):
+    # blla keeps the lines and dfine keeps the regions when both do them
+    blla_lines = any(lines for arch, lines, regions in parts if arch != 'DFINEModel')
+    dfine_regions = any(regions for arch, lines, regions in parts if arch == 'DFINEModel')
+    return [(lines and not (arch == 'DFINEModel' and blla_lines),
+             regions and not (arch != 'DFINEModel' and dfine_regions))
+            for arch, lines, regions in parts]
 
 
 VGSL_RECOGNITION_CLASSES = (VGSLRecognitionTrainingConfig,
@@ -107,6 +135,36 @@ RECOGNITION_BATCH_SIZE_SETTINGS = {
 
 def recognition_batch_size(architecture):
     setting = RECOGNITION_BATCH_SIZE_SETTINGS.get(architecture, 'KRAKEN_TRAINING_BATCH_SIZE_VGSL')
+    return (getattr(settings, setting, None)
+            or getattr(settings, 'KRAKEN_TRAINING_BATCH_SIZE', None))
+
+
+BLLA_SEGMENTATION_CLASSES = (BLLASegmentationTrainingConfig,
+                             BLLASegmentationTrainingDataConfig,
+                             BLLASegmentationDataModule,
+                             BLLASegmentationModel)
+
+SEGMENTATION_TRAINING_CLASSES = {
+    'DFINEModel': (DFINESegmentationTrainingConfig,
+                   DFINESegmentationTrainingDataConfig,
+                   DFINESegmentationDataModule,
+                   DFINESegmentationModel),
+}
+
+
+def segmentation_training_classes(architecture):
+    return SEGMENTATION_TRAINING_CLASSES.get(architecture, BLLA_SEGMENTATION_CLASSES)
+
+
+SEGMENTATION_BATCH_SIZE_SETTINGS = {
+    'DFINEModel': 'KRAKEN_TRAINING_BATCH_SIZE_DFINE',
+}
+
+
+def segmentation_batch_size(architecture):
+    setting = SEGMENTATION_BATCH_SIZE_SETTINGS.get(architecture)
+    if not setting:
+        return None
     return (getattr(settings, setting, None)
             or getattr(settings, 'KRAKEN_TRAINING_BATCH_SIZE', None))
 
@@ -274,6 +332,7 @@ class FrontendFeedback(Callback):
         val_metric = float(
             trainer.logged_metrics.get('val_accuracy')
             or trainer.logged_metrics.get('val_mean_iu')
+            or trainer.logged_metrics.get('val_metric')
             or 0.0
         )
         if val_metric > self.best_metric:
@@ -338,6 +397,119 @@ def _to_ptl_device(device: str):
     raise Exception(f'Invalid device {device} specified')
 
 
+def fit_segmentation(load, architecture, qs, partition, topline, model, model_dir, room_pk,
+                     room_name='document', **class_mappings):
+    training_data = make_segmentation_training_data(qs[partition:])
+    evaluation_data = make_segmentation_training_data(qs[:partition])
+    if architecture == 'DFINEModel':
+        training_data = [d['doc'] for d in training_data]
+        evaluation_data = [d['doc'] for d in evaluation_data]
+
+    (train_config_class,
+     data_config_class,
+     data_module_class,
+     module_class) = segmentation_training_classes(architecture)
+
+    accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
+
+    LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
+    AMP_MODE = getattr(settings, 'KRAKEN_TRAINING_PRECISION', '32')
+    BATCH_SIZE = segmentation_batch_size(architecture) or data_config_class().batch_size
+
+    logger.info(f'Starting segmentation training on {accelerator}/{device} '
+                f'(precision: {AMP_MODE}, batch_size: {BATCH_SIZE}, workers: {LOAD_THREADS}, '
+                f'arch: {module_class.__name__}) with '
+                f'{len(training_data)} files')
+
+    seg_data_config = data_config_class(
+        training_data=training_data,
+        evaluation_data=evaluation_data,
+        format_type=None,
+        num_workers=LOAD_THREADS,
+        batch_size=BATCH_SIZE,
+        **class_mappings,
+    )
+    seg_train_config = train_config_class(
+        resize='union',
+        topline=topline,
+        load_hyper_parameters=True,
+    )
+    seg_dm = data_module_class(seg_data_config)
+    if load:
+        kraken_model = module_class.load_from_weights(load, seg_train_config)
+    else:
+        kraken_model = module_class(seg_train_config)
+
+    trainer = KrakenTrainer(accelerator=accelerator,
+                            devices=device,
+                            # max_epochs=2,
+                            # min_epochs=5,
+                            precision=AMP_MODE,
+                            enable_summary=False,
+                            enable_progress_bar=False,
+                            val_check_interval=1.0,
+                            callbacks=[FrontendFeedback(model, model_dir, room_pk, room_name=room_name),
+                                       make_checkpoint_callback(model_dir)])
+
+    trainer.fit(kraken_model, seg_dm)
+
+    # best checkpoint path from lightning's ModelCheckpoint callback
+    best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
+    best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
+    fb_best = next((cb.best_metric for cb in trainer.callbacks if isinstance(cb, FrontendFeedback)), 0.0)
+    return best_path, float(best_score) if best_score is not None else fb_best
+
+
+def segtrain_(qs, partition, topline, load, model, model_dir, user=None, room_pk=None, room_name='document'):
+    parts = segmentation_parts(load) if load else []
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        if len(parts) > 1:
+            # combined file so each part is trained on its own and put back together after
+            nets = [net for net in load_models(load) if 'segmentation' in net.model_type]
+            results = []
+            for i, (net, part, (lines, regions)) in enumerate(
+                    zip(nets, parts, split_segmentation_targets(parts))):
+                architecture = part[0]
+                part_load = os.path.join(tmp_dir, f'part_{i}.safetensors')
+                write_safetensors([net], part_load)
+                if not (lines or regions):
+                    results.append((part_load, None))
+                    continue
+                class_mappings = {}
+                if not lines:
+                    class_mappings['line_class_mapping'] = {}
+                if not regions:
+                    class_mappings['region_class_mapping'] = {}
+                results.append(fit_segmentation(part_load, architecture, qs, partition, topline, model,
+                                                os.path.join(model_dir, f'part_{i}'), room_pk,
+                                                room_name=room_name, **class_mappings))
+        else:
+            architecture = parts[0][0] if parts else None
+            results = [fit_segmentation(load, architecture, qs, partition, topline, model, model_dir, room_pk,
+                                        room_name=room_name)]
+
+        paths = [result[0] for result in results]
+        if not all(paths):
+            logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
+            raise DidNotConverge
+
+        try:
+            scores = [result[1] for result in results if result[1] is not None]
+            best_score_val = sum(scores) / len(scores) if scores else 0.0
+            dest = model_file_path(model, '.safetensors')
+            logger.info(f'Converting best model {paths} (accuracy: {best_score_val}) to {dest}.')
+            convert_models(paths, dest)
+            switch_model_file(model, '.safetensors')
+            model.training_accuracy = best_score_val
+        except FileNotFoundError:
+            logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
+            if user:
+                user.notify(_("Training didn't get better results than base model!"),
+                            id="seg-no-gain-error", level='warning')
+            restore_base_model_file(model, load)
+
+
 @shared_task(autoretry_for=(MemoryError,), default_retry_delay=60 * 60)
 def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, user_pk=None, **kwargs):
     # # Note hack to circumvent AssertionError: daemonic processes are not allowed to have children
@@ -377,15 +549,6 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-    if load:
-        if detect_model_architecture(load) == 'DFINEModel':
-            send_event('document', document_pk, "training:error", {"id": model.pk})
-            if user:
-                user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
-                            id="training-dfine-unsupported", level='warning')
-            model.delete()
-            raise NotImplementedError(_("D-FINE model fine-tuning is not supported at the moment."))
-
     try:
         model.training = True
         model.save()
@@ -405,70 +568,7 @@ def segtrain(model_pk=None, part_pks=[], document_pk=None, task_group_pk=None, u
         np.random.default_rng(241960353267317949653744176059648850006).shuffle(ground_truth)
         partition = max(1, int(len(ground_truth) / 10))
 
-        training_data = make_segmentation_training_data(qs[partition:])
-        evaluation_data = make_segmentation_training_data(qs[:partition])
-
-        accelerator, device = _to_ptl_device(getattr(settings, 'KRAKEN_TRAINING_DEVICE', 'cpu'))
-
-        LOAD_THREADS = getattr(settings, 'KRAKEN_TRAINING_LOAD_THREADS', 0)
-        AMP_MODE = getattr(settings, 'KRAKEN_TRAINING_PRECISION', '32')
-
-        logger.info(f'Starting segmentation training on {accelerator}/{device} '
-                    f'(precision: {AMP_MODE}, workers: {LOAD_THREADS}) with '
-                    f'{len(training_data)} files')
-
-        seg_data_config = BLLASegmentationTrainingDataConfig(
-            training_data=training_data,
-            evaluation_data=evaluation_data,
-            format_type=None,
-            num_workers=LOAD_THREADS,
-        )
-        seg_train_config = BLLASegmentationTrainingConfig(
-            resize='union',
-            topline=topline,
-            load_hyper_parameters=True,
-        )
-        seg_dm = BLLASegmentationDataModule(seg_data_config)
-        if load:
-            kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
-        else:
-            kraken_model = BLLASegmentationModel(seg_train_config)
-
-        trainer = KrakenTrainer(accelerator=accelerator,
-                                devices=device,
-                                # max_epochs=2,
-                                # min_epochs=5,
-                                precision=AMP_MODE,
-                                enable_summary=False,
-                                enable_progress_bar=False,
-                                val_check_interval=1.0,
-                                callbacks=[FrontendFeedback(model, model_dir, document_pk),
-                                           make_checkpoint_callback(model_dir)])
-
-        trainer.fit(kraken_model, seg_dm)
-
-        # best checkpoint path from lightning's ModelCheckpoint callback
-        best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
-        best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
-
-        if not best_path:
-            logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
-            raise DidNotConverge
-
-        try:
-            fb_best = next((cb.best_metric for cb in trainer.callbacks if isinstance(cb, FrontendFeedback)), 0.0)
-            best_score_val = float(best_score) if best_score is not None else fb_best
-            dest = model_file_path(model, '.safetensors')
-            logger.info(f'Converting best model {best_path} (accuracy: {best_score_val}) to {dest}.')
-            convert_models([best_path], dest)
-            switch_model_file(model, '.safetensors')
-            model.training_accuracy = best_score_val
-        except FileNotFoundError:
-            logger.info(f'Model {os.path.split(model.file.path)[0]} did not improve.')
-            if user:
-                user.notify(_("Training didn't get better results than base model!"),
-                            id="seg-no-gain-error", level='warning')
-            restore_base_model_file(model, load)
+        segtrain_(qs, partition, topline, load, model, model_dir, user=user, room_pk=document_pk)
 
     except DidNotConverge:
         send_event('document', ground_truth[0].document.pk, "training:error", {
@@ -1268,15 +1368,6 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
-    if load:
-        if detect_model_architecture(load) == 'DFINEModel':
-            send_event("collection", collection_pk, "training:error", {"id": model.pk})
-            if user:
-                user.notify(_("D-FINE model fine-tuning is not supported at the moment."),
-                            id="training-dfine-unsupported", level='warning')
-            model.delete()
-            raise NotImplementedError(_("D-FINE model fine-tuning is not supported at the moment."))
-
     try:
         model.training = True
         model.save()
@@ -1316,70 +1407,8 @@ def segtrain_from_collection(collection_pk=None, model_pk=None, task_group_pk=No
         )
         partition = max(1, int(len(ground_truth) / 10))
 
-        training_data = make_segmentation_training_data(qs[partition:])
-        evaluation_data = make_segmentation_training_data(qs[:partition])
-
-        accelerator, device = _to_ptl_device(
-            getattr(settings, "KRAKEN_TRAINING_DEVICE", "cpu")
-        )
-        LOAD_THREADS = getattr(settings, "KRAKEN_TRAINING_LOAD_THREADS", 0)
-        AMP_MODE = getattr(settings, "KRAKEN_TRAINING_PRECISION", "32")
-
-        seg_data_config = BLLASegmentationTrainingDataConfig(
-            training_data=training_data,
-            evaluation_data=evaluation_data,
-            format_type=None,
-            num_workers=LOAD_THREADS,
-        )
-        seg_train_config = BLLASegmentationTrainingConfig(
-            resize='union',
-            topline=topline,
-            load_hyper_parameters=True,
-        )
-        seg_dm = BLLASegmentationDataModule(seg_data_config)
-        if load:
-            kraken_model = BLLASegmentationModel.load_from_weights(load, seg_train_config)
-        else:
-            kraken_model = BLLASegmentationModel(seg_train_config)
-
-        trainer = KrakenTrainer(
-            accelerator=accelerator,
-            devices=device,
-            precision=AMP_MODE,
-            enable_summary=False,
-            enable_progress_bar=False,
-            val_check_interval=1.0,
-            callbacks=[FrontendFeedback(model, model_dir, collection_pk, "collection"),
-                       make_checkpoint_callback(model_dir)],
-        )
-
-        trainer.fit(kraken_model, seg_dm)
-
-        # best checkpoint path from lightning's ModelCheckpoint callback
-        best_path = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_path', None)
-        best_score = getattr(getattr(trainer, 'checkpoint_callback', None), 'best_model_score', None)
-
-        if not best_path:
-            logger.info(f"Model {os.path.split(model.file.path)[0]} did not improve.")
-            raise DidNotConverge
-
-        try:
-            fb_best = next((cb.best_metric for cb in trainer.callbacks if isinstance(cb, FrontendFeedback)), 0.0)
-            best_score_val = float(best_score) if best_score is not None else fb_best
-            dest = model_file_path(model, ".safetensors")
-            logger.info(f"Converting best model {best_path} (accuracy: {best_score_val}) to {dest}.")
-            convert_models([best_path], dest)
-            switch_model_file(model, ".safetensors")
-            model.training_accuracy = best_score_val
-        except FileNotFoundError:
-            logger.info(f"Model {os.path.split(model.file.path)[0]} did not improve.")
-            if user:
-                user.notify(
-                    _("Training didn't get better results than base model!"),
-                    id="seg-no-gain-error",
-                    level="warning",
-                )
-            restore_base_model_file(model, load)
+        segtrain_(qs, partition, topline, load, model, model_dir, user=user,
+                  room_pk=collection_pk, room_name="collection")
     except DidNotConverge:
         send_event(
             "collection", collection_pk, "training:error", {"id": model.pk}
