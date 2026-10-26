@@ -11,6 +11,7 @@ from django.urls import reverse
 from core.models import Document, Line, LineTranscription, OcrModel
 from core.tasks import (
     align,
+    check_model_file,
     detect_model_architecture,
     generate_part_thumbnails,
     lossless_compression,
@@ -343,6 +344,18 @@ def make_safetensors_file(path, kraken_meta):
     save_file({'weight': torch.zeros(2, 2)}, path, metadata={'kraken_meta': json.dumps(kraken_meta)})
 
 
+def make_loadable_model_file(path):
+    """Writes a small real VGSL recognition model that kraken can actually load."""
+    from kraken.models.utils import create_model
+    from kraken.models.writers import write_safetensors
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    model = create_model('TorchVGSLModel',
+                         vgsl='[1,48,0,1 Lbx100 Do O1c10]',
+                         codec='abc',
+                         model_type=['recognition'])
+    write_safetensors([model], path)
+
+
 class QualifyModelTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()
@@ -389,6 +402,39 @@ class QualifyModelTestCase(CoreFactoryTestCase):
         qualify_model.delay(model.pk)
         model.refresh_from_db()
         self.assertIsNone(model.architecture)
+
+    def test_check_model_file_loadable(self):
+        model = self.make_ocr_model('good.safetensors', kraken_meta=None)
+        make_loadable_model_file(model.file.path)
+        self.assertIsNone(check_model_file(model.file.path))
+
+    def test_check_model_file_invalid(self):
+        model = self.make_ocr_model('bad.safetensors', kraken_meta=None)
+        error = check_model_file(model.file.path)
+        self.assertIsNotNone(error)
+        self.assertIn('ValueError', error)
+
+    def test_qualify_model_loadable_clears_error(self):
+        model = self.make_ocr_model('good.safetensors', kraken_meta=None)
+        make_loadable_model_file(model.file.path)
+        model.model_error = 'a previous error'
+        model.save(update_fields=['model_error'])
+        qualify_model.delay(model.pk)
+        model.refresh_from_db()
+        self.assertIsNone(model.model_error)
+
+    def test_qualify_model_unloadable_sets_error(self):
+        model = self.make_ocr_model('bad.safetensors', kraken_meta=None)
+        qualify_model.delay(model.pk)
+        model.refresh_from_db()
+        self.assertIsNotNone(model.model_error)
+        self.assertFalse(OcrModel.objects.selectable().filter(pk=model.pk).exists())
+
+    def test_selectable_includes_loadable_models(self):
+        good = self.make_ocr_model('good.safetensors', kraken_meta=None)
+        make_loadable_model_file(good.file.path)
+        qualify_model.delay(good.pk)
+        self.assertTrue(OcrModel.objects.selectable().filter(pk=good.pk).exists())
 
     def test_qualify_model_missing_model_does_not_raise(self):
         # should silently no-op when the OcrModel no longer exists
