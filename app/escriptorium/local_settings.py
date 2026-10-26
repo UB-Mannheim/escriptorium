@@ -11,9 +11,9 @@ CSRF_TRUSTED_ORIGINS = ['https://ocr-bw.bib.uni-mannheim.de']
 
 # In the format [('Full Name', 'email@example.com'), ('Full Name', 'anotheremail@example.com')]
 ADMINS = [
-    ('Administrator', 'stefan.weil@uni-mannheim.de')
+    ('Administrator', 'stefan.weil@uni-mannheim.de'),
+    ('Jörg Mechnich', 'joerg.mechnich@uni-mannheim.de')
 ]
-# ADMINS = ['Administrator <stefan.weil@uni-mannheim.de>']
 
 # Settings for running from a subpath behind a proxy.
 FORCE_SCRIPT_NAME = '/escriptorium'
