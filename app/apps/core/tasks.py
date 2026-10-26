@@ -81,6 +81,23 @@ def detect_model_architecture(file_path):
     return None
 
 
+def check_model_file(file_path):
+    """Attempts to load a model file with the installed kraken.
+
+    Returns None when the file loads, or the error message otherwise. This
+    catches files that exist on disk but cannot be loaded (e.g. a recognition
+    model whose serialized graph still contains the orphaned pretraining mask
+    head), so a broken model surfaces once at qualification time instead of
+    failing every transcription task that uses it.
+    """
+    from kraken.models import load_models
+    try:
+        load_models(file_path)
+    except Exception as e:  # noqa: BLE001 - any load failure makes the model unusable
+        return f'{type(e).__name__}: {e}'
+    return None
+
+
 VGSL_RECOGNITION_CLASSES = (VGSLRecognitionTrainingConfig,
                             VGSLRecognitionTrainingDataConfig,
                             VGSLRecognitionDataModule,
@@ -114,7 +131,7 @@ def recognition_batch_size(architecture):
 
 @shared_task
 def qualify_model(model_pk):
-    """Detects and persists an OcrModel's architecture from its file, off the request/training path."""
+    """Detects an OcrModel's architecture and verifies its file loads, off the request/training path."""
     OcrModel = apps.get_model('core', 'OcrModel')
     try:
         model = OcrModel.objects.get(pk=model_pk)
@@ -122,10 +139,11 @@ def qualify_model(model_pk):
         return
     if model.file:
         model.architecture = detect_model_architecture(model.file.path)
-        # Only update the architecture field: a plain save() would write back
+        model.model_error = check_model_file(model.file.path)
+        # Only update the qualification fields: a plain save() would write back
         # every field from the stale in-memory copy, e.g. resurrect
         # training=True while the training task's cleanup is running.
-        model.save(update_fields=['architecture'])
+        model.save(update_fields=['architecture', 'model_error'])
 
 
 def _chunks(lst, n):

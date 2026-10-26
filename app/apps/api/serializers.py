@@ -1004,7 +1004,7 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
-        ).for_user_read(self.user)
+        ).for_user_read(self.user).selectable()
         narrow_related(self.fields['parts'],
                        DocumentPart.objects.filter(document=self.document))
 
@@ -1056,7 +1056,7 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
-        ).for_user_read(self.user)
+        ).for_user_read(self.user).selectable()
         narrow_related(self.fields['parts'],
                        DocumentPart.objects.filter(document=self.document))
 
@@ -1260,7 +1260,7 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['transcription'].queryset = Transcription.objects.filter(document=self.document)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
-        ).for_user_read(self.user)
+        ).for_user_read(self.user).selectable()
         narrow_related(self.fields['parts'],
                        DocumentPart.objects.filter(document=self.document))
 
@@ -1330,7 +1330,7 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
             document=self.document)
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
-        ).for_user_read(self.user)
+        ).for_user_read(self.user).selectable()
         narrow_related(self.fields['parts'],
                        DocumentPart.objects.filter(document=self.document))
 
@@ -1822,7 +1822,7 @@ class CollectionRecognizeSerializer(BaseCollectionTrainSerializer):
         user = self.context["request"].user
         self.fields["model"].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
-        ).for_user_read(user)
+        ).for_user_read(user).selectable()
 
 
 class CollectionSegmentSerializer(BaseCollectionTrainSerializer):
@@ -1834,7 +1834,7 @@ class CollectionSegmentSerializer(BaseCollectionTrainSerializer):
         user = self.context["request"].user
         self.fields["model"].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
-        ).for_user_read(user)
+        ).for_user_read(user).selectable()
 
 
 class DownloadSerializer(serializers.ModelSerializer):

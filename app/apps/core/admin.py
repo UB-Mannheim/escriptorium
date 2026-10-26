@@ -105,9 +105,9 @@ class FontAdmin(admin.ModelAdmin):
 
 
 class OcrModelAdmin(admin.ModelAdmin):
-    list_display = ['name', 'job', 'owner', 'script', 'training', 'parent', 'public']
+    list_display = ['name', 'job', 'owner', 'script', 'training', 'parent', 'public', 'model_status']
     search_fields = ['name', 'owner__username']
-    readonly_fields = ['documents_link', 'rights_link', 'finetuned_models_link']
+    readonly_fields = ['documents_link', 'rights_link', 'finetuned_models_link', 'architecture', 'model_error']
     raw_id_fields = ('parent',)
     autocomplete_fields = ('owner',)
     list_select_related = ('owner', 'script', 'parent')
@@ -115,6 +115,11 @@ class OcrModelAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ('name', 'job', 'owner', 'script', 'training', 'parent', 'public', 'file', 'file_size')
+        }),
+        ('Qualification', {
+            'fields': ('architecture', 'model_error'),
+            'classes': ('collapse',),
+            'description': 'Populated by core.tasks.qualify_model after the file changes. model_error is set when the file cannot be loaded by the installed kraken.'
         }),
         ('Related Records', {
             'fields': ('documents_link', 'rights_link', 'finetuned_models_link'),
@@ -149,6 +154,16 @@ class OcrModelAdmin(admin.ModelAdmin):
             return format_html('<a href="{}">{} fine-tuned models</a>', url, count)
         return '-'
     finetuned_models_link.short_description = 'Models Fine-tuned From This'
+
+    def model_status(self, obj):
+        if not obj or not obj.file:
+            return '-'
+        if obj.model_error:
+            return format_html('<span title="{}" style="color:#ba2121">not loadable</span>', obj.model_error)
+        if obj.architecture:
+            return format_html('<span style="color:#117111">{} (loads)</span>', obj.architecture)
+        return '-'  # not qualified yet
+    model_status.short_description = 'Model'
 
 
 class OcrModelDocumentAdmin(admin.ModelAdmin):

@@ -2213,6 +2213,10 @@ class OcrModelQuerySet(models.QuerySet):
             | Q(ocr_model_rights__group__user=user)
         ).distinct()  # prevent duplicates when model is shared with groups with multiple users
 
+    def selectable(self):
+        """Models whose file loads with the installed kraken (no recorded load error)."""
+        return self.filter(Q(model_error=None) | Q(model_error=''))
+
 
 class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     name = models.CharField(max_length=256)
@@ -2225,6 +2229,11 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     # Detected kraken model architecture (e.g. 'DFINEModel', 'VGSLModel'), populated asynchronously
     # by core.tasks.qualify_model whenever the file changes. None until qualified.
     architecture = models.CharField(max_length=64, null=True, blank=True)
+    # Error from the last attempt to actually load the model file, populated
+    # by core.tasks.qualify_model. None while the file loads successfully.
+    # Present so a broken model surfaces once at qualification time instead of
+    # failing every transcription task that uses it.
+    model_error = models.TextField(null=True, blank=True)
 
     MODEL_JOB_SEGMENT = 1
     MODEL_JOB_RECOGNIZE = 2
