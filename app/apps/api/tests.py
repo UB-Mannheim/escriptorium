@@ -1535,9 +1535,10 @@ class LineTranscriptionViewSetTestCase(CoreFactoryTestCase):
 
         existing.refresh_from_db()
         self.assertEqual(existing.content, 'test')
-        # line2 is untouched: the source has nothing for it
+        # line2 is emptied since the source has nothing for it
         self.lt2.refresh_from_db()
-        self.assertEqual(self.lt2.content, 'test2')
+        self.assertEqual(self.lt2.content, '')
+        self.assertEqual(self.lt2.versions[0]['data']['content'], 'test2')
 
     def test_copied_lines_have_no_history(self):
         """A copy doesn't carry over the source layer's history."""

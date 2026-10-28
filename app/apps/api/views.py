@@ -1783,6 +1783,21 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
                     target_lt.avg_confidence = lt.avg_confidence
                     to_update.append(target_lt)
 
+            # lines the source never had get emptied too
+            source_lines = {lt.line_id for lt in sources}
+            for line_id, target_lt in existing.items():
+                if line_id in source_lines or not target_lt.content:
+                    continue
+                try:
+                    target_lt.new_version(author=request.user.username,
+                                          source=settings.VERSIONING_DEFAULT_SOURCE)
+                except NoChangeException:
+                    pass
+                target_lt.content = ''
+                target_lt.graphs = None
+                target_lt.avg_confidence = None
+                to_update.append(target_lt)
+
             # bulk_create/bulk_update don't go through LineTranscription.save(), so this
             # doesn't trigger the CascadeUpdate chain once per line; part.save() below
             # does it once for the whole copy.
