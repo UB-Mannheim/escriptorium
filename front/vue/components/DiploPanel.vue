@@ -79,7 +79,7 @@
                             color="text"
                             aria-label="Copy layer"
                             :disabled="disabled"
-                            :on-click="() => openModal('copyTranscription')"
+                            :on-click="openCopyModal"
                         >
                             <template #button-icon>
                                 <CopyIcon />
@@ -753,6 +753,12 @@ export default {
         changed() {
             this.$refs.saveNotif.classList.remove("hide");
             this.debouncedSave();
+        },
+
+        openCopyModal() {
+            // save pending edits so they get copied too
+            this.debouncedSave.flush();
+            this.openModal("copyTranscription");
         },
 
         appendLine(pos, linePk) {
