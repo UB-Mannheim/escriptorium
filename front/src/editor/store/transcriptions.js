@@ -253,8 +253,8 @@ export const actions = {
             }
 
             // the panel is showing the target: repaint it with the copied content
-            if (layer.pk === state.selectedTranscription) {
-                await dispatch("getCurrentContent", state.selectedTranscription);
+            if (state.comparedTranscriptions.includes(layer.pk)) {
+                await dispatch("fetchContent", layer.pk);
             }
 
             dispatch(
