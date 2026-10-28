@@ -39,17 +39,17 @@ export var BasePanel = {
         window.removeEventListener("resize", this.refresh);
     },
     watch: {
-        "$store.state.parts.loaded": function (n, o) {
+        "$store.state.parts.loaded": function (n, _o) {
             if (n) {
                 this.refresh();
             }
         },
-        "$store.state.document.visible_panels": function (n, o) {
+        "$store.state.document.visible_panels": function (_n, _o) {
             if (this.$store.state.parts.loaded) {
                 this.refresh();
             }
         },
-        "$store.state.document.editorPanels": function (n, o) {
+        "$store.state.document.editorPanels": function (_n, _o) {
             if (this.$store.state.parts.loaded) {
                 this.refresh();
             }
@@ -182,7 +182,7 @@ export var AnnoPanel = {
             }
         },
 
-        disableTaxonomy(taxo) {
+        disableTaxonomy(_taxo) {
             this.anno.readOnly = true;
             this.currentTaxonomy = null;
             document.querySelectorAll(".taxo-group .btn-info").forEach((e) => {
@@ -206,7 +206,7 @@ export var AnnoPanel = {
             return document.getElementById("anno-taxo-" + taxo.pk);
         },
 
-        setThisAnnoTaxonomy(taxo) {
+        setThisAnnoTaxonomy(_taxo) {
             throw "override this method in the subclass!";
         },
 

@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timezone
 
 import psutil
@@ -154,3 +155,55 @@ class TaskReport(models.Model):
 
 
 TASK_FINAL_STATES = [TaskReport.WORKFLOW_STATE_ERROR, TaskReport.WORKFLOW_STATE_DONE, TaskReport.WORKFLOW_STATE_CANCELED]
+
+
+def _new_download_fingerprint():
+    """Generate a random 32-char hex token for a Download row.
+
+    Kept as a module-level callable (not a lambda / staticmethod) so
+    migrations can serialize the default.
+    """
+    return uuid.uuid4().hex
+
+
+class Download(models.Model):
+    """A downloadable artifact produced by a task (export, archive, ...).
+
+    One row per generated file. The `fingerprint` is a random 128-bit
+    token (uuid4 hex) safe to share in URLs; it stays stable for the
+    row's lifetime. `expires_at` is set from the owning user's retention
+    preference and drives the cleanup command.
+    """
+    fingerprint = models.CharField(
+        max_length=32, unique=True, db_index=True,
+        default=_new_download_fingerprint,
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="downloads")
+    task_report = models.ForeignKey(
+        TaskReport, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="downloads",
+    )
+    label = models.CharField(max_length=256)
+    file_path = models.CharField(max_length=1024)
+    file_size = models.BigIntegerField(default=0)
+    mime_type = models.CharField(max_length=128, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    accessed_at = models.DateTimeField(null=True, blank=True)
+    accessed_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.label} ({self.fingerprint[:8]})"
+
+    def is_expired(self):
+        if self.expires_at is None:
+            return False
+        return datetime.now(timezone.utc) >= self.expires_at
+
+    def touch_access(self):
+        """Record a download hit; caller is responsible for saving."""
+        self.accessed_at = datetime.now(timezone.utc)
+        self.accessed_count += 1

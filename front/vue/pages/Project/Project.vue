@@ -130,6 +130,8 @@
                         no-data-message="There are no documents to display."
                     />
                 </div>
+                <!-- Default project ontology -->
+                <ProjectOntologyCard :disabled="loading" />
                 <!-- delete project modal -->
                 <ConfirmModal
                     v-if="deleteModalOpen"
@@ -181,6 +183,7 @@ import ImagesIcon from "../../components/Icons/ImagesIcon/ImagesIcon.vue";
 import PencilIcon from "../../components/Icons/PencilIcon/PencilIcon.vue";
 import PeopleIcon from "../../components/Icons/PeopleIcon/PeopleIcon.vue";
 import PlusIcon from "../../components/Icons/PlusIcon/PlusIcon.vue";
+import ProjectOntologyCard from "../../components/ProjectOntologyCard/ProjectOntologyCard.vue";
 import SearchIcon from "../../components/Icons/SearchIcon/SearchIcon.vue";
 import SearchPanel from "../../components/SearchPanel/SearchPanel.vue";
 import ShareModal from "../../components/SharePanel/ShareModal.vue";
@@ -208,6 +211,7 @@ export default {
         // eslint-disable-next-line vue/no-unused-components
         PeopleIcon,
         PlusIcon,
+        ProjectOntologyCard,
         // eslint-disable-next-line vue/no-unused-components
         SearchPanel,
         ShareModal,

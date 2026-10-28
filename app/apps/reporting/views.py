@@ -210,6 +210,13 @@ class ProjectReport(LoginRequiredMixin, DetailView):
         return OrderedDict(Counter(value.split('|'))).items() if value else ''
 
 
+class DownloadsPage(LoginRequiredMixin, TemplateView):
+    """Renders the /downloads/ shell; the actual list is fetched by the Vue
+    page via /api/downloads/. Kept as a TemplateView so it slots into the
+    existing auth-guarded URL surface."""
+    template_name = "reporting/downloads.html"
+
+
 class DocumentReport(LoginRequiredMixin, DetailView):
     template_name = 'reporting/document_report.html'
     model = Document

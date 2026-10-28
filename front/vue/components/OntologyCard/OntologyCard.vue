@@ -20,6 +20,35 @@
                     :options="categories"
                     :on-change-selection="onSelectCategory"
                 />
+                <input
+                    ref="importInput"
+                    type="file"
+                    accept=".json,.yaml,.yml"
+                    class="sr-only"
+                    @change="onImportFileChange"
+                >
+                <EscrButton
+                    color="text"
+                    size="small"
+                    label="Import"
+                    :disabled="loading"
+                    :on-click="onClickImport"
+                >
+                    <template #button-icon>
+                        <UploadIcon class="escr-ontology-action-icon" />
+                    </template>
+                </EscrButton>
+                <EscrButton
+                    color="text"
+                    size="small"
+                    label="Export"
+                    :disabled="loading"
+                    :on-click="onClickExport"
+                >
+                    <template #button-icon>
+                        <DownloadIcon />
+                    </template>
+                </EscrButton>
             </div>
         </div>
         <SegmentedButtonGroup
@@ -51,15 +80,25 @@
     </div>
 </template>
 <script>
-import { mapState } from "vuex";
+import { mapActions, mapState } from "vuex";
+import DownloadIcon from "../Icons/DownloadIcon/DownloadIcon.vue";
+import EscrButton from "../Button/Button.vue";
 import EscrLoader from "../Loader/Loader.vue";
 import EscrTable from "../Table/Table.vue";
 import SegmentedButtonGroup from "../SegmentedButtonGroup/SegmentedButtonGroup.vue";
+import UploadIcon from "../Icons/UploadIcon/UploadIcon.vue";
 import "./OntologyCard.css";
 
 export default {
     name: "EscrOntologyCard",
-    components: { EscrLoader, EscrTable, SegmentedButtonGroup },
+    components: {
+        DownloadIcon,
+        EscrButton,
+        EscrLoader,
+        EscrTable,
+        SegmentedButtonGroup,
+        UploadIcon,
+    },
     props: {
         /**
          * Whether or not to display a compact variant of this card (i.e. for document view).
@@ -155,6 +194,7 @@ export default {
         },
     },
     methods: {
+        ...mapActions("document", ["exportOntology", "importOntology"]),
         /**
          * Callback for changing the category on component state
          */
@@ -170,6 +210,28 @@ export default {
             } else {
                 this.sort = sort;
             }
+        },
+        /**
+         * Trigger the hidden file input for importing an ontology config
+         */
+        onClickImport() {
+            this.$refs.importInput.click();
+        },
+        /**
+         * Handle a file being selected for import
+         */
+        async onImportFileChange(e) {
+            const file = e.target.files[0];
+            e.target.value = "";
+            if (file) {
+                await this.importOntology(file);
+            }
+        },
+        /**
+         * Handle clicking the export button
+         */
+        async onClickExport() {
+            await this.exportOntology();
         },
     },
 }

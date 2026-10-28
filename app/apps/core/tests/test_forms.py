@@ -14,8 +14,7 @@ class RegionTypesFormMixinTestCase(CoreFactoryTestCase):
 
     def make_doc_and_block(self):
         self.document = self.factory.make_document(name="document")
-        self.block_type = BlockType.objects.create(name="Block", public=True, default=True)
-        self.document.valid_block_types.add(self.block_type)
+        self.block_type = BlockType.objects.create(name="Block", document=self.document)
 
     def test_init(self):
         """Should initialize region types choices, selection"""

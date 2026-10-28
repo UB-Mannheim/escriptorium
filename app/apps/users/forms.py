@@ -194,7 +194,7 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ('email', 'first_name', 'last_name', 'legacy_mode',
-                  'preferred_transcription_font')
+                  'preferred_transcription_font', 'download_retention_days')
 
 
 class GroupForm(BootstrapFormMixin, forms.ModelForm):

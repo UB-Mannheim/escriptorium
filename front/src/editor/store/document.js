@@ -479,12 +479,11 @@ export const actions = {
                             }
 
                             // non-default types: create/queue for update
+                            // (default types are matched by name, not pk: the document's
+                            // valid types are now document-owned copies with their own
+                            // pks, distinct from the template pks in defaultTypes)
                             if (
-                                !defaultTypes.find(
-                                    (b) =>
-                                        (!typePk && b.name === type.name) ||
-                                        (typePk && typePk === b.pk),
-                                )
+                                !defaultTypes.find((b) => b.name === type.name)
                             ) {
                                 let oldType = oldTypes.find((o) => o.pk === type.pk);
                                 if (!typePk) {
@@ -501,7 +500,7 @@ export const actions = {
                                     } else {
                                         const { data } = await createType(
                                             category,
-                                            { name: type.name },
+                                            { name: type.name, color: type.color },
                                         );
                                         typePk = data.pk;
                                     }
@@ -533,10 +532,14 @@ export const actions = {
                                             typePk: type.pk,
                                             data: annotationParams,
                                         });
-                                    } else if (oldType.name !== type.name) {
+                                    } else if (
+                                        oldType.name !== type.name ||
+                                        oldType.color !== type.color
+                                    ) {
                                         await updateType(category, {
                                             typePk: type.pk,
                                             name: type.name,
+                                            color: type.color,
                                         });
                                     }
                                 }
@@ -554,7 +557,7 @@ export const actions = {
                         oldTypes
                             .filter((a) => !newTypes.find((b) => a.pk === b.pk))
                             .filter(
-                                (a) => !defaultTypes.find((b) => a.pk === b.pk),
+                                (a) => !defaultTypes.find((b) => b.name === a.name),
                             )
                             .map(
                                 async (type) => {
@@ -580,6 +583,29 @@ export const actions = {
             valid_part_types: validTypes["parts"],
             valid_block_types: validTypes["regions"],
         });
+
+
+        await Promise.all(
+            [
+                ["regions", "valid_block_types"],
+                ["lines", "valid_line_types"],
+            ].map(async ([category, field]) => {
+                const formTypes = rootState.forms.ontology[category] || [];
+                await Promise.all(
+                    (data[field] || []).map(async (row) => {
+                        const formType = formTypes.find((t) => t.name === row.name);
+                        if (formType?.color && formType.color !== row.color) {
+                            await updateType(category, {
+                                typePk: row.pk,
+                                name: row.name,
+                                color: formType.color,
+                            });
+                            row.color = formType.color;
+                        }
+                    }),
+                );
+            }),
+        );
 
         let page = 1;
         var img_taxos = [];

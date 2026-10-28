@@ -69,3 +69,7 @@
 .escr-edit-ontology .name-column input {
     background-color: var(--background);
 }
+.escr-edit-ontology .name-column .escr-help-text {
+    display: block;
+    padding: 2px 1px 6px;
+}

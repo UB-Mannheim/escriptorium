@@ -8,8 +8,9 @@ from unittest.mock import patch
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
-from core.models import LineTranscription, Transcription
+from core.models import LineTranscription, OcrModel, Transcription
 from core.tests.factory import CoreFactoryTestCase
+from reporting.models import TaskReport
 
 
 class DocumentPartTestCase(CoreFactoryTestCase):
@@ -22,16 +23,16 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         self.part_2 = self.factory.make_part(document=self.part.document)
         self.part_3 = self.factory.make_part(document=self.part.document)
         self.transcription = self.factory.make_transcription(document=self.part.document)
-        self.factory.make_content(self.part, transcription=self.transcription)
-        self.factory.make_content(self.part_2, transcription=self.transcription)
-        self.factory.make_content(self.part_3, transcription=self.transcription)
+        self.factory.make_content(self.part, transcription=self.transcription, block_type_name="blocktype1")
+        self.factory.make_content(self.part_2, transcription=self.transcription, block_type_name="blocktype2")
+        self.factory.make_content(self.part_3, transcription=self.transcription, block_type_name="blocktype3")
         self.user = self.factory.make_user()
         self.witness = self.factory.make_witness(owner=self.user)
         self.n_gram = 4
         self.max_offset = 20
         self.beam_size = 10
         self.gap = 600
-        self.region_types = [rt.id for rt in self.part.document.valid_block_types.all()] + ["Orphan", "Undefined"]
+        self.region_types = [rt.id for rt in self.part.document.block_types.all()] + ["Orphan", "Undefined"]
 
         tpk = self.transcription.pk
         dpk = self.part.document.pk
@@ -426,7 +427,7 @@ class DocumentPartTestCase(CoreFactoryTestCase):
                 merge=True,
                 full_doc=True,
                 threshold=0.0,
-                region_types=[self.part.document.valid_block_types.first().id],
+                region_types=[self.part.document.block_types.first().id],
                 layer_name=None,
                 beam_size=0,
                 gap=self.gap,
@@ -634,3 +635,55 @@ class DocumentPartTestCase(CoreFactoryTestCase):
         finally:
             # clean up tempfile
             os.remove(filepath)
+
+
+class OcrModelCancelTrainingTestCase(CoreFactoryTestCase):
+    """cancel_training must be idempotent: when the training task is already
+    over (or no report exists) it must clear the stuck training flag instead
+    of raising ProcessFailureException."""
+
+    def setUp(self):
+        super().setUp()
+        self.document = self.factory.make_document()
+        self.model = self.factory.make_model(self.document, job=OcrModel.MODEL_JOB_SEGMENT)
+        self.model.training = True
+        self.model.save()
+
+    def make_report(self, task_id='12345'):
+        return self.model.reports.create(
+            user=self.document.owner, label='Fake training',
+            task_id=task_id, method='core.tasks.segtrain',
+            ocr_model=self.model)
+
+    def test_cancel_running_training_revokes_task(self):
+        report = self.make_report()
+        report.start()
+
+        with patch('escriptorium.celery.app.control.revoke') as mock_revoke:
+            self.model.cancel_training(username='admin')
+
+        mock_revoke.assert_called_once_with('12345', terminate=True)
+        report.refresh_from_db()
+        self.assertEqual(report.workflow_state, TaskReport.WORKFLOW_STATE_CANCELED)
+        self.model.refresh_from_db()
+        self.assertFalse(self.model.training)
+
+    def test_cancel_finished_training_cleans_stuck_flag(self):
+        # The training task finished but the flag was left stuck at True
+        report = self.make_report()
+        report.start()
+        report.end()
+
+        with patch('escriptorium.celery.app.control.revoke') as mock_revoke:
+            self.model.cancel_training(username='admin')
+
+        mock_revoke.assert_not_called()
+        report.refresh_from_db()
+        self.assertEqual(report.workflow_state, TaskReport.WORKFLOW_STATE_DONE)
+        self.model.refresh_from_db()
+        self.assertFalse(self.model.training)
+
+    def test_cancel_without_report_cleans_stuck_flag(self):
+        self.model.cancel_training(username='admin')
+        self.model.refresh_from_db()
+        self.assertFalse(self.model.training)

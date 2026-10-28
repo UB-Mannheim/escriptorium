@@ -5,7 +5,7 @@ export function bootDocumentForm(scripts) {
     // link tabs
     var hash = window.location.hash;
     hash && $('div.nav.nav-tabs a[href="' + hash + '"]').tab("show");
-    $("div.nav.nav-tabs a").click(function (e) {
+    $("div.nav.nav-tabs a").click(function (_e) {
         if (!$(this).is(".disabled")) {
             $(this).tab("show");
             var scrollmem = $("body").scrollTop();

@@ -4,7 +4,7 @@
     max-height: calc(90vh - 32px);
     grid-template-columns: 3fr 1fr;
     grid-template-areas:
-        "header header"
+        "header ontology"
         "doclist doclist"
         "doclist doclist"
         "doclist doclist";

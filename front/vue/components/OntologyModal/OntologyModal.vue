@@ -126,6 +126,12 @@
                                 :invalid="!item.name"
                                 @input="(e) => onChangeName(e, item)"
                             >
+                            <span
+                                v-if="isDuplicateName(item)"
+                                class="escr-help-text escr-error-text"
+                            >
+                                This name is already used
+                            </span>
                         </td>
                         <td
                             v-if="['lines', 'regions'].includes(tab)"
@@ -254,10 +260,7 @@ export default {
             const types = {};
             Object.keys(this.defaultTypes).forEach((key) => {
                 types[key] = this.formState[key]
-                    .filter(
-                        // Exclude all that are in default types
-                        (t) => !this.defaultTypes[key].find((dt) => dt.pk === t.pk)
-                    )
+                    .filter((t) => !this.isDefaultType(t, key))
                     // Exclude pk null in custom types since that's always enabled
                     // and doesn't exist in DB.
                     .filter((t) => t.pk !== null)
@@ -350,8 +353,12 @@ export default {
      * On mount, set the existing color settings on state.
      */
     mounted() {
-        Object.values(this.settingKeys).forEach((settingKey) => {
-            this.colorFormState[settingKey] = this.colorSettings[settingKey] || {};
+        Object.entries(this.settingKeys).forEach(([tab, settingKey]) => {
+            const colors = { ...(this.colorSettings[settingKey] || {}) };
+            (this.validTypes[tab] || []).forEach((t) => {
+                if (t.color) colors[t.name] = t.color;
+            });
+            this.colorFormState[settingKey] = colors;
         });
     },
     methods: {
@@ -406,8 +413,12 @@ export default {
                 });
             } else {
                 // unchecking a default item = removing it from the form array
+                const formItem = this.formState[this.tab]?.find(
+                    (t) => t.name === value.name,
+                );
                 this.handleGenericArrayInput({
-                    form: "ontology", field: this.tab, action: "remove", value
+                    form: "ontology", field: this.tab, action: "remove",
+                    value: formItem || value,
                 });
             }
         },
@@ -415,10 +426,11 @@ export default {
          * Handle clicking the save button
          */
         onClickSave() {
-            // set colors from form on local storage and active segmenter
-            let settings = structuredClone(this.colorSettings);
+            // colors are now persisted server-side on the types themselves
+            // (see document.js's saveOntologyChanges); dispatch the colors
+            // to the active segmenter so it recolors live, without
+            // persisting them to the user's local storage anymore.
             Object.values(this.settingKeys).forEach((settingKey) => {
-                settings[settingKey] = this.colorFormState[settingKey];
                 const event = new CustomEvent(
                     "baseline-editor:ontology-colors",
                     {
@@ -430,8 +442,6 @@ export default {
                 );
                 document.dispatchEvent(event);
             });
-            // eslint-disable-next-line no-undef
-            userProfile.set(`baseline-editor-${this.documentId}`, settings);
 
             // perform onSave callback
             this.onSave();
@@ -451,7 +461,8 @@ export default {
             this.tab = tab;
         },
         /**
-         * Get color from either form state or defaults
+         * Get color from the server-persisted value, current session edits, or
+         * fall back to the editor's computed palette.
          */
         getTypeColor(type, idx, key) {
             let color = null;
@@ -461,8 +472,11 @@ export default {
                 this.colorFormState[settingKey] &&
                 this.colorFormState[settingKey][type.name]
             ) {
-                // get color from local storage settings if present
+                // color picked in this session or saved on the document's type
                 color = this.colorFormState[settingKey][type.name];
+            } else if (type.color) {
+                // color persisted server side on the type itself
+                color = type.color;
             } else if (Object.hasOwn(this.defaultColors, key)) {
                 // in the original baseline editor, a string was added to an integer to get
                 // this number!
@@ -470,22 +484,57 @@ export default {
             }
             return color;
         },
+
+        // if the name is taken by a default type or another custom one
+
+        isDuplicateName(item) {
+            if (!item.name) return false;
+            return this.defaultTypes[this.tab].some((dt) => dt.name === item.name) ||
+                this.customTypes[this.tab].filter((t) => t.name === item.name).length > 1;
+        },
+
+        // checks if default type
+
+        isDefaultType(type, key) {
+            if (!type.pk) return false;
+            const saved = (this.validTypes[key] || []).find((t) => t.pk === type.pk);
+            const name = saved ? saved.name : type.name;
+            return this.defaultTypes[key].some((dt) => dt.name === name);
+        },
         /**
-         * True if the item is checked in the form
+         * True if the item is checked in the form. Matched by name: default
+         * items carry template pks, while the document's valid types are
+         * document-owned copies with their own, distinct pks.
          */
         isSelected(item) {
             return this.formState &&
                 this.formState[this.tab] &&
-                this.formState[this.tab].some((formItem) => formItem.pk === item.pk);
+                this.formState[this.tab].some(
+                    (formItem) => formItem.name === item.name &&
+                        this.isDefaultType(formItem, this.tab),
+                );
         },
         /**
-         * Set the type's color on the color form state
+         * Set the type's color: on the form entry if it's currently selected
+         * (so it's persisted server-side on save), and in the in-session
+         * color state so newly-checked default items pick it up too.
          */
         setTypeColor(e, item) {
             const color = e.target.value;
             const settingKey = this.settingKeys[this.tab];
-            // store by name for backwards compatibility
             this.colorFormState[settingKey][item.name] = color;
+
+            const formItem = this.formState[this.tab]?.find(
+                (t) => t.name === item.name,
+            );
+            if (formItem) {
+                this.handleGenericArrayInput({
+                    form: "ontology",
+                    field: this.tab,
+                    action: "update",
+                    value: { ...formItem, color },
+                });
+            }
         },
     },
 }

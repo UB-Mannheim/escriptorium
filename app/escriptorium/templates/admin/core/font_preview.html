@@ -1,0 +1,94 @@
+<style id="escr-font-preview-face"></style>
+<div id="escr-font-preview"
+     data-family="escr-font-preview-{{ font.pk }}"
+     data-src="{{ font.file.url }}">
+    <p style="margin: 0 0 .6em">
+        <button type="button" id="escr-font-preview-dir">ltr</button>
+    </p>
+    <p id="escr-font-preview-text" style="font-size: 24px; max-width: 16em; margin: 0">
+        The cat sat down. Birds sing at dawn. Rain fell all night.
+    </p>
+    <p style="margin: 1em 0 .2em">line editor input</p>
+    <input id="escr-font-preview-input"
+           style="font-size: 24px; width: 16em; padding: .375rem .75rem"
+           value="The cat sat down.">
+    <p style="margin: 0; border-top: 1px solid #ccc; width: 16em">next block</p>
+</div>
+<script>
+(function () {
+    function setup() {
+        var root = document.getElementById("escr-font-preview");
+        var face = document.getElementById("escr-font-preview-face");
+        var text = document.getElementById("escr-font-preview-text");
+        var input = document.getElementById("escr-font-preview-input");
+        var dirButton = document.getElementById("escr-font-preview-dir");
+        var family = root.dataset.family;
+        var src = root.dataset.src;
+        var params = [
+            "size_adjust", "ascent_override", "descent_override", "line_height",
+            "input_height", "input_padding_top", "input_padding_bottom",
+            "input_margin_top", "input_margin_bottom", "input_vertical_align"
+        ];
+
+        function number(name) {
+            var field = document.getElementById("id_" + name);
+            var value = field ? parseFloat(field.value) : NaN;
+            return isNaN(value) ? 0 : value;
+        }
+        function pct(value) {
+            return Math.round(value * 100) + "%";
+        }
+        function em(value) {
+            return value ? value + "em" : "";
+        }
+
+        function apply() {
+            var descriptors = ["size-adjust: " + pct(number("size_adjust") || 1)];
+            var ascent = number("ascent_override");
+            if (ascent) descriptors.push("ascent-override: " + pct(ascent));
+            var descent = number("descent_override");
+            if (descent) descriptors.push("descent-override: " + pct(descent));
+            face.textContent = "@font-face { font-family: " + family + "; src: url(\"" +
+                src + "\"); " + descriptors.join("; ") + "; }";
+
+            var lineHeight = em(number("line_height"));
+            var align = document.getElementById("id_input_vertical_align");
+            text.style.fontFamily = family;
+            text.style.lineHeight = lineHeight;
+            input.style.fontFamily = family;
+            input.style.height = em(number("input_height") || 1.1);
+            input.style.lineHeight = lineHeight;
+            // same padding as form control in the editor, so the two look alike
+            input.style.paddingTop = em(number("input_padding_top")) || ".375rem";
+            input.style.paddingBottom = em(number("input_padding_bottom")) || ".375rem";
+            input.style.marginTop = em(number("input_margin_top"));
+            input.style.marginBottom = em(number("input_margin_bottom"));
+            input.style.verticalAlign = align ? align.value : "";
+        }
+
+        params.forEach(function (name) {
+            var field = document.getElementById("id_" + name);
+            if (!field) return;
+            field.addEventListener("input", apply);
+            field.addEventListener("change", apply);
+        });
+        dirButton.addEventListener("click", function () {
+            var next = text.dir === "rtl" ? "ltr" : "rtl";
+            text.dir = next;
+            input.dir = next;
+            dirButton.textContent = next;
+        });
+        input.addEventListener("keydown", function (event) {
+            // enter would submit the change form
+            if (event.key === "Enter") event.preventDefault();
+        });
+        apply();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", setup);
+    } else {
+        setup();
+    }
+})();
+</script>

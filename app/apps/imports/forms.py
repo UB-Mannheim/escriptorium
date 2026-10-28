@@ -1,7 +1,6 @@
 import io
 import json
 import os
-from urllib.parse import urlparse
 
 import requests
 from bootstrap.forms import BootstrapFormMixin
@@ -13,6 +12,7 @@ from django.utils.translation import gettext as _
 
 from core.forms import RegionTypesFormMixin
 from core.models import DocumentPart, Transcription
+from imports import fetch
 from imports.export import ALTO_FORMAT, ENABLED_EXPORTERS
 from imports.models import DocumentImport
 from imports.parsers import ParseError, make_parser
@@ -24,12 +24,13 @@ class FileImportError(Exception):
     pass
 
 
-def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
+def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None,
+              check_domain=True):
     try:
         headers = {
             'User-Agent': 'eScriptorium'
         }
-        resp = requests.get(uri, headers=headers)
+        resp = fetch.get(uri, headers=headers, check_domain=check_domain)
         resp.raise_for_status()
         content = resp.content
         buf = io.BytesIO(content)
@@ -45,6 +46,8 @@ def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
         raise FileImportError(_("The document is unreachable, unreadable or the host timed out."))
     except json.decoder.JSONDecodeError:
         raise FileImportError(_("The document pointed to by the given uri doesn't seem to be valid json."))
+    except fetch.UnsafeUriError as e:
+        raise FileImportError(e.args[0])
     except ParseError as e:
         msg = _("Couldn't parse the given file or its validation failed")
         if len(e.args):
@@ -53,10 +56,8 @@ def clean_uri(uri, document, tempfile, is_mets=False, mets_base_uri=None):
 
 
 def clean_import_uri(uri, document, tmp_file_name, is_mets=False, mets_base_uri=None):
-    domain = urlparse(uri).netloc
-    if ('*' not in settings.IMPORT_ALLOWED_DOMAINS and domain not in settings.IMPORT_ALLOWED_DOMAINS):
-        raise FileImportError(_("You're not allowed to import files from this domain, please contact your instance administrator."))
-
+    # the domain allowlist, the scheme and the address checks all live in
+    # fetch.validate_uri now, so they apply to redirect targets too
     return clean_uri(uri, document, tmp_file_name, is_mets=is_mets, mets_base_uri=mets_base_uri)
 
 
@@ -228,6 +229,18 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
         label=_("Include character bounding boxes."),
         help_text=_("This data is only present for transcriptions coming from automatic recognition and is invalidated by manual edition."))
 
+    include_metadata = forms.BooleanField(required=False, initial=False, label=_("Include metadata"), help_text=_("Includes document metadata and part metadata."))
+    include_models = forms.BooleanField(required=False, initial=False, label=_("Include OCR models"), help_text=_("Includes the OCR models used to produce the transcriptions."))
+    all_transcriptions = forms.BooleanField(required=False, initial=False, label=_("Include all transcriptions"), help_text=_("Includes all transcriptions of the document, not only the one selected."))
+    include_annotations = forms.BooleanField(required=False, initial=False, label=_("Include annotations"), help_text=_("Includes image and text annotations."))
+    anonymize = forms.BooleanField(required=False, initial=False, label=_("Anonymize users"), help_text=_("Replaces user identifiers in the export with opaque tokens."))
+    archive_format = forms.ChoiceField(
+        choices=(('zip', 'ZIP'), ('tar.gz', 'Gzipped tar')),
+        initial='zip', required=False,
+        label=_("Archive format"),
+        help_text=_("Container format for the downloaded archive. Only applies to the JSON exporter."),
+    )
+
     def __init__(self, document, user, *args, **kwargs):
         self.document = document
         self.user = user
@@ -256,14 +269,36 @@ class ExportForm(RegionTypesFormMixin, BootstrapFormMixin, forms.Form):
                               document_pk=self.document.pk,
                               include_images=self.cleaned_data['include_images'],
                               include_characters=self.cleaned_data['include_characters'],
+                              include_metadata=self.cleaned_data['include_metadata'],
+                              include_models=self.cleaned_data['include_models'],
+                              include_annotations=self.cleaned_data['include_annotations'],
+                              all_transcriptions=self.cleaned_data['all_transcriptions'],
+                              anonymize=self.cleaned_data['anonymize'],
+                              archive_format=self.cleaned_data.get('archive_format') or 'zip',
                               user_pk=self.user.pk,
-                              report_label=_('Export %(document_name)s') % {'document_name': self.document.name})
+                              report_label=self._report_label())
+
+    def _report_label(self):
+        # A JSON export with everything switched on + anonymize is the
+        # Download-Archive quick action; label it distinctly so users can tell
+        # a full backup apart from a regular export in the Tasks list.
+        is_full_archive = (
+            self.cleaned_data.get('file_format') == 'json'
+            and self.cleaned_data.get('anonymize')
+            and self.cleaned_data.get('all_transcriptions')
+            and self.cleaned_data.get('include_annotations')
+            and self.cleaned_data.get('include_metadata')
+            and self.cleaned_data.get('include_characters')
+        )
+        template = (_('Download Archive %(document_name)s') if is_full_archive
+                    else _('Export %(document_name)s'))
+        return template % {'document_name': self.document.name}
 
 
 class DocumentOntologyImportForm(BootstrapFormMixin, forms.Form):
     file = forms.FileField(
         required=True,
-        help_text=_("A file containing a document ontology in JSON format"),
-        widget=forms.FileInput(attrs={"accept": "application/json"}),
-        validators=[FileExtensionValidator(allowed_extensions=["json"])]
+        help_text=_("A file containing a document ontology in JSON or YAML format"),
+        widget=forms.FileInput(attrs={"accept": ".json,.yaml,.yml"}),
+        validators=[FileExtensionValidator(allowed_extensions=["json", "yaml", "yml"])]
     )

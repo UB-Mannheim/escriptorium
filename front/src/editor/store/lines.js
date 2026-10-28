@@ -1,4 +1,4 @@
-import { assign, kebabCase } from "lodash";
+import { assign } from "lodash";
 import * as api from "../api";
 
 export const initialState = () => ({
@@ -52,6 +52,7 @@ export const mutations = {
             state.all[index].baseline = line.baseline;
         if (line.mask !== undefined) state.all[index].mask = line.mask;
         if (line.region !== undefined) state.all[index].region = line.region;
+        if (line.type !== undefined) state.all[index].type = line.type;
 
         // Force reference update on the whole array
         // so that all components get a full refresh after an update
@@ -179,17 +180,28 @@ export const actions = {
             };
         });
 
+        const partPk = rootState.parts.pk;
         const resp = await api.bulkCreateLines(
             rootState.document.id,
-            rootState.parts.pk,
+            partPk,
             { lines: dataLines },
         );
+        // the user moved to another image while this was saving
+        if (rootState.parts.pk !== partPk) return [];
 
         let data = resp.data;
         let createdLines = [];
         for (let i = 0; i < data.lines.length; i++) {
             let l = data.lines[i];
-            let newLine = l;
+            // the API returns the typology as a pk, but the segmenter colors and
+            // labels lines by type *name* -- without it a recreated line (e.g. when
+            // undoing a deletion) would come back untyped
+            let newLine = {
+                ...l,
+                type: rootState.document.types.lines.find(
+                    (t) => t.pk == l.typology,
+                )?.name,
+            };
 
             newLine.currentTrans = {
                 avg_confidence: null,
@@ -242,27 +254,29 @@ export const actions = {
             };
         });
 
+        const partPk = rootState.parts.pk;
         let resp
         try {
             resp = await api.bulkUpdateLines(
                 rootState.document.id,
-                rootState.parts.pk,
+                partPk,
                 { lines: dataLines }
             )
         } catch (err) {
             if (err.response && err.response.status === 400) {
                 console.error(
-                '[bulkUpdateLines] 400 Bad Request:',
-                {
-                    url:    err.config.url,
-                    method: err.config.method,
-                    payload: JSON.parse(err.config.data),
-                    response: err.response.data
-                }
+                    "[bulkUpdateLines] 400 Bad Request:",
+                    {
+                        url:    err.config.url,
+                        method: err.config.method,
+                        payload: JSON.parse(err.config.data),
+                        response: err.response.data
+                    }
                 )
             }
             throw err
         }
+        if (rootState.parts.pk !== partPk) return [];
 
         let data = resp.data;
         let updatedLines = [];
@@ -279,7 +293,14 @@ export const actions = {
                 }
                 if (line.region != lineData.region)
                     hasToRecalculateOrdering = true;
-                commit("update", lineData);
+                // api returns typology pk, panels label lines by type name -> map it back before storing it
+                commit("update", {
+                    ...lineData,
+                    type:
+                        rootState.document.types.lines.find(
+                            (t) => t.pk == lineData.typology,
+                        )?.name || null,
+                });
                 updatedLines.push(line);
             }
         }
@@ -389,7 +410,7 @@ export const actions = {
         commit("setMasksToRecalc", _.uniq(state.masksToRecalc.concat(only)));
         if (!state.debouncedRecalculateMasks) {
             // avoid calling this too often
-            state.debouncedRecalculateMasks = _.debounce(async function (only) {
+            state.debouncedRecalculateMasks = _.debounce(async function (_only) {
                 const params = {};
                 if (state.masksToRecalc.length > 0)
                     params.only = state.masksToRecalc.toString();

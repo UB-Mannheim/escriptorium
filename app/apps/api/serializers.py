@@ -5,8 +5,10 @@ import os.path
 import bleach
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.db.models import Count, Max, Min
 from django.db.utils import IntegrityError
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from easy_thumbnails.files import get_thumbnailer
@@ -49,11 +51,20 @@ from core.tasks import _chunks, segment, segtrain, train, transcribe
 from imports.forms import FileImportError, clean_import_uri, clean_upload_file
 from imports.models import DocumentImport
 from imports.tasks import document_import
-from reporting.models import TaskGroup, TaskReport
+from reporting.models import Download, TaskGroup, TaskReport
 from users.consumers import send_event
 from users.models import Group, User
 
 logger = logging.getLogger(__name__)
+
+
+def narrow_related(field, queryset):
+    """Restrict the objects a related field accepts, many=True included.
+
+    A many=True field is a ManyRelatedField wrapper and DRF resolves each pk
+    through its child_relation, so the queryset has to be assigned there.
+    """
+    getattr(field, 'child_relation', field).queryset = queryset
 
 
 class ImageField(serializers.ImageField):
@@ -99,7 +110,11 @@ class FontSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Font
-        fields = ('pk', 'name', 'url', 'size_adjust')
+        fields = ('pk', 'name', 'url', 'size_adjust', 'ascent_override',
+                  'descent_override', 'line_height', 'input_height',
+                  'input_padding_top', 'input_padding_bottom',
+                  'input_margin_top', 'input_margin_bottom',
+                  'input_vertical_align')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -151,6 +166,19 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ProjectTag is per user, so the field is narrowed to the caller's
+        # own. Falls back to none() rather than the declared all() when built
+        # without a context, so a missing context can only ever narrow.
+        request = (self.context.get("request")
+                   or getattr(self.context.get("view"), "request", None))
+        user = getattr(request, "user", None)
+        narrow_related(self.fields['tags'],
+                       ProjectTag.objects.filter(user=user)
+                       if user is not None and user.is_authenticated
+                       else ProjectTag.objects.none())
 
     def create(self, data):
         data['owner'] = self.context["view"].request.user
@@ -222,28 +250,52 @@ class TranscriptionSerializer(serializers.ModelSerializer):
             return Transcription.objects.get(name=data['name'], document=document)
 
 
-class BlockTypeSerializer(serializers.ModelSerializer):
+class TemplateTypeCreateMixin:
+    """Race-safe get_or_create among document=NULL template rows by name,
+    shared by the Block/Line/Part/Annotation type serializers so that
+    POST /api/types/* dedups instead of minting a duplicate."""
+
+    def create(self, data):
+        lookup = {'name': data.pop('name')}
+        if hasattr(self.Meta.model, 'document'):
+            lookup['document'] = None
+        try:
+            with transaction.atomic():
+                obj, _created = self.Meta.model.objects.get_or_create(defaults=data, **lookup)
+                return obj
+        except IntegrityError:
+            return self.Meta.model.objects.get(**lookup)
+
+
+class BlockTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = BlockType
-        fields = ('pk', 'name')
+        fields = ('pk', 'name', 'color')
+        # name uniqueness is handled by create()'s race-safe get_or_create, not
+        # by rejecting the second POST outright (DRF would otherwise derive a
+        # UniqueValidator from the model's conditional UniqueConstraint).
+        extra_kwargs = {'name': {'validators': []}}
 
 
-class LineTypeSerializer(serializers.ModelSerializer):
+class LineTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = LineType
-        fields = ('pk', 'name')
+        fields = ('pk', 'name', 'color')
+        extra_kwargs = {'name': {'validators': []}}
 
 
-class DocumentPartTypeSerializer(serializers.ModelSerializer):
+class DocumentPartTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = DocumentPartType
         fields = ('pk', 'name')
+        extra_kwargs = {'name': {'validators': []}}
 
 
-class AnnotationTypeSerializer(serializers.ModelSerializer):
+class AnnotationTypeSerializer(TemplateTypeCreateMixin, serializers.ModelSerializer):
     class Meta:
         model = AnnotationType
         fields = ('pk', 'name')
+        extra_kwargs = {'name': {'validators': []}}
 
 
 class AnnotationComponentSerializer(serializers.ModelSerializer):
@@ -273,7 +325,9 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         if getattr(self.context.get('view'), 'swagger_fake_view', False):
             return
-        self.fields['components'].queryset = AnnotationComponent.objects.filter(document=self.context['view'].kwargs['document_pk'])
+        narrow_related(self.fields['components'],
+                       AnnotationComponent.objects.filter(
+                           document=self.context['view'].kwargs['document_pk']))
 
     def create(self, data):
         try:
@@ -285,7 +339,11 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         except KeyError:
             typo_data = None
         if typo_data:
-            typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            try:
+                with transaction.atomic():
+                    typo, created = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            except IntegrityError:
+                typo = AnnotationType.objects.get(name=typo_data['name'])
         else:
             typo = None
         data['document_id'] = self.context['view'].kwargs['document_pk']
@@ -311,7 +369,11 @@ class AnnotationTaxonomySerializer(serializers.ModelSerializer):
         except KeyError:
             typo_data = None
         if typo_data:
-            typo, _ = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            try:
+                with transaction.atomic():
+                    typo, _ = AnnotationType.objects.get_or_create(name=typo_data['name'])
+            except IntegrityError:
+                typo = AnnotationType.objects.get(name=typo_data['name'])
         else:
             typo = None
         data['typology'] = typo
@@ -421,9 +483,9 @@ class DocumentSerializer(serializers.ModelSerializer):
     main_script = serializers.SlugRelatedField(slug_field='name',
                                                queryset=Script.objects.all())
 
-    valid_block_types = BlockTypeSerializer(many=True, read_only=True)
-    valid_line_types = LineTypeSerializer(many=True, read_only=True)
-    valid_part_types = DocumentPartTypeSerializer(many=True, read_only=True)
+    valid_block_types = BlockTypeSerializer(many=True, read_only=True, source='block_types')
+    valid_line_types = LineTypeSerializer(many=True, read_only=True, source='line_types')
+    valid_part_types = DocumentPartTypeSerializer(many=True, read_only=True, source='part_types')
     parts_count = serializers.ReadOnlyField()
     project = serializers.SlugRelatedField(slug_field='slug',
                                            queryset=Project.objects.all())
@@ -447,7 +509,12 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['project'].queryset = Project.objects.for_user_write(self.context['user'])
+        user = self.context['user']
+        self.fields['project'].queryset = Project.objects.for_user_write(user)
+        # DocumentTag is scoped to a project, so the field is narrowed to
+        # the tags of the projects the caller may write to
+        narrow_related(self.fields['tags'], DocumentTag.objects.filter(
+            project__in=Project.objects.for_user_write(user)))
 
     def get_effective_transcription_font(self, document):
         font = document.get_effective_transcription_font(self.context.get('user'))
@@ -955,8 +1022,11 @@ class SegmentSerializer(ProcessSerializerMixin, serializers.Serializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['model'].queryset = OcrModel.objects.filter(job=OcrModel.MODEL_JOB_SEGMENT)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        self.fields['model'].queryset = OcrModel.objects.filter(
+            job=OcrModel.MODEL_JOB_SEGMENT
+        ).for_user_read(self.user)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def process(self):
         super().process()
@@ -1007,7 +1077,8 @@ class SegTrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
         ).for_user_read(self.user)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def validate_parts(self, data):
         if len(data) < 2:
@@ -1210,7 +1281,8 @@ class TrainSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['model'].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_RECOGNIZE
         ).for_user_read(self.user)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def validate(self, data):
         data = super().validate(data)
@@ -1277,9 +1349,10 @@ class TranscribeSerializer(ProcessSerializerMixin, serializers.Serializer):
         self.fields['transcription'].queryset = Transcription.objects.filter(
             document=self.document)
         self.fields['model'].queryset = OcrModel.objects.filter(
-            job=OcrModel.MODEL_JOB_RECOGNIZE)
-        self.fields['parts'].queryset = DocumentPart.objects.filter(
-            document=self.document)
+            job=OcrModel.MODEL_JOB_RECOGNIZE
+        ).for_user_read(self.user)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def process(self):
         super().process()
@@ -1428,10 +1501,11 @@ class AlignSerializer(ProcessSerializerMixin, serializers.Serializer):
             **self.fields['region_types'].choices,
             **{
                 str(rt.id): rt.name
-                for rt in self.document.valid_block_types.all()
+                for rt in self.document.block_types.all()
             },
         }
-        self.fields['parts'].queryset = DocumentPart.objects.filter(document=self.document)
+        narrow_related(self.fields['parts'],
+                       DocumentPart.objects.filter(document=self.document))
 
     def validate(self, data):
         data = super().validate(data)
@@ -1560,6 +1634,41 @@ class VirtualCollectionSerializer(serializers.ModelSerializer):
             "updated_at",
             "items_to_save",
         ]
+
+    def validate_items_to_save(self, items):
+        """Check every pk in the payload against what the user may read.
+
+        items_to_save is a list of raw pks written straight to the database,
+        so each one is validated here before it is stored.
+        """
+        if not items:
+            return items
+
+        user = getattr(self.context.get("request"), "user", None)
+        readable = DocumentPart.objects.filter(
+            document__in=Document.objects.for_user(user))
+        parts = {p.pk: p for p in readable.filter(
+            pk__in={item.get("document_part") for item in items})}
+
+        layers = dict(
+            Transcription.objects
+            .filter(pk__in={item.get("transcription_layer") for item in items},
+                    document__in={p.document_id for p in parts.values()})
+            .values_list("pk", "document_id"))
+
+        for item in items:
+            part = parts.get(item.get("document_part"))
+            if part is None:
+                raise serializers.ValidationError(
+                    _("Invalid document_part: %(pk)s.")
+                    % {"pk": item.get("document_part")})
+            # the layer has to belong to the same document as the part
+            if layers.get(item.get("transcription_layer")) != part.document_id:
+                raise serializers.ValidationError(
+                    _("Invalid transcription_layer: %(pk)s.")
+                    % {"pk": item.get("transcription_layer")})
+
+        return items
 
     def create(self, validated_data):
         items_to_save = validated_data.pop("items_to_save", [])
@@ -1746,3 +1855,39 @@ class CollectionSegmentSerializer(BaseCollectionTrainSerializer):
         self.fields["model"].queryset = OcrModel.objects.filter(
             job=OcrModel.MODEL_JOB_SEGMENT
         ).for_user_read(user)
+
+
+class DownloadSerializer(serializers.ModelSerializer):
+    """Compact list-friendly serializer for reporting.Download rows.
+
+    `file_path` is intentionally NOT surfaced (server-side detail); the
+    client should hit the /file/ action via the fingerprint to fetch the
+    payload.
+    """
+    file_url = serializers.SerializerMethodField()
+    task_report_id = serializers.PrimaryKeyRelatedField(
+        source="task_report", read_only=True,
+    )
+    is_expired = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Download
+        fields = [
+            "fingerprint",
+            "label",
+            "mime_type",
+            "file_size",
+            "created_at",
+            "expires_at",
+            "accessed_at",
+            "accessed_count",
+            "task_report_id",
+            "file_url",
+            "is_expired",
+        ]
+
+    def get_file_url(self, obj):
+        return reverse("api:download-file", kwargs={"fingerprint": obj.fingerprint})
+
+    def get_is_expired(self, obj):
+        return obj.is_expired()

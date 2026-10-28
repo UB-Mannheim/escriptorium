@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'django_filters',
     'captcha',
     'drf_spectacular',
+    'drf_spectacular_sidecar',
 
     'bootstrap',
     'versioning',
@@ -449,6 +450,18 @@ IIIF_IMPORT_QUALITY = 'full'
 
 KRAKEN_TRAINING_DEVICE = os.getenv('KRAKEN_TRAINING_DEVICE', 'cpu')
 KRAKEN_TRAINING_LOAD_THREADS = int(os.getenv('KRAKEN_TRAINING_LOAD_THREADS', 0))
+KRAKEN_TRAINING_PRECISION = os.getenv('KRAKEN_TRAINING_PRECISION', '32')
+
+
+def _int_env(name):
+    value = os.getenv(name)
+    return int(value) if value else None
+
+
+KRAKEN_TRAINING_BATCH_SIZE = _int_env('KRAKEN_TRAINING_BATCH_SIZE')
+KRAKEN_TRAINING_BATCH_SIZE_VGSL = _int_env('KRAKEN_TRAINING_BATCH_SIZE_VGSL')
+KRAKEN_TRAINING_BATCH_SIZE_PPOCR = _int_env('KRAKEN_TRAINING_BATCH_SIZE_PPOCR')
+KRAKEN_TRAINING_BATCH_SIZE_DFINE = _int_env('KRAKEN_TRAINING_BATCH_SIZE_DFINE')
 KRAKEN_INFERENCE_DEVICE = os.getenv('KRAKEN_INFERENCE_DEVICE', 'cpu')
 
 REST_FRAMEWORK = {
@@ -490,6 +503,9 @@ POST /api/token-auth/
     'COMPONENT_SPLIT_REQUEST': True,
     'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
     'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAuthenticated'],
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
 }
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
@@ -528,6 +544,13 @@ EXPORT_STRICT = False
 TEXT_ALIGNMENT_ENABLED = os.getenv('TEXT_ALIGNMENT', "False").lower() not in ("false", "0")
 
 IMPORT_ALLOWED_DOMAINS = os.getenv('IMPORT_ALLOWED_DOMAINS', '*').split(',')
+
+# Imports fetch URLs the user supplies, so by default they may not reach the
+# loopback, link-local, private or reserved ranges. Set this only where the
+# IIIF or METS source is on the internal network, and prefer narrowing
+# IMPORT_ALLOWED_DOMAINS instead.
+IMPORT_ALLOW_PRIVATE_ADDRESSES = os.getenv(
+    'IMPORT_ALLOW_PRIVATE_ADDRESSES', 'False').lower() in ('true', '1')
 
 # Sentry support
 SENTRY_DSN = os.getenv('SENTRY_DSN')

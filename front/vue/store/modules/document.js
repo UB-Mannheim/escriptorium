@@ -4,6 +4,8 @@ import {
     deleteDocument,
     deleteDocumentMetadata,
     editDocument,
+    exportDocumentOntology,
+    importDocumentOntology,
     retrieveDocument,
     retrieveDocumentMetadata,
     retrieveDocumentModels,
@@ -633,10 +635,10 @@ const actions = {
         if (data) {
             commit("setTypes", {
                 regions: data.regions.map((r) => (
-                    {...r, name: r.typology_name || "None" }
+                    {...r, name: r.typology_name || "None", color: r.typology_color }
                 )),
                 lines: data.lines.map((l) => (
-                    {...l, name: l.typology_name || "None" }
+                    {...l, name: l.typology_name || "None", color: l.typology_color }
                 )),
                 text: data.text_annotations.map((t) => (
                     {...t, name: t.taxonomy_name || "None"}
@@ -647,6 +649,51 @@ const actions = {
             });
         } else {
             throw new Error("Unable to retrieve ontology");
+        }
+    },
+    /**
+     * Download the document's ontology as a YAML file
+     */
+    async exportOntology({ state, dispatch }) {
+        try {
+            const { data } = await exportDocumentOntology(state.id);
+            const url = window.URL.createObjectURL(new Blob([data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "ontology_export.yml");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
+    /**
+     * Import an ontology config file (YAML or legacy JSON) onto this document
+     */
+    async importOntology({ state, dispatch }, file) {
+        try {
+            const { data } = await importDocumentOntology(state.id, file);
+            await dispatch("fetchDocumentStats", { refresh: true });
+            if (data?.warnings?.length) {
+                dispatch(
+                    "alerts/add",
+                    {
+                        color: "warning",
+                        message: `Ontology imported with warnings: ${data.warnings.join(" ")}`,
+                    },
+                    { root: true },
+                );
+            } else {
+                dispatch(
+                    "alerts/add",
+                    { color: "success", message: "Ontology imported successfully" },
+                    { root: true },
+                );
+            }
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
         }
     },
     /**
@@ -722,6 +769,39 @@ const actions = {
                 {
                     color: "success",
                     message: "Export queued successfully",
+                },
+                { root: true },
+            );
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+        }
+    },
+    /**
+     * Handle submitting the Download-Archive modal. Queues a full-JSON export
+     * with all optional data (except OCR models) and anonymized users; the
+     * user only picked whether to bundle the raw images.
+     */
+    async handleSubmitDownloadArchive({ commit, dispatch, state }) {
+        try {
+            commit("setLoading", { key: "document", loading: true });
+            await dispatch(
+                "tasks/downloadArchive",
+                {
+                    documentId: state.id,
+                    parts: [],
+                },
+                { root: true },
+            );
+            dispatch("tasks/closeModal", "downloadArchive", { root: true });
+            dispatch({ type: "sidebar/closeSidebar" }, { root: true });
+            commit("setLoading", { key: "document", loading: false });
+            dispatch(
+                "alerts/add",
+                {
+                    color: "success",
+                    message:
+                        "Archive queued. It will show up on your Downloads page when ready.",
                 },
                 { root: true },
             );

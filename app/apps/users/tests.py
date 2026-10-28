@@ -1,11 +1,17 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user, get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core import mail
-from django.test import TestCase, override_settings
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.authtoken.models import Token
 
+from core.models import Document
+from core.tests.factory import CoreFactory
+from users.consumers import NotificationConsumer
 from users.models import GroupOwner, Invitation, ResearchField
 from users.models import User as CustomUser
 
@@ -285,3 +291,95 @@ class TokenAndSessionExpiryTestCase(TestCase):
 
         response = self.client.get(reverse('profile'))
         self.assertNotEqual(response.status_code, 200)
+
+
+@override_settings(CHANNEL_LAYERS={
+    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}})
+class WebsocketRoomScopingTestCase(TransactionTestCase):
+    """join-room takes an object pk from the client, so the room is
+    checked against what the connected user may read.
+
+    Note the fixture: factory.make_project() get_or_creates on the slug, so
+    calling it without a name returns one shared project for every document -
+    and its owner then has legitimate project-owner rights over what is meant
+    to be the other. Both tenants therefore get an explicitly named project,
+    and setUp asserts the isolation before any test runs.
+    """
+
+    def setUp(self):
+        factory = CoreFactory()
+        self.caller = factory.make_user()
+        self.mine = factory.make_document(
+            owner=self.caller,
+            project=factory.make_project(name='caller project',
+                                         owner=self.caller))
+
+        self.other = factory.make_user()
+        self.theirs = factory.make_document(
+            owner=self.other,
+            project=factory.make_project(name='other project',
+                                         owner=self.other))
+
+        self.assertNotIn(self.theirs, Document.objects.for_user(self.caller))
+
+    def connect_as(self, user):
+        inner = NotificationConsumer.as_asgi()
+
+        async def app(scope, receive, send):
+            return await inner(dict(scope, user=user), receive, send)
+
+        return WebsocketCommunicator(app, '/ws/notif/')
+
+    async def join(self, comm, document, settle=1.0):
+        await comm.send_json_to({'type': 'join-room',
+                                 'object_cls': 'document',
+                                 'object_pk': document.pk})
+        # group_add now hits the database, so give it time to land.
+        await comm.receive_nothing(timeout=settle)
+
+    async def broadcast(self, document, name='part:workflow'):
+        await get_channel_layer().group_send(
+            'room-document-%d' % document.pk,
+            {'type': 'notification_event', 'name': name,
+             'data': {'id': 4242, 'task_id': 'a task'}})
+
+    async def received(self, comm, timeout=2):
+        try:
+            return await comm.receive_json_from(timeout=timeout)
+        except Exception:
+            return None
+
+    def test_unauthorised_room_receives_nothing(self):
+        async_to_sync(self._unauthorised)()
+
+    async def _unauthorised(self):
+        comm = self.connect_as(self.caller)
+        connected, _ = await comm.connect()
+        self.assertTrue(connected)
+        await self.join(comm, self.theirs)
+        await self.broadcast(self.theirs)
+        self.assertIsNone(await self.received(comm))
+
+    def test_own_document_room_still_receives(self):
+        async_to_sync(self._own)()
+
+    async def _own(self):
+        comm = self.connect_as(self.other)
+        connected, _ = await comm.connect()
+        self.assertTrue(connected)
+        await self.join(comm, self.theirs)
+        await self.broadcast(self.theirs)
+        self.assertIsNotNone(await self.received(comm))
+        await comm.disconnect()
+
+    def test_refused_join_leaves_the_socket_usable(self):
+        async_to_sync(self._refused_then_allowed)()
+
+    async def _refused_then_allowed(self):
+        comm = self.connect_as(self.caller)
+        connected, _ = await comm.connect()
+        self.assertTrue(connected)
+        await self.join(comm, self.theirs, settle=0.1)
+        await self.join(comm, self.mine)
+        await self.broadcast(self.mine, name='ping')
+        self.assertIsNotNone(await self.received(comm, timeout=3))

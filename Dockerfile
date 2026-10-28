@@ -5,7 +5,7 @@ COPY ./front /build
 RUN npm ci && npm run production
 
 # Pull official base image
-FROM registry.gitlab.com/scripta/escriptorium/base:drf-spectacular
+FROM registry.gitlab.com/scripta/escriptorium/base:kraken-dfine044
 
 # try to autodetect number of cpus available
 # ENV NGINX_WORKER_PROCESSES auto
@@ -32,7 +32,7 @@ COPY ./app/contributors /usr/src/app/contributors
 COPY --from=frontend /build/dist /usr/src/app/front
 
 RUN apt-get update -q && \
-    apt-get install -y --no-install-recommends gettext && \
+    apt-get install -y --no-install-recommends gettext curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 RUN python manage.py compilemessages

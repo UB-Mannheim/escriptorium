@@ -22,7 +22,7 @@ from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField
 from django.core.files.uploadedfile import File
 from django.core.validators import FileExtensionValidator
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import Avg, JSONField, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Length
 from django.db.models.signals import pre_delete
@@ -133,16 +133,63 @@ class DocumentType(Typology):
     pass
 
 
+def get_or_create_doc_type(document, model, name, color=None):
+    """Race-safe fetch-or-create of a document-owned type row.
+    Relies on the (document, name) unique constraint: a concurrent duplicate
+    INSERT raises IntegrityError, then the winner's row is refetched."""
+    defaults = {'color': color} if color is not None else {}
+    try:
+        with transaction.atomic():
+            return model.objects.get_or_create(document=document, name=name, defaults=defaults)
+    except IntegrityError:
+        return model.objects.get(document=document, name=name), False
+
+
 class DocumentPartType(Typology):
-    pass
+    document = models.ForeignKey(
+        'core.Document', null=True, blank=True,
+        on_delete=models.CASCADE, related_name='part_types'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['document', 'name'],
+                                    name='unique_parttype_name_per_doc'),
+            models.UniqueConstraint(fields=['name'], condition=Q(document__isnull=True),
+                                    name='unique_parttype_template_name'),
+        ]
 
 
 class BlockType(Typology):
-    pass
+    document = models.ForeignKey(
+        'core.Document', null=True, blank=True,
+        on_delete=models.CASCADE, related_name='block_types'
+    )
+    color = ColorField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['document', 'name'],
+                                    name='unique_blocktype_name_per_doc'),
+            models.UniqueConstraint(fields=['name'], condition=Q(document__isnull=True),
+                                    name='unique_blocktype_template_name'),
+        ]
 
 
 class LineType(Typology):
-    pass
+    document = models.ForeignKey(
+        'core.Document', null=True, blank=True,
+        on_delete=models.CASCADE, related_name='line_types'
+    )
+    color = ColorField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['document', 'name'],
+                                    name='unique_linetype_name_per_doc'),
+            models.UniqueConstraint(fields=['name'], condition=Q(document__isnull=True),
+                                    name='unique_linetype_template_name'),
+        ]
 
 
 class Tag(models.Model):
@@ -190,7 +237,10 @@ class AnnotationType(Typology):
     for textual it could be 'Stylistic, Named Entity..'
     """
 
-    pass
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='unique_annotationtype_name'),
+        ]
 
 
 class AnnotationComponent(models.Model):
@@ -310,7 +360,7 @@ class Annotation(CascadeUpdate, models.Model):
             "type": "Annotation",
             "body": [
                 {"type": "TextualBody", "value": comment, "purpose": "commenting"}
-                for comment in self.comments
+                for comment in (self.comments or [])
             ]
             + [
                 {
@@ -402,16 +452,73 @@ class Font(models.Model):
     A custom font uploaded by an instance administrator (through the Django admin)
     that can be used to render transcription content in the editor panels.
     """
+    VERTICAL_ALIGN_CHOICES = (
+        ("baseline", _("baseline")),
+        ("middle", _("middle")),
+        ("top", _("top")),
+        ("bottom", _("bottom")),
+        ("text-top", _("text top")),
+        ("text-bottom", _("text bottom")),
+        ("sub", _("subscript")),
+        ("super", _("superscript")),
+    )
+
     name = models.CharField(max_length=255, unique=True)
     file = models.FileField(
         upload_to="fonts/",
         validators=[FileExtensionValidator(["ttf", "otf", "woff", "woff2"])],
-        help_text=_("Font file in ttf, otf, woff or woff2 format."),
+        help_text=_("ttf, otf, woff or woff2"),
     )
-    # scale factor (1.0 = 100%) to normalize fonts that render visually larger or smaller than others.
     size_adjust = models.FloatField(
         default=1.0,
-        help_text=_("Size adjustment factor (1.0 = 100%) to normalize the visual size of this font."),
+        verbose_name=_("size"),
+        help_text=_("scale factor, 1.0 keeps the font as it is"),
+    )
+    ascent_override = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("ascent"),
+        help_text=_("room above the baseline, raise it when tall glyphs get cut"),
+    )
+    descent_override = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("descent"),
+        help_text=_("room below the baseline, raise it when low glyphs get cut"),
+    )
+    line_height = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("line height"),
+        help_text=_("in em, empty keeps the default"),
+    )
+    input_height = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("height"),
+        help_text=_("in em, empty uses 1.1"),
+    )
+    input_padding_top = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("top padding"),
+        help_text=_("in em, moves the text down"),
+    )
+    input_padding_bottom = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("bottom padding"),
+        help_text=_("in em, moves the text up"),
+    )
+    input_margin_top = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("top margin"),
+        help_text=_("in em, moves the box down"),
+    )
+    input_margin_bottom = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("bottom margin"),
+        help_text=_("in em, can be negative to take back the top padding"),
+    )
+    input_vertical_align = models.CharField(
+        max_length=16, blank=True, default="",
+        choices=VERTICAL_ALIGN_CHOICES,
+        verbose_name=_("vertical align"),
+        help_text=_("empty keeps the default"),
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -478,6 +585,8 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
     name = models.CharField(max_length=512)
     slug = models.SlugField(unique=True)
     guidelines = models.URLField(null=True, blank=True, help_text=_("An optional URL pointing to an external document that explains content editing and authorship guidelines for this project, in order to guide a team or group towards consistent practices for manual segmentation/transcription."))
+    # Validated, normalized (v2) ontology config applied to every new document of this project.
+    ontology_config = models.JSONField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -517,7 +626,8 @@ class Project(ExportModelOperationsMixin("Project"), models.Model):
         return self.name
 
     def make_slug(self):
-        slug = slugify(self.name, allow_unicode=True)
+        # the slug column is varchar(50), so the slug must never exceed 50 chars
+        slug = slugify(self.name, allow_unicode=True)[:50]
         # check unicity
         exists = Project.objects.filter(slug=slug).count()
         if not exists:
@@ -597,17 +707,6 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
         DocumentType, null=True, blank=True, on_delete=models.SET_NULL
     )
 
-    # A list of Typology(ies) which are valid to this document. Part of the document's ontology.
-    valid_block_types = models.ManyToManyField(
-        BlockType, blank=True, related_name="valid_in"
-    )
-    valid_line_types = models.ManyToManyField(
-        LineType, blank=True, related_name="valid_in"
-    )
-    valid_part_types = models.ManyToManyField(
-        DocumentPartType, blank=True, related_name="valid_in"
-    )
-
     # Temporary stopgap before redesign of confidence visualization tools
     show_confidence_viz = models.BooleanField(
         verbose_name=_("Show confidence visualizations"),
@@ -667,14 +766,17 @@ class Document(ExportModelOperationsMixin("Document"), CascadeUpdate, models.Mod
             Transcription.objects.get_or_create(
                 document=self, name=Transcription.DEFAULT_NAME
             )
-            self.valid_block_types.through.objects.bulk_create(
-                [Document.valid_block_types.through(document_id=self.id, blocktype_id=type_.id)
-                 for type_ in BlockType.objects.filter(public=True, default=True)]
-            )
-            self.valid_line_types.through.objects.bulk_create(
-                [Document.valid_line_types.through(document_id=self.id, linetype_id=type_.id)
-                 for type_ in LineType.objects.filter(public=True, default=True)]
-            )
+            config = self.project.ontology_config if self.project_id else None
+            if config:
+                from core.ontology import apply_ontology_config
+                apply_ontology_config(self, config)
+            else:
+                for model in (BlockType, LineType, DocumentPartType):
+                    model.objects.bulk_create([
+                        model(document=self, name=t.name,
+                              **({'color': t.color} if hasattr(t, 'color') else {}))
+                        for t in model.objects.filter(document__isnull=True, public=True, default=True)
+                    ])
 
         return res
 
@@ -1444,13 +1546,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
 
             if steps in ["regions", "both"]:
                 for region_type, regions in res.regions.items():
-                    try:
-                        typo, created = self.document.valid_block_types.get_or_create(
-                            name=region_type)
-                    except BlockType.MultipleObjectsReturned:
-                        # Note: this should not happen if the modelisation was alright
-                        # but for now we hack
-                        typo = self.document.valid_block_types.filter(name=region_type)[0]
+                    typo = None
+                    if region_type:
+                        typo, created = get_or_create_doc_type(self.document, BlockType, region_type)
                     for region in regions:
                         Block.objects.create(
                             document_part=self,
@@ -1475,13 +1573,9 @@ class DocumentPart(ExportModelOperationsMixin("DocumentPart"), CascadeUpdate, Or
                     if line.tags and "type" in line.tags and len(line.tags["type"]) > 0:
                         line_type_name = line.tags["type"][0].get("type")
 
-                    try:
-                        typo, created = self.document.valid_line_types.get_or_create(
-                            name=line_type_name)
-                    except LineType.MultipleObjectsReturned:
-                        # Note: this should not happen if the modelisation was alright
-                        # but for now we hack
-                        typo = self.document.valid_line_types.filter(name=line_type_name)[0]
+                    typo = None
+                    if line_type_name:
+                        typo, created = get_or_create_doc_type(self.document, LineType, line_type_name)
                     Line.objects.create(
                         document_part=self,
                         typology=typo,
@@ -2213,10 +2307,13 @@ class OcrModel(ExportModelOperationsMixin("OcrModel"), Versioned, models.Model):
     def cancel_training(self, revoke_task=True, username=None):
         if revoke_task:
             report = self.reports.last()
-            if not report or not report.task_id or report.workflow_state in TASK_FINAL_STATES:
-                raise ProcessFailureException(_("Couldn't find the training task."))
-
-            report.cancel(username)
+            # Only cancel the task if the report is still queued or running.
+            # If the report is already in a final state (or missing), there is
+            # nothing to revoke; the flag is cleared below, which also
+            # self-heals a stuck training flag.
+            if (report is not None and report.task_id
+                    and report.workflow_state not in TASK_FINAL_STATES):
+                report.cancel(username)
 
         self.training = False
         self.save()

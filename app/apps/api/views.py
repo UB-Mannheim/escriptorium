@@ -1,29 +1,40 @@
 import json
 import logging
+import os
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, connection, transaction
 from django.db.models import Avg, Count, F, Prefetch, Q
-from django.http import HttpResponseRedirect
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views.decorators.cache import cache_page
 from django_filters import Filter, FilterSet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
+from rest_framework import filters, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import BasePermission
+from rest_framework.parsers import MultiPartParser
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.response import Response
-from rest_framework.serializers import PrimaryKeyRelatedField
+from rest_framework.serializers import (
+    CharField,
+    FileField,
+    IntegerField,
+    ListField,
+    PrimaryKeyRelatedField,
+)
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 
 from api.serializers import (
@@ -44,6 +55,7 @@ from api.serializers import (
     DocumentSerializer,
     DocumentTagSerializer,
     DocumentTasksSerializer,
+    DownloadSerializer,
     FontSerializer,
     ImageAnnotationSerializer,
     ImportSerializer,
@@ -100,11 +112,20 @@ from core.models import (
     TextualWitness,
     Transcription,
     VirtualCollection,
+    get_or_create_doc_type,
+)
+from core.ontology import (
+    OntologyConfigSerializer,
+    apply_ontology_config,
+    dump_yaml,
+    export_ontology_config,
+    normalize,
+    parse_ontology_file,
 )
 from core.tasks import recalculate_masks
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
-from reporting.models import TaskGroup, TaskReport
+from reporting.models import Download, TaskGroup, TaskReport
 from users.consumers import send_event
 from users.models import Group, User
 from versioning.models import NoChangeException
@@ -117,6 +138,14 @@ CLIENT_TASK_NAME_MAP = {
     'document_export': 'export',
     'document_import': 'import'
 }
+
+
+def find_share_target_user(username):
+    users = list(User.objects.filter(username__iexact=username))
+    if len(users) > 1:
+        # usernames are only unique in unique case sensitive so keep the exact spelling
+        return next((user for user in users if user.username == username), None)
+    return users[0] if users else None
 
 
 class TagFilter(Filter):
@@ -279,20 +308,83 @@ class ProjectViewSet(ModelViewSet):
             else:
                 project.shared_with_groups.add(target)
         elif 'user' in request.data:
-            try:
-                target = User.objects.get(username__iexact=request.data['user'])
-            except User.DoesNotExist:
+            target = find_share_target_user(request.data['user'])
+            if target is None:
                 return Response({'error': 'invalid username.'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            else:
-                project.shared_with_users.add(target)
+            project.shared_with_users.add(target)
         else:
             return Response({'error': 'Please provide either a group(pk) or user(username).'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # re-instantiate serializer to use updated data
-        serializer = ProjectSerializer(project)
+        serializer = ProjectSerializer(project, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        methods=['get'],
+        operation_id='projects_ontology_retrieve',
+        responses={200: OntologyConfigSerializer},
+        description="Retrieve the project's ontology config, used as the default "
+                    "ontology for documents created in it. Null if none is set.",
+    )
+    @extend_schema(
+        methods=['delete'],
+        operation_id='projects_ontology_destroy',
+        request=None,
+        responses={204: OpenApiResponse(description='Ontology config cleared')},
+        description="Clear the project's ontology config.",
+    )
+    @action(detail=True, methods=['get', 'delete'], url_path='ontology')
+    def ontology(self, request, pk=None):
+        if request.method == 'DELETE':
+            project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
+            project.ontology_config = None
+            project.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(self.get_object().ontology_config)
+
+    @extend_schema(
+        operation_id='projects_ontology_export',
+        responses={
+            (200, 'application/yaml'): OpenApiTypes.BINARY,
+            404: OpenApiResponse(description='No ontology config set on this project'),
+        },
+        description="Download the project's ontology config as a YAML file.",
+    )
+    @action(detail=True, methods=['get'], url_path='ontology/export')
+    def ontology_export(self, request, pk=None):
+        project = self.get_object()
+        if not project.ontology_config:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        response = HttpResponse(dump_yaml(project.ontology_config), content_type='application/yaml')
+        response['Content-Disposition'] = 'attachment; filename=ontology_export.yml'
+        return response
+
+    @extend_schema(
+        operation_id='projects_ontology_import',
+        request={'multipart/form-data': inline_serializer(
+            name='ProjectOntologyImportRequest',
+            fields={'file': FileField(help_text='Ontology file, v2 YAML or legacy v1 JSON.')},
+        )},
+        responses={200: OntologyConfigSerializer},
+        description="Upload an ontology file and store it as the project's ontology "
+                    "config. Returns the stored, normalized config.",
+    )
+    @action(detail=True, methods=['post'], url_path='ontology/import', parser_classes=[MultiPartParser])
+    def ontology_import(self, request, pk=None):
+        project = get_object_or_404(Project.objects.for_user_write(request.user), pk=pk)
+        uploaded = request.FILES.get('file')
+        if not uploaded:
+            return Response({'error': 'Please provide an ontology file.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        config = parse_ontology_file(uploaded)
+        config = normalize(config)
+        serializer = OntologyConfigSerializer(data=config)
+        serializer.is_valid(raise_exception=True)
+        project.ontology_config = serializer.validated_data
+        project.save()
+        return Response(project.ontology_config)
 
 
 class ProjectTagViewSet(ModelViewSet):
@@ -309,12 +401,30 @@ class DocumentTagViewSet(ModelViewSet):
     serializer_class = DocumentTagSerializer
     pagination_class = LargeResultsSetPagination
 
+    @cached_property
+    def project(self):
+        """The project named in the URL, authorised for the requesting user.
+
+        Tags are per project: reading one needs read access to the project,
+        changing one needs write access.
+        """
+        qs = (Project.objects.for_user_read(self.request.user)
+              if self.request.method in SAFE_METHODS
+              else Project.objects.for_user_write(self.request.user))
+        try:
+            return qs.get(pk=self.kwargs.get('project_pk'))
+        except Project.DoesNotExist:
+            raise PermissionDenied
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        self.project
+
     def perform_create(self, serializer):
-        project = Project.objects.get(pk=self.kwargs.get('project_pk'))
-        return serializer.save(project=project)
+        return serializer.save(project=self.project)
 
     def get_queryset(self):
-        return DocumentTag.objects.filter(project__pk=self.kwargs.get('project_pk'))
+        return DocumentTag.objects.filter(project=self.project)
 
 
 class DocumentViewSet(ModelViewSet):
@@ -329,8 +439,8 @@ class DocumentViewSet(ModelViewSet):
         qs = Document.objects.for_user(self.request.user).select_related(
             'transcription_font', 'project__transcription_font',
         ).prefetch_related(
-            Prefetch('valid_block_types', queryset=BlockType.objects.order_by('name')),
-            Prefetch('valid_line_types', queryset=LineType.objects.order_by('name')),
+            Prefetch('block_types', queryset=BlockType.objects.order_by('name')),
+            Prefetch('line_types', queryset=LineType.objects.order_by('name')),
         ).annotate(parts_count=Count('parts', distinct=True)).order_by('-updated_at')
 
         if self.action in ['retrieve', 'list']:
@@ -595,11 +705,20 @@ class DocumentViewSet(ModelViewSet):
             return Response({'error': "Invalid transcription."},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        # the model has to be one the user may read
+        try:
+            model = (OcrModel.objects
+                     .for_user_read(request.user)
+                     .get(pk=request.data['model']))
+        except (OcrModel.DoesNotExist, ValueError, TypeError):
+            return Response({'error': "Invalid model."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         from core.tasks import forced_align
         for part in parts:
             forced_align.delay(
                 instance_pk=part.pk,
-                model_pk=request.data['model'],
+                model_pk=model.pk,
                 transcription_pk=request.data['transcription'],
                 part_pk=part.pk,
                 user_pk=request.user.pk
@@ -607,6 +726,22 @@ class DocumentViewSet(ModelViewSet):
 
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=inline_serializer(
+            name='ModifyOntologyRequest',
+            fields={
+                'valid_part_types': ListField(child=IntegerField(), required=False),
+                'valid_line_types': ListField(child=IntegerField(), required=False),
+                'valid_block_types': ListField(child=IntegerField(), required=False),
+            },
+        ),
+        # response is left to auto-detection: DocumentSerializer.__init__ needs a
+        # context['user'], which spectacular only provides via the view's
+        # get_serializer(), not when instantiating the class from a responses= dict.
+        description="Set the document's valid part/line/block types from a list of type "
+                    "pks. Template types (document=null) get copied onto the document; "
+                    "types the document owns that aren't listed are dropped.",
+    )
     @action(detail=True, methods=['patch'])
     def modify_ontology(self, request, pk=None):
         # special PATCH action to modify documents' ontology nested relationships
@@ -623,58 +758,45 @@ class DocumentViewSet(ModelViewSet):
         document = self.get_object()
 
         # for all ontologies (part, line, block): check if array of pks is valid, and
-        # matching type objects exist, then set relations on the document to them
-
-        # part (image)
-        if 'valid_part_types' in request.data:
-            part_types = request.data['valid_part_types']
-            if not all([isinstance(pk, int) for pk in part_types]):
+        # matching type objects exist; listed rows that are templates (document=NULL)
+        # get a document-owned copy ensured by name, and owned rows not listed get
+        # dropped (SET_NULL-safe on content). A pk owned by another document is rejected.
+        mapping = {
+            'valid_part_types': (DocumentPartType, 'part_types'),
+            'valid_line_types': (LineType, 'line_types'),
+            'valid_block_types': (BlockType, 'block_types'),
+        }
+        for key, (model, rel) in mapping.items():
+            if key not in request.data:
+                continue
+            pks = request.data[key]
+            if not all([isinstance(pk, int) for pk in pks]):
                 return Response(
-                    {'error': "valid_part_types must be an array of PKs."},
+                    {'error': f"{key} must be an array of PKs."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            valid_part_types = DocumentPartType.objects.filter(pk__in=part_types)
-            if valid_part_types.count() < len(part_types):
+            rows = model.objects.filter(pk__in=pks)
+            if rows.count() < len(pks):
                 return Response(
-                    {'error': "At least one pk in valid_part_types is invalid."},
+                    {'error': f"At least one pk in {key} is invalid."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            document.valid_part_types.set(valid_part_types)
-
-        # line
-        if 'valid_line_types' in request.data:
-            line_types = request.data['valid_line_types']
-            if not all([isinstance(pk, int) for pk in line_types]):
-                return Response(
-                    {'error': "valid_line_types must be an array of PKs."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            valid_line_types = LineType.objects.filter(pk__in=line_types)
-            if valid_line_types.count() < len(line_types):
-                return Response(
-                    {'error': "At least one pk in valid_line_types is invalid."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            document.valid_line_types.set(valid_line_types)
-
-        # block (region)
-        if 'valid_block_types' in request.data:
-            block_types = request.data['valid_block_types']
-            if not all([isinstance(pk, int) for pk in block_types]):
-                return Response(
-                    {'error': "valid_block_types must be an array of PKs."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            valid_block_types = BlockType.objects.filter(pk__in=block_types)
-            if valid_block_types.count() < len(block_types):
-                return Response(
-                    {'error': "At least one pk in valid_block_types is invalid."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            document.valid_block_types.set(valid_block_types)
+            target = {}
+            for row in rows:
+                if row.document_id not in (None, document.pk):
+                    return Response(
+                        {'error': f"Invalid pk in {key}."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                target[row.name] = row
+            for name, src in target.items():
+                get_or_create_doc_type(document, model, name, color=getattr(src, 'color', None))
+            getattr(document, rel).exclude(name__in=target.keys()).delete()
 
         # save the document and return it in the response data
         document.save()
+        # the type rows prefetched by get_object are stale after the writes above
+        document.refresh_from_db()
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -706,13 +828,11 @@ class DocumentViewSet(ModelViewSet):
             else:
                 document.shared_with_groups.add(target)
         elif 'user' in request.data:
-            try:
-                target = User.objects.get(username__iexact=request.data['user'])
-            except User.DoesNotExist:
+            target = find_share_target_user(request.data['user'])
+            if target is None:
                 return Response({'error': 'invalid username.'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            else:
-                document.shared_with_users.add(target)
+            document.shared_with_users.add(target)
         else:
             return Response({'error': 'Please provide either a group(pk) or user(username).'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -747,6 +867,7 @@ class DocumentViewSet(ModelViewSet):
                    .filter(document_part__document=document)
                    .values('typology_id')
                    .annotate(typology_name=F('typology__name'),
+                             typology_color=F('typology__color'),
                              frequency=Count('*'))
                    .order_by(order_by))
 
@@ -754,6 +875,7 @@ class DocumentViewSet(ModelViewSet):
                  .filter(document_part__document=document)
                  .values('typology_id')
                  .annotate(typology_name=F('typology__name'),
+                           typology_color=F('typology__color'),
                            frequency=Count('*'))
                  .order_by(order_by))
 
@@ -826,15 +948,101 @@ class DocumentViewSet(ModelViewSet):
         ids = list(obj.parts.values_list("pk", flat=True))
         return Response(ids)
 
+    @extend_schema(
+        operation_id='documents_ontology_export',
+        responses={(200, 'application/yaml'): OpenApiTypes.BINARY},
+        description="Download the document's ontology (types, annotation components and "
+                    "taxonomies) as a YAML file.",
+    )
+    @action(detail=True, methods=['get'], url_path='ontology/export')
+    def ontology_export(self, request, pk=None):
+        document = self.get_object()
+        response = HttpResponse(dump_yaml(export_ontology_config(document)), content_type='application/yaml')
+        response['Content-Disposition'] = 'attachment; filename=ontology_export.yml'
+        return response
 
-class TaskGroupViewSet(ModelViewSet):
+    @extend_schema(
+        operation_id='documents_ontology_import',
+        request={'multipart/form-data': inline_serializer(
+            name='DocumentOntologyImportRequest',
+            fields={'file': FileField(help_text='Ontology file, v2 YAML or legacy v1 JSON.')},
+        )},
+        responses={200: inline_serializer(
+            name='DocumentOntologyImportResponse',
+            fields={'warnings': ListField(child=CharField())},
+        )},
+        description="Upload an ontology file and apply it to the document. Returns the "
+                    "warnings for entries that could not be applied as-is.",
+    )
+    @action(detail=True, methods=['post'], url_path='ontology/import', parser_classes=[MultiPartParser])
+    def ontology_import(self, request, pk=None):
+        document = self.get_object()
+        uploaded = request.FILES.get('file')
+        if not uploaded:
+            return Response({'error': 'Please provide an ontology file.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        config = parse_ontology_file(uploaded)
+        config = normalize(config)
+        serializer = OntologyConfigSerializer(data=config)
+        serializer.is_valid(raise_exception=True)
+        warnings = apply_ontology_config(document, serializer.validated_data)
+        return Response({'warnings': warnings})
+
+
+class DocumentPermissionMixin():
+    @cached_property
+    def document(self):
+        """The document named in the URL, authorised for the requesting user."""
+        try:
+            return (Document.objects
+                    .for_user(self.request.user)
+                    .get(pk=self.kwargs.get('document_pk')))
+        except Document.DoesNotExist:
+            raise PermissionDenied
+
+    def initial(self, request, *args, **kwargs):
+        """Authorise the document on every request, whatever the method.
+
+        initial() rather than get_queryset(), so the check covers the paths
+        that do not build a queryset - create() goes straight to the
+        serializer. initial() runs inside DRF's dispatch(), so PermissionDenied
+        is rendered by the API exception handler rather than Django's HTML 403
+        page.
+        """
+        super().initial(request, *args, **kwargs)
+        if getattr(self, 'swagger_fake_view', False):
+            return
+        self.document
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_queryset()
+        self.document  # authorise before the queryset is built
+        return super().get_queryset()
+
+    @cached_property
+    def part(self):
+        """The part named in the URL, checked against the authorised document.
+
+        A queryset built from self.kwargs['part_pk'] alone is not enough: the
+        document is authorised, but nothing ties the part to it. Everything
+        reached by pk goes through here or get_queryset().
+        """
+        return get_object_or_404(DocumentPart,
+                                 pk=self.kwargs['part_pk'],
+                                 document=self.document)
+
+    def get_authorised_part(self):
+        return self.part
+
+
+class TaskGroupViewSet(DocumentPermissionMixin, ModelViewSet):
     queryset = TaskGroup.objects.all().select_related('created_by')
     serializer_class = TaskGroupSerializer
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        qs = qs.filter(document=self.kwargs.get('document_pk'))
-        return qs
+        # scoped to the authorised document, not to the url kwarg alone
+        return super().get_queryset().filter(document=self.document)
 
 
 class TaskReportViewSet(ModelViewSet):
@@ -848,20 +1056,6 @@ class TaskReportViewSet(ModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset().filter(user=self.request.user)
         return qs
-
-
-class DocumentPermissionMixin():
-    def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return super().get_queryset()
-        try:
-            self.document = (Document.objects
-                             .for_user(self.request.user)
-                             .get(pk=self.kwargs.get('document_pk')))
-        except Document.DoesNotExist:
-            raise PermissionDenied
-
-        return super().get_queryset()
 
 
 class DocumentMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
@@ -885,12 +1079,13 @@ class PartMetadataViewSet(DocumentPermissionMixin, ModelViewSet):
     serializer_class = DocumentPartMetadataSerializer
 
     def get_queryset(self):
-        qs = super().get_queryset().filter(part=self.kwargs.get('part_pk'))
-        return qs
+        # the part is resolved through the authorised document, not from the
+        # url kwarg alone
+        return super().get_queryset().filter(part=self.get_authorised_part())
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['part'] = DocumentPart.objects.get(pk=self.kwargs.get('part_pk'))
+        context['part'] = self.get_authorised_part()
         return context
 
 
@@ -971,7 +1166,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def move(self, request, document_pk=None, pk=None):
-        part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        part = self.get_object()
         serializer = PartMoveSerializer(part=part, data=request.data)
         if serializer.is_valid():
             serializer.move()
@@ -981,7 +1176,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, document_pk=None, pk=None):
-        part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        part = self.get_object()
         part.cancel_tasks(username=self.request.user.username)
         part.refresh_from_db()
         return Response({'status': 'canceled', 'workflow': part.workflow})
@@ -991,7 +1186,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
         # If quotas are enforced, assert that the user still has free CPU minutes
         if not settings.DISABLE_QUOTAS and not request.user.has_free_cpu_minutes():
             return Response({'error': "You don't have any CPU minutes left."}, status=status.HTTP_400_BAD_REQUEST)
-        part = DocumentPart.objects.get(document=document_pk, pk=pk)
+        part = self.get_object()
         onlyParam = request.query_params.get("only")
         only = onlyParam and list(map(int, onlyParam.split(',')))
         recalculate_masks.delay(instance_pk=part.pk, user_pk=request.user.pk, only=only)
@@ -999,14 +1194,14 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def recalculate_ordering(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
+        document_part = self.get_object()
         document_part.recalculate_ordering()
         serializer = LineOrderSerializer(document_part.lines.all(), many=True)
         return Response({'status': 'done', 'lines': serializer.data}, status=200)
 
     @action(detail=True, methods=['post'])
     def rotate(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
+        document_part = self.get_object()
         angle = self.request.data.get('angle')
         if angle:
             document_part.rotate(angle, user=self.request.user)
@@ -1017,7 +1212,7 @@ class PartViewSet(DocumentPermissionMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def crop(self, request, document_pk=None, pk=None):
-        document_part = DocumentPart.objects.get(pk=pk)
+        document_part = self.get_object()
         x1 = self.request.data.get('x1')
         y1 = self.request.data.get('y1')
         x2 = self.request.data.get('x2')
@@ -1128,20 +1323,26 @@ class DocumentTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 
 
 class TypologyViewSet(ModelViewSet):
+    pagination_class = LargeResultsSetPagination
+
     def get_queryset(self):
         qs = super().get_queryset()
+        if getattr(self, 'swagger_fake_view', False):
+            return qs
         # POST queryset should be all()
         if self.request.method == "GET":
-            # GET queryset should be only public types
+            # GET queryset should be only public types (owned rows are
+            # always public=False, so this stays the template catalogue)
             return qs.filter(public=True)
         elif self.request.method in ["PUT", "PATCH", "DELETE"]:
             # PUT/PATCH/DELETE (updating and deleting) require permissions
+            # over the document owning the row.
             return qs.filter(
-                Q(valid_in__owner=self.request.user)
-                | Q(valid_in__shared_with_users=self.request.user)
-                | Q(valid_in__shared_with_groups__user=self.request.user)
-                | Q(valid_in__project__owner=self.request.user)
-                | Q(valid_in__project__shared_with_users=self.request.user)
+                Q(document__owner=self.request.user)
+                | Q(document__shared_with_users=self.request.user)
+                | Q(document__shared_with_groups__user=self.request.user)
+                | Q(document__project__owner=self.request.user)
+                | Q(document__project__shared_with_users=self.request.user)
             ).distinct()
         return qs
 
@@ -1159,6 +1360,24 @@ class LineTypeViewSet(TypologyViewSet):
 class AnnotationTypeViewSet(TypologyViewSet):
     queryset = AnnotationType.objects.all()
     serializer_class = AnnotationTypeSerializer
+
+    def get_queryset(self):
+        qs = super(TypologyViewSet, self).get_queryset()
+        if getattr(self, 'swagger_fake_view', False):
+            return qs
+        if self.request.method == "GET":
+            return qs.filter(public=True)
+        elif self.request.method in ["PUT", "PATCH", "DELETE"]:
+            # AnnotationType has no document FK of its own; permission is
+            # derived from the documents of the taxonomies using it.
+            return qs.filter(
+                Q(annotationtaxonomy__document__owner=self.request.user)
+                | Q(annotationtaxonomy__document__shared_with_users=self.request.user)
+                | Q(annotationtaxonomy__document__shared_with_groups__user=self.request.user)
+                | Q(annotationtaxonomy__document__project__owner=self.request.user)
+                | Q(annotationtaxonomy__document__project__shared_with_users=self.request.user)
+            ).distinct()
+        return qs
 
 
 class DocumentPartTypeViewSet(TypologyViewSet):
@@ -1281,6 +1500,12 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         # We can't used the DetailedLineSerializer, since the Transcription serializer requires a line property,
         # which is unknown at this time - the line has not been created yet.
         # We may want to move this code into the DetailedLineSerializer's create method at some point.
+
+        # The part comes from the URL, not the payload.
+        part = self.get_authorised_part()
+        for line in lines:
+            line['document_part'] = part.pk
+
         serializer = LineSerializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -1306,7 +1531,7 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
 
         # Finally, for a response, we want to create all the newly created lines along with their transcriptions.
         # Simplest way to do this - just use the PKs to load the lines again
-        qs = Line.objects.filter(pk__in=line_pks)
+        qs = self.get_queryset().filter(pk__in=line_pks)
         serializer = DetailedLineSerializer(qs, many=True)
         return serializer.data
 
@@ -1322,7 +1547,8 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['post'])
     def bulk_delete(self, request, document_pk=None, part_pk=None):
         deleted_lines = request.data.get("lines")
-        qs = Line.objects.filter(pk__in=deleted_lines)
+        # get_queryset() confines this to the part named in the URL
+        qs = self.get_queryset().filter(pk__in=deleted_lines)
         serializer = DetailedLineSerializer(qs, many=True)
         json = serializer.data
         qs.delete()
@@ -1339,7 +1565,7 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
         if len(original_lines) > MAX_MERGE_SIZE:
             return Response(dict(status='error', error=f"Can't merge more than {MAX_MERGE_SIZE} lines"), status=status.HTTP_400_BAD_REQUEST)
 
-        lines = list(Line.objects.filter(pk__in=original_lines))
+        lines = list(self.get_queryset().filter(pk__in=original_lines))
         if not lines:
             return Response(dict(status='error', error=_("None of the requested lines were found.")), status=status.HTTP_404_NOT_FOUND)
 
@@ -1361,7 +1587,13 @@ class LineViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['post'])
     def move(self, request, document_pk=None, part_pk=None, pk=None):
         data = request.data.get('lines')
-        qs = Line.objects.filter(pk__in=[line['pk'] for line in data])
+        qs = self.get_queryset().filter(pk__in=[line['pk'] for line in data])
+        if qs.count() != len(data):
+            # a pk outside this part: refuse rather than reorder the subset that
+            # did match (LineOrderListSerializer also assumes a full match)
+            return Response({'status': 'error',
+                             'error': _("Some lines could not be found in this part.")},
+                            status=status.HTTP_404_NOT_FOUND)
         serializer = LineOrderSerializer(qs, data=data, many=True)
         if serializer.is_valid():
             resp = serializer.save()
@@ -1390,7 +1622,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
 
     def create(self, request, document_pk=None, part_pk=None):
         response = super().create(request, document_pk=document_pk, part_pk=part_pk)
-        document_part = DocumentPart.objects.get(pk=part_pk)
+        document_part = self.get_authorised_part()
         document_part.calculate_progress()
         document_part.save()
         return response
@@ -1415,7 +1647,11 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     def get_serializer_class(self):
         if getattr(self, 'swagger_fake_view', False):
             return self.serializer_class
-        lines = Line.objects.filter(document_part=self.kwargs['part_pk'])
+        # scoped to the document too, so the part is tied to the document
+        # named in the URL
+        lines = Line.objects.filter(
+            document_part=self.kwargs['part_pk'],
+            document_part__document=self.kwargs['document_pk'])
 
         class RuntimeSerializer(self.serializer_class):
             line = PrimaryKeyRelatedField(queryset=lines)
@@ -1424,7 +1660,8 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['POST'])
     def bulk_create(self, request, document_pk=None, part_pk=None, pk=None):
         lines = request.data.get("lines")
-        serializer = LineTranscriptionSerializer(data=lines, many=True)
+        # get_serializer_class() narrows `line` to this part
+        serializer = self.get_serializer(data=lines, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -1436,8 +1673,9 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
         response = []
         errors = []
         for line in lines:
-            lt = get_object_or_404(LineTranscription, pk=line["pk"])
-            serializer = LineTranscriptionSerializer(lt, data=line, partial=True)
+            # scoped to the part in the URL
+            lt = get_object_or_404(self.get_queryset(), pk=line["pk"])
+            serializer = self.get_serializer(lt, data=line, partial=True)
 
             if serializer.is_valid():
                 try:
@@ -1461,7 +1699,7 @@ class LineTranscriptionViewSet(DocumentPermissionMixin, ModelViewSet):
     @action(detail=False, methods=['POST'])
     def bulk_delete(self, request, document_pk=None, part_pk=None, pk=None):
         lines = request.data.get("lines")
-        qs = LineTranscription.objects.filter(pk__in=lines)
+        qs = self.get_queryset().filter(pk__in=lines)
         qs.update(content='')
         return Response(status=status.HTTP_204_NO_CONTENT, )
 
@@ -1673,3 +1911,48 @@ class VirtualCollectionViewSet(ModelViewSet):
             user=request.user,
         )
         return Response({"status": "training queued", "model_id": serializer.model.pk})
+
+
+class DownloadViewSet(viewsets.ReadOnlyModelViewSet):
+    """List / retrieve / delete / stream the current user's Downloads.
+
+    Lookup is by opaque fingerprint (not by DB pk) so URLs stay
+    non-enumerable. Only the owning user can see their downloads.
+    """
+    queryset = Download.objects.all()
+    serializer_class = DownloadSerializer
+    lookup_field = 'fingerprint'
+    # Allow DELETE without registering it as a ModelViewSet action
+    http_method_names = ['get', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        """User-initiated deletion: remove the row and try to unlink the file."""
+        obj = self.get_object()
+        path = obj.file_path
+        obj.delete()
+        if path and os.path.exists(path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='file')
+    def file(self, request, fingerprint=None):
+        """Stream the archive file. Bumps accessed_at + accessed_count."""
+        obj = self.get_object()
+        if obj.is_expired():
+            raise Http404("download expired")
+        if not os.path.exists(obj.file_path):
+            raise Http404("file missing on disk")
+        obj.touch_access()
+        obj.save(update_fields=['accessed_at', 'accessed_count'])
+        return FileResponse(
+            open(obj.file_path, 'rb'),
+            content_type=obj.mime_type or 'application/octet-stream',
+            as_attachment=True,
+            filename=os.path.basename(obj.file_path),
+        )

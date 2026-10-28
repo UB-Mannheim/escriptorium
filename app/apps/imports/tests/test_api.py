@@ -1,6 +1,7 @@
 import os.path
 from unittest import mock
 
+from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
@@ -146,15 +147,13 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part2.lines.count(), 1)
 
     def test_alto_types(self):
-        bt = BlockType.objects.create(name="test_block_type")
-        lt = LineType.objects.create(name="test_line_type")
-        self.document.valid_block_types.add(bt)
-        self.document.valid_line_types.add(lt)
+        BlockType.objects.create(name="test_block_type", document=self.document)
+        LineType.objects.create(name="test_line_type", document=self.document)
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_composedblock.alto'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(89):
+            with self.assertNumQueries(95):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -167,8 +166,8 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part1.blocks.count(), 3)
 
         # one of each created automatically
-        self.assertEqual(self.document.valid_block_types.count(), 2)
-        self.assertEqual(self.document.valid_line_types.count(), 2)
+        self.assertEqual(self.document.block_types.count(), 2)
+        self.assertEqual(self.document.line_types.count(), 2)
 
         self.assertEqual(self.part1.blocks.all()[0].typology, None)
         self.assertEqual(self.part1.blocks.all()[1].typology.name, 'test_block_type')
@@ -177,6 +176,27 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part1.lines.all()[1].typology.name, 'test_line_type')
         self.assertEqual(self.part1.lines.all()[2].typology.name, 'new_line_type')
         self.assertEqual(self.part1.lines.count(), 3)
+
+    def test_alto_import_twice_dedups_types(self):
+        # importing a file that introduces a new type ("new_block_type") twice
+        # should not create a second BlockType row for that name.
+        uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
+        filename = 'test_composedblock.alto'
+        mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
+
+        for _ in range(2):
+            with open(mock_path, 'rb') as fh:
+                response = self.client.post(uri, {
+                    'upload_file': SimpleUploadedFile(filename, fh.read())
+                })
+                self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            self.document.block_types.filter(name='new_block_type').count(), 1
+        )
+        self.assertEqual(
+            self.document.line_types.filter(name='new_line_type').count(), 1
+        )
 
     def test_resume(self):
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
@@ -372,18 +392,15 @@ class XmlImportTestCase(CoreFactoryTestCase):
         non_word_block_type = "test-non-word-block-type"
         word_block_type = 'heading'
         non_word_line_type = 'test-non-word_line_type'
-        bt_head = BlockType.objects.create(name=word_block_type)
-        bt_non_word = BlockType.objects.create(name=non_word_block_type)
-        lt_non_word = LineType.objects.create(name=non_word_line_type)
-        self.document.valid_block_types.add(bt_head)
-        self.document.valid_block_types.add(bt_non_word)
-        self.document.valid_line_types.add(lt_non_word)
+        BlockType.objects.create(name=word_block_type, document=self.document)
+        BlockType.objects.create(name=non_word_block_type, document=self.document)
+        LineType.objects.create(name=non_word_line_type, document=self.document)
 
         uri = reverse('api:document-imports', kwargs={'pk': self.document.pk})
         filename = 'test_pagexml_types.xml'
         mock_path = os.path.join(os.path.dirname(__file__), 'mocks', filename)
         with open(mock_path, 'rb') as fh:
-            with self.assertNumQueries(95):
+            with self.assertNumQueries(103):
                 response = self.client.post(uri, {
                     'upload_file': SimpleUploadedFile(filename, fh.read())
                 })
@@ -396,8 +413,8 @@ class XmlImportTestCase(CoreFactoryTestCase):
         self.assertEqual(self.part1.blocks.count(), 4)
 
         # 1 of each created automatically
-        self.assertEqual(self.document.valid_block_types.count(), 3)
-        self.assertEqual(self.document.valid_line_types.count(), 2)
+        self.assertEqual(self.document.block_types.count(), 3)
+        self.assertEqual(self.document.line_types.count(), 2)
 
         self.assertEqual(self.part1.blocks.all()[0].typology, None)
         self.assertEqual(self.part1.blocks.all()[1].typology.name, non_word_block_type)
@@ -440,7 +457,11 @@ class XmlImportTestCase(CoreFactoryTestCase):
         with open(mock_path, 'rb') as fh:
             # mock the image grabbing
             mock_resp = mock.Mock(content=fh.read(), status_code=200)
-            with mock.patch('requests.get', return_value=mock_resp):
+            with mock.patch('requests.get', return_value=mock_resp), \
+                    mock.patch('socket.getaddrinfo',
+                               side_effect=lambda *args, **kwargs:
+                               [(2, 1, 6, '', ('93.184.216.34',
+                                               args[1] or 80))]):
                 for part in imp.process():  # exhaust the generator
                     pass
 
@@ -570,6 +591,9 @@ class DocumentExportTestCase(CoreFactoryTestCase):
     def setUp(self):
         super().setUp()
 
+        # clear the cached site so query counts stay stable
+        Site.objects.clear_cache()
+
         self.trans = self.factory.make_transcription()
         self.user = self.trans.document.owner  # shortcut
         self.parts = []
@@ -587,12 +611,12 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                     content='line %d:%d' % (i, j))
 
         self.region_types_choices = list(
-            self.trans.document.valid_block_types.values_list('id', flat=True)
+            self.trans.document.block_types.values_list('id', flat=True)
         ) + ['Undefined', 'Orphan']
 
     def test_simple(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(24):
+        with self.assertNumQueries(25):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
@@ -606,7 +630,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
 
     def test_alto(self):
         self.client.force_login(self.user)
-        with self.assertNumQueries(34):
+        with self.assertNumQueries(35):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,
@@ -631,7 +655,7 @@ class DocumentExportTestCase(CoreFactoryTestCase):
                     transcription=self.trans,
                     content='line %d:%d' % (i, j))
         self.client.force_login(self.user)
-        with self.assertNumQueries(34):
+        with self.assertNumQueries(35):
             response = self.client.post(reverse('api:document-export',
                                                 kwargs={'pk': self.trans.document.pk}),
                                         {'transcription': self.trans.pk,

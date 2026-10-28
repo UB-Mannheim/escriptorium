@@ -477,6 +477,7 @@ export default Vue.extend({
             mainTextDirection: (state) => state.document.mainTextDirection,
             readDirection: (state) => state.document.readDirection,
             selectedTranscription: (state) => state.transcriptions.selectedTranscription,
+            transcriptionFont: (state) => state.document.transcriptionFont,
         }),
         momentDate() {
             return moment.tz(this.line.currentTrans.version_updated_at, this.timeZone);
@@ -761,12 +762,23 @@ export default Vue.extend({
             let fontSize = Math.max(15, Math.round(lineHeight*0.7));  // Note could depend on the script
             ruler.style.fontSize = fontSize+"px";
 
+            let font = this.transcriptionFont || {};
+            let sizeFactor = font.input_height || 1.1;
+            // empty string drops the inline style and falls back to the stylesheet
+            let em = (value) => value ? value+"em" : "";
+
             if(this.mainTextDirection != "ttb"){
                 input.style.fontSize = fontSize+"px";
-                input.style.height = Math.round(fontSize*1.1)+"px";
+                input.style.height = Math.round(fontSize*sizeFactor)+"px";
+                input.style.lineHeight = em(font.line_height);
+                input.style.paddingTop = em(font.input_padding_top);
+                input.style.paddingBottom = em(font.input_padding_bottom);
+                input.style.marginTop = em(font.input_margin_top);
+                input.style.marginBottom = em(font.input_margin_bottom);
+                input.style.verticalAlign = font.input_vertical_align || "";
             }else{
                 verticalTextInput.style.fontSize = fontSize+"px";
-                verticalTextInput.style.width = Math.round(fontSize*1.1)+"px";
+                verticalTextInput.style.width = Math.round(fontSize*sizeFactor)+"px";
             }
 
             if (this.readDirection == "rtl") {

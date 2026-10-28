@@ -68,13 +68,19 @@ export const actions = {
             box: region.box,
         };
 
+        const partPk = rootState.parts.pk;
         const resp = await api.createRegion(
             rootState.document.id,
-            rootState.parts.pk,
+            partPk,
             data,
         );
+        // the user moved to another image while this was saving
+        if (rootState.parts.pk !== partPk) return null;
 
-        let newRegion = resp.data;
+        // the API returns the typology as a pk, but the segmenter colors and labels
+        // regions by type *name* -- without it a recreated region (e.g. when undoing
+        // a deletion) would come back grey
+        let newRegion = { ...resp.data, type: type?.name };
         commit("append", newRegion);
 
         return newRegion;

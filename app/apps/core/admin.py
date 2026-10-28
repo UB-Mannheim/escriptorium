@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
 from solo.admin import SingletonModelAdmin
@@ -76,8 +77,31 @@ class ScriptAdmin(admin.ModelAdmin):
 
 
 class FontAdmin(admin.ModelAdmin):
-    list_display = ['name', 'size_adjust', 'file']
+    list_display = ['name', 'size_adjust', 'line_height', 'file']
     search_fields = ['name']
+    readonly_fields = ['preview']
+
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'file', 'preview')
+        }),
+        ('metrics', {
+            'fields': ('size_adjust', 'ascent_override', 'descent_override', 'line_height'),
+            'description': 'how the font itself sits on the line, applies everywhere '
+                           'transcriptions are shown'
+        }),
+        ('line editor input', {
+            'fields': ('input_height', 'input_padding_top', 'input_padding_bottom',
+                       'input_margin_top', 'input_margin_bottom', 'input_vertical_align'),
+            'description': 'layout of the input box in the line editor'
+        }),
+    )
+
+    def preview(self, font):
+        if font is None or not font.pk or not font.file:
+            return 'save the font to see a preview'
+        return render_to_string('admin/core/font_preview.html', {'font': font})
+    preview.short_description = 'preview'
 
 
 class OcrModelAdmin(admin.ModelAdmin):
@@ -147,6 +171,27 @@ class DocumentTagAdmin(admin.ModelAdmin):
     list_display = ['name', 'color', 'project']
 
 
+class TypologyAdmin(admin.ModelAdmin):
+    list_display = ['pk', 'name', 'public', 'default']
+    list_filter = ['public', 'default']
+    search_fields = ['name']
+
+
+class DocumentTypologyAdmin(TypologyAdmin):
+    list_display = ['pk', 'name', 'document_link', 'public', 'default']
+    search_fields = ['name', 'document__name']
+    list_select_related = ['document']
+    autocomplete_fields = ['document']
+
+    def document_link(self, obj):
+        if not obj.document_id:
+            return '-'
+        url = reverse('admin:core_document_change', args=[obj.document_id])
+        return format_html('<a href="{}">{}</a>', url, obj.document.name)
+    document_link.short_description = 'document'
+    document_link.admin_order_field = 'document__name'
+
+
 class InstanceSettingsAdmin(SingletonModelAdmin):
     list_display = ('page_batch_segmentation', 'page_batch_recognition')
     actions = None
@@ -165,17 +210,17 @@ admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(DocumentPart, DocumentPartAdmin)
 admin.site.register(LineTranscription, LineTranscriptionAdmin)
-admin.site.register(DocumentType)
-admin.site.register(DocumentPartType)
-admin.site.register(BlockType)
-admin.site.register(LineType)
+admin.site.register(DocumentType, TypologyAdmin)
+admin.site.register(DocumentPartType, DocumentTypologyAdmin)
+admin.site.register(BlockType, DocumentTypologyAdmin)
+admin.site.register(LineType, DocumentTypologyAdmin)
 admin.site.register(Script, ScriptAdmin)
 admin.site.register(Font, FontAdmin)
 admin.site.register(Metadata)
 admin.site.register(OcrModel, OcrModelAdmin)
 admin.site.register(OcrModelDocument, OcrModelDocumentAdmin)
 admin.site.register(OcrModelRight, OcrModelRightAdmin)
-admin.site.register(AnnotationType)
+admin.site.register(AnnotationType, TypologyAdmin)
 admin.site.register(AnnotationTaxonomy)
 admin.site.register(AnnotationComponent)
 admin.site.register(DocumentTag, DocumentTagAdmin)

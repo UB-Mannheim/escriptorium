@@ -272,8 +272,7 @@ export class WheelZoom {
         if (!target) return null;
         var ts = target.container.getBoundingClientRect();
         var ter = target.element.getBoundingClientRect();
-        var delta,
-            oldPos = { x: this.pos.x, y: this.pos.y },
+        var oldPos = { x: this.pos.x, y: this.pos.y },
             oldAngle = this.angle;
 
         if (this.previousEvent) {
@@ -355,7 +354,7 @@ export class WheelZoom {
 
     updateStyle(delta) {
         this.targets.forEach(
-            function (target, i) {
+            function (target, _i) {
                 target.update(this.pos, this.scale);
                 // if (this.rotationOrigin) {
                 //     target.rotationContainer.style.transformOrigin = this.rotationOrigin.x+'px '+this.rotationOrigin.y+'px';
