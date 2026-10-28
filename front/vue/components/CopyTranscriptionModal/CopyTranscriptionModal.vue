@@ -121,8 +121,8 @@ export default {
             return !!this.matchedTranscription;
         },
         overwriteWarning() {
-            return "Lines already transcribed in this layer will be overwritten. " +
-                "Their previous content is kept in each line's history.";
+            return "All lines on this page will match the source, empty ones too. " +
+                "Old text stays in each line's history";
         },
         invalid() {
             // can't copy onto the source layer, even by typing its name
