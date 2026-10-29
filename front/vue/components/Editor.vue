@@ -271,15 +271,17 @@ export default {
                 if (font.descent_override) {
                     descriptors.push(`descent-override: ${pct(font.descent_override)}`);
                 }
+                const fontFamily =
+                    `"escr-transcription-font", "Noto Sans", "Resized Arabic", sans-serif`;
                 styleEl.textContent = `@font-face {
                     font-family: "escr-transcription-font";
                     src: url("${font.url}");
                     ${descriptors.join("; ")};
+                }
+                #teklia-virtual-keyboard .key-button .is-marginless {
+                    font-family: ${fontFamily};
                 }`;
-                this.$el.style.setProperty(
-                    "--transcription-font-family",
-                    `"escr-transcription-font", "Noto Sans", "Resized Arabic", sans-serif`,
-                );
+                this.$el.style.setProperty("--transcription-font-family", fontFamily);
                 if (font.line_height) {
                     this.$el.style.setProperty(
                         "--transcription-font-line-height",
