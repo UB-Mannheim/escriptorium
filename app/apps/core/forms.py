@@ -1126,10 +1126,12 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields['user'].label = ''
-        self.fields['user'].empty_label = 'Choose a user'
-        self.fields['user'].queryset = self.fields['user'].queryset.exclude(
-            Q(id=model.owner.id) | Q(ocr_model_rights__ocr_model=model)
-        ).filter(groups__in=model.owner.groups.all()).distinct()
+        self.fields['user'].to_field_name = 'username'
+        self.fields['user'].widget.attrs['placeholder'] = 'Choose a user'
+        self.fields['user'].error_messages['invalid_choice'] = 'Unknown user or already shared'
+        self.fields['user'].queryset = User.objects.exclude(pk=model.owner.pk).exclude(
+            ocr_model_rights__ocr_model=model
+        )
         self.fields['group'].label = ''
         self.fields['group'].empty_label = 'Choose a group'
         self.fields['group'].queryset = self.fields['group'].queryset.exclude(
@@ -1141,12 +1143,15 @@ class ModelRightsForm(BootstrapFormMixin, forms.ModelForm):
         fields = ('user', 'group')
         widgets = {
             'ocr_model': forms.HiddenInput(),
+            'user': forms.TextInput(),
         }
 
     def clean(self):
         cleaned_data = super().clean()
         user = cleaned_data.get("user")
         group = cleaned_data.get("group")
+        if self.has_error('user'):
+            return cleaned_data
         if (not user and not group) or (user and group):
             self.add_error('user', 'You must either choose a user OR a group')
             self.add_error('group', 'You must either choose a user OR a group')

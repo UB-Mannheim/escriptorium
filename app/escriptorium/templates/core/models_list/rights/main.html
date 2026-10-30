@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n bootstrap %}
+{% load render_bundle from webpack_loader %}
 
 {% block body %}
 <h2><strong>{{ model_name }}</strong> {% trans "shares" %}</h2>
@@ -39,8 +40,13 @@
       {% csrf_token %}
       <tr>
         <td colspan="3" class="text-right">
-          <div class="d-inline-block">
-            {% render_field form.user %}
+          <div class="d-inline-block text-left">
+            {% render_field form.user list="collaborators" class="js-autocomplete" %}
+            <datalist id="collaborators">
+              {% for username in collaborators %}
+              <option>{{ username }}</option>
+              {% endfor %}
+            </datalist>
           </div>
           <strong class="pl-3 pr-3">{% trans "or" %}</strong>
           <div class="d-inline-block">
@@ -57,3 +63,15 @@
   </tbody>
 </table>
 {% endblock %}
+
+{% block extrastyle %}
+    {% if not request.user.legacy_mode %}
+        {% render_bundle 'autocompleteFields' 'css' %}
+    {% endif %}
+{% endblock extrastyle %}
+
+{% block extrascript %}
+    {% if not request.user.legacy_mode %}
+        {% render_bundle 'autocompleteFields' 'js' %}
+    {% endif %}
+{% endblock extrascript %}

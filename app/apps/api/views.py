@@ -244,6 +244,13 @@ class UserViewSet(ModelViewSet):
             data=json,
         )
 
+    @extend_schema(responses={200: {'type': 'array', 'items': {'type': 'string'}}})
+    @action(detail=False, methods=['get'])
+    def collaborators(self, request):
+        if not request.user.is_authenticated:
+            raise NotAuthenticated
+        return Response(list(request.user.get_collaborators().values_list('username', flat=True)))
+
 
 class GroupViewSet(ModelViewSet):
     queryset = Group.objects.all()

@@ -423,7 +423,7 @@ class OcrModelRightsTestCase(TestCase):
         self.assertEqual(self.client.get(self.rights_url()).status_code, 200)
 
         self.client.post(self.rights_url(),
-                         data={'user': colleague.pk, 'group': ''})
+                         data={'user': colleague.username, 'group': ''})
         self.assertTrue(OcrModelRight.objects.filter(
             ocr_model=self.model, user=colleague).exists())
 
