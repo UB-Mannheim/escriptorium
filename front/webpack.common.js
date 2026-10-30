@@ -20,6 +20,7 @@ module.exports = {
         ontologyOverviewPage: "./vue/exports/ontologyOverviewPage.js",
         modelTraining: "./vue/exports/modelTraining.js",
         downloads: "./vue/exports/downloads.js",
+        autocompleteFields: "./vue/exports/autocompleteFields.js",
     },
 
     output: {
