@@ -11,8 +11,7 @@ CSRF_TRUSTED_ORIGINS = ['https://ocr-bw.bib.uni-mannheim.de']
 
 # In the format [('Full Name', 'email@example.com'), ('Full Name', 'anotheremail@example.com')]
 ADMINS = [
-    ('Administrator', 'stefan.weil@uni-mannheim.de'),
-    ('Jörg Mechnich', 'joerg.mechnich@uni-mannheim.de')
+    ('Administrator', 'ocr.ub@uni-mannheim.de'),
 ]
 
 # Settings for running from a subpath behind a proxy.
@@ -28,10 +27,10 @@ LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME + '/projects/'
 LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME + '/'
 
 ALLOWED_HOSTS = ['localhost', 'ocr-bw.bib.uni-mannheim.de']
-DEFAULT_FROM_EMAIL = 'stefan.weil@uni-mannheim.de'
+DEFAULT_FROM_EMAIL = 'ocr.ub@uni-mannheim.de'
 
 # Sender e-mail address for log messages sent by e-mail.
-SERVER_EMAIL = 'stefan.weil@uni-mannheim.de'
+SERVER_EMAIL = 'ocr.ub@uni-mannheim.de'
 
 # https://docs.djangoproject.com/en/3.2/topics/email/
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
