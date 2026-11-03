@@ -102,23 +102,35 @@
                 <template #popper>
                     <ul class="escr-vertical-menu escr-tasks-menu">
                         <li>
-                            <a href="/documents/tasks/">
-                                <span>Task Monitoring</span>
-                            </a>
-                        </li>
-                        <li>
                             <a href="/quotas/">
-                                <span>Task Usage</span>
+                                <span>My Tasks</span>
                             </a>
                         </li>
                         <li>
                             <a href="/downloads/">
-                                <span>Downloads</span>
+                                <span>My Exports</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/documents/tasks/">
+                                <span>Task Monitoring</span>
                             </a>
                         </li>
                     </ul>
                 </template>
             </VMenu>
+            <a
+                v-if="isAuthenticated"
+                href="/profile/teams/"
+                aria-label="teams page"
+                :class="{
+                    'escr-globalnav-icon': true,
+                    'escr-globalnav-icon-active': location.href.endsWith('/profile/teams/'),
+                }"
+            >
+                <PeopleIcon />
+                <span>Teams</span>
+            </a>
         </div>
         <div class="escr-lower-navgroup">
             <VMenu
@@ -210,6 +222,7 @@ import EscrLogo from "../Icons/EscrLogo/EscrLogo.vue";
 import HomeIcon from "../Icons/HomeIcon/HomeIcon.vue";
 import LightModeIcon from "../Icons/LightModeIcon/LightModeIcon.vue";
 import ModelsIcon from "../Icons/ModelsIcon/ModelsIcon.vue";
+import PeopleIcon from "../Icons/PeopleIcon/PeopleIcon.vue";
 import ProfileIcon from "../Icons/ProfileIcon/ProfileIcon.vue";
 import SearchLargeIcon from "../Icons/SearchLargeIcon/SearchLargeIcon.vue";
 import TasksIcon from "../Icons/TasksIcon/TasksIcon.vue";
@@ -226,6 +239,7 @@ export default {
         HomeIcon,
         LightModeIcon,
         ModelsIcon,
+        PeopleIcon,
         ProfileIcon,
         SearchLargeIcon,
         TasksIcon,

@@ -3,7 +3,7 @@
 {% load render_bundle from webpack_loader %}
 
 {% block body %}
-<a class="breadcrumbs" href="{% url 'profile-team-list' %}">{% trans "Back to profile" %}</a>
+<a class="breadcrumbs" href="{% url 'profile-team-list' %}">{% trans "Back to teams" %}</a>
 {% if request.user.legacy_mode %}
     <br><br>
     <h4>{% trans "Team:" %} {{object}}</h4>

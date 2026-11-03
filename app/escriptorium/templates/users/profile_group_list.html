@@ -1,10 +1,10 @@
-{% extends "users/profile.html" %}
+{% extends "base.html" %}
 {% load i18n bootstrap %}
 
-{% block infos-tab-active %}{% endblock %}
-{% block team-tab-active %}active{% endblock %}
-
-{% block tab-content %}
+{% block body %}
+<h1>{% trans 'Teams' %}</h1>
+<div class="container">
+<div class="col-md-8">
 <h4>{% trans "Create a new Team" %}</h4>
 <form method="post">
     {% csrf_token %}
@@ -57,4 +57,6 @@
     {% trans "You are not part of any team yet." %}
     {% endfor %}
 </table>
+</div>
+</div>
 {% endblock %}
