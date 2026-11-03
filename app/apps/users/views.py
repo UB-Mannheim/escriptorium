@@ -363,7 +363,7 @@ class GroupDetail(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, Upda
         context['other_users'] = self.object.user_set.exclude(pk=self.request.user.pk)
         context['collaborators'] = (self.request.user.get_collaborators()
                                     .exclude(groups=self.object)
-                                    .values_list('username', flat=True))
+                                    .values('username', 'first_name', 'last_name'))
         return context
 
 

@@ -16,10 +16,10 @@
         </template>
         <template #modal-content>
             <h3>Add Group</h3>
-            <EscrDropdown
+            <EscrAutocompleteDropdown
                 label="Add group"
                 :disabled="disabled || !groups"
-                :options="groupOptions"
+                :option-groups="groupOptionGroups"
                 :on-change="handleGroupChange"
             />
             <h3>Add User</h3>
@@ -54,7 +54,6 @@
 import { mapActions, mapState } from "vuex";
 import EscrAutocompleteDropdown from "../AutocompleteDropdown/AutocompleteDropdown.vue";
 import EscrButton from "../Button/Button.vue";
-import EscrDropdown from "../Dropdown/Dropdown.vue";
 import EscrModal from "../Modal/Modal.vue";
 import XIcon from "../Icons/XIcon/XIcon.vue";
 import "./ShareModal.css";
@@ -64,7 +63,6 @@ export default {
     components: {
         EscrAutocompleteDropdown,
         EscrButton,
-        EscrDropdown,
         EscrModal,
         XIcon,
     },
@@ -113,20 +111,24 @@ export default {
             selectedGroup: (state) => state.forms.share.group,
             username: (state) => state.forms.share.user,
         }),
-        groupOptions() {
-            return this.groups.map((group) => ({
-                label: group.name,
-                value: group.pk.toString(),
-                selected: this.selectedGroup.toString() === group.pk.toString(),
-            }));
+        groupOptionGroups() {
+            if (!this.groups.length) return [];
+            return [{
+                options: this.groups.map((group) => ({
+                    label: group.name,
+                    value: group.pk.toString(),
+                    selected: this.selectedGroup.toString() === group.pk.toString(),
+                })),
+            }];
         },
         userOptionGroups() {
             if (!this.collaborators.length) return [];
             return [{
-                options: this.collaborators.map((name) => ({
-                    label: name,
-                    value: name,
-                    selected: name === this.username,
+                options: this.collaborators.map((user) => ({
+                    label: user.username,
+                    value: user.username,
+                    hint: [user.first_name, user.last_name].join(" ").trim(),
+                    selected: user.username === this.username,
                 })),
             }];
         },
@@ -138,7 +140,7 @@ export default {
         ...mapActions("forms", ["clearForm", "handleGenericInput"]),
         ...mapActions("user", ["fetchCollaborators"]),
         handleGroupChange(e) {
-            if (this.username !== "") {
+            if (e.target.value && this.username !== "") {
                 this.handleGenericInput({ form: "share", field: "user", value: "" });
                 this.userFieldKey++;
             }

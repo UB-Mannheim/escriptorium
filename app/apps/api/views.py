@@ -244,12 +244,13 @@ class UserViewSet(ModelViewSet):
             data=json,
         )
 
-    @extend_schema(responses={200: {'type': 'array', 'items': {'type': 'string'}}})
+    @extend_schema(responses={200: {'type': 'array', 'items': {'type': 'object', 'properties': {
+        'username': {'type': 'string'}, 'first_name': {'type': 'string'}, 'last_name': {'type': 'string'}}}}})
     @action(detail=False, methods=['get'])
     def collaborators(self, request):
         if not request.user.is_authenticated:
             raise NotAuthenticated
-        return Response(list(request.user.get_collaborators().values_list('username', flat=True)))
+        return Response(list(request.user.get_collaborators().values('username', 'first_name', 'last_name')))
 
 
 class GroupViewSet(ModelViewSet):

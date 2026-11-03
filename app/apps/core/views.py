@@ -1030,7 +1030,7 @@ class ModelRights(OcrModelRightsMixin, SuccessMessageMixin, CreateView):
         kwargs['model_name'] = self.ocr_model.name
         kwargs['collaborators'] = (self.request.user.get_collaborators()
                                    .exclude(ocr_model_rights__ocr_model=self.ocr_model)
-                                   .values_list('username', flat=True))
+                                   .values('username', 'first_name', 'last_name'))
 
         return super().get_context_data(**kwargs)
 

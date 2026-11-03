@@ -75,7 +75,7 @@
                         @mousedown.prevent="selectOption(option)"
                         @mouseenter="highlightedIndex = getFlatIndex(index, optIndex)"
                     >
-                        {{ option.label }}
+                        {{ option.label }}{{ option.hint ? ` (${option.hint})` : "" }}
                     </div>
                 </div>
             </template>
@@ -118,7 +118,7 @@ export default {
          *   {
          *     label: "Group Name",
          *     options: [
-         *       { value: String, label: String, selected: Boolean }
+         *       { value: String, label: String, hint?: String, selected: Boolean }
          *     ]
          *   }
          * ]
@@ -172,6 +172,7 @@ export default {
                     label: group.label,
                     options: group.options.filter(option =>
                         option.label.toLowerCase().includes(search)
+                        || (option.hint || "").toLowerCase().includes(search)
                     ),
                 }))
                 .filter(group => group.options.length > 0);

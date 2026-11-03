@@ -22,8 +22,8 @@
             {% trans "Make sure to use a correct email as you will not receive an error message if it is not the case (in order to avoid phishing)." as help_text  %}
             {% render_field form.recipient_id help_text=help_text list="collaborators" class="js-autocomplete" %}
             <datalist id="collaborators">
-                {% for username in collaborators %}
-                <option>{{ username }}</option>
+                {% for user in collaborators %}
+                <option value="{{ user.username }}">{{ user.first_name }} {{ user.last_name }}</option>
                 {% endfor %}
             </datalist>
                 </div>

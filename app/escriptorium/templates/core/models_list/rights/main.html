@@ -43,14 +43,14 @@
           <div class="d-inline-block text-left">
             {% render_field form.user list="collaborators" class="js-autocomplete" %}
             <datalist id="collaborators">
-              {% for username in collaborators %}
-              <option>{{ username }}</option>
+              {% for user in collaborators %}
+              <option value="{{ user.username }}">{{ user.first_name }} {{ user.last_name }}</option>
               {% endfor %}
             </datalist>
           </div>
           <strong class="pl-3 pr-3">{% trans "or" %}</strong>
-          <div class="d-inline-block">
-            {% render_field form.group %}
+          <div class="d-inline-block text-left">
+            {% render_field form.group class="js-autocomplete" %}
           </div>
         </td>
         <td>

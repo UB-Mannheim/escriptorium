@@ -2,8 +2,13 @@ import Vue from "vue";
 import EscrAutocompleteDropdown from "../components/AutocompleteDropdown/AutocompleteDropdown.vue";
 
 document.querySelectorAll(".js-autocomplete").forEach((field) => {
-    const options = Array.from(field.list?.options || [])
-        .map((choice) => ({ value: choice.value, label: choice.value }));
+    const isSelect = field.tagName === "SELECT";
+    const choices = Array.from((isSelect ? field.options : field.list?.options) || []);
+    const options = choices.filter((choice) => choice.value).map((choice) => ({
+        value: choice.value,
+        label: isSelect ? choice.text : choice.value,
+        hint: isSelect ? "" : choice.text.trim(),
+    }));
     const mount = document.createElement("div");
     field.before(mount);
     field.hidden = true;
@@ -28,9 +33,9 @@ document.querySelectorAll(".js-autocomplete").forEach((field) => {
             return h(EscrAutocompleteDropdown, {
                 props: {
                     label: field.title,
-                    placeholder: field.placeholder,
-                    allowCustomValue: true,
-                    matchesOnly: true,
+                    placeholder: isSelect ? choices[0]?.text : field.placeholder,
+                    allowCustomValue: !isSelect,
+                    matchesOnly: !isSelect,
                     optionGroups: this.optionGroups,
                     onChange: (e) => {
                         this.value = e.target.value;
