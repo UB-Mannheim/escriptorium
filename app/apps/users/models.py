@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Group
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -56,6 +56,30 @@ class User(AbstractUser):
             return super().get_full_name()
         else:
             return self.username
+
+    def get_collaborators(self):
+        from core.models import Document, Project
+        groups = self.groups.all()
+        project_users = Project.shared_with_users.through.objects
+        document_users = Document.shared_with_users.through.objects
+        projects = Project.objects.filter(
+            Q(owner=self)
+            | Q(pk__in=project_users.filter(user=self).values('project'))
+            | Q(pk__in=Project.shared_with_groups.through.objects.filter(group__in=groups).values('project')))
+        documents = Document.objects.filter(
+            Q(owner=self)
+            | Q(project__in=projects)
+            | Q(pk__in=document_users.filter(user=self).values('document'))
+            | Q(pk__in=Document.shared_with_groups.through.objects.filter(group__in=groups).values('document'))
+        ).exclude(workflow_state=Document.WORKFLOW_STATE_ARCHIVED)
+        return (User.objects
+                .filter(Q(pk__in=User.groups.through.objects.filter(group__in=groups).values('user'))
+                        | Q(pk__in=projects.values('owner'))
+                        | Q(pk__in=project_users.filter(project__in=projects).values('user'))
+                        | Q(pk__in=documents.values('owner'))
+                        | Q(pk__in=document_users.filter(document__in=documents).values('user')))
+                .exclude(pk=self.pk)
+                .order_by('username'))
 
     def notify(self, message, id=None, level='info', links=None):
         if id is None:

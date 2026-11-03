@@ -25,8 +25,10 @@
         >×</button>
         <ChevronDownIcon v-else />
         <div
-            v-if="showDropdown"
+            v-if="listVisible"
             class="escr-autocomplete-options"
+            :style="{ maxHeight: `${maxHeight}px` }"
+            @mousedown.prevent
         >
             <div
                 v-if="filteredOptions.length === 0 && searchText && allowCustomValue"
@@ -43,7 +45,7 @@
             </div>
             <template v-else>
                 <div
-                    v-if="allowCustomValue && searchText && !hasExactMatch"
+                    v-if="showCustomOption"
                     class="escr-autocomplete-new-option escr-autocomplete-new-option--clickable"
                     :class="{ 'escr-autocomplete-new-option--highlighted': highlightedIndex === -1 }"
                     @mousedown.prevent="selectCustomValue"
@@ -73,7 +75,7 @@
                         @mousedown.prevent="selectOption(option)"
                         @mouseenter="highlightedIndex = getFlatIndex(index, optIndex)"
                     >
-                        {{ option.label }}
+                        {{ option.label }}{{ option.hint ? ` (${option.hint})` : "" }}
                     </div>
                 </div>
             </template>
@@ -116,7 +118,7 @@ export default {
          *   {
          *     label: "Group Name",
          *     options: [
-         *       { value: String, label: String, selected: Boolean }
+         *       { value: String, label: String, hint?: String, selected: Boolean }
          *     ]
          *   }
          * ]
@@ -139,11 +141,16 @@ export default {
             type: Boolean,
             default: false,
         },
+        matchesOnly: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {
             searchText: "",
             showDropdown: false,
+            maxHeight: 300,
             blurTimeout: null,
             highlightedIndex: 0,
             isClearing: false,
@@ -165,6 +172,7 @@ export default {
                     label: group.label,
                     options: group.options.filter(option =>
                         option.label.toLowerCase().includes(search)
+                        || (option.hint || "").toLowerCase().includes(search)
                     ),
                 }))
                 .filter(group => group.options.length > 0);
@@ -203,8 +211,14 @@ export default {
         /**
          * calculate dynamic spacing for dropdown when open
          */
+        showCustomOption() {
+            return this.allowCustomValue && this.searchText && !this.hasExactMatch && !this.matchesOnly;
+        },
+        listVisible() {
+            return this.showDropdown && (!this.matchesOnly || this.flattenedOptions.length > 0);
+        },
         dropdownSpacing() {
-            if (!this.showDropdown) {
+            if (!this.listVisible) {
                 return '0px';
             }
 
@@ -213,7 +227,7 @@ export default {
             if (this.filteredOptions.length === 0) {
                 height = 48;
             } else {
-                if (this.allowCustomValue && this.searchText && !this.hasExactMatch) {
+                if (this.showCustomOption) {
                     height += 38;
                 }
                 this.filteredOptions.forEach(group => {
@@ -223,7 +237,7 @@ export default {
                     height += group.options.length * 30;
                 });
             }
-            const finalHeight = Math.min(height, 300);
+            const finalHeight = Math.min(height, this.maxHeight);
             return `${finalHeight + 10}px`;
         },
     },
@@ -246,6 +260,16 @@ export default {
             // Reset highlighted index when filtered options change
             this.highlightedIndex = 0;
         },
+        showDropdown(open) {
+            if (open) {
+                const inputBottom = this.$refs.input.getBoundingClientRect().bottom;
+                const spaceBelow = window.innerHeight - inputBottom - 16;
+                this.maxHeight = Math.max(120, Math.min(300, spaceBelow));
+            }
+        },
+    },
+    beforeDestroy() {
+        clearTimeout(this.blurTimeout);
     },
     methods: {
         handleInput(e) {
@@ -301,7 +325,7 @@ export default {
                     this.showDropdown = true;
                     this.highlightedIndex = 0;
                 } else {
-                    const hasCustomOption = this.allowCustomValue && this.searchText && !this.hasExactMatch;
+                    const hasCustomOption = this.showCustomOption;
                     const maxIndex = this.flattenedOptions.length - 1;
 
                     if (hasCustomOption && this.highlightedIndex === -1) {
@@ -314,13 +338,14 @@ export default {
                         this.highlightedIndex = 0; // Loop back to first
                     }
                 }
+                this.scrollToHighlighted();
             } else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 if (!this.showDropdown) {
                     this.showDropdown = true;
                     this.highlightedIndex = 0;
                 } else {
-                    const hasCustomOption = this.allowCustomValue && this.searchText && !this.hasExactMatch;
+                    const hasCustomOption = this.showCustomOption;
                     const maxIndex = this.flattenedOptions.length - 1;
 
                     if (this.highlightedIndex === 0 && hasCustomOption) {
@@ -333,7 +358,11 @@ export default {
                         this.highlightedIndex = maxIndex; // Loop to last
                     }
                 }
+                this.scrollToHighlighted();
             } else if (e.key === "Enter") {
+                if (this.matchesOnly && this.allowCustomValue && !this.listVisible) {
+                    return;
+                }
                 e.preventDefault(); // Prevent form submission
 
                 if (!this.showDropdown) {
@@ -341,7 +370,7 @@ export default {
                 }
 
                 // Priority 1: If typing a custom value that doesn't exactly match, use it
-                if (this.allowCustomValue && this.searchText && !this.hasExactMatch) {
+                if (this.showCustomOption) {
                     this.selectCustomValue();
                 }
                 // Priority 2: If custom option is highlighted (index -1)
@@ -384,6 +413,14 @@ export default {
             this.showDropdown = false;
             this.onChange({ target: { value: this.searchText } });
             this.$refs.input.blur();
+        },
+        scrollToHighlighted() {
+            this.$nextTick(() => {
+                const option = this.$el.querySelector(
+                    "[class*='escr-autocomplete'][class*='--highlighted']",
+                );
+                if (option) option.scrollIntoView({ block: "nearest" });
+            });
         },
         clearValue() {
             if (this.blurTimeout) {

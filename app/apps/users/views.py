@@ -358,9 +358,17 @@ class GroupDetail(GroupOwnerMixin, LoginRequiredMixin, SuccessMessageMixin, Upda
             'request': self.request})
         return kwargs
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['group'].queryset = form.fields['group'].queryset.filter(pk=self.object.pk)
+        return form
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['other_users'] = self.object.user_set.exclude(pk=self.request.user.pk)
+        context['collaborators'] = (self.request.user.get_collaborators()
+                                    .exclude(groups=self.object)
+                                    .values('username', 'first_name', 'last_name'))
         return context
 
 

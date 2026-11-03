@@ -16,21 +16,22 @@
         </template>
         <template #modal-content>
             <h3>Add Group</h3>
-            <EscrDropdown
+            <EscrAutocompleteDropdown
                 label="Add group"
                 :disabled="disabled || !groups"
-                :options="groupOptions"
+                :option-groups="groupOptionGroups"
                 :on-change="handleGroupChange"
             />
             <h3>Add User</h3>
-            <TextField
+            <EscrAutocompleteDropdown
+                :key="userFieldKey"
                 placeholder="Enter username of registered user"
                 label="Add user"
-                :label-visible="false"
-                :on-input="handleUserInput"
+                :allow-custom-value="true"
+                :matches-only="true"
+                :option-groups="userOptionGroups"
+                :on-change="handleUserInput"
                 :disabled="disabled"
-                :max-length="150"
-                :value="username"
             />
         </template>
         <template #modal-actions>
@@ -51,20 +52,18 @@
 </template>
 <script>
 import { mapActions, mapState } from "vuex";
+import EscrAutocompleteDropdown from "../AutocompleteDropdown/AutocompleteDropdown.vue";
 import EscrButton from "../Button/Button.vue";
-import EscrDropdown from "../Dropdown/Dropdown.vue";
 import EscrModal from "../Modal/Modal.vue";
-import TextField from "../TextField/TextField.vue";
 import XIcon from "../Icons/XIcon/XIcon.vue";
 import "./ShareModal.css";
 
 export default {
     name: "EscrShareModal",
     components: {
+        EscrAutocompleteDropdown,
         EscrButton,
-        EscrDropdown,
         EscrModal,
-        TextField,
         XIcon,
     },
     props: {
@@ -100,25 +99,56 @@ export default {
             type: Function,
             required: true,
         },
+        sharedUsers: {
+            type: Array,
+            default: () => [],
+        },
+    },
+    data() {
+        return {
+            userFieldKey: 0,
+        };
     },
     computed: {
         ...mapState({
+            collaborators: (state) => state.user.collaborators,
             selectedGroup: (state) => state.forms.share.group,
             username: (state) => state.forms.share.user,
         }),
-        groupOptions() {
-            return this.groups.map((group) => ({
-                label: group.name,
-                value: group.pk.toString(),
-                selected: this.selectedGroup.toString() === group.pk.toString(),
-            }));
+        groupOptionGroups() {
+            if (!this.groups.length) return [];
+            return [{
+                options: this.groups.map((group) => ({
+                    label: group.name,
+                    value: group.pk.toString(),
+                    selected: this.selectedGroup.toString() === group.pk.toString(),
+                })),
+            }];
         },
+        userOptionGroups() {
+            const shared = this.sharedUsers.map((user) => user.username);
+            const users = this.collaborators.filter((user) => !shared.includes(user.username));
+            if (!users.length) return [];
+            return [{
+                options: users.map((user) => ({
+                    label: user.username,
+                    value: user.username,
+                    hint: [user.first_name, user.last_name].join(" ").trim(),
+                    selected: user.username === this.username,
+                })),
+            }];
+        },
+    },
+    created() {
+        this.fetchCollaborators();
     },
     methods: {
         ...mapActions("forms", ["clearForm", "handleGenericInput"]),
+        ...mapActions("user", ["fetchCollaborators"]),
         handleGroupChange(e) {
-            if (this.username !== "") {
+            if (e.target.value && this.username !== "") {
                 this.handleGenericInput({ form: "share", field: "user", value: "" });
+                this.userFieldKey++;
             }
             this.handleGenericInput({ form: "share", field: "group", value: e.target.value });
         },

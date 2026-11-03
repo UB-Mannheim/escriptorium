@@ -234,6 +234,7 @@
                     :disabled="loading && loading.document"
                     :on-cancel="closeShareModal"
                     :on-submit="shareDocument"
+                    :shared-users="sharedWithUsers"
                 />
                 <!-- import images modal -->
                 <ImportModal

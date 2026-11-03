@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+    retrieveCollaborators,
     retrieveCurrentUser,
     retrieveGroups,
     retrieveModels,
@@ -8,6 +9,7 @@ import {
 // initial state
 const state = () => ({
     canInvite: false,
+    collaborators: [],
     firstName: "",
     /**
      * groups: [{
@@ -50,6 +52,14 @@ const actions = {
             commit("setGroups", data.results);
         }
     },
+    async fetchCollaborators({ commit, dispatch }) {
+        try {
+            const { data } = await retrieveCollaborators();
+            commit("setCollaborators", data);
+        } catch (error) {
+            dispatch("alerts/addError", error, { root: true });
+        }
+    },
     /**
      * Fetch segmentation models the user has access to.
      */
@@ -87,6 +97,9 @@ const actions = {
 const mutations = {
     setCanInvite(state, canInvite) {
         state.canInvite = canInvite;
+    },
+    setCollaborators(state, collaborators) {
+        state.collaborators = collaborators;
     },
     setFirstName(state, firstName) {
         state.firstName = firstName;
