@@ -801,7 +801,7 @@ const actions = {
                 {
                     color: "success",
                     message:
-                        "Archive queued. It will show up on your Downloads page when ready.",
+                        "Archive queued. It will show up in My Exports when ready.",
                 },
                 { root: true },
             );

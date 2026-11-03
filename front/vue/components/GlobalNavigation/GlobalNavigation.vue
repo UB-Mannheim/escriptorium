@@ -102,18 +102,18 @@
                 <template #popper>
                     <ul class="escr-vertical-menu escr-tasks-menu">
                         <li>
-                            <a href="/documents/tasks/">
-                                <span>Task Monitoring</span>
-                            </a>
-                        </li>
-                        <li>
                             <a href="/quotas/">
-                                <span>Task Usage</span>
+                                <span>My Tasks</span>
                             </a>
                         </li>
                         <li>
                             <a href="/downloads/">
-                                <span>Downloads</span>
+                                <span>My Exports</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/documents/tasks/">
+                                <span>Task Monitoring</span>
                             </a>
                         </li>
                     </ul>
