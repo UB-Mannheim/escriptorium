@@ -219,6 +219,7 @@
                             </template>
                         </EscrButton>
                         <EscrButton
+                            v-if="canTrain"
                             color="secondary"
                             label="Train Model"
                             size="small"
@@ -689,6 +690,7 @@ export default {
     },
     computed: {
         ...mapState({
+            canTrain: (state) => state.user.canTrain,
             deleteModalOpen: (state) => state.images.deleteModalOpen,
             documentName: (state) => state.document.name,
             isDragging: (state) => state.images.isDragging,

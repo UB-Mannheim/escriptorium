@@ -4,7 +4,7 @@ from math import ceil
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Page, Paginator
@@ -68,6 +68,7 @@ from core.ontology import (
     normalize,
     parse_ontology_file,
 )
+from core.permissions import CAN_TRAIN, user_can_train
 from core.search import WORD_BY_WORD_SEARCH_MODE, build_highlighted_replacement_psql
 from core.tasks import replace_line_transcriptions_text
 from imports.forms import DocumentOntologyImportForm, ExportForm, ImportForm
@@ -794,6 +795,9 @@ class DocumentPartsProcessAjax(LoginRequiredMixin, View):
                                 status=404, content_type="application/json")
 
         task = self.request.POST.get('task')
+        if task in ('segtrain', 'train') and not user_can_train(request.user):
+            return HttpResponse(json.dumps({'status': 'Forbidden'}),
+                                status=403, content_type="application/json")
         if task == 'segment':
             form_class = SegmentForm
         elif task == 'transcribe':
@@ -1080,5 +1084,6 @@ class MigrateDocument(ShareDocument):
     success_message = _("Document was successfully migrated to the selected project!")
 
 
-class TrainingView(LoginRequiredMixin, TemplateView):
+class TrainingView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     template_name = "core/training.html"
+    permission_required = CAN_TRAIN

@@ -25,7 +25,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import IntegrityError, models, transaction
 from django.db.models import Avg, JSONField, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Length
-from django.db.models.signals import pre_delete
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.forms import ValidationError
 from django.utils.functional import cached_property
@@ -2445,6 +2445,12 @@ class InstanceSettings(SingletonModel):
         default=1,
         help_text="Pages per transcription task"
     )
+    default_user_permissions = models.ManyToManyField(
+        "auth.Permission",
+        blank=True,
+        related_name="+",
+        help_text="Permissions automatically granted to every newly created user.",
+    )
 
     class Meta:
         verbose_name = "Instance setting"
@@ -2452,6 +2458,20 @@ class InstanceSettings(SingletonModel):
 
     def __str__(self):
         return "Instance settings"
+
+
+@receiver(post_save, sender=User, dispatch_uid="default_user_permissions_signal")
+def grant_default_user_permissions(sender, instance, created, raw=False, **kwargs):
+    if not created or raw:
+        return
+    # single query on the through table, without instantiating the singleton
+    perm_ids = list(
+        InstanceSettings.default_user_permissions.through.objects
+        .filter(instancesettings_id=InstanceSettings.singleton_instance_id)
+        .values_list("permission_id", flat=True)
+    )
+    if perm_ids:
+        instance.user_permissions.add(*perm_ids)
 
 
 class VirtualCollection(models.Model):

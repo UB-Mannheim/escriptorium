@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from django.contrib.auth.models import Permission
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
@@ -122,6 +123,8 @@ class DocumentViewSetTestCase(CoreFactoryTestCase):
         self.doc2 = self.factory.make_document(project=self.proj2, owner=self.proj1.owner)
         self.part = self.factory.make_part(document=self.doc)
         self.part2 = self.factory.make_part(document=self.doc)
+        self.proj1.owner.user_permissions.add(
+            Permission.objects.get(content_type__app_label='core', codename='can_train'))
 
         self.line = Line.objects.create(
             baseline=[[10, 25], [50, 25]],
@@ -2350,3 +2353,51 @@ class ObjectAuthorisationTestCase(CoreFactoryTestCase):
         resp = self.client.post(uri, data={'name': 'mine', 'color': '#ffffff'})
         self.assertEqual(resp.status_code, 201, resp.content)
         self.assertEqual(self.client.get(uri).status_code, 200)
+
+
+class TrainingPermissionTestCase(CoreFactoryTestCase):
+    """core.can_train must be enforced on every training endpoint."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = self.factory.make_user()
+        self.doc = self.factory.make_document(owner=self.user)
+        self.collection = VirtualCollection.objects.create(name='c', owner=self.user)
+        self.perm = Permission.objects.get(content_type__app_label='core', codename='can_train')
+
+    def _uris(self):
+        return [
+            reverse('api:document-train', kwargs={'pk': self.doc.pk}),
+            reverse('api:document-segtrain', kwargs={'pk': self.doc.pk}),
+            reverse('api:virtualcollection-train-recognizer', kwargs={'pk': self.collection.pk}),
+            reverse('api:virtualcollection-train-segmenter', kwargs={'pk': self.collection.pk}),
+        ]
+
+    def test_forbidden_without_permission(self):
+        self.client.force_login(self.user)
+        for uri in self._uris():
+            resp = self.client.post(uri, data={})
+            self.assertEqual(resp.status_code, 403, uri)
+
+    def test_allowed_past_permission_check_with_permission(self):
+        self.user.user_permissions.add(self.perm)
+        self.client.force_login(self.user)
+        for uri in self._uris():
+            resp = self.client.post(uri, data={})
+            # empty payload: validation error, but not a permission error
+            self.assertEqual(resp.status_code, 400, uri)
+
+    def test_superuser_bypasses(self):
+        self.user.is_superuser = True
+        self.user.save()
+        self.client.force_login(self.user)
+        resp = self.client.post(reverse('api:document-train', kwargs={'pk': self.doc.pk}), data={})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_current_user_exposes_can_train(self):
+        self.client.force_login(self.user)
+        uri = reverse('api:user-current')
+        self.assertIs(self.client.get(uri).json()['can_train'], False)
+        self.user.user_permissions.add(self.perm)
+        self.client.force_login(self.user)
+        self.assertIs(self.client.get(uri).json()['can_train'], True)

@@ -23,6 +23,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated
+from rest_framework.exceptions import PermissionDenied as DRFPermissionDenied
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser
@@ -122,6 +123,7 @@ from core.ontology import (
     normalize,
     parse_ontology_file,
 )
+from core.permissions import user_can_train
 from core.tasks import recalculate_masks
 from imports.forms import ExportForm, ImportForm
 from imports.parsers import ParseError
@@ -670,10 +672,14 @@ class DocumentViewSet(ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def train(self, request, pk=None):
+        if not user_can_train(request.user):
+            raise DRFPermissionDenied(_("You are not allowed to train models."))
         return self.get_process_response(request, TrainSerializer)
 
     @action(detail=True, methods=['post'])
     def segtrain(self, request, pk=None):
+        if not user_can_train(request.user):
+            raise DRFPermissionDenied(_("You are not allowed to train models."))
         return self.get_process_response(request, SegTrainSerializer)
 
     @action(detail=True, methods=['post'])
@@ -1905,6 +1911,8 @@ class VirtualCollectionViewSet(ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def train_recognizer(self, request, pk=None):
+        if not user_can_train(request.user):
+            raise DRFPermissionDenied(_("You are not allowed to train models."))
         # recognition: get the collection, validate with training serializer, enqueue training task
         collection = self.get_object()
         serializer = CollectionRecognizeSerializer(
@@ -1921,6 +1929,8 @@ class VirtualCollectionViewSet(ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def train_segmenter(self, request, pk=None):
+        if not user_can_train(request.user):
+            raise DRFPermissionDenied(_("You are not allowed to train models."))
         # segmentation: get the collection, validate with training serializer, enqueue segtraining task
         collection = self.get_object()
         serializer = CollectionSegmentSerializer(

@@ -1,7 +1,10 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.contrib.auth.models import Permission
+from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.translation import gettext as _
 from solo.admin import SingletonModelAdmin
 
 from core.models import (
@@ -28,6 +31,7 @@ from core.models import (
     TextualWitness,
     Transcription,
 )
+from users.models import User
 
 
 class MetadataInline(admin.TabularInline):
@@ -193,7 +197,8 @@ class DocumentTypologyAdmin(TypologyAdmin):
 
 
 class InstanceSettingsAdmin(SingletonModelAdmin):
-    list_display = ('page_batch_segmentation', 'page_batch_recognition')
+    change_form_template = 'admin/core/instancesettings/change_form.html'
+    filter_horizontal = ('default_user_permissions',)
     actions = None
 
     def has_delete_permission(self, request, obj=None):
@@ -204,6 +209,30 @@ class InstanceSettingsAdmin(SingletonModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'default_user_permissions':
+            kwargs['queryset'] = Permission.objects.select_related('content_type')
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    def response_change(self, request, obj):
+        if '_apply_default_perms' in request.POST:
+            perm_ids = list(obj.default_user_permissions.values_list('pk', flat=True))
+            user_ids = list(User.objects.filter(is_active=True).values_list('pk', flat=True))
+            Through = User.user_permissions.through
+            Through.objects.bulk_create(
+                [Through(user_id=u, permission_id=p) for u in user_ids for p in perm_ids],
+                ignore_conflicts=True,
+                batch_size=1000,
+            )
+            self.message_user(
+                request,
+                _('Granted %(perms)d default permission(s) to %(users)d active user(s).')
+                % {'perms': len(perm_ids), 'users': len(user_ids)},
+                messages.SUCCESS,
+            )
+            return HttpResponseRedirect(request.path)
+        return super().response_change(request, obj)
 
 
 admin.site.register(Project, ProjectAdmin)
@@ -226,4 +255,4 @@ admin.site.register(AnnotationComponent)
 admin.site.register(DocumentTag, DocumentTagAdmin)
 admin.site.register(TextualWitness)
 admin.site.register(Transcription)
-admin.site.register(InstanceSettings)
+admin.site.register(InstanceSettings, InstanceSettingsAdmin)
