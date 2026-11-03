@@ -99,6 +99,10 @@ export default {
             type: Function,
             required: true,
         },
+        sharedUsers: {
+            type: Array,
+            default: () => [],
+        },
     },
     data() {
         return {
@@ -122,9 +126,11 @@ export default {
             }];
         },
         userOptionGroups() {
-            if (!this.collaborators.length) return [];
+            const shared = this.sharedUsers.map((user) => user.username);
+            const users = this.collaborators.filter((user) => !shared.includes(user.username));
+            if (!users.length) return [];
             return [{
-                options: this.collaborators.map((user) => ({
+                options: users.map((user) => ({
                     label: user.username,
                     value: user.username,
                     hint: [user.first_name, user.last_name].join(" ").trim(),

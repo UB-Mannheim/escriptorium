@@ -163,6 +163,7 @@
                     :disabled="loading"
                     :on-cancel="closeShareModal"
                     :on-submit="share"
+                    :shared-users="sharedWithUsers"
                 />
             </div>
         </template>
