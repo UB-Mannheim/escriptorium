@@ -92,6 +92,27 @@
                 </tr>
             </tbody>
         </table>
+        <ul
+            v-if="!loading && !error && (previous || next)"
+            class="pagination justify-content-end"
+        >
+            <li class="page-item">
+                <a
+                    v-if="previous"
+                    class="page-link"
+                    href="#"
+                    @click.prevent="loadPage(page - 1)"
+                ><span aria-hidden="true">&lsaquo;</span></a>
+            </li>
+            <li class="page-item">
+                <a
+                    v-if="next"
+                    class="page-link"
+                    href="#"
+                    @click.prevent="loadPage(page + 1)"
+                ><span aria-hidden="true">&rsaquo;</span></a>
+            </li>
+        </ul>
     </div>
 </template>
 <script>
@@ -104,6 +125,9 @@ export default {
             items: [],
             loading: true,
             error: null,
+            page: 1,
+            next: null,
+            previous: null,
         };
     },
     created() {
@@ -114,20 +138,21 @@ export default {
             this.loading = true;
             this.error = null;
             try {
-                // walk every api page or old rows stay hidden
-                const items = [];
-                let url = "/api/downloads/";
-                while (url) {
-                    const r = await axios.get(url);
-                    items.push(...(r.data.results || r.data || []));
-                    url = r.data.next || null;
-                }
-                this.items = items;
+                const r = await axios.get("/api/downloads/", {
+                    params: { page: this.page },
+                });
+                this.items = r.data.results || [];
+                this.next = r.data.next;
+                this.previous = r.data.previous;
             } catch (e) {
                 this.error = e.message || String(e);
             } finally {
                 this.loading = false;
             }
+        },
+        loadPage(page) {
+            this.page = page;
+            this.fetch();
         },
         async onDelete(item) {
             if (!confirm(`Delete "${item.label}"? This cannot be undone.`)) {
@@ -135,9 +160,10 @@ export default {
             }
             try {
                 await axios.delete(`/api/downloads/${item.fingerprint}/`);
-                this.items = this.items.filter(
-                    (x) => x.fingerprint !== item.fingerprint,
-                );
+                if (this.items.length === 1 && this.page > 1) {
+                    this.page -= 1;
+                }
+                this.fetch();
             } catch (e) {
                 this.error = e.message || String(e);
             }
