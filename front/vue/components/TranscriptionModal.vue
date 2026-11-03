@@ -115,6 +115,30 @@
                             </template>
                         </ToggleButton>
                     </div>
+                    <div class="new-section with-separator escr-line-zoom-tools">
+                        <VDropdown
+                            v-for="tool in zoomTools"
+                            :key="tool.label"
+                            theme="escr-tooltip-small"
+                            placement="bottom"
+                            :distance="8"
+                            :triggers="['hover']"
+                        >
+                            <EscrButton
+                                :aria-label="tool.label"
+                                color="text"
+                                size="small"
+                                :on-click="tool.action"
+                            >
+                                <template #button-icon>
+                                    <component :is="tool.icon" />
+                                </template>
+                            </EscrButton>
+                            <template #popper>
+                                {{ tool.label }}
+                            </template>
+                        </VDropdown>
+                    </div>
                     <div class="escr-line-modal-right">
                         <EscrButton
                             color="text"
@@ -142,38 +166,55 @@
                     <div
                         id="modal-img-container"
                         ref="modalImgContainer"
+                        :style="boxStyle"
                         width="80%"
+                        @wheel.prevent="onExcerptWheel"
+                        @mousedown="onExcerptMouseDown"
+                        @dblclick="resetZoom"
                     >
-                        <img
-                            id="line-img"
-                            :src="modalImgSrc"
-                            draggable="false"
-                            selectable="false"
-                        >
-                        <div class="overlay">
-                            <svg
-                                width="100%"
-                                height="100%"
+                        <div class="line-zoom" :style="zoomStyle">
+                            <img
+                                id="line-img"
+                                :src="modalImgSrc"
+                                draggable="false"
+                                selectable="false"
                             >
-                                <defs>
-                                    <mask id="modal-overlay">
-                                        <rect
-                                            width="100%"
-                                            height="100%"
-                                            fill="white"
-                                        />
-                                        <polygon points="" />
-                                    </mask>
-                                </defs>
-                                <rect
-                                    fill="grey"
-                                    opacity="0.5"
+                            <div class="overlay">
+                                <svg
                                     width="100%"
                                     height="100%"
-                                    mask="url(#modal-overlay)"
-                                />
-                            </svg>
+                                >
+                                    <defs>
+                                        <mask id="modal-overlay">
+                                            <rect
+                                                width="100%"
+                                                height="100%"
+                                                fill="white"
+                                            />
+                                            <polygon points="" />
+                                        </mask>
+                                    </defs>
+                                    <rect
+                                        fill="grey"
+                                        opacity="0.5"
+                                        width="100%"
+                                        height="100%"
+                                        mask="url(#modal-overlay)"
+                                    />
+                                </svg>
+                            </div>
                         </div>
+                        <div
+                            v-if="!legacyModeEnabled && mainTextDirection != 'ttb'"
+                            class="escr-line-resize-handle"
+                            title="Drag to resize the line image (double-click to reset)"
+                            @pointerdown.stop.prevent="onResizeMouseDown"
+                            @pointermove="onResizeMouseMove"
+                            @pointerup="onResizeMouseUp"
+                            @pointercancel="onResizeMouseUp"
+                            @wheel.stop
+                            @dblclick.stop="resetBoxHeight"
+                        />
                     </div>
 
                     <!-- TODO: Refactor to not use refs (use vuex store or component data) -->
@@ -235,6 +276,7 @@
                             <span>on {{ momentDate }}</span>
                         </small>
                     </div>
+                
 
                     <hr v-if="!legacyModeEnabled">
 
@@ -435,13 +477,19 @@ import HelpVersions from "./HelpVersions.vue";
 import HelpCompareTranscriptions from "./HelpCompareTranscriptions.vue";
 import ToggleButton from "./ToggleButton/ToggleButton.vue";
 import TranscriptionSelector from "./TranscriptionSelector/TranscriptionSelector.vue";
+import DragVerticalIcon from "./Icons/DragVerticalIcon/DragVerticalIcon.vue";
 import XIcon from "./Icons/XIcon/XIcon.vue";
+import ZoomInIcon from "./Icons/ZoomInIcon/ZoomInIcon.vue";
+import ZoomOutIcon from "./Icons/ZoomOutIcon/ZoomOutIcon.vue";
+import ZoomResetIcon from "./Icons/ZoomResetIcon/ZoomResetIcon.vue";
+import { Dropdown as VDropdown } from "floating-vue";
 import "./TranscriptionModal.css";
 
 export default Vue.extend({
     components: {
         ArrowCircleLeftIcon,
         ArrowCircleRightIcon,
+        DragVerticalIcon,
         EscrButton,
         KeyboardIcon,
         LineVersion,
@@ -449,7 +497,11 @@ export default Vue.extend({
         HelpCompareTranscriptions,
         ToggleButton,
         TranscriptionSelector,
+        VDropdown,
         XIcon,
+        ZoomInIcon,
+        ZoomOutIcon,
+        ZoomResetIcon,
     },
     props: {
         /**
@@ -462,7 +514,9 @@ export default Vue.extend({
     },
     data() {
         return {
-            isVKEnabled: false
+            isVKEnabled: false,
+            zoom: {scale: 1, x: 0, y: 0},
+            boxHeight: this.loadBoxHeight(),
         }
     },
     computed: {
@@ -479,6 +533,28 @@ export default Vue.extend({
             selectedTranscription: (state) => state.transcriptions.selectedTranscription,
             transcriptionFont: (state) => state.document.transcriptionFont,
         }),
+        zoomTools() {
+            const tools = [
+                {label: "Zoom in", icon: "ZoomInIcon", action: () => this.zoomBy(1.25)},
+                {label: "Zoom out", icon: "ZoomOutIcon", action: () => this.zoomBy(1 / 1.25)},
+                {label: "Reset zoom and position", icon: "ZoomResetIcon", action: () => this.resetZoom()},
+            ];
+            // height of the box is fixed for ttb text
+            if (this.mainTextDirection != "ttb") {
+                tools.push({label: "Reset image height", icon: "DragVerticalIcon", action: () => this.resetBoxHeight()});
+            }
+            return tools;
+        },
+        boxStyle() {
+            // user-chosen height of the (horizontal text) image box
+            if (this.legacyModeEnabled || !this.boxHeight || this.mainTextDirection == "ttb") return {};
+            return {height: this.boxHeight + "px"};
+        },
+        zoomStyle() {
+            return {
+                transform: `translate(${this.zoom.x}px, ${this.zoom.y}px) scale(${this.zoom.scale})`,
+            };
+        },
         momentDate() {
             return moment.tz(this.line.currentTrans.version_updated_at, this.timeZone);
         },
@@ -523,6 +599,7 @@ export default Vue.extend({
     },
     watch: {
         line() {
+            this.resetZoom();
             this.computeStyles();
         },
         enabledVKs() {
@@ -560,11 +637,20 @@ export default Vue.extend({
         // unbind all events to avoid duplicating them
         $(document).off("hide.bs.modal");
         $(document).off("show.bs.modal");
+        window.removeEventListener("resize", this.onWindowResize);
+        window.removeEventListener("mousemove", this.onExcerptMouseMove);
+        window.removeEventListener("mouseup", this.onExcerptMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
     },
     mounted() {
-        $(this.$refs.transModal).modal({show: true});
-        $(this.$refs.transModal).draggable({handle: ".modal-header"});
-        $(this.$refs.transModal).resizable();
+        // the new UI modal fills the work area: no backdrop over the nav bars, no drag/resize
+        $(this.$refs.transModal).modal({show: true, backdrop: this.legacyModeEnabled});
+        if (this.legacyModeEnabled) {
+            $(this.$refs.transModal).draggable({handle: ".modal-header"});
+            $(this.$refs.transModal).resizable();
+        }
+        window.addEventListener("resize", this.onWindowResize);
         this.computeStyles();
         let modele = this;
 
@@ -594,6 +680,106 @@ export default Vue.extend({
                 enableVirtualKeyboard(input);
     },
     methods: {
+        boxHeightKey() {
+            // stored per document
+            return "escr-line-box-height-" + this.$store.state.document.id;
+        },
+
+        loadBoxHeight() {
+            try {
+                return parseInt(localStorage.getItem(this.boxHeightKey())) || null;
+            } catch (e) {
+                return null;
+            }
+        },
+
+        applyBoxHeight(height) {
+            this.boxHeight = height;
+            this.$nextTick(() => this.computeStyles());
+        },
+
+        resetBoxHeight() {
+            try { localStorage.removeItem(this.boxHeightKey()); } catch (e) { /* ignore */ }
+            this.applyBoxHeight(null);
+        },
+
+        onResizeMouseDown(ev) {
+            if (ev.button !== 0) return;
+            // capture the pointer so the drag keeps working outside the box (and the window)
+            ev.target.setPointerCapture(ev.pointerId);
+            this.resizeStart = {y: ev.clientY, height: this.$refs.modalImgContainer.clientHeight};
+            document.body.style.cursor = "ns-resize";
+            document.body.style.userSelect = "none";
+        },
+
+        onResizeMouseMove(ev) {
+            if (!this.resizeStart) return;
+            const maxHeight = this.$refs.transModal.clientHeight;  // may exceed the box: the body scrolls
+            const height = this.resizeStart.height + ev.clientY - this.resizeStart.y;
+            this.applyBoxHeight(Math.round(Math.min(Math.max(height, 64), maxHeight)));
+        },
+
+        onResizeMouseUp() {
+            if (!this.resizeStart) return;
+            this.resizeStart = null;
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+            try { localStorage.setItem(this.boxHeightKey(), String(this.boxHeight)); } catch (e) { /* ignore */ }
+        },
+
+        onWindowResize() {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => {
+                this.resetZoom();
+                this.computeStyles();
+            }, 100);
+        },
+
+        resetZoom() {
+            this.zoom = {scale: 1, x: 0, y: 0};
+        },
+
+        onExcerptWheel(ev) {
+            const rect = this.$refs.modalImgContainer.getBoundingClientRect();
+            this.zoomBy(ev.deltaY < 0 ? 1.1 : 1 / 1.1, ev.clientX - rect.left, ev.clientY - rect.top);
+        },
+
+        zoomBy(factor, px, py) {
+            // default to zooming around the center of the box
+            const container = this.$refs.modalImgContainer;
+            if (px === undefined) px = container.clientWidth / 2;
+            if (py === undefined) py = container.clientHeight / 2;
+            const scale = Math.min(10, Math.max(1, this.zoom.scale * factor));
+            const k = scale / this.zoom.scale;
+            this.zoom = {
+                scale: scale,
+                x: px - (px - this.zoom.x) * k,
+                y: py - (py - this.zoom.y) * k,
+            };
+        },
+
+        onExcerptMouseDown(ev) {
+            // the image is the whole page: dragging reveals the neighbouring lines
+            if (ev.button !== 0) return;
+            ev.preventDefault();
+            this.panStart = {x: ev.clientX - this.zoom.x, y: ev.clientY - this.zoom.y};
+            window.addEventListener("mousemove", this.onExcerptMouseMove);
+            window.addEventListener("mouseup", this.onExcerptMouseUp);
+        },
+
+        onExcerptMouseMove(ev) {
+            this.zoom = {
+                scale: this.zoom.scale,
+                x: ev.clientX - this.panStart.x,
+                y: ev.clientY - this.panStart.y,
+            };
+        },
+
+        onExcerptMouseUp() {
+            window.removeEventListener("mousemove", this.onExcerptMouseMove);
+            window.removeEventListener("mouseup", this.onExcerptMouseUp);
+        },
+
         close() {
             $(this.$refs.transModal).modal("hide");
         },
@@ -689,7 +875,8 @@ export default Vue.extend({
             let visuHeight = lineHeight + 2*context;
 
             if(this.mainTextDirection != "ttb"){
-                modalImgContainer.style.height = visuHeight+"px";
+                // the new UI box has a fixed height set in CSS
+                if (this.legacyModeEnabled) modalImgContainer.style.height = visuHeight+"px";
             }else{
                 modalImgContainer.style.width = visuHeight+"px";
                 modalImgContainer.style.display = "inline-block";
@@ -843,7 +1030,10 @@ export default Vue.extend({
             if(this.mainTextDirection != "ttb")
             {
                 ratio = modalImgContainer.clientWidth / (bbox.width + (2*bbox.height*hContext));
-                let MAX_HEIGHT = Math.round(Math.max(25, (window.innerHeight-230) / 3));
+                // the new UI box has its own height: fit the line + context in it
+                let MAX_HEIGHT = this.legacyModeEnabled
+                    ? Math.round(Math.max(25, (window.innerHeight-230) / 3))
+                    : Math.floor(modalImgContainer.clientHeight / (1 + 2*hContext));
                 lineHeight = Math.max(30, Math.round(bbox.height*ratio));
                 if (lineHeight > MAX_HEIGHT) {
                     // change the ratio so that the image can not get too big
