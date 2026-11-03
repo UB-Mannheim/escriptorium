@@ -72,6 +72,9 @@
     --background-secondary: #b9d0e9;
     --foreground-alert: #771010;
     --background-alert: #f8caca;
+    /* amber, matching --at-risk used for warning statuses elsewhere */
+    --foreground-warning: #7a5200;
+    --background-warning: #ffe8bf;
 
     /* line ordering panel */
     --line-ordering-border: rgba(0, 0, 0, 0.15);

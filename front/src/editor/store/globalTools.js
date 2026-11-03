@@ -8,6 +8,7 @@ const state = () => ({
      */
     activeTool: "select",
     modalOpen: {
+        copyTranscription: false,
         deleteTranscription: false,
         elementDetails: false,
         models: false,
@@ -19,6 +20,21 @@ const state = () => ({
 const getters = {};
 
 const actions = {
+    /**
+     * Close the "copy transcription layer" modal and reset form state.
+     */
+    closeCopyTranscriptionModal({ commit }) {
+        commit("setModalOpen", { key: "copyTranscription", open: false });
+        commit("document/setBlockShortcuts", false, { root: true });
+        commit(
+            "forms/setFormState",
+            {
+                form: "copyTranscription",
+                formState: { target: "" },
+            },
+            { root: true },
+        );
+    },
     /**
      * Close the "element details" modal and reset form state.
      */

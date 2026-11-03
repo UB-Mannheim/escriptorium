@@ -769,6 +769,33 @@ class LineTranscriptionSerializer(serializers.ModelSerializer):
         return self.cleanup(content)
 
 
+class CopyTranscriptionSerializer(serializers.Serializer):
+    """
+    Validates a request to copy the content of one transcription layer into another one.
+    The `source`/`target` querysets are narrowed down to the current document by the view.
+    """
+    source = serializers.PrimaryKeyRelatedField(queryset=Transcription.objects.none())
+    target = serializers.PrimaryKeyRelatedField(queryset=Transcription.objects.none(),
+                                                required=False)
+    target_name = serializers.CharField(max_length=512, required=False, allow_blank=False)
+
+    def validate(self, data):
+        source = data['source']
+        target = data.get('target')
+        target_name = data.get('target_name')
+
+        if bool(target) == bool(target_name):
+            raise serializers.ValidationError(
+                "Provide either a 'target' layer or a 'target_name', but not both.")
+
+        if target and target == source:
+            raise serializers.ValidationError("Can not copy a layer onto itself.")
+        if target_name and target_name == source.name:
+            raise serializers.ValidationError("Can not copy a layer onto itself.")
+
+        return data
+
+
 class LineListSerializer(serializers.ListSerializer):
     def update(self, qs, validated_data):
         # Maps for id->instance and id->data item.

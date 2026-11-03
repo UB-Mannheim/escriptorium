@@ -38,6 +38,12 @@
             :on-cancel="closeOntologyModal"
             :on-save="onSaveOntology"
         />
+        <CopyTranscriptionModal
+            v-if="!legacyModeEnabled && modalOpen && modalOpen.copyTranscription"
+            :disabled="!partsLoaded || copyTranscriptionLoading"
+            :on-cancel="closeCopyTranscriptionModal"
+            :on-copy="onCopyTranscription"
+        />
         <ConfirmModal
             v-if="!legacyModeEnabled && modalOpen && modalOpen.deleteTranscription"
             :body-text="`Are you sure you want to delete ${transcriptionToDelete.name}?`"
@@ -63,6 +69,7 @@ import ReconnectingWebSocket from "reconnectingwebsocket";
 import { mapActions, mapState } from "vuex";
 import Alerts from "./Toast/ToastGroup.vue";
 import ConfirmModal from "./ConfirmModal/ConfirmModal.vue";
+import CopyTranscriptionModal from "./CopyTranscriptionModal/CopyTranscriptionModal.vue";
 import EditorNavigation from "./EditorNavigation/EditorNavigation.vue";
 import ElementDetailsModal from "./ElementDetailsModal/ElementDetailsModal.vue";
 import ExtraInfo from "./ExtraInfo.vue";
@@ -79,6 +86,7 @@ export default {
     components: {
         Alerts,
         ConfirmModal,
+        CopyTranscriptionModal,
         ElementDetailsModal,
         EditorNavigation,
         ExtraInfo,
@@ -121,6 +129,12 @@ export default {
             type: Boolean,
             required: true,
         },
+    },
+    data() {
+        return {
+            // true while a transcription layer copy is in flight
+            copyTranscriptionLoading: false,
+        };
     },
     computed: {
         ...mapState({
@@ -230,12 +244,14 @@ export default {
     },
     methods: {
         ...mapActions("globalTools", [
+            "closeCopyTranscriptionModal",
             "closeElementDetailsModal",
             "closeOntologyModal",
             "closeTranscriptionsModal",
         ]),
         ...mapActions("transcriptions", {
             closeDeleteTranscriptionModal: "closeDeleteModal",
+            copyLayer: "copyLayer",
             deleteTranscription: "deleteTranscription",
             saveTranscriptionsChanges: "saveTranscriptionsChanges",
         }),
@@ -249,6 +265,17 @@ export default {
         async onSaveOntology() {
             await this.saveOntologyChanges();
             this.closeOntologyModal();
+        },
+        async onCopyTranscription({ target, targetName }) {
+            this.copyTranscriptionLoading = true;
+            try {
+                await this.copyLayer({ target, targetName });
+                this.closeCopyTranscriptionModal();
+            } catch (err) {
+                // the store already raised an alert, keep the modal open
+            } finally {
+                this.copyTranscriptionLoading = false;
+            }
         },
         async onSaveTranscriptions() {
             await this.saveTranscriptionsChanges();
