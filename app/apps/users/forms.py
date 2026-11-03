@@ -159,7 +159,6 @@ class GroupInvitationForm(InvitationForm):
 
     def save(self, commit=True):
         recipient = self.cleaned_data['recipient_id']
-        print('recipient', recipient)
         if recipient:
             invitation = super().save(commit=False)
             invitation.recipient = recipient
