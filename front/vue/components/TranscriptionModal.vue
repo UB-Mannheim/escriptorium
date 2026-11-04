@@ -4,6 +4,7 @@
         ref="transModal"
         :class="{ modal: true, ['escr-line-modal']: !legacyModeEnabled }"
         role="dialog"
+        @focusin="$store.commit('document/setBlockShortcuts', true)"
     >
         <div
             class="modal-dialog modal-xl"
@@ -276,7 +277,6 @@
                             <span>on {{ momentDate }}</span>
                         </small>
                     </div>
-                
 
                     <hr v-if="!legacyModeEnabled">
 
@@ -640,8 +640,11 @@ export default Vue.extend({
         window.removeEventListener("resize", this.onWindowResize);
         window.removeEventListener("mousemove", this.onExcerptMouseMove);
         window.removeEventListener("mouseup", this.onExcerptMouseUp);
+        clearTimeout(this.resizeTimeout);
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
+        $(this.$el).modal("hide");
+        this.$store.commit("document/setBlockShortcuts", false);
     },
     mounted() {
         // the new UI modal fills the work area: no backdrop over the nav bars, no drag/resize
