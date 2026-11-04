@@ -111,3 +111,85 @@
 .escr-line-modal .escr-line-version button {
     color: var(--primary);
 }
+
+/* full-area layout: below the editor nav (72px), right of the global nav (64px) */
+#trans-modal.escr-line-modal {
+    top: 72px;
+    left: 64px;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: auto;
+    padding: 0 !important;
+    overflow: hidden;
+    z-index: var(--sidebar-z);
+}
+#trans-modal.escr-line-modal .modal-dialog {
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+#trans-modal.escr-line-modal .modal-content {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    border-radius: 0;
+}
+#trans-modal.escr-line-modal .modal-header {
+    cursor: default;
+}
+#trans-modal.escr-line-modal .modal-body {
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+/* wheel-zoomable line excerpt */
+#modal-img-container .line-zoom {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+}
+
+/* image box: fixed default height (ttb sets its own inline size), as wide as the input */
+#trans-modal.escr-line-modal #modal-img-container {
+    width: 100%;
+    height: 8em;
+}
+#modal-img-container {
+    cursor: move;
+}
+.escr-line-modal-header .escr-line-zoom-tools {
+    gap: 0.25rem;
+}
+
+/* draggable bottom border of the image box: always-visible grip */
+.escr-line-resize-handle {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 12px;
+    cursor: ns-resize;
+    touch-action: none;
+    z-index: 2;
+    border-bottom: 2px solid var(--text1);
+    opacity: 0.4;
+}
+.escr-line-resize-handle::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    width: 40px;
+    margin-left: -20px;
+    border-top: 2px solid var(--text1);
+    border-bottom: 2px solid var(--text1);
+    height: 4px;
+}
+.escr-line-resize-handle:hover {
+    opacity: 0.9;
+}

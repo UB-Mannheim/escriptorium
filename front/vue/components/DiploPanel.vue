@@ -404,7 +404,12 @@ export default {
             }
         },
         enabledVKs() {
-            this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
+            const isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1;
+            // the line modal can switch it
+            if (isVKEnabled != this.isVKEnabled) {
+                this.isVKEnabled = isVKEnabled;
+                this.applyVK();
+            }
         },
         transcriptionsLoaded(isLoaded) {
             if (isLoaded === true) {
@@ -1291,6 +1296,17 @@ export default {
                 vks.push(this.documentId);
                 this.$store.commit("document/setEnabledVKs", vks);
                 window.userProfile.set("VK-enabled", vks);
+            } else {
+                // Make sure we save changes made before we remove the VK
+                vks.splice(vks.indexOf(this.documentId), 1);
+                this.$store.commit("document/setEnabledVKs", vks);
+                window.userProfile.set("VK-enabled", vks);
+            }
+            this.applyVK();
+        },
+
+        applyVK() {
+            if (this.isVKEnabled) {
                 this.$refs.diplomaticLines.childNodes.forEach((c) => {
                     this.activateVK(c);
                 });
@@ -1300,10 +1316,6 @@ export default {
                     this.isSortModeEnabled = false;
                 }
             } else {
-                // Make sure we save changes made before we remove the VK
-                vks.splice(vks.indexOf(this.documentId), 1);
-                this.$store.commit("document/setEnabledVKs", vks);
-                window.userProfile.set("VK-enabled", vks);
                 this.$refs.diplomaticLines.childNodes.forEach((c) => {
                     this.deactivateVK(c);
                 });
