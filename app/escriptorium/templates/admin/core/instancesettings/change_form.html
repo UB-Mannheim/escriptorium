@@ -3,9 +3,10 @@
 
 {% block submit_buttons_bottom %}
 {{ block.super }}
+{% trans "Grant the selected default permissions to every active user? This cannot be undone automatically." as confirm_msg %}
 <div class="submit-row">
   <input type="submit" name="_apply_default_perms"
          value="{% trans 'Save and apply default permissions to all existing users' %}"
-         onclick="return confirm('{% trans "Grant the selected default permissions to every active user? This cannot be undone automatically." %}');">
+         onclick="return confirm('{{ confirm_msg|escapejs }}');">
 </div>
 {% endblock %}
