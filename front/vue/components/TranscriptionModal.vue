@@ -680,7 +680,7 @@ export default Vue.extend({
         this.isVKEnabled = this.enabledVKs.indexOf(this.documentId) != -1 || false;
         if (this.isVKEnabled)
             for (const input of [...document.getElementsByClassName("display-virtual-keyboard")])
-                enableVirtualKeyboard(input);
+                this.activateVK(input);
     },
     methods: {
         boxHeightKey() {
@@ -1073,8 +1073,7 @@ export default Vue.extend({
                 // eslint-disable-next-line no-undef
                 userProfile.set("VK-enabled", vks);
                 for (const input of [...keyboardEnabledInputs]) {
-                    // eslint-disable-next-line no-undef
-                    enableVirtualKeyboard(input);
+                    this.activateVK(input);
                     input.focus();
                 }
             } else {
@@ -1091,6 +1090,15 @@ export default Vue.extend({
                     // delay is required to refocus, to ensure vk removed
                     setTimeout(() => input.focus(), 200);
                 }
+            }
+        },
+
+        activateVK(input) {
+            if (input.vkOnfocus) {
+                input.onfocus = input.vkOnfocus;
+            } else {
+                enableVirtualKeyboard(input);
+                input.vkOnfocus = input.onfocus;
             }
         }
     },

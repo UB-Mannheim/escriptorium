@@ -1279,8 +1279,13 @@ export default {
         activateVK(div) {
             div.contentEditable = "true";
             this.$refs.diplomaticLines.contentEditable = "false";
-            // eslint-disable-next-line no-undef
-            enableVirtualKeyboard(div);
+            if (div.vkOnfocus) {
+                div.onfocus = div.vkOnfocus;
+            } else {
+                // eslint-disable-next-line no-undef
+                enableVirtualKeyboard(div);
+                div.vkOnfocus = div.onfocus;
+            }
         },
 
         deactivateVK(div) {
