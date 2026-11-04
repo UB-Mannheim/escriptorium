@@ -122,6 +122,7 @@
     height: auto;
     padding: 0 !important;
     overflow: hidden;
+    z-index: var(--sidebar-z);
 }
 #trans-modal.escr-line-modal .modal-dialog {
     max-width: none;
