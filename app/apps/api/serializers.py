@@ -47,6 +47,7 @@ from core.models import (
     VirtualCollection,
     VirtualCollectionItem,
 )
+from core.permissions import user_can_train
 from core.tasks import _chunks, segment, segtrain, train, transcribe
 from imports.forms import FileImportError, clean_import_uri, clean_upload_file
 from imports.models import DocumentImport
@@ -119,16 +120,20 @@ class FontSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     can_invite = serializers.SerializerMethodField()
+    can_train = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('pk', 'is_active',
                   'username', 'email', 'first_name', 'last_name',
-                  'date_joined', 'last_login', 'is_staff', 'can_invite')
-        read_only_fields = ('date_joined', 'last_login', 'is_staff', 'can_invite')
+                  'date_joined', 'last_login', 'is_staff', 'can_invite', 'can_train')
+        read_only_fields = ('date_joined', 'last_login', 'is_staff', 'can_invite', 'can_train')
 
     def get_can_invite(self, user):
         return user.has_perms(['users.can_invite'])
+
+    def get_can_train(self, user):
+        return user_can_train(user)
 
 
 class DetailedGroupSerializer(serializers.ModelSerializer):

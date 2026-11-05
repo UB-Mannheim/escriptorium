@@ -219,6 +219,7 @@
                             </template>
                         </EscrButton>
                         <EscrButton
+                            v-if="canTrain"
                             color="secondary"
                             label="Train Model"
                             size="small"
@@ -689,6 +690,7 @@ export default {
     },
     computed: {
         ...mapState({
+            canTrain: (state) => state.user.canTrain,
             deleteModalOpen: (state) => state.images.deleteModalOpen,
             documentName: (state) => state.document.name,
             isDragging: (state) => state.images.isDragging,
@@ -904,6 +906,7 @@ export default {
         });
         // handle document-related websocket events
         msgSocket.addEventListener("message", this.websocketTaskListener);
+        this.fetchCurrentUser();
         // load document
         try {
             await this.fetchDocument();
@@ -982,7 +985,12 @@ export default {
             openModal: "openModal",
             transcribe: "transcribeImages",
         }),
-        ...mapActions("user", ["fetchGroups", "fetchRecognizeModels", "fetchSegmentModels"]),
+        ...mapActions("user", [
+            "fetchCurrentUser",
+            "fetchGroups",
+            "fetchRecognizeModels",
+            "fetchSegmentModels",
+        ]),
         ...mapMutations("images", ["setLoading", "setSelectedParts", "setIsDragging"]),
         ...mapMutations("document", ["setPartsCount"]),
         ...mapActions("collection", ["loadCollection", "addSelectedParts"]),

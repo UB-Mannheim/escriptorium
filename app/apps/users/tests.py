@@ -136,7 +136,7 @@ class InvitationTestCase(TestCase):
             response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(10):  # +1: default user permissions lookup
             response = self.client.post(url, {
                 'email': invitation.recipient_email,
                 'username': 'jimd',
@@ -174,7 +174,7 @@ class InvitationTestCase(TestCase):
             response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-        with self.assertNumQueries(10):  # the extra query -> for the expiry date
+        with self.assertNumQueries(11):  # +1 expiry date, +1 default user permissions lookup
             response = self.client.post(url, {
                 'email': invitation.recipient_email,
                 'username': 'jimd',

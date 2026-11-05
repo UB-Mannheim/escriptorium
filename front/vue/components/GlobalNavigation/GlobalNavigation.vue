@@ -69,7 +69,7 @@
                 <span>Models</span>
             </a>
             <a
-                v-if="isAuthenticated"
+                v-if="isAuthenticated && canTrain"
                 href="/training/"
                 aria-label="training page"
                 :class="{
@@ -264,6 +264,7 @@ export default {
     computed: {
         ...mapState({
             canInvite: (state) => state.user.canInvite,
+            canTrain: (state) => state.user.canTrain,
             isStaff: (state) => state.user.isStaff,
         }),
         location() {

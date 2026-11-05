@@ -9,6 +9,7 @@ import {
 // initial state
 const state = () => ({
     canInvite: false,
+    canTrain: false,
     collaborators: [],
     firstName: "",
     /**
@@ -39,6 +40,7 @@ const actions = {
         try {
             const { data } = await retrieveCurrentUser();
             commit("setCanInvite", data.can_invite);
+            commit("setCanTrain", data.can_train);
             commit("setIsStaff", data.is_staff);
             commit("setFirstName", data.first_name);
             commit("setUsername", data.username);
@@ -97,6 +99,9 @@ const actions = {
 const mutations = {
     setCanInvite(state, canInvite) {
         state.canInvite = canInvite;
+    },
+    setCanTrain(state, canTrain) {
+        state.canTrain = canTrain;
     },
     setCollaborators(state, collaborators) {
         state.collaborators = collaborators;
