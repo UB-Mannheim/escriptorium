@@ -640,6 +640,9 @@ export default {
             if (clickedIgnoredElement) {
                 return;
             }
+            if (this.linkable && item.href && !this.orderable) {
+                window.location.href = item.href;
+            }
 
             // otherwise, callback
             this.onRowClick(item);
